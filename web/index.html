@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DAoC Zone Viewer</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f14; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #hud {
+    position: fixed; top: 12px; left: 12px; z-index: 10;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: #cfe3f5; background: rgba(8,14,22,.78);
+    border: 1px solid rgba(120,170,220,.28); border-radius: 8px;
+    padding: 10px 12px; max-width: 340px;
+    backdrop-filter: blur(6px); pointer-events: none;
+  }
+  #hud h1 { margin: 0 0 6px; font-size: 13px; letter-spacing: .02em; color: #8fd0ff; }
+  #hud dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 1px 10px; }
+  #hud dt { color: #6f8ba6; }
+  #hud dd { margin: 0; }
+  #hud .keys { margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(120,170,220,.2); color: #7e9ab4; }
+  #err {
+    position: fixed; inset: 0; z-index: 20; display: none; place-content: center;
+    padding: 40px; background: #0b0f14;
+    font: 13px/1.6 ui-monospace, Menlo, Consolas, monospace; color: #ff9a9a;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="hud">
+  <h1 id="title">loading…</h1>
+  <dl>
+    <dt>grid</dt><dd id="i-grid">—</dd>
+    <dt>height</dt><dd id="i-height">—</dd>
+    <dt>tris</dt><dd id="i-tris">—</dd>
+    <dt>atlas</dt><dd id="i-atlas">—</dd>
+    <dt>align</dt><dd id="i-align">—</dd>
+    <dt>water</dt><dd id="i-water">—</dd>
+    <dt>char</dt><dd id="i-char">—</dd>
+    <dt>gait</dt><dd id="i-gait">—</dd>
+    <dt>mode</dt><dd id="i-mode">—</dd>
+    <dt>pos</dt><dd id="i-pos">—</dd>
+    <dt>fps</dt><dd id="i-fps">—</dd>
+  </dl>
+  <div class="keys">WASD move · drag = orbit camera · wheel = zoom<br>shift = sprint · alt = walk · C = free-fly camera · F = wireframe</div>
+</div>
+<div id="err"></div>
+<script type="module" src="viewer.js"></script>
+</body>
+</html>

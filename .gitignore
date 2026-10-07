@@ -1,0 +1,14 @@
+# Converted game assets. These are derived from a Dark Age of Camelot install
+# and are copyright Electronic Arts / Broadsword Online Games. Converting them
+# for your own use is one thing; redistributing them is not — so the output of
+# zoneconv and charconv stays out of the repository. Run the converters against
+# your own install to regenerate it.
+web/data/
+
+# Renders produced by charshot.
+*.png
+!web/*.png
+
+# Go build output.
+/bin/
+*.exe
