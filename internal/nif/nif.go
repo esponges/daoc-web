@@ -519,10 +519,14 @@ func (f *File) readAV(r *reader, a *AVObject) {
 	}
 }
 
-// readGeomCommon reads NiGeometryData through NiTriBasedGeomData, which is
-// everything NiTriShapeData and NiTriStripsData have in common. It returns the
-// triangle count the subclass needs; what follows differs between the two.
-func (f *File) readGeomCommon(r *reader) (d *ShapeData, nVerts, nTris int, err error) {
+// readGeomCommon reads NiGeometryData, the base every geometry block shares.
+//
+// It stops short of NiTriBasedGeomData's triangle count on purpose. The two
+// triangle blocks inherit that class and read the count themselves, but
+// NiParticlesData extends NiGeometryData directly and has no triangles at all
+// -- reading a count there is two bytes the file never wrote, which is what
+// desynchronised logfire.nif.
+func (f *File) readGeomCommon(r *reader) (d *ShapeData, nVerts int, err error) {
 	d = &ShapeData{}
 	v := f.Version
 	// The published schema puts a Group ID here from 10.1.0.0 onward, but
@@ -580,20 +584,19 @@ func (f *File) readGeomCommon(r *reader) (d *ShapeData, nVerts, nTris int, err e
 	if v >= Ver1001000 {
 		r.u16() // consistency flags
 	}
-	// NiTriBasedGeomData.
-	nTris = int(r.u16())
 	if r.err != nil {
-		return nil, 0, 0, r.err
+		return nil, 0, r.err
 	}
-	return d, nVerts, nTris, nil
+	return d, nVerts, nil
 }
 
 func (f *File) readShapeData(r *reader) (*ShapeData, error) {
-	d, nVerts, nTris, err := f.readGeomCommon(r)
+	d, nVerts, err := f.readGeomCommon(r)
 	if err != nil {
 		return nil, err
 	}
 	v := f.Version
+	nTris := int(r.u16()) // NiTriBasedGeomData
 
 	r.u32() // triangle point count, == nTris*3
 	hasTris := true
@@ -908,6 +911,9 @@ func (f *File) WorldTransforms() []Transform {
 // reader walks the byte slice, latching the first error so callers can read a
 // whole block and check once. Past an error every read yields zero.
 type reader struct {
+	// lax disables the non-finite float check. Set only while reading a
+	// particle data block: see readParticleData.
+	lax bool
 	b   []byte
 	p   int
 	err error
@@ -955,7 +961,7 @@ func (r *reader) i32() int32 { return int32(r.u32()) }
 
 func (r *reader) f32() float32 {
 	v := math.Float32frombits(r.u32())
-	if r.err == nil && (math.IsNaN(float64(v)) || math.IsInf(float64(v), 0)) {
+	if r.err == nil && !r.lax && (math.IsNaN(float64(v)) || math.IsInf(float64(v), 0)) {
 		r.err = fmt.Errorf("non-finite float at %d", r.p-4)
 	}
 	return v

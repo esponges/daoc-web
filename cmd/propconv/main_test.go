@@ -170,3 +170,61 @@ func TestFixtureHeightsMatchTheHeightmap(t *testing.T) {
 		t.Errorf("only %.1f%% of fixtures sit exactly on the derived terrain, want 80%%+", pct)
 	}
 }
+
+// Every model the zone places must parse and yield geometry. This is the
+// regression test for the whole block set: 60 models spanning four format
+// versions, triangle lists and strips, particle systems, controllers, lights
+// and a camera. Because a block carries no length, any layout error anywhere
+// in a file shows up here as a model that will not read at all.
+func TestEveryPlacedModelConverts(t *testing.T) {
+	game := gamePath(t)
+	nifsCSV, fixCSV := zoneCSVs(t)
+	models, err := parseNifs(nifsCSV)
+	if err != nil {
+		t.Fatalf("parseNifs: %v", err)
+	}
+	fixtures, err := parseFixtures(fixCSV)
+	if err != nil {
+		t.Fatalf("parseFixtures: %v", err)
+	}
+	used := map[int]int{}
+	for _, f := range fixtures {
+		used[f.NifID]++
+	}
+
+	var verts []vertex
+	var indices []uint32
+	converted, placed, total := 0, 0, 0
+	for id, n := range used {
+		total += n
+		def, ok := models[id]
+		if !ok {
+			t.Errorf("fixture id %d has no entry in nifs.csv", id)
+			continue
+		}
+		mo, err := convertModel(game, def, &verts, &indices)
+		if err != nil {
+			t.Errorf("%s (%d placements): %v", def.File, n, err)
+			continue
+		}
+		if len(mo.Groups) == 0 {
+			t.Errorf("%s produced no draw groups", def.File)
+		}
+		converted++
+		placed += n
+	}
+	if placed != total {
+		t.Errorf("%d of %d fixtures placed; want all of them", placed, total)
+	}
+	if len(verts) == 0 || len(indices) == 0 {
+		t.Fatal("no geometry produced")
+	}
+	// Indices must address the shared vertex buffer.
+	for _, ix := range indices {
+		if int(ix) >= len(verts) {
+			t.Fatalf("index %d addresses vertex %d of %d", ix, ix, len(verts))
+		}
+	}
+	t.Logf("%d models converted, %d/%d fixtures placed, %d vertices, %d triangles",
+		converted, placed, total, len(verts), len(indices)/3)
+}

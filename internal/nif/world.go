@@ -290,7 +290,7 @@ func (f *File) parseWorldBlock(r *reader, typ string) (any, error) {
 		return l, nil
 
 	default:
-		return nil, fmt.Errorf("unmodelled block type %q; blocks carry no length so parsing cannot continue", typ)
+		return f.parseEffectBlock(r, typ)
 	}
 }
 
@@ -392,11 +392,12 @@ func (f *File) readTexDesc(r *reader) TexDesc {
 // are emitted reversed to keep the whole mesh consistently wound; degenerate
 // triangles, which strips use to stitch runs together, are dropped.
 func (f *File) readStripsData(r *reader) (*ShapeData, error) {
-	d, nVerts, nTris, err := f.readGeomCommon(r)
+	d, nVerts, err := f.readGeomCommon(r)
 	if err != nil {
 		return nil, err
 	}
 	v := f.Version
+	nTris := int(r.u16()) // NiTriBasedGeomData
 	nStrips := int(r.u16())
 	if nStrips < 0 || nStrips > 1<<16 {
 		return nil, fmt.Errorf("implausible strip count %d", nStrips)

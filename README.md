@@ -13,7 +13,7 @@ zones/zone100/dat100.mpk ──► terrain.pcx + offset.pcx ──► heights.u1
                          └─► SECTOR.DAT ──────────────► zone.json    (scale, water, fog)
 zones/zone100/lod100.mpk ──► 64 × DXT1 tiles ─────────► atlas.png    (2048×2048)
                          └─► nifs.csv + fixtures.csv ─┐
-zones/Nifs/*.npk ───────────► 48 scenery models ──────┴► props.bin   (baked meshes)
+zones/Nifs/*.npk ───────────► 60 scenery models ──────┴► props.bin   (baked meshes)
                                                       └► props.json  (1006 placements)
 
 figures/NVikingM.NIF ───────► 49 skinned shapes ──────► mesh.bin     (skinned vertices)
@@ -175,7 +175,7 @@ That makes the format unforgiving but also self-checking: the footer has to
 land precisely at end-of-file. `Parse` enforces that, which is why a clean parse
 of a 686KB, 479-block model is itself the headline assertion.
 
-Five layouts differ from the published nif.xml schema, every one of them found
+Eight layouts differ from the published nif.xml schema, every one of them found
 the same way: parsing desynchronised, and the bytes at that offset were decoded
 by hand until they said something sensible.
 
@@ -196,15 +196,41 @@ by hand until they said something sensible.
 - **No `Direct Render` on `NiSourceTexture`.** The schema adds it at 10.1.0.0.
   In `NF_b-fence1.NIF` the block holding `A_oldwood.dds` ends one byte before
   the flag would, and reading it eats the next block's separator.
+- **`NiParticlesData` has no triangle count.** It extends `NiGeometryData`
+  directly, where the two triangle blocks reach it through
+  `NiTriBasedGeomData`. Reading a count there is two bytes the file never
+  wrote, which is exactly how far `logfire.nif` ran over.
+- **`NiDynamicEffect` carries no affected-node list** at 4.1/4.2. The schema
+  offers two alternative arrays gated at 4.0.0.2 from either side, so both read
+  as present; neither is. In `spikes.NIF` the `__MAX_Default_Light` block puts
+  1.0f where a count would be, and that float is the dimmer.
+- **`NiCamera` gates two fields the other way.** No orthographic-projection
+  flag before 10.1.0.0, but a screen-texture count at every version. The
+  viewport settles it: in `HCelttreetower.NIF` those four floats read 0, 1, 1,
+  0 and the frustum 1.0 to 5000.0 only under that reading.
 
 Version 10.1.0.0 also writes a zero `uint32` ahead of the header body and of
 every block.
 
-The Norseman uses just ten block types. The scenery adds thirteen more, of
-which only `NiTriStrips`/`NiTriStripsData` carry geometry; the rest are render
-state and texture references. Strips are converted to triangle lists at parse
-time — alternating winding, degenerate stitches dropped — so nothing downstream
-has to know which topology an artist used.
+The Norseman uses just ten block types; reading the zone's scenery takes
+**thirty-two**. Only `NiTriShapeData` and `NiTriStripsData` carry geometry that
+is drawn. Everything else — render state, texture references, particle systems,
+animation controllers, lights, a camera — is read purely to get the byte count
+right, because a block carries no length and a type that merely exists in a
+file cannot be stepped over. A campfire's flame is an emitter nothing here
+draws, but until that emitter can be consumed exactly, the logs underneath it
+cannot be read either.
+
+Strips are converted to triangle lists at parse time — alternating winding,
+degenerate stitches dropped — so nothing downstream has to know which topology
+an artist used.
+
+One deliberate hole in the checking: `Parse` rejects non-finite floats, which
+is how two of the layout bugs above announced themselves, but that check is
+disabled inside particle data. `NiAutoNormalParticles` means the engine
+generates the normals at runtime, so the array the exporter wrote is never read
+by the game, and in `NDwrfville.nif` it contains a NaN among other
+uninitialised bytes. The footer landing at end-of-file still covers the block.
 
 ### Scenery
 
@@ -230,11 +256,11 @@ Three things about that row are not obvious:
 - **`Scale` is a percentage**, bounded per model by the `MinScale`/`MaxScale`
   columns of `nifs.csv`.
 
-Zone 100 places **1006 fixtures from 81 models**, and it is a lopsided
-distribution: 551 are one pine and 228 one evergreen, so two models account for
-77% of the zone. Props never move, so `propconv` bakes each model's scene graph
-into flat geometry at conversion time and the viewer draws each model once with
-instancing — about 195 calls for the whole zone.
+Zone 100 places **1006 fixtures from 60 distinct models**, all of which convert,
+and it is a lopsided distribution: 551 are one pine and 228 one evergreen, so
+two models account for 77% of the zone. Props never move, so `propconv` bakes
+each model's scene graph into flat geometry at conversion time and the viewer
+draws each model once with instancing — 257 calls for the whole zone.
 
 Models carry invisible collision hulls beside the visible mesh; the fences make
 the convention clearest, with a `Collisionswitch` node branching into `collidee`
@@ -320,14 +346,14 @@ first. This applies standing still too: a T-posed idle is not an idle.
   the per-sector `patch*.dds` masks in `ter100.mpk` blended against the layer
   list in `textures.csv`, which is a multi-texture splatting pass this does not
   attempt.
-- **36 of 1006 fixtures are missing**, leaving 96.4% placed. Twelve models fail
-  to parse, all of them animated effects: campfires and torches
-  (`NiLookAtController`, `NiUVController`), smoke and forge sparks
-  (`NiAutoNormalParticles`, `NiRotatingParticles`) and one model carrying a
-  `NiCamera`. Because blocks carry no length, a type that is present cannot be
-  skipped even when nothing would draw it, so these need modelling before the
-  models they sit in can be read at all. The blacksmith, the bindstone and the
-  campfires are what is absent from Mularn.
+- **Particle systems are read but not drawn.** Every fixture is placed, but a
+  campfire is only its logs and a torch only its bracket: the flame, smoke and
+  forge sparks are emitters this pipeline parses and discards. Animated UV
+  scrolling (`NiUVController`) and look-at behaviour are read and ignored the
+  same way.
+- **Two textures are missing from the install.** `BAG.nif` names `mfiga6.dds`
+  and `mheada3.dds`, which exist nowhere in the game directory; those three
+  props draw white.
 - **No recorded animation.** The 4032 `.kfa` files are unexamined, as are the
   35 `NiKeyframeController` blocks inside the model itself. The gait is
   hand-written.
