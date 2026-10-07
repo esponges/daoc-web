@@ -125,11 +125,15 @@ export class Skeleton {
     this.bindWorld = [];
     this.animLocal = [];
     this.world = [];
+    // The scale is folded into the rotation rows, so a recorded clip that
+    // rewrites the rotation would silently drop it. Keep it to put back.
+    this.bindScale = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       this.bindLocal.push(fromBone(bones[i].t, bones[i].r, bones[i].s));
       this.bindWorld.push(xform());
       this.animLocal.push(xform());
       this.world.push(xform());
+      this.bindScale[i] = bones[i].s || 1;
     }
 
     // Parents are not guaranteed to precede children, so resolve the order
@@ -291,3 +295,140 @@ export function skinVertex(skel, shape, pos, boneIdx, weights, out = [0, 0, 0]) 
   }
   return out;
 }
+
+// --- recorded animation ---------------------------------------------------
+//
+// A clip from DAoC's own .kfa files. Unlike poseWalk, which rotates joints by
+// deltas conjugated into each joint's frame, a recorded track supplies the
+// joint's local transform outright: the rotation replaces the bind rotation
+// rather than composing with it. Bones with no track keep their bind pose, and
+// a channel with no keys keeps that component of it -- a track may rotate a
+// bone without moving it.
+
+// quatToRows writes a w,x,y,z quaternion into the rotation part of a
+// transform, scaled, leaving the translation alone.
+export function quatToRows(q, scale, out) {
+  const w = q[0], x = q[1], y = q[2], z = q[3];
+  const xx = x * x, yy = y * y, zz = z * z;
+  const xy = x * y, xz = x * z, yz = y * z;
+  const wx = w * x, wy = w * y, wz = w * z;
+  out[0] = (1 - 2 * (yy + zz)) * scale;
+  out[1] = (2 * (xy - wz)) * scale;
+  out[2] = (2 * (xz + wy)) * scale;
+  out[4] = (2 * (xy + wz)) * scale;
+  out[5] = (1 - 2 * (xx + zz)) * scale;
+  out[6] = (2 * (yz - wx)) * scale;
+  out[8] = (2 * (xz - wy)) * scale;
+  out[9] = (2 * (yz + wx)) * scale;
+  out[10] = (1 - 2 * (xx + yy)) * scale;
+  return out;
+}
+
+// span finds the key interval containing t and the blend factor within it.
+// Keys are [time, ...] rows in ascending time.
+function span(keys, t) {
+  const n = keys.length;
+  if (n === 0) return null;
+  if (n === 1 || t <= keys[0][0]) return { a: 0, b: 0, f: 0 };
+  if (t >= keys[n - 1][0]) return { a: n - 1, b: n - 1, f: 0 };
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (keys[mid][0] <= t) lo = mid; else hi = mid;
+  }
+  const t0 = keys[lo][0], t1 = keys[hi][0];
+  const d = t1 - t0;
+  return { a: lo, b: hi, f: d > 1e-9 ? (t - t0) / d : 0 };
+}
+
+// sampleQuat slerps between the two keys bracketing t. The shorter arc is
+// always taken: a quaternion and its negation are the same rotation, so a
+// negative dot means the raw pair would spin the long way round.
+function sampleQuat(keys, t, out) {
+  const s = span(keys, t);
+  if (!s) return null;
+  const A = keys[s.a], B = keys[s.b];
+  let w0 = A[1], x0 = A[2], y0 = A[3], z0 = A[4];
+  let w1 = B[1], x1 = B[2], y1 = B[3], z1 = B[4];
+  let dot = w0 * w1 + x0 * x1 + y0 * y1 + z0 * z1;
+  if (dot < 0) { w1 = -w1; x1 = -x1; y1 = -y1; z1 = -z1; dot = -dot; }
+  let s0 = 1 - s.f, s1 = s.f;
+  if (dot < 0.9995) {
+    const theta = Math.acos(Math.min(1, dot));
+    const sin = Math.sin(theta);
+    if (sin > 1e-6) {
+      s0 = Math.sin((1 - s.f) * theta) / sin;
+      s1 = Math.sin(s.f * theta) / sin;
+    }
+  }
+  out[0] = s0 * w0 + s1 * w1;
+  out[1] = s0 * x0 + s1 * x1;
+  out[2] = s0 * y0 + s1 * y1;
+  out[3] = s0 * z0 + s1 * z1;
+  const len = Math.hypot(out[0], out[1], out[2], out[3]) || 1;
+  out[0] /= len; out[1] /= len; out[2] /= len; out[3] /= len;
+  return out;
+}
+
+function sampleVec(keys, t, out) {
+  const s = span(keys, t);
+  if (!s) return null;
+  const A = keys[s.a], B = keys[s.b];
+  for (let k = 0; k < 3; k++) out[k] = A[k + 1] + (B[k + 1] - A[k + 1]) * s.f;
+  return out;
+}
+
+function sampleFloat(keys, t) {
+  const s = span(keys, t);
+  if (!s) return null;
+  return keys[s.a][1] + (keys[s.b][1] - keys[s.a][1]) * s.f;
+}
+
+// Clip binds a converted animation to a particular skeleton, resolving each
+// track's bone name to an index once rather than per frame.
+export class Clip {
+  constructor(json, skeleton) {
+    this.name = json.name;
+    this.source = json.source;
+    this.duration = json.duration || 0;
+    this.tracks = [];
+    this.missing = [];
+    for (const t of json.tracks || []) {
+      const i = skeleton.boneId(t.bone);
+      if (i < 0) { this.missing.push(t.bone); continue; }
+      this.tracks.push({
+        bone: i, name: t.bone,
+        rot: t.rot || [], trans: t.trans || [], scale: t.scale || [],
+      });
+    }
+  }
+}
+
+Skeleton.prototype.poseClip = function (clip, time) {
+  const n = this.animLocal.length;
+  for (let i = 0; i < n; i++) this.animLocal[i].set(this.bindLocal[i]);
+  if (!clip || !clip.tracks.length) { this.resolve(); return; }
+
+  // Clips loop, and a negative time is as valid as a large one.
+  const d = clip.duration;
+  let t = time;
+  if (d > 0) { t = time % d; if (t < 0) t += d; }
+
+  const q = this._q || (this._q = new Float32Array(4));
+  const v = this._v || (this._v = new Float32Array(3));
+  for (const tr of clip.tracks) {
+    const m = this.animLocal[tr.bone];
+    if (tr.rot.length && sampleQuat(tr.rot, t, q)) {
+      // Scale lives folded into the rotation rows, so rewriting the rotation
+      // would drop it. Take the clip's scale if it has one, else the bind
+      // scale this bone already carried.
+      let s = tr.scale.length ? sampleFloat(tr.scale, t) : null;
+      if (s === null) s = this.bindScale[tr.bone];
+      quatToRows(q, s, m);
+    }
+    if (tr.trans.length && sampleVec(tr.trans, t, v)) {
+      m[3] = v[0]; m[7] = v[1]; m[11] = v[2];
+    }
+  }
+  this.resolve();
+};

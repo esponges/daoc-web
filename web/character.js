@@ -15,7 +15,7 @@
 // world rotation. That way "swing the thigh forward" means the same thing for
 // every joint regardless of how the artist oriented it.
 
-import { Skeleton, xform } from './skeleton.js';
+import { Skeleton, xform, Clip } from './skeleton.js';
 
 const MAX_BONES = 52; // the largest bone count on any one shape, with headroom
 
@@ -153,6 +153,23 @@ export async function createCharacter(gl, base, helpers) {
   const bones = man.bones;
   const skel = new Skeleton(bones);
 
+  // --- recorded animation ---
+  // The game's own .kfa clips, if animconv has been run. They are optional:
+  // without them the procedural gait still drives the figure, which is what
+  // the viewer falls back to.
+  const clips = {};
+  try {
+    const idx = await fetch(base + '/anim/index.json').then((r) => (r.ok ? r.json() : null));
+    if (idx) {
+      await Promise.all(idx.animations.map(async (a) => {
+        const j = await fetch(base + '/anim/' + a.file).then((r) => (r.ok ? r.json() : null));
+        if (j) clips[a.name] = new Clip(j, skel);
+      }));
+    }
+  } catch (e) {
+    console.warn('recorded animation not loaded:', e.message);
+  }
+
   // Scratch, reused every frame.
   const tmpA = xform();
   const skinBuf = new Float32Array(MAX_BONES * 3 * 4);
@@ -200,6 +217,16 @@ export async function createCharacter(gl, base, helpers) {
     boneCount: bones.length,
     missingJoints: skel.missingJoints,
     pose: (phase, intensity) => skel.poseWalk(phase, intensity),
+    // poseClip plays a recorded clip by name; returns false if it is absent,
+    // so the caller can fall back to the procedural gait.
+    poseClip: (name, time) => {
+      const c = clips[name];
+      if (!c) return false;
+      skel.poseClip(c, time);
+      return true;
+    },
+    clips,
+    clipNames: Object.keys(clips),
     skeleton: skel,
     draw,
   };

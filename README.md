@@ -19,6 +19,8 @@ zones/Nifs/*.npk ───────────► 60 scenery models ──�
 figures/NVikingM.NIF ───────► 49 skinned shapes ──────► mesh.bin     (skinned vertices)
                          └─► 114-bone Biped skeleton ► char.json    (bones, inverse binds)
 figures/skins/*.mpk ────────► DXT3/DXT5 skins ────────► tex/*.png
+anims/{I,W,R}_VM.kfa ───────► keyframe tracks ────────► anim/*.json  (idle/walk/run)
+  + figures/animnode.dat ───► bone index -> name ──────┘
                                                             │
                                                             ▼
                                             web/ ── WebGL2, GPU skinning
@@ -32,6 +34,7 @@ Needs Go 1.21+ and a DAoC install.
 go run ./cmd/zoneconv -zone 100 -name "Vale of Mularn"   # terrain
 go run ./cmd/propconv -zone 100                          # trees, buildings, props
 go run ./cmd/charconv                                    # character
+go run ./cmd/animconv -anims "I_VM,W_VM,R_VM" -as "idle,walk,run"   # animations
 go run ./cmd/serve                                       # then open localhost:8777
 ```
 
@@ -51,6 +54,7 @@ at any speed.
 | `zoneconv` | zone terrain, texture atlas and water |
 | `propconv` | zone scenery: models flattened, placed and grouped by texture |
 | `charconv` | one character: mesh, skeleton, skin weights, textures |
+| `animconv` | recorded animations; `-list` scores every clip against a skeleton |
 | `charshot` | renders an exported character to a PNG, no browser needed |
 | `nifdump` | inspects a `.nif`; `-bind` checks the bind pose, `-shapes` lists geometry |
 | `mpakls` | lists and extracts from MPAK archives |
@@ -316,11 +320,75 @@ skin tone.
 
 ## Animation
 
-There is no animation data in the pipeline yet; the gait is procedural, written
-against the Biped joint names. Phase advances with ground covered, and one
-intensity parameter scales the same cycle from a walk to a sprint.
+The character plays DAoC's own recorded animations. A procedural gait remains
+as a fallback when they have not been converted, and the HUD says which is
+running.
 
-A joint's local frame is whatever the artist left it as, so joints are not
+### The `.kfa` files
+
+They are not a separate format. A `.kfa` is a **NetImmerse 4.2.1.0 NIF** — the
+same generation as the scenery — containing nothing but `NiKeyframeController`
+and `NiKeyframeData`. The parser built for the trees reads them unchanged.
+
+What *is* unusual is how a track names its bone. The nodes in a `.kfa` are all
+unnamed. Instead the file's one real node heads two linked lists that run in
+lockstep — a chain of `NiStringExtraData` and a chain of
+`NiKeyframeController` — and the n-th string belongs to the n-th controller.
+That string is a number, which indexes `figures/animnode.dat`, a 178-line list
+of Biped bone names:
+
+```
+chain position 5  ->  string "6"  ->  animnode.dat line 6  ->  "Bip01 Neck"
+```
+
+That indirection is why the animations are portable. A clip names no skeleton
+of its own, so any model with Biped bones can play any of them — which is how
+one humanoid set serves every player race.
+
+### Finding the right clips
+
+There are 4032 `.kfa` files and nothing maps a model to its animations, so
+`animconv -list` scores them instead: it resolves every track through
+`animnode.dat` and counts how many land on the character's actual skeleton.
+
+```
+scanned 3994 animations, 38 unreadable
+
+animation                          tracks on model  legs duration    keys
+W_VM                                   61       61     6    1.20s     685
+R_VM                                   61       61     6    0.73s     536
+I_VM                                   61       61     6    4.00s    1175
+```
+
+2081 clips drive all six gait joints. The naming resolves itself once the
+scores are visible: `W_`/`R_`/`I_` are walk, run and idle, and the suffix is a
+race-and-sex code — `VM` is Viking Male, which is what `NVikingM.NIF` is. The
+scoring is what makes that an observation rather than a guess: clips for other
+skeletons, like `I_BritM`, match only 43 of their 93 tracks.
+
+A useful corroboration fell out of it. DAoC walks at 85 u/s and `W_VM` lasts
+1.20s, so one cycle covers **102 units** — within 3% of the 105-unit stride the
+procedural gait had been using, which was derived independently from the
+model's proportions.
+
+### Playing them back
+
+A recorded track supplies a joint's local transform outright, replacing the
+bind rotation rather than composing with it — simpler than the procedural path
+below, which works in deltas. Rotations are quaternions in NIF's `w,x,y,z`
+order, slerped along the shorter arc; a channel with no keys keeps that
+component of the bind pose, so a track may rotate a bone without moving it.
+Scale needs care: it lives folded into the rotation rows, so rewriting a
+rotation silently drops it unless the bind scale is put back.
+
+The clips are authored in place — `Bip01` sways a couple of units but never
+accumulates — so the viewer supplies the movement and advances the clip's clock
+in proportion to actual speed. That is the same rule the procedural phase uses,
+applied to a cycle someone else timed.
+
+### The procedural gait
+
+Still present as a fallback. A joint's local frame is whatever the artist left it as, so joints are not
 rotated in their own axes. A rotation is given in the body's frame and
 conjugated into the joint's:
 
@@ -354,9 +422,13 @@ first. This applies standing still too: a T-posed idle is not an idle.
 - **Two textures are missing from the install.** `BAG.nif` names `mfiga6.dds`
   and `mheada3.dds`, which exist nowhere in the game directory; those three
   props draw white.
-- **No recorded animation.** The 4032 `.kfa` files are unexamined, as are the
-  35 `NiKeyframeController` blocks inside the model itself. The gait is
-  hand-written.
+- **Three animations, no blending.** Walk, run and idle are converted; the
+  other ~2000 humanoid clips — combat styles, emotes, swimming, jumping,
+  death — are reachable by name through `animconv` but not wired to anything.
+  Switching clips cuts rather than cross-fades, so the change of gait is a
+  visible snap. Sprint reuses the run cycle, played faster.
+- **38 of 4032 `.kfa` files do not parse.** They are a small minority and
+  `-list` reports them; none is in the humanoid locomotion set.
 - **No collision.** The character follows the heightmap and walks through
   anything else, including trees, buildings and the lake surface. The data is
   there to fix it: `nifs.csv` has a Collide flag and a radius per model, and

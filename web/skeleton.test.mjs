@@ -16,7 +16,7 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { Skeleton, skinVertex, apply } from './skeleton.js';
+import { Skeleton, skinVertex, apply, Clip } from './skeleton.js';
 
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -181,6 +181,98 @@ const bindAgain = Array.from(skel.world[skel.joints.lCalf]);
 skel.poseWalk(0, 0);
 check('an idle pose equals the bind pose',
   bindAgain.every((v, i) => Math.abs(v - skel.world[skel.joints.lCalf][i]) < 1e-6));
+
+
+// --- recorded animation ---------------------------------------------------
+//
+// The clips come from DAoC's own .kfa files, resolved to bones through
+// animnode.dat. These checks are the same ones the procedural gait has to
+// pass: if the quaternion component order were wrong, or the bone mapping
+// off, the figure would not stand up straight or walk.
+
+let clips = null;
+try {
+  const idx = JSON.parse(await readFile(join(base, 'anim', 'index.json'), 'utf8'));
+  clips = {};
+  for (const a of idx.animations) {
+    clips[a.name] = new Clip(JSON.parse(await readFile(join(base, 'anim', a.file), 'utf8')), skel);
+  }
+} catch (e) {
+  console.log('  --    recorded animation not converted; run animconv  (' + e.message + ')');
+}
+
+if (clips) {
+  const names = Object.keys(clips);
+  check('every converted clip binds to the skeleton',
+    names.length > 0 && names.every((n) => clips[n].tracks.length > 0 && clips[n].missing.length === 0),
+    names.map((n) => n + ':' + clips[n].tracks.length + 'tr').join(' '));
+
+  // Sample the whole of every clip and demand the figure stays a figure.
+  const boneHeight = (i) => skel.world[i][11];
+  const head = skel.boneId('Bip01 Head');
+  const lFoot = skel.boneId('Bip01 L Foot'), rFoot = skel.boneId('Bip01 R Foot');
+  let worstHead = 0, badFrames = 0, minFoot = Infinity;
+  for (const n of names) {
+    const c = clips[n];
+    for (let k = 0; k <= 48; k++) {
+      skel.poseClip(c, (k / 48) * c.duration);
+      for (const m of skel.world) {
+        for (const v of m) if (!Number.isFinite(v)) badFrames++;
+      }
+      const h = boneHeight(head);
+      // The model is 71.8 units tall; a standing head sits near the top.
+      if (h < 55 || h > 80) worstHead = Math.max(worstHead, Math.abs(h - 67));
+      minFoot = Math.min(minFoot, boneHeight(lFoot), boneHeight(rFoot));
+    }
+  }
+  check('clips never produce a non-finite transform', badFrames === 0, badFrames + ' bad values');
+  check('the head stays at a standing height through every clip',
+    worstHead === 0, worstHead ? 'off by ' + worstHead.toFixed(1) : 'always 55..80u');
+  check('feet never pass far below the ground plane', minFoot > -12,
+    'lowest foot ' + minFoot.toFixed(1) + 'u');
+
+  // A walk cycle has to actually swing the legs, in antiphase.
+  const walk = clips.walk;
+  if (walk) {
+    let sep = [];
+    for (let k = 0; k < 32; k++) {
+      skel.poseClip(walk, (k / 32) * walk.duration);
+      // Fore/aft is the model's Y axis.
+      sep.push(skel.world[lFoot][7] - skel.world[rFoot][7]);
+    }
+    const lo = Math.min(...sep), hi = Math.max(...sep);
+    check('the recorded walk swings the feet in antiphase', lo < -8 && hi > 8,
+      'separation ' + lo.toFixed(1) + ' .. ' + hi.toFixed(1) + ' units');
+
+    // And it has to loop: the pose at t=0 and t=duration must agree, or the
+    // character snaps every cycle.
+    skel.poseClip(walk, 0);
+    const first = skel.world.map((m) => Array.from(m));
+    skel.poseClip(walk, walk.duration);
+    let loopErr = 0;
+    for (let i = 0; i < first.length; i++) {
+      for (let k = 0; k < 12; k++) loopErr = Math.max(loopErr, Math.abs(first[i][k] - skel.world[i][k]));
+    }
+    check('the walk cycle loops seamlessly', loopErr < 2.0, 'worst joint delta ' + loopErr.toFixed(3));
+  }
+
+  // Idle should be near-still compared with walking.
+  const idle = clips.idle;
+  if (idle && walk) {
+    const travel = (c) => {
+      let lo = Infinity, hi = -Infinity;
+      for (let k = 0; k < 32; k++) {
+        skel.poseClip(c, (k / 32) * c.duration);
+        const d = skel.world[lFoot][7];
+        lo = Math.min(lo, d); hi = Math.max(hi, d);
+      }
+      return hi - lo;
+    };
+    const ti = travel(idle), tw = travel(walk);
+    check('idle moves the feet far less than walking', ti < tw * 0.5,
+      'idle ' + ti.toFixed(1) + 'u vs walk ' + tw.toFixed(1) + 'u');
+  }
+}
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');
 process.exit(failures ? 1 : 0);

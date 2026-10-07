@@ -332,7 +332,7 @@ async function main() {
   // to see the gait and close enough to walk to the shore.
   const player = {
     x: 112 * cell, y: 118 * cell, // world X and Y, i.e. heightmap cells
-    yaw: Math.PI, phase: 0, gait: 0,
+    yaw: Math.PI, phase: 0, gait: 0, clipTime: 0, clip: null,
   };
 
   // --- cameras ---
@@ -484,15 +484,29 @@ async function main() {
       // pace at any speed.
       player.phase += (d / STRIDE) * Math.PI * 2;
       player.gait = speed;
+      // A recorded clip is authored for one speed. Advancing its own clock in
+      // proportion to how fast the character is actually moving keeps the
+      // feet planted instead of skating -- the same rule as the procedural
+      // phase, applied to a cycle someone else timed.
+      player.clipTime += dt * (speed / (speed <= WALK ? WALK : RUN));
     } else {
       player.gait = 0;
+      player.clipTime += dt;
     }
     const intensity = Math.min(1, player.gait / RUN);
-    char.pose(player.phase, intensity);
+    // Prefer DAoC's own animation; fall back to the procedural gait if
+    // animconv has not been run.
+    const clip = player.gait === 0 ? 'idle' : player.gait <= WALK ? 'walk' : 'run';
+    player.clip = char.poseClip(clip, player.clipTime) ? clip : null;
+    if (!player.clip) char.pose(player.phase, intensity);
 
     const playerGround = groundAt(player.x, player.y);
-    // A small vertical bob, twice per stride, sells the weight transfer.
-    const bob = 1.6 * intensity * (1 - Math.cos(player.phase * 2)) * 0.5;
+    // A small vertical bob, twice per stride, sells the weight transfer. The
+    // recorded clips already carry their own, so this is only for the
+    // procedural fallback.
+    const bob = player.clip
+      ? 0
+      : 1.6 * intensity * (1 - Math.cos(player.phase * 2)) * 0.5;
     const charModel = modelMatrix(player.x, playerGround + bob, player.y, player.yaw);
 
     // --- place the camera ---
@@ -604,10 +618,11 @@ async function main() {
       ? 'cell ' + (player.x / cell).toFixed(1) + ', ' + (player.y / cell).toFixed(1) +
         '  ground ' + Math.round(playerGround) + 'u'
       : cam.pos.map((n) => Math.round(n)).join(', ');
-    $('i-gait').textContent = player.gait
+    $('i-gait').textContent = (player.gait
       ? Math.round(player.gait) + ' u/s ' +
         (player.gait >= SPRINT ? '(sprint)' : player.gait <= WALK ? '(walk)' : '(run)')
-      : 'idle';
+      : 'idle') +
+      (player.clip ? '  · ' + player.clip + '.kfa' : '  · procedural');
     $('i-mode').textContent = followMode ? 'third person' : 'free fly';
 
     requestAnimationFrame(frame);
