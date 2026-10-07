@@ -2,7 +2,8 @@
 
 A proof of concept: extract Dark Age of Camelot's shipped assets and render
 them in a browser. Currently one zone — **100, Vale of Mularn**, its forest and
-the village of Mularn — with a playable **Norseman** you can walk around it.
+the village of Mularn — with a playable character you can walk around it: a
+**Troll in full plate** by default, or the **Norseman** via `?char=norseman`.
 
 Written in Go, with a dependency-free WebGL2 viewer.
 
@@ -16,10 +17,10 @@ zones/zone100/lod100.mpk ──► 64 × DXT1 tiles ─────────�
 zones/Nifs/*.npk ───────────► 60 scenery models ──────┴► props.bin   (baked meshes)
                                                       └► props.json  (1006 placements)
 
-figures/NVikingM.NIF ───────► 49 skinned shapes ──────► mesh.bin     (skinned vertices)
+figures/NTrollM.NIF ────────► 49 skinned shapes ──────► mesh.bin     (skinned vertices)
                          └─► 114-bone Biped skeleton ► char.json    (bones, inverse binds)
 figures/skins/*.mpk ────────► DXT3/DXT5 skins ────────► tex/*.png
-anims/{I,W,R}_VM.kfa ───────► keyframe tracks ────────► anim/*.json  (idle/walk/run)
+anims/Troll_*.kfa ──────────► keyframe tracks ────────► anim/*.json  (idle/walk/run)
   + figures/animnode.dat ───► bone index -> name ──────┘
                                                             │
                                                             ▼
@@ -33,8 +34,17 @@ Needs Go 1.21+ and a DAoC install.
 ```bash
 go run ./cmd/zoneconv -zone 100 -name "Vale of Mularn"   # terrain
 go run ./cmd/propconv -zone 100                          # trees, buildings, props
-go run ./cmd/charconv                                    # character
-go run ./cmd/animconv -anims "I_VM,W_VM,R_VM" -as "idle,walk,run"   # animations
+
+# A character is an outfit: one shape per slot plus the texture to dress it.
+go run ./cmd/charconv -outfit troll-plate
+go run ./cmd/animconv -char web/data/char/troll-plate \
+  -anims "Troll_idle,Troll_walk,troll_run" -as "idle,walk,run"
+
+# The Norseman is still there; ?char=norseman in the URL switches to him.
+go run ./cmd/charconv -outfit norseman
+go run ./cmd/animconv -char web/data/char/norseman \
+  -anims "I_VM,W_VM,R_VM" -as "idle,walk,run"
+
 go run ./cmd/serve                                       # then open localhost:8777
 ```
 
@@ -69,7 +79,8 @@ caught two bugs the numeric checks passed over.
 
 ```bash
 go test ./...            # container, heightmap and NIF parsing against the real files
-node web/skeleton.test.mjs   # the posing maths and the exported character
+node web/skeleton.test.mjs              # the posing maths, for the Norseman
+node web/skeleton.test.mjs troll-plate  # and for any other converted outfit
 ```
 
 Two checks are worth more than the rest.
@@ -273,11 +284,31 @@ nearest level, since props are seen from the ground.
 
 ### Characters
 
-A race model is not one mesh. `NVikingM.NIF` holds 49 skinned shapes: ten
-heads, five torso tiers each in two cuts, several arms, legs, boots, gloves and
-cloaks, and whole-body meshes for distant rendering. A character is assembled by
-choosing one shape per slot — drawing all of them stacks every outfit the race
-can wear on top of itself.
+A race model is not one mesh. `NVikingM.NIF` and `NTrollM.NIF` each hold 49
+skinned shapes: ten heads, five torso tiers in two cuts apiece, several arms,
+legs, boots, gloves and cloaks, and whole-body meshes for distant rendering. A
+character is assembled by choosing one shape per slot — drawing all of them
+stacks every outfit the race can wear on top of itself.
+
+**The tiers are the game's armour categories, in order.** `Body1` through
+`Body5` are cloth, leather, studded, chain and plate, and the same ordering runs
+through `Boots1..5`, `Legs1..4` and `Gloves1..3` — a slot's last tier is its
+plate variant. That is why an outfit has to pick shape and texture together: the
+tier gives the silhouette and the texture gives the material, and choosing them
+independently gets you plate boots painted like cloth.
+
+`charconv -outfit` names a pairing. Two ship:
+
+| outfit | model | shapes |
+| --- | --- | --- |
+| `norseman` | `NVikingM.NIF` | `HeadA1,Body1,LBody1,Arms1,Legs1,Gloves1,Boots1` |
+| `troll-plate` | `NTrollM.NIF` | `HeadA1,Body5,Lbody4,Arms6,Legs4,Gloves3,Boots5` |
+
+`-shapes` and `-tex Slot=file.dds` override either half for experiments.
+
+Leaving a slot out is visible rather than subtle: the first troll build omitted
+`Lbody4` and came out with a hole through the midriff, because nothing else
+covers the gap between the breastplate and the leg armour.
 
 The skeleton's 114 joints use **3ds Max Biped names**, listed in
 `figures/animnode.dat`. That is what makes the model animatable without
@@ -312,6 +343,12 @@ Prefixes are race codes (`a` Avalonian, `b` Briton, `d` Dwarf, `k` Kobold,
 `t` Troll, `v` Valkyn …), with `m1`/`m2`/`m3` the Midgard sets and three-letter
 forms (`nor`, `tro`, `kob`) for heads and hair.
 
+Armour has a second, larger naming scheme keyed by material rather than race:
+`cth` cloth, `lea` leather, `std` studded, `scl` scale, `chn` chain, `plt`
+plate, then slot and variant — `pltBody01_04_m.dds`, `pltBoots01_04.dds`. There
+are 162 plate textures and 111 chain across the skin archives, so the material
+is chosen independently of who wears it.
+
 **DAoC's character skins are not alpha-masked.** The DXT5 faces carry a
 smoothly varying alpha channel the engine uses for something else:
 `nor_m_head01.dds` has ten opaque texels out of 65536, so reading it as opacity
@@ -343,7 +380,15 @@ chain position 5  ->  string "6"  ->  animnode.dat line 6  ->  "Bip01 Neck"
 
 That indirection is why the animations are portable. A clip names no skeleton
 of its own, so any model with Biped bones can play any of them — which is how
-one humanoid set serves every player race.
+one humanoid set serves every player race. The Troll and the Norseman have
+byte-identical bone lists, and `animconv -list` scores the same 2081 clips for
+both.
+
+Portable does not mean interchangeable, though. A race that moves differently
+has its own cycles, and the troll does: `Troll_walk`, `troll_run` and
+`Troll_idle` give it a longer, more lumbering stride than `W_VM` does the
+Norseman. Clips are converted per character, into that character's own
+`anim/` directory, so the model and its movement travel together.
 
 ### Finding the right clips
 
@@ -451,19 +496,28 @@ first. This applies standing still too: a T-posed idle is not an idle.
 - **Two textures are missing from the install.** `BAG.nif` names `mfiga6.dds`
   and `mheada3.dds`, which exist nowhere in the game directory; those three
   props draw white.
-- **Three animations.** Walk, run and idle are converted and cross-fade into
-  one another; the other ~2000 humanoid clips — combat styles, emotes,
-  swimming, jumping, death — are reachable by name through `animconv` but not
-  wired to anything. Sprint reuses the run cycle, played faster, rather than
-  having one of its own.
+- **Three animations per character.** Walk, run and idle are converted and
+  cross-fade into one another; the other ~2000 humanoid clips — combat styles,
+  emotes, swimming, jumping, death — are reachable by name through `animconv`
+  but not wired to anything. Sprint reuses the run cycle, played faster,
+  rather than having one of its own.
 - **38 of 4032 `.kfa` files do not parse.** They are a small minority and
   `-list` reports them; none is in the humanoid locomotion set.
 - **No collision.** The character follows the heightmap and walks through
   anything else, including trees, buildings and the lake surface. The data is
   there to fix it: `nifs.csv` has a Collide flag and a radius per model, and
   the models ship explicit collision hulls that `propconv` currently discards.
-- **One character.** Equipment, races, genders and the `fig3/*.mpk` armour
-  meshes are all reachable through the same code but not wired up.
+- **Two outfits, hand-written.** Any of the 600-odd figure models and 5669 skin
+  textures can be combined through `-outfit`, `-shapes` and `-tex`, but the
+  pairings are chosen by hand; nothing reads the game's own equipment tables.
+  The `fig3/*.mpk` armour meshes are untouched.
+- **A troll in plate is not a thing the game would build.** Plate is Albion's
+  armour and Troll is a Midgard race, so the live client would never put them
+  together. Meshes and textures are independent here, so nothing stops it.
+- **No per-race scale.** The troll model is authored 72.9 units tall against
+  the Norseman's 71.8 — broader in the shoulders, but the same height. In the
+  live game trolls tower over Norsemen, which means the client applies a size
+  multiplier this pipeline does not read.
 - Heightmap edges stop at sample 255 (65280 units), 256 units short of the
   nominal zone edge. Harmless here; matters when stitching zones together.
 

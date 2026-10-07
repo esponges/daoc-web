@@ -41,21 +41,62 @@ import (
 
 const defaultGame = `C:\Program Files (x86)\Electronic Arts\Dark Age of Camelot`
 
-// One shape per slot: a Norseman in starter cloth. Head A1 is the
-// highest-detail face, and the cloak and LOD bodies are deliberately left out.
-const defaultShapes = "HeadA1,Body1,LBody1,Arms1,Legs1,Gloves1,Boots1"
-
-// slotTextures maps a shape-name prefix to the texture the game would dress
-// that slot with. Longest prefix wins, so LBody beats Body.
-var slotTextures = map[string]string{
-	"Head":   "nor_m_head01.dds",
-	"Body":   "m1_bodym.dds",
-	"LBody":  "m1_tunic1.dds",
-	"Arms":   "m1_arm1.dds",
-	"Legs":   "m1_legs1.dds",
-	"Gloves": "m1_glove1.dds",
-	"Boots":  "m1_boot1.dds",
+// An outfit is one shape per slot plus the texture to dress it with. The two
+// go together: the shape tier decides the silhouette and the texture decides
+// what it is made of, and picking them independently gives you plate boots
+// painted like cloth.
+//
+// A model carries its slots in tiers -- Body1..Body5, Boots1..Boots5 -- and
+// those tiers are the game's armour categories in order: cloth, leather,
+// studded, chain, plate. The heaviest tier a slot has is its plate variant,
+// which is why the plate outfit below reaches for the last of each.
+type outfit struct {
+	desc     string
+	figure   string
+	shapes   string
+	textures map[string]string // shape-name prefix -> .dds; longest prefix wins
 }
+
+var outfits = map[string]outfit{
+	// Head A1 is the highest-detail face; the cloak and LOD bodies are
+	// deliberately left out of both.
+	"norseman": {
+		desc:   "Norseman in starter cloth",
+		figure: "NVikingM.NIF",
+		shapes: "HeadA1,Body1,LBody1,Arms1,Legs1,Gloves1,Boots1",
+		textures: map[string]string{
+			"Head":   "nor_m_head01.dds",
+			"Body":   "m1_bodym.dds",
+			"LBody":  "m1_tunic1.dds",
+			"Arms":   "m1_arm1.dds",
+			"Legs":   "m1_legs1.dds",
+			"Gloves": "m1_glove1.dds",
+			"Boots":  "m1_boot1.dds",
+		},
+	},
+	// Plate is Albion's armour in the live game and a Troll is a Midgard
+	// race, so this is a combination the client would never assemble. The
+	// meshes and textures are independent of each other, though, so nothing
+	// stops it here.
+	"troll-plate": {
+		desc:   "Troll in full plate",
+		figure: "NTrollM.NIF",
+		shapes: "HeadA1,Body5,Lbody4,Arms6,Legs4,Gloves3,Boots5",
+		textures: map[string]string{
+			"Head":   "tro_m_Head01.dds",
+			"Body":   "pltBody01_04_m.dds",
+			"LBody":  "pltBody01_04_m.dds",
+			"Arms":   "pltBody01_04_m.dds",
+			"Legs":   "pltLegs01_04.dds",
+			"Gloves": "pltGloves01_04.dds",
+			"Boots":  "pltBoots01_04.dds",
+		},
+	},
+}
+
+// slotTextures is the active outfit's mapping, set from the chosen outfit and
+// any -tex overrides.
+var slotTextures = map[string]string{}
 
 // maxInfluences is how many bones may move one vertex. Four is what the file
 // uses in practice and what fits a compact vertex.
@@ -110,18 +151,58 @@ type manifest struct {
 
 func main() {
 	game := flag.String("game", defaultGame, "DAoC install directory")
-	figure := flag.String("figure", "NVikingM.NIF", "model in figures/")
-	name := flag.String("name", "norseman", "output name")
+	outfitName := flag.String("outfit", "norseman", "named outfit: "+outfitNames())
+	figure := flag.String("figure", "", "model in figures/ (overrides the outfit's)")
+	name := flag.String("name", "", "output name (defaults to the outfit name)")
 	out := flag.String("out", filepath.Join("web", "data", "char"), "output directory")
-	shapeList := flag.String("shapes", defaultShapes, "comma-separated shapes to include")
+	shapeList := flag.String("shapes", "", "comma-separated shapes (overrides the outfit's)")
+	texList := flag.String("tex", "", "per-slot texture overrides, e.g. Body=pltBody01_01_m.dds,Legs=...")
 	listOnly := flag.Bool("list", false, "list available shapes and exit")
 	noTex := flag.Bool("no-tex", false, "skip texture extraction")
 	flag.Parse()
+
+	o, ok := outfits[*outfitName]
+	if !ok {
+		fmt.Fprintf(os.Stderr, "charconv: unknown outfit %q; have %s\n", *outfitName, outfitNames())
+		os.Exit(1)
+	}
+	if *figure == "" {
+		*figure = o.figure
+	}
+	if *name == "" {
+		*name = *outfitName
+	}
+	if *shapeList == "" {
+		*shapeList = o.shapes
+	}
+	for k, v := range o.textures {
+		slotTextures[k] = v
+	}
+	if *texList != "" {
+		for _, pair := range strings.Split(*texList, ",") {
+			k, v, found := strings.Cut(strings.TrimSpace(pair), "=")
+			if !found {
+				fmt.Fprintf(os.Stderr, "charconv: -tex wants Slot=file.dds, got %q\n", pair)
+				os.Exit(1)
+			}
+			slotTextures[strings.TrimSpace(k)] = strings.TrimSpace(v)
+		}
+	}
+	fmt.Printf("%s: %s\n", *outfitName, o.desc)
 
 	if err := run(*game, *figure, *name, *out, *shapeList, *listOnly, *noTex); err != nil {
 		fmt.Fprintln(os.Stderr, "charconv:", err)
 		os.Exit(1)
 	}
+}
+
+func outfitNames() string {
+	names := make([]string, 0, len(outfits))
+	for k := range outfits {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	return strings.Join(names, ", ")
 }
 
 func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error {

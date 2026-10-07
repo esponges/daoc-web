@@ -11,7 +11,12 @@ import { createCharacter, modelMatrix } from './character.js';
 import { createProps } from './props.js';
 
 const ZONE = 'data/zone100';
-const CHARACTER = 'data/char/norseman';
+
+// Which converted character to load. ?char=norseman switches back without a
+// rebuild; each one carries its own animations, so the clips follow the model.
+const CHARACTER = 'data/char/' +
+  (new URLSearchParams(location.search).get('char') || 'troll-plate')
+    .replace(/[^a-zA-Z0-9_-]/g, '');
 
 // DAoC's own movement rates, in world units per second. A zone is 65536 units
 // across and the Norseman model is 71.8 tall, which puts a unit at roughly an

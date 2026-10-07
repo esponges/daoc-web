@@ -17,10 +17,10 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Skeleton, skinVertex, apply, Clip, rowsToQuat, quatToRows, makePose, xform } from './skeleton.js';
-
-
 const here = dirname(fileURLToPath(import.meta.url));
-const base = join(here, 'data', 'char', 'norseman');
+// Which converted character to check; pass a name to test another outfit.
+const who = process.argv[2] || 'norseman';
+const base = join(here, 'data', 'char', who);
 
 let failures = 0;
 function check(name, ok, detail) {
