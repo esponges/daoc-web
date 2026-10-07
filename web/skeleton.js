@@ -128,12 +128,23 @@ export class Skeleton {
     // The scale is folded into the rotation rows, so a recorded clip that
     // rewrites the rotation would silently drop it. Keep it to put back.
     this.bindScale = new Float32Array(n);
+    // The bind pose as rotation/translation/scale rather than matrices.
+    // Blending has to interpolate rotations as quaternions -- averaging two
+    // rotation matrices does not give a rotation -- and a bone with no track
+    // in either clip still has to contribute its bind value, so the bind pose
+    // is kept in the same form a sampled pose uses.
+    this.bindQuat = new Float32Array(n * 4);
+    this.bindTrans = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
       this.bindLocal.push(fromBone(bones[i].t, bones[i].r, bones[i].s));
       this.bindWorld.push(xform());
       this.animLocal.push(xform());
       this.world.push(xform());
       this.bindScale[i] = bones[i].s || 1;
+      rowsToQuat(this.bindLocal[i], this.bindScale[i], this.bindQuat, i * 4);
+      this.bindTrans[i * 3 + 0] = this.bindLocal[i][3];
+      this.bindTrans[i * 3 + 1] = this.bindLocal[i][7];
+      this.bindTrans[i * 3 + 2] = this.bindLocal[i][11];
     }
 
     // Parents are not guaranteed to precede children, so resolve the order
@@ -431,4 +442,160 @@ Skeleton.prototype.poseClip = function (clip, time) {
     }
   }
   this.resolve();
+};
+
+// --- blending -------------------------------------------------------------
+//
+// Switching clips outright snaps the figure: a foot forward in one cycle is a
+// foot back in the next. Cross-fading means interpolating two poses, and that
+// has to happen on rotations rather than on the matrices poseClip writes --
+// the average of two rotation matrices is not a rotation, and blending them
+// shears the limb instead of turning it.
+//
+// So a pose here is the same decomposition the file itself uses: a quaternion,
+// a translation and a scale per bone, defaulting to the bind value for any
+// bone a clip does not drive. Poses blend cleanly; matrices are built once at
+// the end.
+
+// rowsToQuat extracts a quaternion from the rotation part of a transform whose
+// rows carry a uniform scale. Shepperd's method: pick the largest diagonal
+// term so the square root never divides by something near zero.
+export function rowsToQuat(m, scale, out, o = 0) {
+  const s = scale || 1;
+  const m00 = m[0] / s, m01 = m[1] / s, m02 = m[2] / s;
+  const m10 = m[4] / s, m11 = m[5] / s, m12 = m[6] / s;
+  const m20 = m[8] / s, m21 = m[9] / s, m22 = m[10] / s;
+  const tr = m00 + m11 + m22;
+  let w, x, y, z;
+  if (tr > 0) {
+    const k = Math.sqrt(tr + 1) * 2;
+    w = 0.25 * k; x = (m21 - m12) / k; y = (m02 - m20) / k; z = (m10 - m01) / k;
+  } else if (m00 > m11 && m00 > m22) {
+    const k = Math.sqrt(1 + m00 - m11 - m22) * 2;
+    w = (m21 - m12) / k; x = 0.25 * k; y = (m01 + m10) / k; z = (m02 + m20) / k;
+  } else if (m11 > m22) {
+    const k = Math.sqrt(1 + m11 - m00 - m22) * 2;
+    w = (m02 - m20) / k; x = (m01 + m10) / k; y = 0.25 * k; z = (m12 + m21) / k;
+  } else {
+    const k = Math.sqrt(1 + m22 - m00 - m11) * 2;
+    w = (m10 - m01) / k; x = (m02 + m20) / k; y = (m12 + m21) / k; z = 0.25 * k;
+  }
+  const len = Math.hypot(w, x, y, z) || 1;
+  out[o] = w / len; out[o + 1] = x / len; out[o + 2] = y / len; out[o + 3] = z / len;
+  return out;
+}
+
+// makePose allocates a pose buffer for a skeleton.
+export function makePose(n) {
+  return {
+    rot: new Float32Array(n * 4),
+    trans: new Float32Array(n * 3),
+    scale: new Float32Array(n),
+  };
+}
+
+// slerpQuat blends two quaternions along the shorter arc, reading and writing
+// into flat arrays at the given offsets.
+export function slerpQuat(a, ao, b, bo, f, out, oo) {
+  let w0 = a[ao], x0 = a[ao + 1], y0 = a[ao + 2], z0 = a[ao + 3];
+  let w1 = b[bo], x1 = b[bo + 1], y1 = b[bo + 2], z1 = b[bo + 3];
+  let dot = w0 * w1 + x0 * x1 + y0 * y1 + z0 * z1;
+  if (dot < 0) { w1 = -w1; x1 = -x1; y1 = -y1; z1 = -z1; dot = -dot; }
+  let s0 = 1 - f, s1 = f;
+  if (dot < 0.9995) {
+    const theta = Math.acos(Math.min(1, dot));
+    const sin = Math.sin(theta);
+    if (sin > 1e-6) {
+      s0 = Math.sin((1 - f) * theta) / sin;
+      s1 = Math.sin(f * theta) / sin;
+    }
+  }
+  let w = s0 * w0 + s1 * w1, x = s0 * x0 + s1 * x1;
+  let y = s0 * y0 + s1 * y1, z = s0 * z0 + s1 * z1;
+  const len = Math.hypot(w, x, y, z) || 1;
+  out[oo] = w / len; out[oo + 1] = x / len; out[oo + 2] = y / len; out[oo + 3] = z / len;
+  return out;
+}
+
+// samplePose fills a pose from a clip at time t, starting from the bind pose
+// so bones the clip does not drive still have a value to blend.
+Skeleton.prototype.samplePose = function (clip, time, pose) {
+  pose.rot.set(this.bindQuat);
+  pose.trans.set(this.bindTrans);
+  pose.scale.set(this.bindScale);
+  if (!clip || !clip.tracks.length) return pose;
+
+  const d = clip.duration;
+  let t = time;
+  if (d > 0) { t = time % d; if (t < 0) t += d; }
+
+  const q = this._q || (this._q = new Float32Array(4));
+  const v = this._v || (this._v = new Float32Array(3));
+  for (const tr of clip.tracks) {
+    const i = tr.bone;
+    if (tr.rot.length && sampleQuat(tr.rot, t, q)) {
+      pose.rot[i * 4] = q[0]; pose.rot[i * 4 + 1] = q[1];
+      pose.rot[i * 4 + 2] = q[2]; pose.rot[i * 4 + 3] = q[3];
+    }
+    if (tr.trans.length && sampleVec(tr.trans, t, v)) {
+      pose.trans[i * 3] = v[0]; pose.trans[i * 3 + 1] = v[1]; pose.trans[i * 3 + 2] = v[2];
+    }
+    if (tr.scale.length) {
+      const s = sampleFloat(tr.scale, t);
+      if (s !== null) pose.scale[i] = s;
+    }
+  }
+  return pose;
+};
+
+// blendPose writes (1-f)*a + f*b, slerping rotations and lerping the rest.
+Skeleton.prototype.blendPose = function (a, b, f, out) {
+  const n = this.animLocal.length;
+  if (f <= 0) { out.rot.set(a.rot); out.trans.set(a.trans); out.scale.set(a.scale); return out; }
+  if (f >= 1) { out.rot.set(b.rot); out.trans.set(b.trans); out.scale.set(b.scale); return out; }
+  for (let i = 0; i < n; i++) {
+    slerpQuat(a.rot, i * 4, b.rot, i * 4, f, out.rot, i * 4);
+    for (let k = 0; k < 3; k++) {
+      const j = i * 3 + k;
+      out.trans[j] = a.trans[j] + (b.trans[j] - a.trans[j]) * f;
+    }
+    out.scale[i] = a.scale[i] + (b.scale[i] - a.scale[i]) * f;
+  }
+  return out;
+};
+
+// applyPose turns a pose into local matrices and resolves the hierarchy.
+Skeleton.prototype.applyPose = function (pose) {
+  const n = this.animLocal.length;
+  const q = this._q4 || (this._q4 = new Float32Array(4));
+  for (let i = 0; i < n; i++) {
+    const m = this.animLocal[i];
+    q[0] = pose.rot[i * 4]; q[1] = pose.rot[i * 4 + 1];
+    q[2] = pose.rot[i * 4 + 2]; q[3] = pose.rot[i * 4 + 3];
+    quatToRows(q, pose.scale[i], m);
+    m[3] = pose.trans[i * 3];
+    m[7] = pose.trans[i * 3 + 1];
+    m[11] = pose.trans[i * 3 + 2];
+  }
+  this.resolve();
+};
+
+// poseCross is the whole cross-fade in one call: sample both clips, blend,
+// apply. f is how far across, 0 meaning entirely clip a.
+Skeleton.prototype.poseCross = function (a, ta, b, tb, f) {
+  const n = this.animLocal.length;
+  this._poseA = this._poseA || makePose(n);
+  this._poseB = this._poseB || makePose(n);
+  this._poseOut = this._poseOut || makePose(n);
+  if (!b || f <= 0) {
+    this.applyPose(this.samplePose(a, ta, this._poseA));
+    return;
+  }
+  if (!a || f >= 1) {
+    this.applyPose(this.samplePose(b, tb, this._poseB));
+    return;
+  }
+  this.samplePose(a, ta, this._poseA);
+  this.samplePose(b, tb, this._poseB);
+  this.applyPose(this.blendPose(this._poseA, this._poseB, f, this._poseOut));
 };

@@ -386,6 +386,35 @@ accumulates — so the viewer supplies the movement and advances the clip's cloc
 in proportion to actual speed. That is the same rule the procedural phase uses,
 applied to a cycle someone else timed.
 
+### Blending
+
+Changing gait cross-fades over 0.18s rather than cutting, because a foot
+forward in one cycle is a foot back in the next and the switch reads as a
+twitch.
+
+The fade cannot be done on the matrices `poseClip` writes. Interpolating two
+rotation matrices componentwise does not give a rotation: the result shortens
+as it goes, so a limb visibly contracts halfway through every transition.
+Measured on this model, matrix lerp shrinks a shin by up to **2.5%** at the
+midpoint. So a pose here is kept in the same decomposition the file uses — a
+quaternion, a translation and a scale per bone, defaulting to the bind value
+for any bone the clip does not drive — rotations are slerped along the shorter
+arc, and matrices are built once at the end. That holds bone length to
+**8.5e-6 units out of 16.3**.
+
+Walk and run hand over their normalised phase when one replaces the other, so
+the swing foot stays the swing foot; starting the incoming clip at zero would
+cross the legs mid-transition. Idle has no stride to carry, so it starts fresh.
+Both clocks keep running during the fade — the outgoing clip finishes its
+stride rather than freezing.
+
+Decomposing turned up something about the shipped data. **The bind matrices are
+not exactly orthonormal**: the worst bone's rows are 0.9986 long instead of 1,
+and two of them are 1.5e-4 off perpendicular. A quaternion can only hold a true
+rotation, so the round trip returns a cleaned-up matrix differing from the
+original by exactly that much — the test asserts the loss is no larger than the
+input's own skew rather than pretending it is zero.
+
 ### The procedural gait
 
 Still present as a fallback. A joint's local frame is whatever the artist left it as, so joints are not
@@ -422,11 +451,11 @@ first. This applies standing still too: a T-posed idle is not an idle.
 - **Two textures are missing from the install.** `BAG.nif` names `mfiga6.dds`
   and `mheada3.dds`, which exist nowhere in the game directory; those three
   props draw white.
-- **Three animations, no blending.** Walk, run and idle are converted; the
-  other ~2000 humanoid clips — combat styles, emotes, swimming, jumping,
-  death — are reachable by name through `animconv` but not wired to anything.
-  Switching clips cuts rather than cross-fades, so the change of gait is a
-  visible snap. Sprint reuses the run cycle, played faster.
+- **Three animations.** Walk, run and idle are converted and cross-fade into
+  one another; the other ~2000 humanoid clips — combat styles, emotes,
+  swimming, jumping, death — are reachable by name through `animconv` but not
+  wired to anything. Sprint reuses the run cycle, played faster, rather than
+  having one of its own.
 - **38 of 4032 `.kfa` files do not parse.** They are a small minority and
   `-list` reports them; none is in the humanoid locomotion set.
 - **No collision.** The character follows the heightmap and walks through

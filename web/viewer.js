@@ -24,6 +24,14 @@ const SPRINT = 420;
 // model's leg length so the feet keep pace with the ground instead of skating.
 const STRIDE = 105;
 
+// How long a change of gait takes to cross-fade. Long enough that the switch
+// is not a snap, short enough that the character still feels responsive to the
+// key that caused it; a stride is about a second, so this is a fifth of one.
+const FADE = 0.18;
+
+// Clips that are stride cycles, and so can hand their phase to one another.
+const LOCOMOTION = new Set(['walk', 'run']);
+
 const $ = (id) => document.getElementById(id);
 
 function fail(msg) {
@@ -332,8 +340,13 @@ async function main() {
   // to see the gait and close enough to walk to the shore.
   const player = {
     x: 112 * cell, y: 118 * cell, // world X and Y, i.e. heightmap cells
-    yaw: Math.PI, phase: 0, gait: 0, clipTime: 0, clip: null,
+    yaw: Math.PI, phase: 0, gait: 0, clip: null, blend: 1,
   };
+
+  // Animation state: the clip playing, the one fading out behind it, and a
+  // clock for each. Two clocks rather than one because the outgoing clip
+  // carries on at its own rate while it fades.
+  const anim = { cur: 'idle', prev: null, t: 0, prevT: 0, fade: 1 };
 
   // --- cameras ---
   // Two modes: an orbit camera chasing the character, and the original
@@ -366,7 +379,7 @@ async function main() {
   // Debug handle: lets you jump the camera from the console, e.g.
   //   daoc.goto(120, 90, 800)   // heightmap cell x, y, metres above ground
   globalThis.daoc = {
-    cam, orbit, player, char, props, manifest: man, heights,
+    cam, orbit, player, char, props, anim, manifest: man, heights,
     heightAt: (cx, cy) => H(Math.round(cx), Math.round(cy)),
     groundAt,
     // Put the character on a given heightmap cell, e.g. daoc.warp(60, 70).
@@ -484,21 +497,54 @@ async function main() {
       // pace at any speed.
       player.phase += (d / STRIDE) * Math.PI * 2;
       player.gait = speed;
-      // A recorded clip is authored for one speed. Advancing its own clock in
-      // proportion to how fast the character is actually moving keeps the
-      // feet planted instead of skating -- the same rule as the procedural
-      // phase, applied to a cycle someone else timed.
-      player.clipTime += dt * (speed / (speed <= WALK ? WALK : RUN));
     } else {
       player.gait = 0;
-      player.clipTime += dt;
     }
     const intensity = Math.min(1, player.gait / RUN);
+
+    // --- animation ---
+    // Which clip the character should be in. Sprint has no cycle of its own,
+    // so it reuses the run and lets the rate below carry the extra speed.
+    const want = player.gait === 0 ? 'idle' : player.gait <= WALK ? 'walk' : 'run';
+    if (want !== anim.cur) {
+      // Start a cross-fade. The outgoing clip keeps its own clock running
+      // through the fade, so it finishes its stride rather than freezing.
+      anim.prev = anim.cur;
+      anim.prevT = anim.t;
+      const carry = LOCOMOTION.has(want) && LOCOMOTION.has(anim.cur);
+      const dOld = char.clipDuration(anim.cur), dNew = char.clipDuration(want);
+      // Walk and run are both stride cycles. Carrying the normalised phase
+      // across means the swing foot stays the swing foot; starting the new
+      // clip at zero would cross the legs mid-transition.
+      anim.t = carry && dOld > 0 ? ((anim.t % dOld) / dOld) * dNew : 0;
+      anim.cur = want;
+      anim.fade = 0;
+    }
+    // A recorded clip is authored for one speed. Advancing its own clock in
+    // proportion to how fast the character is actually moving keeps the feet
+    // planted instead of skating -- the same rule as the procedural phase,
+    // applied to a cycle someone else timed.
+    const rate = (name) => {
+      if (name === 'walk') return Math.max(player.gait, WALK) / WALK;
+      if (name === 'run') return Math.max(player.gait, RUN) / RUN;
+      return 1;
+    };
+    anim.t += dt * rate(anim.cur);
+    if (anim.prev) anim.prevT += dt * rate(anim.prev);
+    if (anim.fade < 1) {
+      anim.fade = Math.min(1, anim.fade + dt / FADE);
+      if (anim.fade >= 1) anim.prev = null;
+    }
+
     // Prefer DAoC's own animation; fall back to the procedural gait if
     // animconv has not been run.
-    const clip = player.gait === 0 ? 'idle' : player.gait <= WALK ? 'walk' : 'run';
-    player.clip = char.poseClip(clip, player.clipTime) ? clip : null;
-    if (!player.clip) char.pose(player.phase, intensity);
+    const blended = char.poseBlend(anim.prev, anim.prevT, anim.cur, anim.t, anim.fade);
+    player.clip = blended ? anim.cur : null;
+    player.blend = blended && anim.prev ? anim.fade : 1;
+    if (!blended) {
+      player.phase += player.gait > 0 ? (player.gait * dt / STRIDE) * Math.PI * 2 : 0;
+      char.pose(player.phase, intensity);
+    }
 
     const playerGround = groundAt(player.x, player.y);
     // A small vertical bob, twice per stride, sells the weight transfer. The
@@ -622,7 +668,11 @@ async function main() {
       ? Math.round(player.gait) + ' u/s ' +
         (player.gait >= SPRINT ? '(sprint)' : player.gait <= WALK ? '(walk)' : '(run)')
       : 'idle') +
-      (player.clip ? '  · ' + player.clip + '.kfa' : '  · procedural');
+      (player.clip
+        ? '  · ' + (anim.prev
+            ? anim.prev + ' → ' + anim.cur + ' ' + Math.round(anim.fade * 100) + '%'
+            : anim.cur + '.kfa')
+        : '  · procedural');
     $('i-mode').textContent = followMode ? 'third person' : 'free fly';
 
     requestAnimationFrame(frame);

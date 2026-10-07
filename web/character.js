@@ -225,6 +225,16 @@ export async function createCharacter(gl, base, helpers) {
       skel.poseClip(c, time);
       return true;
     },
+    // poseBlend cross-fades from one clip to another. A missing outgoing clip
+    // is fine -- the fade just starts from nothing -- but the incoming one
+    // has to exist, and false means the caller should fall back.
+    poseBlend: (from, fromTime, to, toTime, f) => {
+      const b = clips[to];
+      if (!b) return false;
+      skel.poseCross(clips[from] || null, fromTime, b, toTime, clips[from] ? f : 1);
+      return true;
+    },
+    clipDuration: (name) => (clips[name] ? clips[name].duration : 0),
     clips,
     clipNames: Object.keys(clips),
     skeleton: skel,

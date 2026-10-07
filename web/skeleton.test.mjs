@@ -16,7 +16,7 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { Skeleton, skinVertex, apply, Clip } from './skeleton.js';
+import { Skeleton, skinVertex, apply, Clip, rowsToQuat, quatToRows, makePose, xform } from './skeleton.js';
 
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -272,6 +272,140 @@ if (clips) {
     check('idle moves the feet far less than walking', ti < tw * 0.5,
       'idle ' + ti.toFixed(1) + 'u vs walk ' + tw.toFixed(1) + 'u');
   }
+}
+
+
+// --- blending -------------------------------------------------------------
+//
+// Blending decomposes each pose into quaternion/translation/scale, so the
+// decomposition has to be lossless before any blend can be trusted.
+//
+// It is not quite lossless, and the reason is in the data rather than the
+// code: the bind matrices DAoC ships are not exactly orthonormal. The worst
+// bone's rows are 0.9986 long instead of 1, and two of them are 1.5e-4 off
+// perpendicular. A quaternion can only represent a true rotation, so the round
+// trip returns a cleaned-up matrix that differs from the original by exactly
+// that much. The check below allows for the input's own error and no more.
+
+{
+  let worstTrip = 0, worstSkew = 0, tripBone = '', skewBone = '';
+  const m = xform();
+  const q = new Float32Array(4);
+  for (let i = 0; i < skel.bones.length; i++) {
+    const b = skel.bindLocal[i], s = skel.bindScale[i];
+    // How far this matrix is from being a rotation times a uniform scale.
+    const row = (r) => [b[r * 4], b[r * 4 + 1], b[r * 4 + 2]];
+    const len = (r) => Math.hypot(...row(r));
+    const dot = (a, c) => row(a).reduce((t, v, k) => t + v * row(c)[k], 0) / (len(a) * len(c) || 1);
+    const skew = Math.max(
+      Math.abs(len(0) - s), Math.abs(len(1) - s), Math.abs(len(2) - s),
+      Math.abs(dot(0, 1)), Math.abs(dot(0, 2)), Math.abs(dot(1, 2)));
+    if (skew > worstSkew) { worstSkew = skew; skewBone = skel.bones[i].name; }
+
+    rowsToQuat(b, s, q, 0);
+    quatToRows(q, s, m);
+    for (const k of [0, 1, 2, 4, 5, 6, 8, 9, 10]) {
+      const d = Math.abs(m[k] - b[k]);
+      if (d > worstTrip) { worstTrip = d; tripBone = skel.bones[i].name; }
+    }
+  }
+  check('the shipped bind matrices are nearly, not exactly, orthonormal',
+    worstSkew > 0, 'worst skew ' + worstSkew.toExponential(2) + ' on ' + skewBone);
+  check('the quaternion round trip loses no more than that skew',
+    worstTrip <= worstSkew * 1.5 + 1e-6,
+    'round trip ' + worstTrip.toExponential(2) + ' on ' + tripBone +
+    ' vs skew ' + worstSkew.toExponential(2));
+}
+
+if (clips && clips.walk && clips.idle) {
+  const { walk, idle } = clips;
+  const snapshot = () => skel.world.map((x) => Array.from(x));
+  const maxDiff = (a, b) => {
+    let d = 0;
+    for (let i = 0; i < a.length; i++) {
+      for (let k = 0; k < 12; k++) d = Math.max(d, Math.abs(a[i][k] - b[i][k]));
+    }
+    return d;
+  };
+
+  // A cross-fade at its endpoints must be exactly the clips it fades between,
+  // or every transition starts and ends with a jump.
+  skel.poseClip(walk, 0.4);
+  const direct = snapshot();
+  skel.poseCross(walk, 0.4, idle, 1.0, 0);
+  check('a cross-fade at f=0 is exactly the outgoing clip',
+    maxDiff(direct, snapshot()) < 1e-3, maxDiff(direct, snapshot()).toExponential(2));
+
+  skel.poseClip(idle, 1.0);
+  const toIdle = snapshot();
+  skel.poseCross(walk, 0.4, idle, 1.0, 1);
+  check('a cross-fade at f=1 is exactly the incoming clip',
+    maxDiff(toIdle, snapshot()) < 1e-3, maxDiff(toIdle, snapshot()).toExponential(2));
+
+  const head = skel.boneId('Bip01 Head');
+  const boneLen = (name, parentName) => {
+    const i = skel.boneId(name), p = skel.boneId(parentName);
+    return Math.hypot(skel.world[i][3] - skel.world[p][3],
+                      skel.world[i][7] - skel.world[p][7],
+                      skel.world[i][11] - skel.world[p][11]);
+  };
+  // Baseline from the same pipeline, so the comparison is not against the
+  // un-normalised bind matrices the check above just characterised.
+  skel.poseCross(null, 0, null, 0, 0);
+  const bindShin = boneLen('Bip01 L Foot', 'Bip01 L Calf');
+
+  let bad = 0, hiHead = -Infinity, loHead = Infinity, worstShin = 0;
+  for (let s = 0; s <= 10; s++) {
+    for (let k = 0; k < 8; k++) {
+      skel.poseCross(walk, (k / 8) * walk.duration, idle, (k / 8) * idle.duration, s / 10);
+      for (const m of skel.world) for (const v of m) if (!Number.isFinite(v)) bad++;
+      hiHead = Math.max(hiHead, skel.world[head][11]);
+      loHead = Math.min(loHead, skel.world[head][11]);
+      worstShin = Math.max(worstShin, Math.abs(boneLen('Bip01 L Foot', 'Bip01 L Calf') - bindShin));
+    }
+  }
+  check('blended poses are finite', bad === 0, bad + ' bad values');
+  check('the figure stays upright through a blend',
+    loHead > 55 && hiHead < 80, 'head ' + loHead.toFixed(1) + '..' + hiHead.toFixed(1) + 'u');
+  check('bones keep their length mid-blend',
+    worstShin < 0.02, 'shin drifts ' + worstShin.toExponential(2) + 'u of ' + bindShin.toFixed(1) + 'u');
+
+  // The reason the decomposition exists. Lerping two rotation matrices
+  // componentwise does not give a rotation: it shortens as it goes, so a limb
+  // visibly contracts halfway through a transition. Measure both ways on the
+  // same pair of poses and show the gap.
+  {
+    const lCalf = skel.boneId('Bip01 L Calf');
+    skel.poseClip(walk, 0.4);
+    const A = Array.from(skel.animLocal[lCalf]);
+    skel.poseClip(idle, 1.0);
+    const B = Array.from(skel.animLocal[lCalf]);
+    const rowLen = (m, r) => Math.hypot(m[r * 4], m[r * 4 + 1], m[r * 4 + 2]);
+    let worstNaive = 0;
+    for (let s = 1; s < 10; s++) {
+      const f = s / 10;
+      const L = A.map((v, i) => v + (B[i] - v) * f);
+      worstNaive = Math.max(worstNaive, Math.abs(rowLen(L, 0) - 1), Math.abs(rowLen(L, 1) - 1));
+    }
+    skel.poseCross(walk, 0.4, idle, 1.0, 0.5);
+    const ours = Math.max(Math.abs(rowLen(skel.animLocal[lCalf], 0) - 1),
+                          Math.abs(rowLen(skel.animLocal[lCalf], 1) - 1));
+    check('slerping beats lerping the matrices outright',
+      ours < worstNaive * 0.1,
+      'matrix lerp shrinks a bone by up to ' + (worstNaive * 100).toFixed(1) +
+      '%, slerp by ' + (ours * 100).toFixed(3) + '%');
+  }
+
+  // Halfway between two clips should sit between them, not outside.
+  skel.poseCross(walk, 0.4, null, 0, 0);
+  const a = skel.world[skel.boneId('Bip01 L Thigh')][7];
+  skel.poseCross(idle, 1.0, null, 0, 0);
+  const b = skel.world[skel.boneId('Bip01 L Thigh')][7];
+  skel.poseCross(walk, 0.4, idle, 1.0, 0.5);
+  const mid = skel.world[skel.boneId('Bip01 L Thigh')][7];
+  check('a half blend lands between the two poses',
+    mid >= Math.min(a, b) - 0.5 && mid <= Math.max(a, b) + 0.5,
+    a.toFixed(2) + ' .. ' + mid.toFixed(2) + ' .. ' + b.toFixed(2));
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');
