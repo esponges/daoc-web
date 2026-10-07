@@ -8,6 +8,7 @@
 // Here that becomes a Y-up scene: world X -> GL x, world Y -> GL z, height -> GL y.
 
 import { createCharacter, modelMatrix } from './character.js';
+import { createProps } from './props.js';
 
 const ZONE = 'data/zone100';
 const CHARACTER = 'data/char/norseman';
@@ -317,6 +318,16 @@ async function main() {
     console.warn('skeleton is missing expected joints:', char.missingJoints.join(', '));
   }
 
+  // --- scenery ---
+  // Props are optional: a zone that has not been through propconv should
+  // still render its terrain rather than failing to start.
+  let props = null;
+  try {
+    props = await createProps(gl, ZONE + '/props');
+  } catch (e) {
+    console.warn('scenery not loaded:', e.message);
+  }
+
   // Spawn on the rising ground south-east of the lake, which is open enough
   // to see the gait and close enough to walk to the shore.
   const player = {
@@ -355,7 +366,7 @@ async function main() {
   // Debug handle: lets you jump the camera from the console, e.g.
   //   daoc.goto(120, 90, 800)   // heightmap cell x, y, metres above ground
   globalThis.daoc = {
-    cam, orbit, player, char, manifest: man, heights,
+    cam, orbit, player, char, props, manifest: man, heights,
     heightAt: (cx, cy) => H(Math.round(cx), Math.round(cy)),
     groundAt,
     // Put the character on a given heightmap cell, e.g. daoc.warp(60, 70).
@@ -427,6 +438,10 @@ async function main() {
   $('i-align').textContent = man.orientation.replace(/\s+/g, ' ');
   $('i-water').textContent = waters.length
     ? waters.map((w) => w.name + ' @ ' + w.height).join(', ')
+    : 'none';
+  $('i-props').textContent = props
+    ? props.instanceCount + ' placed, ' + props.models.length + ' models, ' +
+      props.triangleCount.toLocaleString() + ' tris, ' + props.drawCalls + ' draws'
     : 'none';
   $('i-char').textContent = char.manifest.source + '  ' +
     char.triangles + ' tris, ' + char.boneCount + ' bones, ' +
@@ -544,6 +559,13 @@ async function main() {
     } else {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
       gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
+    }
+
+    if (props) {
+      props.draw({
+        viewProj: vp, camPos: eye,
+        fogColor, fogStart, fogEnd, lightDir: [0.45, 0.78, 0.35],
+      });
     }
 
     // The character goes in before the water so a submerged figure is tinted

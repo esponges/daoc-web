@@ -1,8 +1,8 @@
 # daoc-web
 
 A proof of concept: extract Dark Age of Camelot's shipped assets and render
-them in a browser. Currently one zone — **100, Vale of Mularn** — with a
-playable **Norseman** you can walk around it.
+them in a browser. Currently one zone — **100, Vale of Mularn**, its forest and
+the village of Mularn — with a playable **Norseman** you can walk around it.
 
 Written in Go, with a dependency-free WebGL2 viewer.
 
@@ -12,6 +12,9 @@ Written in Go, with a dependency-free WebGL2 viewer.
 zones/zone100/dat100.mpk ──► terrain.pcx + offset.pcx ──► heights.u16 (256×256 uint16)
                          └─► SECTOR.DAT ──────────────► zone.json    (scale, water, fog)
 zones/zone100/lod100.mpk ──► 64 × DXT1 tiles ─────────► atlas.png    (2048×2048)
+                         └─► nifs.csv + fixtures.csv ─┐
+zones/Nifs/*.npk ───────────► 48 scenery models ──────┴► props.bin   (baked meshes)
+                                                      └► props.json  (1006 placements)
 
 figures/NVikingM.NIF ───────► 49 skinned shapes ──────► mesh.bin     (skinned vertices)
                          └─► 114-bone Biped skeleton ► char.json    (bones, inverse binds)
@@ -27,6 +30,7 @@ Needs Go 1.21+ and a DAoC install.
 
 ```bash
 go run ./cmd/zoneconv -zone 100 -name "Vale of Mularn"   # terrain
+go run ./cmd/propconv -zone 100                          # trees, buildings, props
 go run ./cmd/charconv                                    # character
 go run ./cmd/serve                                       # then open localhost:8777
 ```
@@ -45,6 +49,7 @@ at any speed.
 | command | what it does |
 | --- | --- |
 | `zoneconv` | zone terrain, texture atlas and water |
+| `propconv` | zone scenery: models flattened, placed and grouped by texture |
 | `charconv` | one character: mesh, skeleton, skin weights, textures |
 | `charshot` | renders an exported character to a PNG, no browser needed |
 | `nifdump` | inspects a `.nif`; `-bind` checks the bind pose, `-shapes` lists geometry |
@@ -63,11 +68,22 @@ go test ./...            # container, heightmap and NIF parsing against the real
 node web/skeleton.test.mjs   # the posing maths and the exported character
 ```
 
-The strongest check spans both. `charconv` computes the model's bounding box by
+Two checks are worth more than the rest.
+
+**The character, two ways.** `charconv` computes the model's bounding box by
 walking the NIF's own scene graph; `skeleton.test.mjs` skins every vertex the
 way the shader does, from the exported skeleton, inverse bind matrices, bone
 indices and weights. The two routes share no code, and they agree to 0.08 units
 on a 71.8-unit figure.
+
+**The terrain, against the game's own designers.** `fixtures.csv` gives an
+absolute world height for every prop in the zone, authored by EA against EA's
+terrain. This project's heightmap is derived independently, from two 8-bit PCX
+rasters combined by factors read out of `SECTOR.DAT`, with the tile orientation
+inferred statistically. Nothing connects the two. Of 1006 fixtures, **87.4% sit
+on the derived terrain exactly** — within half a unit, where a unit is about an
+inch — and the mean disagreement is **1.34 units**. A wrong scale factor, a
+wrong offset or a flipped axis would put that in the hundreds.
 
 ## File formats, as worked out from the shipped data
 
@@ -147,8 +163,10 @@ surface triangulates as a strip between the two chains.
 
 ### NIF models
 
-`figures/*.NIF` are **Gamebryo 10.1.0.0**; `items/*.nif` are the older
-**NetImmerse 4.2.1.0**. Both are a flat array of blocks preceded by a header,
+DAoC ships four generations: **NetImmerse 4.1.0.12**, **4.2.1.0** and
+**4.2.2.0** for the older scenery and items, and **Gamebryo 10.1.0.0** for
+characters and newer props. Vale of Mularn's 81 models alone span all of them.
+All are a flat array of blocks preceded by a header,
 referencing each other by index. A block carries no length, so walking the file
 means knowing the exact field layout of every type present, and one wrong field
 desynchronises everything after it.
@@ -157,8 +175,9 @@ That makes the format unforgiving but also self-checking: the footer has to
 land precisely at end-of-file. `Parse` enforces that, which is why a clean parse
 of a 686KB, 479-block model is itself the headline assertion.
 
-Two layouts differ from the published nif.xml schema at this version, both
-found by hand-decoding the bytes where parsing desynchronised:
+Five layouts differ from the published nif.xml schema, every one of them found
+the same way: parsing desynchronised, and the bytes at that offset were decoded
+by hand until they said something sensible.
 
 - **No `Group ID` on `NiGeometryData`.** The schema adds it from 10.1.0.0, but
   DAoC's 10.1.0.0 files open straight with the vertex count. Reading a Group ID
@@ -166,14 +185,61 @@ found by hand-decoding the bytes where parsing desynchronised:
 - **`Skin Partition` is on `NiSkinData`, not `NiSkinInstance`.** The field moves
   between versions and is never on both; reading it in both places loses four
   bytes.
+- **The UV-set count moves.** From 10.0.1.0 it sits between the vertices and
+  the normals. At 4.2.1.0 it comes after the vertex colours instead, directly
+  ahead of the arrays it describes. Read in the modern position it is 22273,
+  and the byte after it is the first of a unit-length normal.
+- **`NiSwitchNode`'s active-child index is present at every version**, not just
+  from 10.1.0.0. The pine's LOD node has two children and two ranges, 0–6575.7
+  and 6575.7–100000, and they only line up if the centre starts four bytes
+  further on.
+- **No `Direct Render` on `NiSourceTexture`.** The schema adds it at 10.1.0.0.
+  In `NF_b-fence1.NIF` the block holding `A_oldwood.dds` ends one byte before
+  the flag would, and reading it eats the next block's separator.
 
 Version 10.1.0.0 also writes a zero `uint32` ahead of the header body and of
 every block.
 
-The Norseman uses just ten block types: `NiNode`, `NiTriShape`,
-`NiTriShapeData`, `NiSkinInstance`, `NiSkinData`, `NiSkinPartition`,
-`NiMaterialProperty`, `NiVertexColorProperty`, `NiKeyframeController` and
-`NiKeyframeData`.
+The Norseman uses just ten block types. The scenery adds thirteen more, of
+which only `NiTriStrips`/`NiTriStripsData` carry geometry; the rest are render
+state and texture references. Strips are converted to triangle lists at parse
+time — alternating winding, degenerate stitches dropped — so nothing downstream
+has to know which topology an artist used.
+
+### Scenery
+
+Two CSVs inside `datNNN.mpk` place the world. `nifs.csv` maps a numeric id to a
+model file in `zones/Nifs`, one `.npk` archive per model; `fixtures.csv` places
+that id:
+
+```
+ID,NIF #,Textual Name,X,Y,Z,A,Scale,...,3D Angle,3D Axis X,3D Axis Y,3D Axis Z
+1,403,Pine,52736.00,19200.00,4960.00,225,150,...,2.356194,0.000000,0.000000,1.000000
+```
+
+Three things about that row are not obvious:
+
+- **`Z` is absolute world height, not an offset.** It matches the heightmap
+  this project derives from `terrain.pcx` to the unit, which is what the
+  verification section leans on.
+- **`A` and the axis-angle columns disagree, and both are right.** `A` is a
+  clockwise heading in degrees; the 3D angle is the same rotation measured
+  anticlockwise, with the sign carried by the Z axis column. Here 225° and
+  2.356194 rad (135°) describe one heading. `propconv` takes the axis-angle
+  pair, which needs no convention guessed.
+- **`Scale` is a percentage**, bounded per model by the `MinScale`/`MaxScale`
+  columns of `nifs.csv`.
+
+Zone 100 places **1006 fixtures from 81 models**, and it is a lopsided
+distribution: 551 are one pine and 228 one evergreen, so two models account for
+77% of the zone. Props never move, so `propconv` bakes each model's scene graph
+into flat geometry at conversion time and the viewer draws each model once with
+instancing — about 195 calls for the whole zone.
+
+Models carry invisible collision hulls beside the visible mesh; the fences make
+the convention clearest, with a `Collisionswitch` node branching into `collidee`
+and `visible`. Those branches are dropped. `NiLODNode` subtrees keep only the
+nearest level, since props are seen from the ground.
 
 ### Characters
 
@@ -254,17 +320,21 @@ first. This applies standing still too: a T-posed idle is not an idle.
   the per-sector `patch*.dds` masks in `ter100.mpk` blended against the layer
   list in `textures.csv`, which is a multi-texture splatting pass this does not
   attempt.
-- **No world models.** Buildings, trees and props are `.nif` meshes placed by
-  `fixtures.csv` and `nifs.csv`. Mularn village is still absent. The parser now
-  handles the character block set; static props need the 4.2.1.0 generation and
-  its extra block types (`NiZBufferProperty`, `NiTexturingProperty`,
-  `NiSourceTexture` and friends), which is a bounded extension rather than an
-  unknown.
+- **36 of 1006 fixtures are missing**, leaving 96.4% placed. Twelve models fail
+  to parse, all of them animated effects: campfires and torches
+  (`NiLookAtController`, `NiUVController`), smoke and forge sparks
+  (`NiAutoNormalParticles`, `NiRotatingParticles`) and one model carrying a
+  `NiCamera`. Because blocks carry no length, a type that is present cannot be
+  skipped even when nothing would draw it, so these need modelling before the
+  models they sit in can be read at all. The blacksmith, the bindstone and the
+  campfires are what is absent from Mularn.
 - **No recorded animation.** The 4032 `.kfa` files are unexamined, as are the
   35 `NiKeyframeController` blocks inside the model itself. The gait is
   hand-written.
 - **No collision.** The character follows the heightmap and walks through
-  anything else, including across the lake surface.
+  anything else, including trees, buildings and the lake surface. The data is
+  there to fix it: `nifs.csv` has a Collide flag and a radius per model, and
+  the models ship explicit collision hulls that `propconv` currently discards.
 - **One character.** Equipment, races, genders and the `fig3/*.mpk` armour
   meshes are all reachable through the same code but not wired up.
 - Heightmap edges stop at sample 255 (65280 units), 256 units short of the

@@ -32,7 +32,9 @@ import (
 
 // Version numbers as packed by the format: 10.1.0.0 is 0x0A010000.
 const (
+	Ver4010012 = 0x0401000C // NetImmerse 4.1.0.12
 	Ver4020100 = 0x04020100 // NetImmerse 4.2.1.0
+	Ver4020200 = 0x04020200 // NetImmerse 4.2.2.0
 	Ver1001000 = 0x0A000100 // Gamebryo 10.0.1.0
 	Ver1001008 = 0x0A000108 // Gamebryo 10.0.1.8
 	Ver1010000 = 0x0A010000 // Gamebryo 10.1.0.0
@@ -146,6 +148,10 @@ type ShapeData struct {
 	Center    [3]float32
 	Radius    float32
 	Triangles []Triangle
+	// Strips is set only by NiTriStripsData, which stores geometry as
+	// triangle strips. Triangles is filled from it either way, so consumers
+	// never need to care which topology the artist exported.
+	Strips [][]uint16
 }
 
 // SkinInstance is NiSkinInstance: ties a TriShape to a bone list.
@@ -337,9 +343,11 @@ func Parse(b []byte) (*File, error) {
 			}
 		}
 
-	case f.Version == Ver4020100:
-		// NetImmerse 4.2.1.0: each block is prefixed by its own type name
-		// and the block count is all the header carries.
+	case f.Version >= Ver4010012 && f.Version <= Ver4020200:
+		// NetImmerse 4.x: each block is prefixed by its own type name and
+		// the block count is all the header carries. The zone's scenery
+		// spans 4.1.0.12, 4.2.1.0 and 4.2.2.0, which differ only in
+		// individual fields, all gated inside the block readers.
 		n := int(r.u32())
 		if r.err != nil {
 			return f, r.err
@@ -473,7 +481,7 @@ func (f *File) parseBlock(r *reader, typ string) (any, error) {
 		return f.readKeyframeData(r)
 
 	default:
-		return nil, fmt.Errorf("unmodelled block type %q; blocks carry no length so parsing cannot continue", typ)
+		return f.parseWorldBlock(r, typ)
 	}
 }
 
@@ -511,8 +519,11 @@ func (f *File) readAV(r *reader, a *AVObject) {
 	}
 }
 
-func (f *File) readShapeData(r *reader) (*ShapeData, error) {
-	d := &ShapeData{}
+// readGeomCommon reads NiGeometryData through NiTriBasedGeomData, which is
+// everything NiTriShapeData and NiTriStripsData have in common. It returns the
+// triangle count the subclass needs; what follows differs between the two.
+func (f *File) readGeomCommon(r *reader) (d *ShapeData, nVerts, nTris int, err error) {
+	d = &ShapeData{}
 	v := f.Version
 	// The published schema puts a Group ID here from 10.1.0.0 onward, but
 	// DAoC's 10.1.0.0 files do not carry it: the block opens directly with
@@ -522,7 +533,7 @@ func (f *File) readShapeData(r *reader) (*ShapeData, error) {
 	if v > Ver1010000 {
 		d.GroupID = r.i32()
 	}
-	nVerts := int(r.u16())
+	nVerts = int(r.u16())
 	if v >= Ver1010000 {
 		r.u8() // keep flags
 		r.u8() // compress flags
@@ -530,7 +541,18 @@ func (f *File) readShapeData(r *reader) (*ShapeData, error) {
 	if r.boolean() {
 		d.Vertices = r.vec3s(nVerts)
 	}
-	nUV := int(r.u16())
+	// The UV-set count moves. From 10.0.1.0 it sits between the vertices
+	// and the normals; at 4.2.1.0 it comes after the vertex colours
+	// instead, immediately ahead of the UV arrays it describes.
+	//
+	// Derived from npintre1.NIF, where a count read here is 22273 and the
+	// byte that should follow it is the first of a unit-length normal. Read
+	// after the colours it is 2, which matches the two source textures and
+	// the "tree_multitex_alpha" material the shape points at.
+	nUV := 0
+	if v >= Ver1001000 {
+		nUV = int(r.u16())
+	}
 	if r.boolean() {
 		d.Normals = r.vec3s(nVerts)
 	}
@@ -541,6 +563,9 @@ func (f *File) readShapeData(r *reader) (*ShapeData, error) {
 		for i := range d.Colors {
 			d.Colors[i] = [4]float32{r.f32(), r.f32(), r.f32(), r.f32()}
 		}
+	}
+	if v <= 0x04020200 {
+		nUV = int(r.u16())
 	}
 	// The top nibble of the UV-set count is a Bethesda extension; DAoC
 	// leaves it clear, but mask it so a stray bit cannot explode the loop.
@@ -555,8 +580,21 @@ func (f *File) readShapeData(r *reader) (*ShapeData, error) {
 	if v >= Ver1001000 {
 		r.u16() // consistency flags
 	}
-	// NiTriBasedGeomData, then NiTriShapeData.
-	nTris := int(r.u16())
+	// NiTriBasedGeomData.
+	nTris = int(r.u16())
+	if r.err != nil {
+		return nil, 0, 0, r.err
+	}
+	return d, nVerts, nTris, nil
+}
+
+func (f *File) readShapeData(r *reader) (*ShapeData, error) {
+	d, nVerts, nTris, err := f.readGeomCommon(r)
+	if err != nil {
+		return nil, err
+	}
+	v := f.Version
+
 	r.u32() // triangle point count, == nTris*3
 	hasTris := true
 	if v >= Ver1001000 {
