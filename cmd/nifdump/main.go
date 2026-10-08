@@ -23,6 +23,7 @@ func main() {
 	tree := flag.Int("tree", 0, "print this many levels of the node hierarchy")
 	shapes := flag.Bool("shapes", false, "list geometry")
 	probeName := flag.String("probe", "", "dump all transforms bearing on this shape")
+	tex := flag.Bool("tex", false, "list every shape's properties and texture slots")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, "usage: nifdump [-bind] [-shapes] [-tree N] <file.nif>")
@@ -79,6 +80,9 @@ func main() {
 		}
 		if *tree > 0 {
 			printTree(f, *tree)
+		}
+		if *tex {
+			listTextures(f)
 		}
 		if *probeName != "" {
 			probe(f, *probeName)
@@ -311,4 +315,48 @@ func checkInverse(f *nif.File) {
 		n++
 	}
 	fmt.Printf("  skinData.Skin vs inverse(world[shape]): %d shapes, worst %.6g\n", n, worst)
+}
+
+// listTextures prints each shape's own properties, and every texture slot of
+// any texturing property among them, with the file each slot names. A shape
+// also inherits its ancestors' properties; those are listed under the nodes.
+func listTextures(f *nif.File) {
+	fmt.Println("  properties:")
+	for i, b := range f.Blocks {
+		var name string
+		var props []int32
+		switch o := b.(type) {
+		case *nif.TriShape:
+			name, props = "shape "+o.Name, o.Properties
+		case *nif.Node:
+			name, props = f.TypeOf[i]+" "+o.Name, o.Properties
+		default:
+			continue
+		}
+		if len(props) == 0 {
+			continue
+		}
+		fmt.Printf("    %3d %s\n", i, name)
+		for _, p := range props {
+			fmt.Printf("          %3d %s", p, f.TypeOf[p])
+			if ap, ok := f.Block(p).(*nif.AlphaProperty); ok {
+				fmt.Printf("  flags=%#04x blend=%v src=%d dst=%d test=%v", ap.Flags, ap.Flags&1 != 0, (ap.Flags>>1)&15, (ap.Flags>>5)&15, ap.Flags&(1<<9) != 0)
+			}
+			if t, ok := f.Block(p).(*nif.Texturing); ok {
+				slots := make([]string, 0, len(t.Slots))
+				for s := range t.Slots {
+					slots = append(slots, s)
+				}
+				sort.Strings(slots)
+				for _, s := range slots {
+					file := "?"
+					if src, ok := f.Block(t.Slots[s].Source).(*nif.SourceTexture); ok {
+						file = fmt.Sprintf("%q external=%d", src.FileName, src.UseExternal)
+					}
+					fmt.Printf("  %s=%s", s, file)
+				}
+			}
+			fmt.Println()
+		}
+	}
 }

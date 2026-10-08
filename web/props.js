@@ -20,6 +20,11 @@ layout(location = 4) in float aScale;
 
 uniform mat4 uViewProj;
 uniform vec3 uCamPos;
+// Billboards: the camera's right and up in world space. A billboard vertex
+// sits at its card's pivot and carries its corner offset in aNormal.
+uniform float uBillboard;
+uniform vec3 uCamRight;
+uniform vec3 uCamUp;
 
 out vec2 vUV;
 out vec3 vNormal;
@@ -34,11 +39,16 @@ void main() {
     aScale * aPos.z + aInst.y,
     aScale * (s * aPos.x + c * aPos.y) + aInst.z
   );
-  vNormal = normalize(vec3(
-    c * aNormal.x - s * aNormal.y,
-    aNormal.z,
-    s * aNormal.x + c * aNormal.y
-  ));
+  if (uBillboard > 0.5) {
+    world += aScale * (uCamRight * aNormal.x + uCamUp * aNormal.y);
+    vNormal = normalize(uCamPos - world);
+  } else {
+    vNormal = normalize(vec3(
+      c * aNormal.x - s * aNormal.y,
+      aNormal.z,
+      s * aNormal.x + c * aNormal.y
+    ));
+  }
   vUV = aUV;
   vDist = length(world - uCamPos);
   gl_Position = uViewProj * vec4(world, 1.0);
@@ -56,11 +66,18 @@ uniform vec3 uFogColor;
 uniform float uFogStart;
 uniform float uFogEnd;
 uniform float uAlphaTest;
+uniform float uAdditive;
 
 out vec4 outColor;
 
 void main() {
   vec4 texel = texture(uTex, vUV);
+  float fog = clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
+  // A glow is light: unlit, and fading out in fog rather than into it.
+  if (uAdditive > 0.5) {
+    outColor = vec4(texel.rgb * (1.0 - fog), texel.a);
+    return;
+  }
   // Foliage is a cut-out: the canopy is a handful of quads whose texture is
   // mostly transparent. Discarding keeps the depth buffer honest without
   // needing the props sorted back to front.
@@ -70,7 +87,6 @@ void main() {
   // the exporter does not wind them consistently.
   float lambert = abs(dot(n, normalize(uLightDir)));
   vec3 lit = texel.rgb * (0.45 + 0.55 * lambert);
-  float fog = clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   outColor = vec4(mix(lit, uFogColor, fog), 1.0);
 }`;
 
@@ -121,7 +137,8 @@ export async function createProps(gl, base) {
 
   const prog = program(gl, PROP_VS, PROP_FS, 'props');
   const U = {};
-  for (const n of ['uViewProj', 'uCamPos', 'uTex', 'uLightDir', 'uFogColor', 'uFogStart', 'uFogEnd', 'uAlphaTest']) {
+  for (const n of ['uViewProj', 'uCamPos', 'uTex', 'uLightDir', 'uFogColor', 'uFogStart', 'uFogEnd', 'uAlphaTest',
+    'uAdditive', 'uBillboard', 'uCamRight', 'uCamUp']) {
     U[n] = gl.getUniformLocation(prog, n);
   }
 
@@ -220,21 +237,38 @@ export async function createProps(gl, base) {
     gl.uniform1f(U.uFogStart, ctx.fogStart);
     gl.uniform1f(U.uFogEnd, ctx.fogEnd);
     gl.uniform1i(U.uTex, 0);
+    gl.uniform3fv(U.uCamRight, ctx.camRight);
+    gl.uniform3fv(U.uCamUp, ctx.camUp);
     gl.activeTexture(gl.TEXTURE0);
     // Cut-out foliage and single-sided boards are both two-sided in practice.
     gl.disable(gl.CULL_FACE);
 
+    // Solid geometry first, then the glows added over it: they test depth,
+    // so a wall hides a torch behind it, but write none, so overlapping
+    // flames add up instead of cutting holes in one another.
     let calls = 0;
-    for (const m of models) {
-      if (!m.count) continue;
-      gl.bindVertexArray(m.vao);
-      for (const g of m.groups) {
-        gl.bindTexture(gl.TEXTURE_2D, textures.get(g.texture) || white);
-        gl.uniform1f(U.uAlphaTest, g.alpha ? 1 : 0);
-        gl.drawElementsInstanced(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, g.first * 4, m.count);
-        calls++;
+    for (const glow of [false, true]) {
+      if (glow) {
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+        gl.depthMask(false);
+      }
+      gl.uniform1f(U.uAdditive, glow ? 1 : 0);
+      for (const m of models) {
+        if (!m.count) continue;
+        gl.bindVertexArray(m.vao);
+        for (const g of m.groups) {
+          if (!!g.additive !== glow) continue;
+          gl.bindTexture(gl.TEXTURE_2D, textures.get(g.texture) || white);
+          gl.uniform1f(U.uAlphaTest, g.alpha && !glow ? 1 : 0);
+          gl.uniform1f(U.uBillboard, g.billboard ? 1 : 0);
+          gl.drawElementsInstanced(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, g.first * 4, m.count);
+          calls++;
+        }
       }
     }
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
     return calls;

@@ -16,6 +16,8 @@ Written in Go, with a dependency-free WebGL2 viewer.
 zones/zone100/dat100.mpk ──► terrain.pcx + offset.pcx ──► heights.u16 (256×256 uint16)
                          └─► SECTOR.DAT ──────────────► zone.json    (scale, water, fog)
 zones/zone100/lod100.mpk ──► 64 × DXT1 tiles ─────────► atlas.png    (2048×2048)
+zones/zone100/ter100.mpk ──► textures.csv + masks ───► masks.png    (ground layers:
+zones/TerrainTex/*.dds ─────► 12 ground textures ─────► layers.jpg    where and which)
                          └─► nifs.csv + fixtures.csv ─┐
 zones/Nifs/*.npk ───────────► 60 scenery models ──────┴► props.bin   (baked meshes)
                                                       └► props.json  (1006 placements)
@@ -92,7 +94,7 @@ at any speed.
 | `charconv` | one character: mesh, skeleton, skin weights, textures; `-model N` from the game tables |
 | `animconv` | recorded animations; by default the model's own anim set, `-list` scores every clip |
 | `charshot` | renders an exported character to a PNG, no browser needed |
-| `nifdump` | inspects a `.nif`; `-bind` checks the bind pose, `-shapes` lists geometry |
+| `nifdump` | inspects a `.nif`; `-bind` checks the bind pose, `-shapes` lists geometry, `-tex` each shape's textures and blending |
 | `mpakls` | lists and extracts from MPAK archives |
 | `serve` | static file server for `web/` |
 
@@ -202,6 +204,42 @@ swap=true  flipX=true  flipY=false   r = +0.3121
 swap=false flipX=true  flipY=false   r = +0.2757
 swap=false flipX=true  flipY=true    r = +0.1866
 ```
+
+### Ground detail
+
+The atlas is what the ground looks like from a distance. Up close the game
+paints it from layers, and the data for that sits in `ter100.mpk`:
+
+- **`textures.csv`** lists, for each of the 64 sectors, the ground textures
+  painted on it in order — rock, dirt, two grasses, stones, mud, snow,
+  cobbles, pine needles, about a dozen — each with how many times it repeats
+  across the zone. Grass repeats 256 times, every 256 units; the one layer
+  that repeats once is `ValeofMularn`, a painting of the whole zone laid
+  thinly over the rest for variation.
+- **`patch<x><y>-<n>.dds`** are the masks, 128px a sector, three layers to
+  a tile in red, green and blue: layer *i* of a sector is mask *i*/3,
+  channel *i*%3. A sector with eleven layers has four tiles, one with eight
+  has three. The first layer's channel is solid everywhere, and each later
+  one is laid over the stack by its mask.
+- The textures themselves are in `zones/TerrainTex`.
+
+None of that is documented, and the orientation of a mask in its sector
+could be any of sixteen ways. It is checked against the game rather than
+guessed: `tex100.mpk` holds the game's own pre-blended picture of each
+sector at 512px. `zoneconv` composites the layers, block-averaged to wash
+out the texture detail, under every layout and both plausible blend rules,
+and correlates each with those tiles:
+
+```
+as named and unflipped, painted in order   r = +0.9943
+as named and unflipped, weighted average   r = +0.9830
+best of the other fifteen layouts          r = +0.6286
+```
+
+`zoneconv` writes the layers resampled to 512px as one JPEG strip, the masks
+stitched per tile index as a PNG strip, and the per-sector slot table into
+`zone.json`. The terrain shader paints them within 4000 units of the camera
+and fades to the atlas by 9000. `G` toggles it, for comparison.
 
 ### Water
 
@@ -313,8 +351,19 @@ draws each model once with instancing — 257 calls for the whole zone.
 
 Models carry invisible collision hulls beside the visible mesh; the fences make
 the convention clearest, with a `Collisionswitch` node branching into `collidee`
-and `visible`. Those branches are dropped. `NiLODNode` subtrees keep only the
-nearest level, since props are seen from the ground.
+and `visible`. Those branches are dropped. The newer models add a third, `shadowcaster`: a
+coarse, untextured hull the game renders only into its shadow pass. It was
+drawn here, as a white lump over the boulders and a white slab across the
+Mularn hall's stone base, and is now dropped too. `NiLODNode` subtrees keep
+only the nearest level, since props are seen from the ground.
+
+Flames and glows are cards under a `NiBillboardNode`, whose
+`NiAlphaProperty` blends source-alpha onto ONE: they add light to what is
+behind them, drawn on black. `propconv` keeps both facts. A billboard's
+vertices are written as the card's pivot with the corner's offset across and
+up the card, and the viewer lays that offset along the camera's right and
+up. Glows are drawn after the solid scenery, tested against depth but not
+writing it.
 
 ### Characters
 
@@ -754,17 +803,17 @@ a large wolf pack until it kills you, and running a badger to its leash.
 
 ## Known limitations
 
-- **Ground-level texturing is blurry.** The LOD atlas is 2048px over 65536
-  world units — about 32 units per texel. Fine from altitude, mushy up close,
-  and more obvious now there is a character standing on it. Real detail needs
-  the per-sector `patch*.dds` masks in `ter100.mpk` blended against the layer
-  list in `textures.csv`, which is a multi-texture splatting pass this does not
-  attempt.
+- **The lighting is not the game's.** Terrain and scenery are lit by one
+  made-up sun with no shadows. The zone ships `shademap.pcx` and
+  `shadow.pcx`, and the newer models carry baked vertex colours; none is
+  used yet. There is no sky either, only the fog colour.
+- **No grass.** `grassmap.pcx` and `densemap.pcx` say where the game
+  scatters grass sprites; nothing reads them.
 - **Particle systems are read but not drawn.** Every fixture is placed, but a
-  campfire is only its logs and a torch only its bracket: the flame, smoke and
-  forge sparks are emitters this pipeline parses and discards. Animated UV
-  scrolling (`NiUVController`) and look-at behaviour are read and ignored the
-  same way.
+  campfire is only its logs: its flame, smoke and the forge sparks are
+  emitters this pipeline parses and discards. The newer torches and braziers
+  draw their flames as glowing cards instead, and those show, but the
+  `NiUVController` that scrolls them is ignored, so they do not flicker.
 - **Two textures are missing from the install.** `BAG.nif` names `mfiga6.dds`
   and `mheada3.dds`, which exist nowhere in the game directory; those three
   props draw white.

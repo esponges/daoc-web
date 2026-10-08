@@ -51,6 +51,13 @@ type groupOut struct {
 	Alpha   bool   `json:"alpha"`
 	First   int    `json:"first"` // index of the first element in the index buffer
 	Count   int    `json:"count"`
+	// Additive groups are glows -- flames, coronas -- added to what is
+	// behind them, black meaning nothing.
+	Additive bool `json:"additive,omitempty"`
+	// Billboard groups turn to face the camera. Each vertex's position is
+	// then the card's pivot, and its normal holds the corner's offset from
+	// it: x across the card, y up it.
+	Billboard bool `json:"billboard,omitempty"`
 }
 
 type modelOut struct {
@@ -360,8 +367,19 @@ func atof(s string) float32 {
 // properties off any NiAVObject and children inherit them, so a texture set on
 // the model root applies to every shape beneath it.
 type texState struct {
-	texture string
-	alpha   bool
+	texture  string
+	alpha    bool
+	additive bool
+	// billboard is set under a NiBillboardNode, with the node's origin in
+	// model space as the point the card turns about.
+	billboard bool
+	pivot     [3]float32
+}
+
+// groupKey is what splits a model's geometry into draws.
+type groupKey struct {
+	texture             string
+	additive, billboard bool
 }
 
 func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32) (*modelOut, error) {
@@ -376,7 +394,7 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 	mo := &modelOut{Name: def.Name, File: def.File}
 
 	// Collect geometry per texture so each group is one draw call.
-	byTex := map[string]*struct {
+	byTex := map[groupKey]*struct {
 		alpha bool
 		idx   []uint32
 	}{}
@@ -401,6 +419,9 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 			}
 			world := parent.Mul(b.Local)
 			st = applyProps(f, b.Properties, st)
+			if f.TypeOf[ref] == "NiBillboardNode" {
+				st.billboard, st.pivot = true, world.Trans
+			}
 			for _, c := range b.Children {
 				walk(c, world, st, depth+1)
 			}
@@ -427,21 +448,35 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 			if d == nil || len(d.Vertices) == 0 || len(d.Triangles) == 0 {
 				return
 			}
-			g := byTex[st.texture]
+			k := groupKey{st.texture, st.additive, st.billboard}
+			g := byTex[k]
 			if g == nil {
 				g = &struct {
 					alpha bool
 					idx   []uint32
 				}{}
-				byTex[st.texture] = g
+				byTex[k] = g
 			}
 			g.alpha = g.alpha || st.alpha
 
 			first := uint32(len(*verts))
+			var card cardAxes
+			if st.billboard {
+				card = cardFrame(d.Vertices, world, st.pivot)
+			}
 			for i, p := range d.Vertices {
 				v := vertex{P: world.Apply(p)}
 				if i < len(d.Normals) {
 					v.N = rotate(world, d.Normals[i])
+				}
+				if st.billboard {
+					// The bounds take the corner where the exporter left
+					// it; the vertex itself becomes the pivot plus an offset.
+					for k := 0; k < 3; k++ {
+						min[k], max[k] = minf(min[k], v.P[k]), maxf(max[k], v.P[k])
+					}
+					v.N = card.offset(v.P, st.pivot)
+					v.P = st.pivot
 				}
 				if len(d.UV) > 0 && i < len(d.UV[0]) {
 					v.UV = d.UV[0][i]
@@ -465,21 +500,32 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 		walk(root, nif.Identity, texState{}, 0)
 	}
 
-	names := make([]string, 0, len(byTex))
+	keys := make([]groupKey, 0, len(byTex))
 	for k := range byTex {
-		names = append(names, k)
+		keys = append(keys, k)
 	}
-	sort.Strings(names)
-	for _, n := range names {
-		g := byTex[n]
+	sort.Slice(keys, func(i, j int) bool {
+		a, b := keys[i], keys[j]
+		if a.texture != b.texture {
+			return a.texture < b.texture
+		}
+		if a.additive != b.additive {
+			return !a.additive
+		}
+		return !a.billboard && b.billboard
+	})
+	for _, k := range keys {
+		g := byTex[k]
 		if len(g.idx) == 0 {
 			continue
 		}
 		mo.Groups = append(mo.Groups, groupOut{
-			Texture: n,
-			Alpha:   g.alpha,
-			First:   len(*indices),
-			Count:   len(g.idx),
+			Texture:   k.texture,
+			Alpha:     g.alpha,
+			First:     len(*indices),
+			Count:     len(g.idx),
+			Additive:  k.additive,
+			Billboard: k.billboard,
 		})
 		*indices = append(*indices, g.idx...)
 	}
@@ -490,13 +536,16 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 	return mo, nil
 }
 
-// isCollision spots the invisible collision hulls the exporter ships beside
-// the visible mesh. The fence models are the clearest case: a "Collisionswitch"
-// node with a "collidee" branch and a "visible" one.
+// isCollision spots the invisible hulls the exporter ships beside the
+// visible mesh. The fence models are the clearest case: a "Collisionswitch"
+// node with a "collidee" branch and a "visible" one. The newer models add a
+// third, "shadowcaster": a coarse, untextured stand-in the game renders only
+// into its shadow pass. Drawn, it is a white lump over the real thing -- the
+// boulders and the Mularn hall base wore one.
 func isCollision(name string) bool {
 	n := strings.ToLower(name)
 	return strings.Contains(n, "collidee") || strings.Contains(n, "collision_") ||
-		strings.HasPrefix(n, "collide")
+		strings.HasPrefix(n, "collide") || n == "shadowcaster"
 }
 
 // applyProps resolves a node's property list, inheriting anything it does not
@@ -515,6 +564,11 @@ func applyProps(f *nif.File, refs []int32, st texState) texState {
 			// Bit 9 of the flags is the alpha-test enable. Trees need it:
 			// the canopy is a few quads with a cut-out leaf texture.
 			st.alpha = true
+			// Bit 0 enables blending; bits 1-4 and 5-8 are the source and
+			// destination factors. A destination of 0, ONE, adds the
+			// texture to what is behind: the flames and glows, whose
+			// textures are drawn on black.
+			st.additive = b.Flags&1 != 0 && (b.Flags>>5)&15 == 0
 		}
 	}
 	return st
@@ -628,4 +682,58 @@ func writePNG(path string, img image.Image) error {
 		return err
 	}
 	return f.Close()
+}
+
+// cardAxes is how a billboard card's corners are re-expressed for drawing:
+// across and up the card, so the viewer can lay them out along the camera's
+// right and up instead of wherever the exporter left them facing.
+type cardAxes struct {
+	across [2]float32 // horizontal direction across an upright card
+	flat   bool       // a card lying flat: both axes are horizontal
+}
+
+// cardFrame finds a card's axes from its corners. An upright card -- a
+// flame -- spans height, and across is the direction its corners spread in
+// the ground plane. A flat one -- some coronas -- spans no height, and is
+// laid out by its two ground-plane directions instead.
+func cardFrame(ps [][3]float32, world nif.Transform, pivot [3]float32) cardAxes {
+	var sxx, sxy, syy, zlo, zhi, ext float64
+	zlo, zhi = math.Inf(1), math.Inf(-1)
+	for _, p := range ps {
+		w := world.Apply(p)
+		x, y, z := float64(w[0]-pivot[0]), float64(w[1]-pivot[1]), float64(w[2]-pivot[2])
+		sxx += x * x
+		sxy += x * y
+		syy += y * y
+		zlo, zhi = math.Min(zlo, z), math.Max(zhi, z)
+		ext = math.Max(ext, math.Hypot(x, y))
+	}
+	// Principal axis of the ground-plane spread.
+	a := 0.5 * math.Atan2(2*sxy, sxx-syy)
+	c := cardAxes{across: [2]float32{float32(math.Cos(a)), float32(math.Sin(a))}}
+	c.flat = zhi-zlo < 0.2*ext
+	return c
+}
+
+func (c cardAxes) offset(p, pivot [3]float32) [3]float32 {
+	x, y, z := p[0]-pivot[0], p[1]-pivot[1], p[2]-pivot[2]
+	u := x*c.across[0] + y*c.across[1]
+	if c.flat {
+		return [3]float32{u, -x*c.across[1] + y*c.across[0], 0}
+	}
+	return [3]float32{u, z, 0}
+}
+
+func minf(a, b float32) float32 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxf(a, b float32) float32 {
+	if a > b {
+		return a
+	}
+	return b
 }

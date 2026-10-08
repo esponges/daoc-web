@@ -56,6 +56,12 @@ const TURN = 2.8;
 // character once it moves, per second.
 const CAM_RETURN = 3;
 
+// Ground detail is painted out to DETAIL_NEAR and fades into the colour
+// atlas by DETAIL_FAR, in world units. Beyond that the layers would only
+// shimmer, and the atlas is what they average to anyway.
+const DETAIL_NEAR = 4000;
+const DETAIL_FAR = 9000;
+
 // The player's hit points. A grey wolf takes a third of them in a fair fight.
 const PLAYER_HP = 220;
 
@@ -143,10 +149,12 @@ uniform mat4 uViewProj;
 uniform vec3 uCamPos;
 out vec3 vNormal;
 out vec2 vUV;
+out vec2 vWorld;
 out float vDist;
 void main() {
   vNormal = aNormal;
   vUV = aUV;
+  vWorld = aPos.xz;
   vDist = length(aPos - uCamPos);
   gl_Position = uViewProj * vec4(aPos, 1.0);
 }
@@ -156,16 +164,55 @@ const TERRAIN_FS = `#version 300 es
 precision highp float;
 in vec3 vNormal;
 in vec2 vUV;
+in vec2 vWorld;
 in float vDist;
 uniform sampler2D uAtlas;
+// Ground detail (see zoneconv/splat.go): the layer textures, the masks that
+// say where each lies, and per sector which layer each slot paints and how
+// often it repeats across the zone.
+uniform mediump sampler2DArray uLayers;
+uniform mediump sampler2DArray uMasks;
+uniform highp sampler2D uSlots;
+uniform float uSectors;
+uniform float uZone;
+uniform float uMaskPx;
+uniform float uDetail; // 0 when the zone has no detail layers
+uniform vec2 uDetailFade; // distance over which detail gives way to the atlas
 uniform vec3 uFogColor;
 uniform float uFogStart;
 uniform float uFogEnd;
 uniform vec3 uLightDir;
 uniform float uWireframe;
 out vec4 outColor;
+vec3 detail() {
+  vec2 zuv = vWorld / uZone;
+  vec2 sec = clamp(floor(zuv * uSectors), 0.0, uSectors - 1.0);
+  // Mask texels stay inside their own sector: the neighbour's channels
+  // belong to different layers.
+  float h = 0.5 / uMaskPx;
+  vec2 muv = (sec + clamp(zuv * uSectors - sec, h, 1.0 - h)) / uSectors;
+  int row = int(sec.y * uSectors + sec.x);
+  vec3 c = vec3(0.0);
+  vec4 m = vec4(0.0);
+  for (int i = 0; i < 12; i++) {
+    vec2 s = texelFetch(uSlots, ivec2(i, row), 0).rg;
+    if (s.x < 0.0) break;
+    if (i % 3 == 0) m = texture(uMasks, vec3(muv, float(i / 3)));
+    float w = i == 0 ? 1.0 : m[i % 3];
+    if (w <= 0.0) continue;
+    // Repeats are counted across the zone, so the grass tiles every 256
+    // units wherever it is painted.
+    c = mix(c, texture(uLayers, vec3(zuv * s.y, s.x)).rgb, w);
+  }
+  return c;
+}
+
 void main() {
   vec3 base = texture(uAtlas, vUV).rgb;
+  if (uDetail > 0.5) {
+    float far = smoothstep(uDetailFade.x, uDetailFade.y, vDist);
+    if (far < 1.0) base = mix(detail(), base, far);
+  }
   if (uWireframe > 0.5) base = vec3(0.55, 0.62, 0.70);
   vec3 n = normalize(vNormal);
   // Hemisphere ambient plus one directional term: enough to read the relief.
@@ -211,6 +258,49 @@ void main() {
   outColor = vec4(mix(water, uFogColor, fog), 0.78);
 }
 `;
+
+// loadDetail uploads the ground layers, their masks and the slot table.
+// The two images are strips -- one layer or mask plane under the next -- which
+// texImage3D slices into an array by height.
+async function loadDetail(gl, zone, sp, aniso) {
+  const [layersImg, masksImg] = await Promise.all([
+    loadImage(zone + '/' + sp.layers),
+    loadImage(zone + '/' + sp.masks),
+  ]);
+  const array = (img, side, depth, mips) => {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, t);
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, side, side, depth, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    if (mips) {
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
+      if (aniso) gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, 8);
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    return t;
+  };
+  const layers = array(layersImg, sp.layerPx, sp.names.length, true);
+  const masks = array(masksImg, sp.sectors * sp.maskPx, sp.planes, false);
+
+  // Slot table: a row per sector, [layer, repeats] per slot, -1 past the end.
+  const n = sp.sectors * sp.sectors, data = new Float32Array(n * 12 * 2).fill(-1);
+  sp.slots.forEach((row, r) => row.forEach(([l, t], i) => {
+    data[(r * 12 + i) * 2] = l; data[(r * 12 + i) * 2 + 1] = t;
+  }));
+  const slots = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, slots);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, 12, n, 0, gl.RG, gl.FLOAT, data);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  return { layers, masks, slots, sectors: sp.sectors, maskPx: sp.maskPx };
+}
 
 // ---------------------------------------------------------------------- main
 
@@ -325,6 +415,18 @@ async function main() {
   if (aniso) {
     const maxA = gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
     gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, maxA));
+  }
+
+  // --- ground detail ---
+  // Optional: zones converted before splat.go, or without layer tables,
+  // draw from the atlas alone.
+  let detail = null;
+  if (man.splat) {
+    try {
+      detail = await loadDetail(gl, ZONE, man.splat, aniso);
+    } catch (e) {
+      console.warn('ground detail not loaded:', e.message);
+    }
   }
 
   // --- water surfaces ---
@@ -495,11 +597,14 @@ async function main() {
   // than leave a key held down for good.
   addEventListener('blur', () => keys.clear());
   let wireframe = false;
+  // G toggles ground detail, to compare against the atlas alone.
+  let detailOn = true;
   // Running is the default; R toggles walking.
   let walkMode = false;
   addEventListener('keydown', (e) => {
     keys.add(e.code);
     if (e.code === 'KeyF') wireframe = !wireframe;
+    if (e.code === 'KeyG') detailOn = !detailOn;
     if (e.code === 'KeyR' && !e.repeat) walkMode = !walkMode;
     // Combat. Tab would otherwise move focus out of the page.
     if (combat && e.code === 'Tab') {
@@ -598,7 +703,8 @@ async function main() {
     char.height.toFixed(1) + 'u, drawn at ' + char.scale + 'x';
 
   // --- uniform locations ---
-  const tU = uniforms(gl, terrainProg, ['uViewProj', 'uCamPos', 'uAtlas', 'uFogColor', 'uFogStart', 'uFogEnd', 'uLightDir', 'uWireframe']);
+  const tU = uniforms(gl, terrainProg, ['uViewProj', 'uCamPos', 'uAtlas', 'uFogColor', 'uFogStart', 'uFogEnd', 'uLightDir', 'uWireframe',
+    'uLayers', 'uMasks', 'uSlots', 'uSectors', 'uZone', 'uMaskPx', 'uDetail', 'uDetailFade']);
   const wU = uniforms(gl, waterProg, ['uViewProj', 'uCamPos', 'uFogColor', 'uFogStart', 'uFogEnd', 'uTime']);
 
   gl.enable(gl.DEPTH_TEST);
@@ -756,6 +862,20 @@ async function main() {
     gl.uniform1i(tU.uAtlas, 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1f(tU.uDetail, detail && detailOn ? 1 : 0);
+    if (detail) {
+      gl.uniform1i(tU.uLayers, 1);
+      gl.uniform1i(tU.uMasks, 2);
+      gl.uniform1i(tU.uSlots, 3);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D_ARRAY, detail.layers);
+      gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, detail.masks);
+      gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, detail.slots);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1f(tU.uSectors, detail.sectors);
+      gl.uniform1f(tU.uZone, man.zoneUnits);
+      gl.uniform1f(tU.uMaskPx, detail.maskPx);
+      gl.uniform2f(tU.uDetailFade, DETAIL_NEAR, DETAIL_FAR);
+    }
     gl.bindVertexArray(terrainVAO);
     if (wireframe) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lbo);
@@ -766,8 +886,19 @@ async function main() {
     }
 
     if (props) {
+      // The camera's right and up, for cards that turn to face it.
+      const f = [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]];
+      const fl = Math.hypot(...f) || 1;
+      const r = [-f[2] / fl, 0, f[0] / fl];
+      const rl = Math.hypot(...r) || 1;
+      const camRight = r.map((x) => x / rl);
+      const camUp = [
+        (camRight[1] * f[2] - camRight[2] * f[1]) / fl,
+        (camRight[2] * f[0] - camRight[0] * f[2]) / fl,
+        (camRight[0] * f[1] - camRight[1] * f[0]) / fl,
+      ];
       props.draw({
-        viewProj: vp, camPos: eye,
+        viewProj: vp, camPos: eye, camRight, camUp,
         fogColor, fogStart, fogEnd, lightDir: [0.45, 0.78, 0.35],
       });
     }

@@ -44,6 +44,7 @@ type manifest struct {
 	Waters       []waterOut `json:"waters"`
 	Start        [4]int     `json:"start"`
 	Fog          fogOut     `json:"fog"`
+	Splat        *splatOut  `json:"splat,omitempty"` // ground detail layers; see splat.go
 }
 
 type waterOut struct {
@@ -246,6 +247,16 @@ func run(game string, zoneNum int, zoneName, outRoot string) error {
 			Left: w.Left, Right: w.Right,
 		})
 		fmt.Printf("  water: %s (%s) at height %d, %d shoreline pairs\n", w.Name, w.Type, w.Height, len(w.Left))
+	}
+
+	// Ground detail is an addition, not a requirement: a zone without the
+	// layer tables still draws from the atlas alone.
+	if sx == sy {
+		if sp, err := buildSplat(game, zoneNum, sx, outDir); err != nil {
+			fmt.Printf("  ground detail skipped: %v\n", err)
+		} else {
+			man.Splat = sp
+		}
 	}
 
 	mj, err := json.MarshalIndent(man, "", "  ")

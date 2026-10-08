@@ -59,14 +59,16 @@ type TexDesc struct {
 	UVSet      uint32
 }
 
-// Texturing is NiTexturingProperty. Only the base slot is wired through to the
-// converter; the rest are read so the block's length comes out right.
+// Texturing is NiTexturingProperty. Slots maps each present slot by name --
+// "base", "dark", "detail", "gloss", "glow", "bump", "decal0", "decal1" --
+// to its description; Base and HasBase repeat the base slot for convenience.
 type Texturing struct {
 	Property
 	ApplyMode uint32
 	Count     uint32
 	HasBase   bool
 	Base      TexDesc
+	Slots     map[string]TexDesc
 }
 
 // SourceTexture is NiSourceTexture: for DAoC's world models always an external
@@ -352,25 +354,21 @@ func (f *File) readTexturing(r *reader) (*Texturing, error) {
 	// The slots are a fixed sequence, each an optional TexDesc. Only the
 	// base one carries the diffuse map this pipeline wants, but every
 	// present slot must still be consumed.
-	readSlot := func() TexDesc {
-		var d TexDesc
+	t.Slots = map[string]TexDesc{}
+	readSlot := func(name string) {
 		if r.boolean() {
-			d = f.readTexDesc(r)
+			t.Slots[name] = f.readTexDesc(r)
 		}
-		return d
 	}
-	t.HasBase = false
-	if r.boolean() {
-		t.HasBase = true
-		t.Base = f.readTexDesc(r)
-	}
-	readSlot() // dark
-	readSlot() // detail
-	readSlot() // gloss
-	readSlot() // glow
+	readSlot("base")
+	t.Base, t.HasBase = t.Slots["base"]
+	readSlot("dark")
+	readSlot("detail")
+	readSlot("gloss")
+	readSlot("glow")
 	if t.Count > 5 {
 		if r.boolean() { // bump map
-			f.readTexDesc(r)
+			t.Slots["bump"] = f.readTexDesc(r)
 			r.f32() // luma scale
 			r.f32() // luma offset
 			for i := 0; i < 4; i++ {
@@ -379,10 +377,10 @@ func (f *File) readTexturing(r *reader) (*Texturing, error) {
 		}
 	}
 	if t.Count > 6 {
-		readSlot() // decal 0
+		readSlot("decal0")
 	}
 	if t.Count > 7 {
-		readSlot() // decal 1
+		readSlot("decal1")
 	}
 	if v >= Ver1001000 {
 		n := int(r.u32()) // shader textures
