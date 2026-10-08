@@ -599,3 +599,45 @@ Skeleton.prototype.poseCross = function (a, ta, b, tb, f) {
   this.samplePose(b, tb, this._poseB);
   this.applyPose(this.blendPose(this._poseA, this._poseB, f, this._poseOut));
 };
+
+// groundSpeed reads how fast a locomotion clip travels, in model units per
+// second, from the clip alone.
+//
+// A planted foot does not move against the ground, so relative to the body
+// it slides backward at exactly the speed the body moves forward. Take the
+// frames where a foot sits at its lowest -- within half a unit of it, which
+// is the flat stretch of the stance -- and the median of its horizontal
+// speed there is the clip's own ground speed. Move a figure at that speed
+// with the clip at 1x and its feet stay put.
+//
+// The game's tables carry "stride" numbers for this, but they do not agree
+// with the clips: the wolf's walk is listed at 52 and its feet say 40.
+// Returns 0 when no foot ever plants, which is the honest answer for a clip
+// that is not a gait.
+Skeleton.prototype.groundSpeed = function (clip) {
+  const N = 360, dt = clip.duration / N;
+  const speeds = [];
+  for (const side of ['L', 'R']) {
+    const b = this.boneId('Bip01 ' + side + ' Foot');
+    if (b < 0 || !(clip.duration > 0)) continue;
+    const xs = [], ys = [], zs = [];
+    for (let i = 0; i <= N; i++) {
+      this.poseClip(clip, Math.min(i * dt, clip.duration - 1e-4));
+      const m = this.world[b];
+      xs.push(m[3]); ys.push(m[7]); zs.push(m[11]);
+    }
+    const low = Math.min(...zs) + 0.5;
+    const v = [];
+    for (let i = 1; i <= N; i++) {
+      if (zs[i] < low && zs[i - 1] < low) {
+        v.push(Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]) / dt);
+      }
+    }
+    // A foot that touches down for a frame or two is not a stance.
+    if (v.length >= N / 20) {
+      v.sort((p, q) => p - q);
+      speeds.push(v[v.length >> 1]);
+    }
+  }
+  return speeds.length ? speeds.reduce((s, x) => s + x, 0) / speeds.length : 0;
+};

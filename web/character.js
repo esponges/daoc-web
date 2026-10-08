@@ -212,6 +212,9 @@ export async function createCharacter(gl, base, helpers) {
   return {
     manifest: man,
     height: man.height,
+    // How much larger than authored the game draws this model, from
+    // monsters.csv. 1 for anything converted without a table row.
+    scale: man.scale || 1,
     forwardY: man.forwardY || -1,
     triangles: man.indexCount / 3,
     boneCount: bones.length,
@@ -235,6 +238,9 @@ export async function createCharacter(gl, base, helpers) {
       return true;
     },
     clipDuration: (name) => (clips[name] ? clips[name].duration : 0),
+    // groundSpeed is a clip's own travel speed in model units per second,
+    // read from its planted feet; 0 if absent or not a gait.
+    groundSpeed: (name) => (clips[name] ? skel.groundSpeed(clips[name]) : 0),
     clips,
     clipNames: Object.keys(clips),
     skeleton: skel,

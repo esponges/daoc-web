@@ -4,6 +4,8 @@ A proof of concept: extract Dark Age of Camelot's shipped assets and render
 them in a browser. Currently one zone — **100, Vale of Mularn**, its forest and
 the village of Mularn — with a playable character you can walk around it: a
 **Troll in full plate** by default, or the **Norseman** via `?char=norseman`.
+Wolves and badgers wander the woods and villagers wander the village, each one
+built from the game's own creature tables by model number.
 
 Written in Go, with a dependency-free WebGL2 viewer.
 
@@ -17,6 +19,8 @@ zones/zone100/lod100.mpk ──► 64 × DXT1 tiles ─────────�
 zones/Nifs/*.npk ───────────► 60 scenery models ──────┴► props.bin   (baked meshes)
                                                       └► props.json  (1006 placements)
 
+gamedata.mpk ───────────────► monsters/monnifs/anims ─┐ (model ID -> figure, skins,
+                                                      │  scale, anim set)
 figures/NTrollM.NIF ────────► 49 skinned shapes ──────► mesh.bin     (skinned vertices)
                          └─► 114-bone Biped skeleton ► char.json    (bones, inverse binds)
 figures/skins/*.mpk ────────► DXT3/DXT5 skins ────────► tex/*.png
@@ -45,8 +49,18 @@ go run ./cmd/charconv -outfit norseman
 go run ./cmd/animconv -char web/data/char/norseman \
   -anims "I_VM,W_VM,R_VM" -as "idle,walk,run"
 
+# NPCs are converted by their model number in monsters.csv; with no -anims,
+# animconv takes the idle, walk and run the game's own tables assign them.
+for m in 56 47 572 153; do go run ./cmd/charconv -model $m; done
+for c in large-grey-wolf small-grey-wolf badger norse-male; do
+  go run ./cmd/animconv -char web/data/char/$c
+done
+
 go run ./cmd/serve                                       # then open localhost:8777
 ```
+
+Where they stand is `web/spawns/zone100.json`, which is this project's own
+placement — see [NPCs](#npcs). `?npcs=0` leaves them out.
 
 Controls: `WASD` to move, drag to orbit the camera, wheel to zoom, shift to
 sprint, alt to walk, `C` for the free-fly camera, `F` for wireframe. The
@@ -63,8 +77,8 @@ at any speed.
 | --- | --- |
 | `zoneconv` | zone terrain, texture atlas and water |
 | `propconv` | zone scenery: models flattened, placed and grouped by texture |
-| `charconv` | one character: mesh, skeleton, skin weights, textures |
-| `animconv` | recorded animations; `-list` scores every clip against a skeleton |
+| `charconv` | one character: mesh, skeleton, skin weights, textures; `-model N` from the game tables |
+| `animconv` | recorded animations; by default the model's own anim set, `-list` scores every clip |
 | `charshot` | renders an exported character to a PNG, no browser needed |
 | `nifdump` | inspects a `.nif`; `-bind` checks the bind pose, `-shapes` lists geometry |
 | `mpakls` | lists and extracts from MPAK archives |
@@ -80,8 +94,15 @@ caught two bugs the numeric checks passed over.
 ```bash
 go test ./...            # container, heightmap and NIF parsing against the real files
 node web/skeleton.test.mjs              # the posing maths, for the Norseman
-node web/skeleton.test.mjs troll-plate  # and for any other converted outfit
+node web/skeleton.test.mjs troll-plate  # and for any other converted character
+node web/npc.test.mjs                   # ten simulated minutes of wandering
 ```
+
+`skeleton.test.mjs` passes for all six converted characters — two playable
+outfits, two wolves, the badger and the villager. `npc.test.mjs` loads the real
+spawn file and characters against a stubbed-out WebGL context, lays a lake
+across the wolves' home, and checks that every NPC wanders, none outpaces its
+walk, strays from its radius or gets its feet wet, and all of them pose.
 
 Two checks are worth more than the rest.
 
@@ -480,6 +501,90 @@ Swinging them fore and aft is a rotation about that same axis, which does
 nothing to an arm lying along it, so the arms are brought down to the sides
 first. This applies standing still too: a T-posed idle is not an idle.
 
+## NPCs
+
+### What the client knows, and what it does not
+
+The server names every creature by a number and nothing more. The client turns
+that number into something drawable through a chain of tables in
+`gamedata.mpk`, which `internal/gamedata` reads:
+
+```
+monsters.csv  model 56 "Large Grey Wolf" ─► figure 212, body skin 97, scale 100
+monnifs.csv   figure 212 ─────────────────► "wolf" (figures/Wolf.NIF), anim set 7
+anims.csv     anim set 7 ─────────────────► walk 241, run 242, idle 240, death 244 …
+animnifs.csv  clip 241 ───────────────────► wlf_walk.kfa, loop
+skins.csv     skin 97 ────────────────────► wolf.tga, archive 2 (figures/skins/skin002.mpk, as .dds)
+```
+
+So `charconv -model 56` needs nothing else: figure, textures, scale and clips
+all come from the tables. The same tables settle two questions the hand-built
+outfits had left open. **Race scale** is the Scale column: Troll Male is drawn
+at 1.30 and Norse Male at 1.09, so the troll stands about a fifth taller —
+nothing in either `.nif` records that. And the troll's anim set names exactly
+the `troll_walk`, `troll_run` and `troll_idle` that clip-scoring had picked
+by hand, which is a reassuring agreement between two methods that share
+nothing.
+
+What the client does **not** have is placement. Where a wolf stands, how far it
+roams and what it is called in-game all arrive from the server at runtime, and
+nothing in the install records them. `web/spawns/zone100.json` is therefore
+written by hand for this project: three large and four small grey wolves in the
+woods by the lake, three badgers, and nine villagers between Mularn and
+Haggerfell. It is not the live game's population and does not try to be.
+
+### Creatures are Bipeds too
+
+The wolf looked like the risk: a quadruped, a strip mesh rather than a shape
+list, and a skeleton nobody had tried. It turned out to be 3ds Max Biped in
+four-legged form — `Bip01 L HorseLink` between calf and foot, `Bip01 Tail`
+through `Tail4` — so `animnode.dat` already names its bones, and every wolf
+clip binds all 36 of its tracks with none dropped. The badger shares the rat's
+anim set and binds all 37.
+
+`wlf_walk.kfa` is three identical copies of one 1.2-second stride back to back.
+The table's frame counts (10 for "Wolf Trot", 54 for "Wolf Walk", same file)
+match neither the stride nor the file, so the clip is played whole, which
+loops seamlessly.
+
+### Walking at the clip's own pace
+
+A planted foot does not move against the ground, so relative to the body it
+slides backward at exactly the speed the body travels. `Skeleton.groundSpeed`
+reads that off each walk clip — the median horizontal speed of a foot while it
+sits within half a unit of its lowest point — and an NPC walks at that speed
+times its scale, with the clip at 1x. Its feet stay planted by construction.
+
+The tables carry "stride" columns that look as though they should give this,
+but they do not agree with the clips: the wolf's walk is listed at 52 and its
+feet say 40.7. Runs measure less reliably — a run's foot is barely down — so
+NPCs only walk for now.
+
+The same reading checks the player's numbers. The troll's walk measures 86.2
+units a second unscaled, against the game's walk rate of 85, so the playback
+rate calibrated earlier was right; drawn at 1.30x, the clip now runs that much
+slower to match.
+
+### Parsing the rest of figures/
+
+Creatures pushed the NIF parser from 444 to **617 of the 633** figure models:
+
+- Six small extra-data tags — integer, integers, boolean, float, colour and
+  text keys — stopped 160 figures outright, since a block with no length cannot
+  be skipped unread.
+- The composite NPC bodies (`albbody01heada.nif` and siblings) set bit 12 of
+  the 10.x UV-set field, which means a tangent and a bitangent per vertex
+  follow the normals. Without reading them, every float after is skewed.
+- Sixteen figures export their weapon and shield attachment nodes —
+  `Bip01 R Shield`, `HELD` — with a translation of three NaNs, `7fc00000` in an
+  otherwise sound block. The game places those nodes from whatever is held, so
+  the value never mattered to it. The parser accepts NaN there and nowhere
+  else, and zeroes it.
+
+The sixteen left over are specialised: textures embedded as `NiPixelData`,
+`NiTextureEffect` projections on spell-like models, colour and
+texture-transform controllers, and two "coco" models.
+
 ## Known limitations
 
 - **Ground-level texturing is blurry.** The LOD atlas is 2048px over 65536
@@ -507,17 +612,22 @@ first. This applies standing still too: a T-posed idle is not an idle.
   anything else, including trees, buildings and the lake surface. The data is
   there to fix it: `nifs.csv` has a Collide flag and a radius per model, and
   the models ship explicit collision hulls that `propconv` currently discards.
-- **Two outfits, hand-written.** Any of the 600-odd figure models and 5669 skin
-  textures can be combined through `-outfit`, `-shapes` and `-tex`, but the
-  pairings are chosen by hand; nothing reads the game's own equipment tables.
-  The `fig3/*.mpk` armour meshes are untouched.
+- **The playable outfits are still hand-written.** Creatures come from the
+  tables by model number, but the two player outfits pick plate and cloth tiers
+  by hand; nothing reads `items.csv` to dress a character from equipment. The
+  `fig3/*.mpk` armour meshes are untouched. The Norseman also still plays the
+  `W_VM` walk that clip-scoring found, where his anim set names `W_hm`.
 - **A troll in plate is not a thing the game would build.** Plate is Albion's
   armour and Troll is a Midgard race, so the live client would never put them
   together. Meshes and textures are independent here, so nothing stops it.
-- **No per-race scale.** The troll model is authored 72.9 units tall against
-  the Norseman's 71.8 — broader in the shoulders, but the same height. In the
-  live game trolls tower over Norsemen, which means the client applies a size
-  multiplier this pipeline does not read.
+- **NPC placement is invented.** The client ships no spawn data, so where the
+  wolves and villagers stand is this project's choice, not the live game's.
+- **NPCs only idle and walk.** They wander inside a radius of their spawn
+  point; they do not run, fight, flee, die, notice the player or avoid each
+  other, and like the player they walk through trees and buildings. They keep
+  out of the lakes, judged by each lake's bounding box and surface height.
+- **16 of 633 figures do not parse** — see [Parsing the rest of
+  figures/](#parsing-the-rest-of-figures).
 - Heightmap edges stop at sample 255 (65280 units), 256 units short of the
   nominal zone edge. Harmless here; matters when stitching zones together.
 

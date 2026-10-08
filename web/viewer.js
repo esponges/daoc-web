@@ -9,6 +9,7 @@
 
 import { createCharacter, modelMatrix } from './character.js';
 import { createProps } from './props.js';
+import { createNPCs } from './npc.js';
 
 const ZONE = 'data/zone100';
 
@@ -325,6 +326,19 @@ async function main() {
     waters.push({ ...w, vao, count: verts.length / 3 });
   }
 
+  // Whether a point is under one of the lakes: inside its shoreline's box and
+  // below its surface. NPCs use it to stay out of the water.
+  const wetBoxes = waters.map((w) => {
+    const pts = [...(w.left || []), ...(w.right || [])];
+    return {
+      h: w.height,
+      x0: Math.min(...pts.map((p) => p[0])) * cell, x1: Math.max(...pts.map((p) => p[0])) * cell,
+      y0: Math.min(...pts.map((p) => p[1])) * cell, y1: Math.max(...pts.map((p) => p[1])) * cell,
+    };
+  });
+  const isWet = (wx, wy) => wetBoxes.some((b) =>
+    wx >= b.x0 && wx <= b.x1 && wy >= b.y0 && wy <= b.y1 && groundAt(wx, wy) < b.h);
+
   // --- character ---
   const char = await createCharacter(gl, CHARACTER, { program, uniforms, loadImage });
   if (char.missingJoints.length) {
@@ -339,6 +353,20 @@ async function main() {
     props = await createProps(gl, ZONE + '/props');
   } catch (e) {
     console.warn('scenery not loaded:', e.message);
+  }
+
+  // --- NPCs ---
+  // Also optional: they need their characters converted, and the zone is
+  // worth seeing without them.
+  let npcs = null;
+  try {
+    // ?npcs=0 leaves them out, for looking at the zone on its own.
+    if (new URLSearchParams(location.search).get('npcs') !== '0') {
+      npcs = await createNPCs(gl, 'spawns/zone100.json', { program, uniforms, loadImage },
+        { cell, extent, groundAt, isWet });
+    }
+  } catch (e) {
+    console.warn('npcs not loaded:', e.message);
   }
 
   // Spawn on the rising ground south-east of the lake, which is open enough
@@ -384,7 +412,7 @@ async function main() {
   // Debug handle: lets you jump the camera from the console, e.g.
   //   daoc.goto(120, 90, 800)   // heightmap cell x, y, metres above ground
   globalThis.daoc = {
-    cam, orbit, player, char, props, anim, manifest: man, heights,
+    cam, orbit, player, char, props, npcs, anim, manifest: man, heights,
     heightAt: (cx, cy) => H(Math.round(cx), Math.round(cy)),
     groundAt,
     // Put the character on a given heightmap cell, e.g. daoc.warp(60, 70).
@@ -463,7 +491,7 @@ async function main() {
     : 'none';
   $('i-char').textContent = char.manifest.source + '  ' +
     char.triangles + ' tris, ' + char.boneCount + ' bones, ' +
-    char.height.toFixed(1) + 'u tall';
+    char.height.toFixed(1) + 'u, drawn at ' + char.scale + 'x';
 
   // --- uniform locations ---
   const tU = uniforms(gl, terrainProg, ['uViewProj', 'uCamPos', 'uAtlas', 'uFogColor', 'uFogStart', 'uFogEnd', 'uLightDir', 'uWireframe']);
@@ -530,8 +558,10 @@ async function main() {
     // planted instead of skating -- the same rule as the procedural phase,
     // applied to a cycle someone else timed.
     const rate = (name) => {
-      if (name === 'walk') return Math.max(player.gait, WALK) / WALK;
-      if (name === 'run') return Math.max(player.gait, RUN) / RUN;
+      // Divided by the race's scale: a troll drawn 1.3x larger covers 1.3x
+      // the ground per stride, so its cycle has to run that much slower.
+      if (name === 'walk') return Math.max(player.gait, WALK) / (WALK * char.scale);
+      if (name === 'run') return Math.max(player.gait, RUN) / (RUN * char.scale);
       return 1;
     };
     anim.t += dt * rate(anim.cur);
@@ -558,7 +588,9 @@ async function main() {
     const bob = player.clip
       ? 0
       : 1.6 * intensity * (1 - Math.cos(player.phase * 2)) * 0.5;
-    const charModel = modelMatrix(player.x, playerGround + bob, player.y, player.yaw);
+    const charModel = modelMatrix(player.x, playerGround + bob, player.y, player.yaw, char.scale);
+
+    if (npcs) npcs.update(dt);
 
     // --- place the camera ---
     let eye, target;
@@ -567,7 +599,7 @@ async function main() {
     if (followMode) {
       const op = Math.cos(orbit.pitch), os = Math.sin(orbit.pitch);
       const look = [Math.sin(orbit.yaw) * op, -os, -Math.cos(orbit.yaw) * op];
-      target = [player.x, playerGround + char.height * 0.62, player.y];
+      target = [player.x, playerGround + char.height * char.scale * 0.62, player.y];
       eye = [
         target[0] - look[0] * orbit.dist,
         target[1] - look[1] * orbit.dist,
@@ -639,6 +671,12 @@ async function main() {
       viewProj: vp, model: charModel, camPos: eye,
       fogColor, fogStart, fogEnd, lightDir: [0.45, 0.78, 0.35],
     });
+    if (npcs) {
+      npcs.draw({
+        viewProj: vp, camPos: eye,
+        fogColor, fogStart, fogEnd, lightDir: [0.45, 0.78, 0.35],
+      });
+    }
 
     if (waters.length) {
       gl.useProgram(waterProg);
@@ -679,6 +717,10 @@ async function main() {
             : anim.cur + '.kfa')
         : '  · procedural');
     $('i-mode').textContent = followMode ? 'third person' : 'free fly';
+    if (npcs) {
+      $('i-npc').textContent = npcs.npcs.length + ' placed, ' + npcs.drawn + ' in view, ' +
+        npcs.types.size + ' kinds';
+    }
 
     requestAnimationFrame(frame);
   }
