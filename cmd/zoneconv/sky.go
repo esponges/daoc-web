@@ -62,21 +62,11 @@ type discOut struct {
 }
 
 func buildSky(game string, zoneNum int, outDir string) (*skyOut, error) {
-	zarc, err := mpak.Open(filepath.Join(game, "zones", "zones.mpk"))
+	n, reg, err := regionOf(game, zoneNum)
 	if err != nil {
 		return nil, err
 	}
-	raw, err := zarc.Read("zones.dat")
-	if err != nil {
-		return nil, err
-	}
-	zones := parseINI(raw)
-	region := zones.get(fmt.Sprintf("zone%03d", zoneNum), "region")
-	if region == "" {
-		return nil, fmt.Errorf("zones.dat has no region for zone %d", zoneNum)
-	}
-	n, _ := strconv.Atoi(region)
-	file := zones.get(fmt.Sprintf("region%03d", n), "skydome")
+	file := reg["skydome"]
 	if file == "" {
 		file = "sky_default.dat"
 	}
@@ -86,7 +76,7 @@ func buildSky(game string, zoneNum int, outDir string) (*skyOut, error) {
 	if err != nil {
 		return nil, err
 	}
-	raw, err = sarc.Read(file)
+	raw, err := sarc.Read(file)
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +149,30 @@ func buildSky(game string, zoneNum int, outDir string) (*skyOut, error) {
 	}
 	fmt.Printf("  sky: %s (zone %d -> region %d), %d cloud layers, fog %v\n", file, zoneNum, n, len(out.Clouds), out.Fog)
 	return out, nil
+}
+
+// regionOf finds a zone's region in zones/zones.mpk's zones.dat and returns
+// its number and its settings -- skydome, grasscsv, grassmap and so on.
+func regionOf(game string, zoneNum int) (int, map[string]string, error) {
+	zarc, err := mpak.Open(filepath.Join(game, "zones", "zones.mpk"))
+	if err != nil {
+		return 0, nil, err
+	}
+	raw, err := zarc.Read("zones.dat")
+	if err != nil {
+		return 0, nil, err
+	}
+	zones := parseINI(raw)
+	region := zones.get(fmt.Sprintf("zone%03d", zoneNum), "region")
+	if region == "" {
+		return 0, nil, fmt.Errorf("zones.dat has no region for zone %d", zoneNum)
+	}
+	n, _ := strconv.Atoi(region)
+	reg := zones[fmt.Sprintf("region%03d", n)]
+	if reg == nil {
+		reg = map[string]string{}
+	}
+	return n, reg, nil
 }
 
 // convertSkyTexture writes one of zones/sky's images as PNG and returns

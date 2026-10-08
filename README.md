@@ -112,6 +112,7 @@ node web/skeleton.test.mjs troll-warrior  # and for any other converted characte
 node web/npc.test.mjs                   # ten simulated minutes of wandering
 node web/combat.test.mjs                # targeting, fights, deaths and respawns
 node web/lighting.test.mjs              # the sun's shadow camera
+node web/grass.test.mjs                 # where grass grows, against its maps
 ```
 
 `skeleton.test.mjs` passes for all six converted characters — two playable
@@ -315,6 +316,43 @@ blended into west; the two cloud decks projected onto a flat ceiling so they
 crowd toward the horizon; and the sun's disc and glow added over them,
 placed where the shadows say it is. The sky's fog colour replaces
 `SECTOR.DAT`'s darker teal, so far hills fade into the horizon behind them.
+
+### Grass
+
+The region's entry in `zones.dat` also names its grass: `grasscsv=grass_mid.csv`
+and `grassmap=grass_mid.dds`, in `zones/textures`. The CSV is a sprite table,
+64 rows in 13 groups — meadow grass, brown scrub, tall grass and white
+flowers, waterside plants, reeds, rocks, ferns, pine saplings — each with its
+chance of being picked within the group, a shape, a height, length and width
+with a random spread for each, a scale spread in percent, its rectangle in the
+512px atlas, and sometimes a tint.
+
+Where each group grows is in the zone: `grassmap.pcx` holds ten times the
+group number per heightmap cell, and `densemap.pcx` how thickly, 0..255.
+Neither is documented, and the factor of ten is checked against the ground:
+every 30 (group 3, the waterside plants) lies on the lake shore, two thirds
+of them below the water line, and 110 (group 11, rocks) sits high on the
+slopes. 0 is group 0, plain grass; over the snow its density is zero on 84%
+of cells, so the density map, not the group, is what keeps grass off snow,
+roads and Mularn's square.
+
+The shapes are not documented either. Read against the atlas: 0 and 1 are
+upright plants, drawn as two crossed cards; 2 is the rocks and 4 the lily
+leaf, pictures taken from above, laid flat; 3 is the fern, one frond drawn
+four times leaning outward. A card's width is the row's length — grass clump
+1 is 12 tall and 8 long, and its picture is 62 by 87 pixels.
+
+`web/grass.js` grows each cell's plants from a generator seeded by the cell,
+so a tuft is always in the same place, and only within 2200 units of the
+camera, shrinking into the ground over the last 700. Each plant reads the
+density bilinearly at its own spot and its group from a spot jittered up to
+half a cell away, so neighbouring groups mix along their border instead of
+meeting on the cell grid. Groups other than the waterside ones stop at the
+shore. How many plants full density means is a client setting, not data;
+550 a cell, about 33,000 around the player, is chosen by eye. They are lit
+like the ground beneath them, shadows included, sway at the tips, cast no
+shadows themselves, and use alpha-to-coverage for softer edges. `V` toggles
+them.
 
 ### Water
 
@@ -883,8 +921,10 @@ a large wolf pack until it kills you, and running a badger to its leash.
   is chosen here rather than following a clock. The point lights in
   `lights.csv` are not lit. Cast shadows reach 2400 units from the player;
   beyond that only slope lighting remains.
-- **No grass.** `grassmap.pcx` and `densemap.pcx` say where the game
-  scatters grass sprites; nothing reads them.
+- **Grass grows through floors.** The density map keeps it off Mularn's
+  square, but nothing stops a tuft inside a building or under a fence on
+  ground the map marks as meadow; the shapes are a reading of the atlas, not
+  the game's code.
 - **Particle systems are read but not drawn.** Every fixture is placed, but a
   campfire is only its logs: its flame, smoke and the forge sparks are
   emitters this pipeline parses and discards. The newer torches and braziers

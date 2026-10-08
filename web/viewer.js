@@ -15,6 +15,7 @@ import { createCombat } from './combat.js';
 import { Animator } from './animator.js';
 import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows, setSkyLight, SUN_DIR } from './lighting.js';
 import { createSky } from './sky.js';
+import { createGrass } from './grass.js';
 
 const ZONE = 'data/zone100';
 
@@ -484,6 +485,20 @@ async function main() {
     console.warn('scenery not loaded:', e.message);
   }
 
+  // --- grass ---
+  // Optional too: zones converted before grass.go have none.
+  let grass = null;
+  if (man.grass) {
+    try {
+      grass = await createGrass(gl, ZONE, man.grass, { cell, grid, groundAt, isWet },
+        { program, uniforms, loadImage });
+    } catch (e) {
+      console.warn('grass not loaded:', e.message);
+    }
+  }
+  // V toggles it.
+  let grassOn = true;
+
   // --- NPCs ---
   // Also optional: they need their characters converted, and the zone is
   // worth seeing without them.
@@ -571,7 +586,7 @@ async function main() {
   // Debug handle: lets you jump the camera from the console, e.g.
   //   daoc.goto(120, 90, 800)   // heightmap cell x, y, metres above ground
   globalThis.daoc = {
-    cam, orbit, player, char, props, npcs, combat, anim, manifest: man, heights,
+    cam, orbit, player, char, props, npcs, combat, anim, manifest: man, heights, grass,
     heightAt: (cx, cy) => H(Math.round(cx), Math.round(cy)),
     groundAt,
     // Put the character on a given heightmap cell, e.g. daoc.warp(60, 70).
@@ -608,6 +623,7 @@ async function main() {
     if (e.code === 'KeyF') wireframe = !wireframe;
     if (e.code === 'KeyG') detailOn = !detailOn;
     if (e.code === 'KeyL' && shadows && shadows.ok) shadowsOn = !shadowsOn;
+    if (e.code === 'KeyV') grassOn = !grassOn;
     if (e.code === 'KeyR' && !e.repeat) walkMode = !walkMode;
     // Combat. Tab would otherwise move focus out of the page.
     if (combat && e.code === 'Tab') {
@@ -929,6 +945,9 @@ async function main() {
       const ctx = { viewProj, camPos: eye, camRight, camUp, fogColor, fogStart, fogEnd, light, shadowPass };
       drawTerrain(viewProj, light, shadowPass);
       if (props) props.draw(ctx);
+      // Grass casts no shadow: a few inches of blades would only speckle
+      // the ground the map already darkens.
+      if (grass && grassOn && !shadowPass) grass.draw({ ...ctx, time: now / 1000 });
       // The character goes in before the water so a submerged figure is
       // tinted by the translucent surface rather than drawn over it.
       char.draw({ ...ctx, model: charModel });
