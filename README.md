@@ -516,9 +516,12 @@ so the vertex shader places every particle from the time and its slot
 number, one instanced draw per emitter per placement. Additive glows add
 light; smoke blends over what is behind it. Neither writes depth.
 
-What the data says is drawn as it says, which leaves the smoke faint: its
-texture's alpha peaks at 0.26 and the colour curve's at 0.31, so a puff is at
-most 8% opaque. A `NiParticleBomb` that kicks the forge sparks about is not
+Taken as the data has it, the smoke is close to invisible: its texture's
+alpha peaks at 0.26 and the colour curve's at 0.31, so a puff is at most 8%
+opaque, and a column of them reads as nothing against the hills. Blended
+particles are therefore drawn at 8 times their opacity, a deliberate
+departure from the files; `?smoke=1` shows them as the data says, and any
+other number sets the factor. A `NiParticleBomb` that kicks the forge sparks about is not
 modelled, and only the log fire's stone ring has a fire: the newer
 `x06_campfire` rings carry no emitter, and nothing in the zone files puts
 one on them.

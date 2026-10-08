@@ -125,6 +125,7 @@ in vec4 vColor;
 in float vDist;
 uniform sampler2D uTex;
 uniform float uAdditive;
+uniform float uOpacity;
 uniform float uFogStart, uFogEnd;
 uniform vec3 uFogColor;
 out vec4 outColor;
@@ -135,10 +136,17 @@ void main() {
     // Light: fades out in fog rather than into it.
     outColor = vec4(t.rgb * (1.0 - fog), t.a);
   } else {
-    outColor = vec4(mix(t.rgb, uFogColor, fog), t.a);
+    outColor = vec4(mix(t.rgb, uFogColor, fog), min(1.0, t.a * uOpacity));
   }
 }
 `;
+
+// Smoke as the data has it is barely there: its texture's alpha peaks at
+// 0.26 and its colour curve's at 0.31, so a puff is at most 8% opaque and
+// a column of them reads as nothing against the hills. This multiplies the
+// opacity of blended (non-additive) particles, a deliberate departure from
+// the data; ?smoke=1 shows it as the files say.
+const SMOKE_OPACITY = Number(new URLSearchParams(globalThis.location?.search || '').get('smoke')) || 8;
 
 // Emitters further than this from the camera are not drawn.
 const DRAW_DISTANCE = 9000;
@@ -148,7 +156,7 @@ export function createParticles(gl, props, { program, uniforms }) {
   const U = uniforms(gl, prog, ['uViewProj', 'uCamPos', 'uCamRight', 'uCamUp', 'uTime', 'uPlace',
     'uScale', 'uSeed', 'uOrigin', 'uAxes', 'uBox', 'uRate', 'uLife', 'uSpeed', 'uVert', 'uHoriz',
     'uSize', 'uGrow', 'uFade', 'uSpin', 'uColor', 'uColorT', 'uColorN', 'uTex', 'uAdditive',
-    'uFogStart', 'uFogEnd', 'uFogColor']);
+    'uFogStart', 'uFogEnd', 'uFogColor', 'uOpacity']);
 
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
@@ -204,6 +212,7 @@ export function createParticles(gl, props, { program, uniforms }) {
     for (const additive of [false, true]) {
       gl.blendFunc(gl.SRC_ALPHA, additive ? gl.ONE : gl.ONE_MINUS_SRC_ALPHA);
       gl.uniform1f(U.uAdditive, additive ? 1 : 0);
+      gl.uniform1f(U.uOpacity, additive ? 1 : SMOKE_OPACITY);
       for (const e of emitters) {
         const p = e.p;
         if (p.additive !== additive) continue;
