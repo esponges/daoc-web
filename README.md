@@ -478,6 +478,20 @@ up the card, and the viewer lays that offset along the camera's right and
 up. Glows are drawn after the solid scenery, tested against depth but not
 writing it.
 
+They also move, and the motion is in the models too. A flame card's shape
+has a `NiUVController` whose `NiUVData` V curve runs 0 to 1 over a second:
+the fire texture scrolls up one height a second. The coronas' billboard
+nodes have a `NiKeyframeController` whose scale keys breathe 1, 0.93, 0.95,
+0.91, 1 over a second. Every UV curve in the zone's models is a two-key ramp
+— the bindstone's swirl moves a tenth of a texture a second — so `propconv`
+stores a scroll rate per draw group, and the pulse curve per billboard group.
+The viewer plays them on the clock, each copy from its own point in the
+cycle, hashed from its position, so a row of torches does not flicker in
+step. The coronas' controller flags say clamp rather than loop; played once
+at load the pulse would never be seen, so it loops. Nodes that animate whole
+parts — the Blacksmith has one, so do the keep and a guard tower — are not
+played.
+
 ### Characters
 
 A race model is not one mesh. `NVikingM.NIF` and `NTrollM.NIF` each hold 49
@@ -928,8 +942,7 @@ a large wolf pack until it kills you, and running a badger to its leash.
 - **Particle systems are read but not drawn.** Every fixture is placed, but a
   campfire is only its logs: its flame, smoke and the forge sparks are
   emitters this pipeline parses and discards. The newer torches and braziers
-  draw their flames as glowing cards instead, and those show, but the
-  `NiUVController` that scrolls them is ignored, so they do not flicker.
+  draw their flames as glowing, scrolling cards instead, and those burn.
 - **Two textures are missing from the install.** `BAG.nif` names `mfiga6.dds`
   and `mheada3.dds`, which exist nowhere in the game directory; those three
   props draw white.

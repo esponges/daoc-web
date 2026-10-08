@@ -228,3 +228,35 @@ func TestEveryPlacedModelConverts(t *testing.T) {
 	t.Logf("%d models converted, %d/%d fixtures placed, %d vertices, %d triangles",
 		converted, placed, total, len(verts), len(indices)/3)
 }
+
+// TestTorchFlickers converts the Mularn tiki torch and checks its animation
+// survives: the flame card rises at one texture height a second, additive
+// and turned to the camera, and the corona breathes between 0.91 and 1.
+func TestTorchFlickers(t *testing.T) {
+	game := gamePath(t)
+	var verts []vertex
+	var indices []uint32
+	mo, err := convertModel(game, modelDef{Name: "M06_tikitorch", File: "M06_tikitorch.nif"}, &verts, &indices)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var flame, corona *groupOut
+	for i := range mo.Groups {
+		g := &mo.Groups[i]
+		switch g.Texture {
+		case "fireshell3":
+			flame = g
+		case "lampglow":
+			corona = g
+		}
+	}
+	if flame == nil || corona == nil {
+		t.Fatalf("groups %+v: want a fireshell3 flame and a lampglow corona", mo.Groups)
+	}
+	if !flame.Additive || !flame.Billboard || flame.Scroll == nil || *flame.Scroll != [2]float32{0, 1} {
+		t.Errorf("flame: additive %v, billboard %v, scroll %v; want both and a V scroll of 1", flame.Additive, flame.Billboard, flame.Scroll)
+	}
+	if len(corona.Pulse) != 5 || corona.Pulse[0][1] != 1 || corona.Pulse[3][1] > 0.92 {
+		t.Errorf("corona pulse %v, want 5 keys from 1 down to about 0.91", corona.Pulse)
+	}
+}

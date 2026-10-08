@@ -59,6 +59,14 @@ type groupOut struct {
 	// then the card's pivot, and its normal holds the corner's offset from
 	// it: x across the card, y up it.
 	Billboard bool `json:"billboard,omitempty"`
+	// Scroll is a texture moving across its card, in texture widths a
+	// second, U then V: the flames rise at 1 a second. From a
+	// NiUVController, whose curves in these models are all straight ramps.
+	Scroll *[2]float32 `json:"scroll,omitempty"`
+	// Pulse is a billboard's size over one second, [time, scale] keys,
+	// looped: the coronas breathe between 0.91 and 1. From the
+	// NiKeyframeController on the card's NiBillboardNode.
+	Pulse [][2]float32 `json:"pulse,omitempty"`
 }
 
 type modelOut struct {
@@ -377,6 +385,7 @@ type texState struct {
 	// model space as the point the card turns about.
 	billboard bool
 	pivot     [3]float32
+	pulse     [][2]float32
 	// vertexMode is the NiVertexColorProperty in force: 0 ignores a shape's
 	// vertex colours, 1 makes them emissive, 2 has them scale the lighting.
 	// Only 2 is used, as baked shade -- the darker eaves, corners and
@@ -391,6 +400,8 @@ type texState struct {
 type groupKey struct {
 	texture             string
 	additive, billboard bool
+	scroll              [2]float32
+	pulse               string // the pulse keys, printed, so equal curves share a group
 }
 
 func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32) (*modelOut, error) {
@@ -403,6 +414,20 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 		return nil, err
 	}
 	mo := &modelOut{Name: def.Name, File: def.File}
+
+	// Animation hangs off its target by reference from the controller's
+	// side, so index the controllers by what they drive.
+	pulses := map[string][][2]float32{}
+	uvBy := map[int32]*nif.UVController{}
+	kfBy := map[int32]*nif.KeyframeController{}
+	for _, blk := range f.Blocks {
+		switch c := blk.(type) {
+		case *nif.UVController:
+			uvBy[c.Target] = c
+		case *nif.KeyframeController:
+			kfBy[c.Target] = c
+		}
+	}
 
 	// Collect geometry per texture so each group is one draw call.
 	byTex := map[groupKey]*struct {
@@ -431,7 +456,16 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 			world := parent.Mul(b.Local)
 			st = applyProps(f, b.Properties, st)
 			if f.TypeOf[ref] == "NiBillboardNode" {
-				st.billboard, st.pivot = true, world.Trans
+				st.billboard, st.pivot, st.pulse = true, world.Trans, nil
+				if kf := kfBy[ref]; kf != nil {
+					if d, ok := f.Block(kf.Data).(*nif.KeyframeData); ok && len(d.Scales) > 1 {
+						for _, k := range d.Scales {
+							// Rounded, so copies of one curve share a draw group.
+							r := func(v float32) float32 { return float32(math.Round(float64(v)*1000) / 1000) }
+							st.pulse = append(st.pulse, [2]float32{r(k.Time), r(k.Value)})
+						}
+					}
+				}
 			}
 			for _, c := range b.Children {
 				walk(c, world, st, depth+1)
@@ -459,7 +493,14 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 			if d == nil || len(d.Vertices) == 0 || len(d.Triangles) == 0 {
 				return
 			}
-			k := groupKey{st.texture, st.additive, st.billboard}
+			k := groupKey{texture: st.texture, additive: st.additive, billboard: st.billboard}
+			if uv := uvBy[ref]; uv != nil {
+				k.scroll = uvScroll(f, uv)
+			}
+			if st.billboard && len(st.pulse) > 1 {
+				k.pulse = fmt.Sprint(st.pulse)
+				pulses[k.pulse] = st.pulse
+			}
 			g := byTex[k]
 			if g == nil {
 				g = &struct {
@@ -528,7 +569,13 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 		if a.additive != b.additive {
 			return !a.additive
 		}
-		return !a.billboard && b.billboard
+		if a.billboard != b.billboard {
+			return !a.billboard
+		}
+		if a.scroll != b.scroll {
+			return a.scroll[0] < b.scroll[0] || (a.scroll[0] == b.scroll[0] && a.scroll[1] < b.scroll[1])
+		}
+		return a.pulse < b.pulse
 	})
 	for _, k := range keys {
 		g := byTex[k]
@@ -542,7 +589,12 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 			Count:     len(g.idx),
 			Additive:  k.additive,
 			Billboard: k.billboard,
+			Pulse:     pulses[k.pulse],
 		})
+		if k.scroll != ([2]float32{}) {
+			s := k.scroll
+			mo.Groups[len(mo.Groups)-1].Scroll = &s
+		}
 		*indices = append(*indices, g.idx...)
 	}
 	if len(mo.Groups) == 0 {
@@ -754,4 +806,24 @@ func maxf(a, b float32) float32 {
 		return a
 	}
 	return b
+}
+
+// uvScroll turns a NiUVController's offset curves into a rate, texture
+// widths a second, U then V. Every curve in the zone's models is a two-key
+// ramp -- the flames' V from 0 to 1 over a second, the bindstone's U over
+// ten -- so first to last key is the whole of it.
+func uvScroll(f *nif.File, c *nif.UVController) [2]float32 {
+	d, ok := f.Block(c.Data).(*nif.UVData)
+	if !ok {
+		return [2]float32{}
+	}
+	var out [2]float32
+	for i := 0; i < 2; i++ {
+		k := d.Groups[i]
+		if len(k) < 2 || k[len(k)-1].Time <= k[0].Time {
+			continue
+		}
+		out[i] = (k[len(k)-1].Value - k[0].Value) / (k[len(k)-1].Time - k[0].Time)
+	}
+	return out
 }

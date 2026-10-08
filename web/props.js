@@ -28,6 +28,24 @@ uniform vec3 uCamPos;
 uniform float uBillboard;
 uniform vec3 uCamRight;
 uniform vec3 uCamUp;
+// Animation, per draw group: a texture scroll in widths a second, and a
+// billboard's size over a looping second as up to eight [time, scale] keys.
+uniform float uTime;
+uniform vec2 uScroll;
+uniform vec2 uPulse[8];
+uniform int uPulseN;
+
+float pulse(float t) {
+  if (uPulseN < 2) return 1.0;
+  for (int i = 1; i < 8; i++) {
+    if (i >= uPulseN) break;
+    if (t <= uPulse[i].x) {
+      float a = uPulse[i - 1].x, b = uPulse[i].x;
+      return mix(uPulse[i - 1].y, uPulse[i].y, (t - a) / max(b - a, 1e-4));
+    }
+  }
+  return uPulse[uPulseN - 1].y;
+}
 
 out vec2 vUV;
 out vec3 vNormal;
@@ -44,8 +62,11 @@ void main() {
     aScale * aPos.z + aInst.y,
     aScale * (s * aPos.x + c * aPos.y) + aInst.z
   );
+  // Every copy runs its animation from its own point in the cycle, so a
+  // row of torches does not flicker in step.
+  float phase = fract(sin(dot(aInst.xz, vec2(12.9898, 78.233))) * 43758.5453);
   if (uBillboard > 0.5) {
-    world += aScale * (uCamRight * aNormal.x + uCamUp * aNormal.y);
+    world += aScale * pulse(fract(uTime + phase)) * (uCamRight * aNormal.x + uCamUp * aNormal.y);
     vNormal = normalize(uCamPos - world);
   } else {
     vNormal = normalize(vec3(
@@ -54,7 +75,7 @@ void main() {
       s * aNormal.x + c * aNormal.y
     ));
   }
-  vUV = aUV;
+  vUV = aUV + uScroll * fract(uTime * 0.1 + phase) * 10.0;
   vShade = aColor.rgb;
   vWorld = world;
   vDist = length(world - uCamPos);
@@ -130,6 +151,8 @@ function loadImage(src) {
   });
 }
 
+const NO_SCROLL = [0, 0];
+
 export async function createProps(gl, base) {
   const manifest = await fetch(base + '/props.json').then((r) => {
     if (!r.ok) throw new Error('props.json: HTTP ' + r.status);
@@ -148,7 +171,8 @@ export async function createProps(gl, base) {
   const prog = program(gl, PROP_VS, PROP_FS, 'props');
   const U = {};
   for (const n of ['uViewProj', 'uCamPos', 'uTex', 'uFogColor', 'uFogStart', 'uFogEnd', 'uAlphaTest',
-    'uAdditive', 'uBillboard', 'uCamRight', 'uCamUp', ...LIGHT_UNIFORMS]) {
+    'uAdditive', 'uBillboard', 'uCamRight', 'uCamUp', 'uTime', 'uScroll', 'uPulse', 'uPulseN',
+    ...LIGHT_UNIFORMS]) {
     U[n] = gl.getUniformLocation(prog, n);
   }
 
@@ -210,6 +234,10 @@ export async function createProps(gl, base) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
     gl.bindVertexArray(null);
 
+    // Pulse curves flattened for the uniform, at most eight keys.
+    for (const g of m.groups) {
+      if (g.pulse) g.pulseKeys = new Float32Array(g.pulse.slice(0, 8).flat());
+    }
     return { name: m.name, vao, count: list.length, groups: m.groups, max: m.max };
   });
 
@@ -256,6 +284,7 @@ export async function createProps(gl, base) {
     gl.uniform1i(U.uTex, 0);
     gl.uniform3fv(U.uCamRight, ctx.camRight);
     gl.uniform3fv(U.uCamUp, ctx.camUp);
+    gl.uniform1f(U.uTime, ctx.time || 0);
     gl.activeTexture(gl.TEXTURE0);
     // Cut-out foliage and single-sided boards are both two-sided in practice.
     gl.disable(gl.CULL_FACE);
@@ -280,6 +309,9 @@ export async function createProps(gl, base) {
           gl.bindTexture(gl.TEXTURE_2D, textures.get(g.texture) || white);
           gl.uniform1f(U.uAlphaTest, g.alpha && !glow ? 1 : 0);
           gl.uniform1f(U.uBillboard, g.billboard ? 1 : 0);
+          gl.uniform2fv(U.uScroll, g.scroll || NO_SCROLL);
+          gl.uniform1i(U.uPulseN, g.pulseKeys ? g.pulseKeys.length / 2 : 0);
+          if (g.pulseKeys) gl.uniform2fv(U.uPulse, g.pulseKeys);
           gl.drawElementsInstanced(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, g.first * 4, m.count);
           calls++;
         }

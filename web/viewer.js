@@ -942,12 +942,12 @@ async function main() {
     // Everything that stands in the world, drawn with a given camera: the
     // player's for the picture, the sun's for the shadow map.
     const drawWorld = (viewProj, light, shadowPass) => {
-      const ctx = { viewProj, camPos: eye, camRight, camUp, fogColor, fogStart, fogEnd, light, shadowPass };
+      const ctx = { viewProj, camPos: eye, camRight, camUp, fogColor, fogStart, fogEnd, light, shadowPass, time: now / 1000 };
       drawTerrain(viewProj, light, shadowPass);
       if (props) props.draw(ctx);
       // Grass casts no shadow: a few inches of blades would only speckle
       // the ground the map already darkens.
-      if (grass && grassOn && !shadowPass) grass.draw({ ...ctx, time: now / 1000 });
+      if (grass && grassOn && !shadowPass) grass.draw(ctx);
       // The character goes in before the water so a submerged figure is
       // tinted by the translucent surface rather than drawn over it.
       char.draw({ ...ctx, model: charModel });
