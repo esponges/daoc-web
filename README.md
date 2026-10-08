@@ -66,8 +66,12 @@ go run ./cmd/serve                                       # then open localhost:8
 Where they stand is `web/spawns/zone100.json`, which is this project's own
 placement — see [NPCs](#npcs). `?npcs=0` leaves them out.
 
-Controls: `WASD` to move, drag to orbit the camera, wheel to zoom, shift to
-sprint, alt to walk, `C` for the free-fly camera, `F` for wireframe. Click an
+Controls are the game's: `W`/`S` move forward and back (backing up is at a
+walk), `A`/`D` turn the character with the camera behind it, `Q`/`E`
+strafe. Hold the right mouse button and drag to look around without turning;
+the camera swings back behind once you move. Wheel zooms, shift sprints, `R`
+toggles between running (the default) and walking, `C` switches to the
+free-fly camera, `F` to wireframe. Left-click an
 NPC to target it, or `Tab`
 for the nearest in front of the camera (again to cycle); a ring marks it, gold
 when selected and red in a fight. `1` switches
@@ -692,8 +696,7 @@ those two are already paced by ground speed.
 
 ### Targeting by clicking
 
-A click — a press and release without dragging, so orbiting the camera still
-works — casts a ray from the eye through the cursor, built from the camera's
+A left click — a press and release without moving the mouse — casts a ray from the eye through the cursor, built from the camera's
 own basis and field of view. Each living NPC stands in for an upright
 cylinder as tall as it is drawn and as wide as its body, and the nearest one
 the ray enters is selected. The combat test checks the obvious cases: a ray

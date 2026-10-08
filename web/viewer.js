@@ -44,6 +44,14 @@ const LOCOMOTION = new Set(['walk', 'run']);
 // Vertical field of view, shared by the projection and click-picking.
 const FOV = Math.PI / 3;
 
+// How fast A and D turn the character, in radians per second: half a turn
+// in a little over a second.
+const TURN = 2.8;
+
+// How fast a camera swung away by a right-drag eases back behind the
+// character once it moves, per second.
+const CAM_RETURN = 3;
+
 // The player's hit points. A grey wolf takes a third of them in a fair fight.
 const PLAYER_HP = 220;
 
@@ -419,7 +427,10 @@ async function main() {
   // --- cameras ---
   // Two modes: an orbit camera chasing the character, and the original
   // free-fly for looking at the zone as a whole.
-  const orbit = { yaw: Math.PI, pitch: 0.30, dist: 320 };
+  // The chase camera's heading is the character's plus an offset: A and D
+  // turn the character and the camera with it, and a right-drag swings the
+  // offset to look around without turning anyone.
+  const orbit = { yaw: Math.PI, off: 0, pitch: 0.30, dist: 320 };
   const mid = extent / 2;
   const cam = {
     pos: [mid - 26000, man.maxHeight + 9000, mid + 34000],
@@ -472,10 +483,17 @@ async function main() {
   };
 
   const keys = new Set();
+  // A key released while the page is not focused never sends its keyup --
+  // Alt-Tabbing away is the usual way -- so drop everything on blur rather
+  // than leave a key held down for good.
+  addEventListener('blur', () => keys.clear());
   let wireframe = false;
+  // Running is the default; R toggles walking.
+  let walkMode = false;
   addEventListener('keydown', (e) => {
     keys.add(e.code);
     if (e.code === 'KeyF') wireframe = !wireframe;
+    if (e.code === 'KeyR' && !e.repeat) walkMode = !walkMode;
     // Combat. Tab would otherwise move focus out of the page.
     if (combat && e.code === 'Tab') {
       e.preventDefault();
@@ -496,17 +514,20 @@ async function main() {
     }
   });
   addEventListener('keyup', (e) => keys.delete(e.code));
+  // A left click selects whatever NPC is under the cursor. A right-drag
+  // turns the camera and nothing else; in free-fly either button looks
+  // around.
   let dragging = false;
-  // A click -- pressed and released without dragging -- selects whatever NPC
-  // is under the cursor; a drag orbits the camera as before.
   let downAt = null;
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('mousedown', (e) => {
-    dragging = true;
-    downAt = [e.clientX, e.clientY];
+    if (e.button === 2 || (e.button === 0 && !followMode)) dragging = true;
+    if (e.button === 0) downAt = [e.clientX, e.clientY];
     e.preventDefault();
   });
   addEventListener('mouseup', (e) => {
-    dragging = false;
+    if (e.button === 2 || !followMode) dragging = false;
+    if (e.button !== 0) return;
     if (!downAt || !combat || !view.eye) return;
     const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
     downAt = null;
@@ -533,7 +554,7 @@ async function main() {
   addEventListener('mousemove', (e) => {
     if (!dragging) return;
     if (followMode) {
-      orbit.yaw -= e.movementX * 0.005;
+      orbit.off -= e.movementX * 0.005;
       orbit.pitch = Math.max(-0.35, Math.min(1.25, orbit.pitch + e.movementY * 0.004));
     } else {
       cam.yaw -= e.movementX * 0.0028;
@@ -583,37 +604,45 @@ async function main() {
     last = now;
 
     // --- move the character ---
-    // WASD is relative to where the camera points and the character turns to
-    // face wherever it is heading, which is how an MMO handles it.
-    const camF = [Math.sin(orbit.yaw), -Math.cos(orbit.yaw)];
-    const camR = [Math.cos(orbit.yaw), Math.sin(orbit.yaw)];
-    let mx = 0, my = 0;
-    if (keys.has('KeyW')) { mx += camF[0]; my += camF[1]; }
-    if (keys.has('KeyS')) { mx -= camF[0]; my -= camF[1]; }
-    if (keys.has('KeyD')) { mx += camR[0]; my += camR[1]; }
-    if (keys.has('KeyA')) { mx -= camR[0]; my -= camR[1]; }
+    // As in DAoC: A and D turn the character, W and S move it forward and
+    // back along the way it faces, Q and E step sideways. The camera hangs
+    // behind and turns with it.
+    const control = followMode && !player.dead;
+    const turn = control ? (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0) : 0;
+    player.yaw += turn * TURN * dt;
+    const fwdKey = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0);
+    const sideKey = (keys.has('KeyE') ? 1 : 0) - (keys.has('KeyQ') ? 1 : 0);
+    const pf = [Math.sin(player.yaw), -Math.cos(player.yaw)];
+    const pr = [Math.cos(player.yaw), Math.sin(player.yaw)];
+    let mx = pf[0] * fwdKey + pr[0] * sideKey, my = pf[1] * fwdKey + pr[1] * sideKey;
     const moveLen = Math.hypot(mx, my);
-    if (moveLen > 0 && followMode && !player.dead) {
+    player.back = control && fwdKey < 0 && sideKey === 0;
+    if (moveLen > 0 && control) {
       mx /= moveLen; my /= moveLen;
       const sprinting = keys.has('ShiftLeft') || keys.has('ShiftRight');
-      const walking = keys.has('AltLeft') || keys.has('AltRight');
-      const speed = sprinting ? SPRINT : walking ? WALK : RUN;
+      // Backing up is always at a walk, which is how the game does it.
+      const speed = player.back || walkMode ? WALK : sprinting ? SPRINT : RUN;
       const d = speed * dt;
       player.x = Math.max(0, Math.min(extent, player.x + mx * d));
       player.y = Math.max(0, Math.min(extent, player.y + my * d));
-      player.yaw = turnToward(player.yaw, Math.atan2(mx, -my), 11 * dt);
       // Phase advances with ground covered, not with time, so the feet keep
       // pace at any speed.
       player.phase += (d / STRIDE) * Math.PI * 2;
       player.gait = speed;
+      // Moving brings a camera swung aside back round behind.
+      orbit.off *= Math.max(0, 1 - CAM_RETURN * dt);
     } else {
       player.gait = 0;
     }
+    orbit.off = ((orbit.off + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+    orbit.yaw = player.yaw + orbit.off;
     const intensity = Math.min(1, player.gait / RUN);
 
     // --- NPCs and the fight ---
     if (npcs) npcs.update(dt);
-    if (combat) combat.update(dt, { moving: player.gait > 0 });
+    // Turning counts as moving here, so the fight's own turn toward the
+    // target does not wrestle the A and D keys.
+    if (combat) combat.update(dt, { moving: player.gait > 0 || turn !== 0 });
 
     // --- animation ---
     // Which clip the character should be in. Sprint has no cycle of its own,
@@ -629,7 +658,8 @@ async function main() {
     anim.update(dt, (name) => {
       // Divided by the race's scale: a troll drawn 1.3x larger covers 1.3x
       // the ground per stride, so its cycle has to run that much slower.
-      if (name === 'walk') return Math.max(player.gait, WALK) / (WALK * char.scale);
+      // Backing up plays the walk in reverse.
+      if (name === 'walk') return (player.back ? -1 : 1) * Math.max(player.gait, WALK) / (WALK * char.scale);
       if (name === 'run') return Math.max(player.gait, RUN) / (RUN * char.scale);
       return 1;
     });
