@@ -13,6 +13,7 @@ import { createNPCs, bodyRadius, pickNPC } from './npc.js';
 import { createRing } from './ring.js';
 import { createCombat } from './combat.js';
 import { Animator } from './animator.js';
+import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows } from './lighting.js';
 
 const ZONE = 'data/zone100';
 
@@ -150,11 +151,13 @@ uniform vec3 uCamPos;
 out vec3 vNormal;
 out vec2 vUV;
 out vec2 vWorld;
+out vec3 vPos;
 out float vDist;
 void main() {
   vNormal = aNormal;
   vUV = aUV;
   vWorld = aPos.xz;
+  vPos = aPos;
   vDist = length(aPos - uCamPos);
   gl_Position = uViewProj * vec4(aPos, 1.0);
 }
@@ -165,8 +168,10 @@ precision highp float;
 in vec3 vNormal;
 in vec2 vUV;
 in vec2 vWorld;
+in vec3 vPos;
 in float vDist;
 uniform sampler2D uAtlas;
+${LIGHT_GLSL}
 // Ground detail (see zoneconv/splat.go): the layer textures, the masks that
 // say where each lies, and per sector which layer each slot paints and how
 // often it repeats across the zone.
@@ -181,7 +186,6 @@ uniform vec2 uDetailFade; // distance over which detail gives way to the atlas
 uniform vec3 uFogColor;
 uniform float uFogStart;
 uniform float uFogEnd;
-uniform vec3 uLightDir;
 uniform float uWireframe;
 out vec4 outColor;
 vec3 detail() {
@@ -215,10 +219,7 @@ void main() {
   }
   if (uWireframe > 0.5) base = vec3(0.55, 0.62, 0.70);
   vec3 n = normalize(vNormal);
-  // Hemisphere ambient plus one directional term: enough to read the relief.
-  float diff = max(dot(n, normalize(uLightDir)), 0.0);
-  float ambient = 0.45 + 0.20 * n.y;
-  vec3 lit = base * (ambient + 0.75 * diff);
+  vec3 lit = base * lightAt(n, vPos, false);
   float fog = clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   outColor = vec4(mix(lit, uFogColor, fog), 1.0);
 }
@@ -605,6 +606,7 @@ async function main() {
     keys.add(e.code);
     if (e.code === 'KeyF') wireframe = !wireframe;
     if (e.code === 'KeyG') detailOn = !detailOn;
+    if (e.code === 'KeyL' && shadows && shadows.ok) shadowsOn = !shadowsOn;
     if (e.code === 'KeyR' && !e.repeat) walkMode = !walkMode;
     // Combat. Tab would otherwise move focus out of the page.
     if (combat && e.code === 'Tab') {
@@ -703,8 +705,17 @@ async function main() {
     char.height.toFixed(1) + 'u, drawn at ' + char.scale + 'x';
 
   // --- uniform locations ---
-  const tU = uniforms(gl, terrainProg, ['uViewProj', 'uCamPos', 'uAtlas', 'uFogColor', 'uFogStart', 'uFogEnd', 'uLightDir', 'uWireframe',
-    'uLayers', 'uMasks', 'uSlots', 'uSectors', 'uZone', 'uMaskPx', 'uDetail', 'uDetailFade']);
+  const tU = uniforms(gl, terrainProg, ['uViewProj', 'uCamPos', 'uAtlas', 'uFogColor', 'uFogStart', 'uFogEnd', 'uWireframe',
+    'uLayers', 'uMasks', 'uSlots', 'uSectors', 'uZone', 'uMaskPx', 'uDetail', 'uDetailFade', ...LIGHT_UNIFORMS]);
+
+  // Sun shadows; see lighting.js. ?shadows=0 turns them off, ?shadow=4096
+  // asks for a sharper map.
+  const params = new URLSearchParams(location.search);
+  const shadowSize = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), Number(params.get('shadow')) || 2048);
+  const shadows = params.get('shadows') === '0' ? null
+    : createShadows(gl, { size: shadowSize, radius: 2400 * Math.sqrt(shadowSize / 2048) });
+  if (shadows && !shadows.ok) console.warn('shadow map framebuffer incomplete; drawing without shadows');
+  let shadowsOn = !!(shadows && shadows.ok);
   const wU = uniforms(gl, waterProg, ['uViewProj', 'uCamPos', 'uFogColor', 'uFogStart', 'uFogEnd', 'uTime']);
 
   gl.enable(gl.DEPTH_TEST);
@@ -842,8 +853,6 @@ async function main() {
       canvas.height = Math.round(h * dpr);
     }
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(fogColor[0], fogColor[1], fogColor[2], 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const far = 160000;
     const near = followMode ? 15 : 20;
@@ -851,18 +860,22 @@ async function main() {
     view.eye = eye; view.target = target;
     const fogStart = far * 0.25, fogEnd = far * 0.92;
 
+    // --- terrain ---
+    // The shadow pass draws it too, as a caster: a hill shades the valley
+    // behind it. That pass wants depth only, so no ground detail.
+    const drawTerrain = (viewProj, light, shadowPass) => {
     gl.useProgram(terrainProg);
-    gl.uniformMatrix4fv(tU.uViewProj, false, vp);
+    gl.uniformMatrix4fv(tU.uViewProj, false, viewProj);
     gl.uniform3fv(tU.uCamPos, eye);
     gl.uniform3fv(tU.uFogColor, fogColor);
     gl.uniform1f(tU.uFogStart, fogStart);
     gl.uniform1f(tU.uFogEnd, fogEnd);
-    gl.uniform3fv(tU.uLightDir, [0.45, 0.78, 0.35]);
-    gl.uniform1f(tU.uWireframe, wireframe ? 1 : 0);
+    bindLight(gl, tU, light);
+    gl.uniform1f(tU.uWireframe, wireframe && !shadowPass ? 1 : 0);
     gl.uniform1i(tU.uAtlas, 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.uniform1f(tU.uDetail, detail && detailOn ? 1 : 0);
+    gl.uniform1f(tU.uDetail, detail && detailOn && !shadowPass ? 1 : 0);
     if (detail) {
       gl.uniform1i(tU.uLayers, 1);
       gl.uniform1i(tU.uMasks, 2);
@@ -877,44 +890,54 @@ async function main() {
       gl.uniform2f(tU.uDetailFade, DETAIL_NEAR, DETAIL_FAR);
     }
     gl.bindVertexArray(terrainVAO);
-    if (wireframe) {
+    if (wireframe && !shadowPass) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lbo);
       gl.drawElements(gl.LINES, lineIdx.length, gl.UNSIGNED_INT, 0);
     } else {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
       gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
     }
+    };
 
-    if (props) {
-      // The camera's right and up, for cards that turn to face it.
-      const f = [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]];
-      const fl = Math.hypot(...f) || 1;
-      const r = [-f[2] / fl, 0, f[0] / fl];
-      const rl = Math.hypot(...r) || 1;
-      const camRight = r.map((x) => x / rl);
-      const camUp = [
-        (camRight[1] * f[2] - camRight[2] * f[1]) / fl,
-        (camRight[2] * f[0] - camRight[0] * f[2]) / fl,
-        (camRight[0] * f[1] - camRight[1] * f[0]) / fl,
-      ];
-      props.draw({
-        viewProj: vp, camPos: eye, camRight, camUp,
-        fogColor, fogStart, fogEnd, lightDir: [0.45, 0.78, 0.35],
-      });
+    // The camera's right and up, for cards that turn to face it.
+    const f = [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]];
+    const fl = Math.hypot(...f) || 1;
+    const r = [-f[2] / fl, 0, f[0] / fl];
+    const rl = Math.hypot(...r) || 1;
+    const camRight = r.map((x) => x / rl);
+    const camUp = [
+      (camRight[1] * f[2] - camRight[2] * f[1]) / fl,
+      (camRight[2] * f[0] - camRight[0] * f[2]) / fl,
+      (camRight[0] * f[1] - camRight[1] * f[0]) / fl,
+    ];
+    // Everything that stands in the world, drawn with a given camera: the
+    // player's for the picture, the sun's for the shadow map.
+    const drawWorld = (viewProj, light, shadowPass) => {
+      const ctx = { viewProj, camPos: eye, camRight, camUp, fogColor, fogStart, fogEnd, light, shadowPass };
+      drawTerrain(viewProj, light, shadowPass);
+      if (props) props.draw(ctx);
+      // The character goes in before the water so a submerged figure is
+      // tinted by the translucent surface rather than drawn over it.
+      char.draw({ ...ctx, model: charModel });
+      if (npcs) npcs.draw(ctx);
+    };
+
+    // --- shadow pass ---
+    // Centred on the player, or under the free camera.
+    let light = null;
+    if (shadows && shadowsOn) {
+      const c = followMode ? [player.x, playerGround, player.y] : [eye[0], groundAt(eye[0], eye[2]), eye[2]];
+      const l = shadows.begin(c);
+      drawWorld(l.viewProj, null, true);
+      shadows.end();
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      light = l;
     }
 
-    // The character goes in before the water so a submerged figure is tinted
-    // by the translucent surface rather than drawn over it.
-    char.draw({
-      viewProj: vp, model: charModel, camPos: eye,
-      fogColor, fogStart, fogEnd, lightDir: [0.45, 0.78, 0.35],
-    });
-    if (npcs) {
-      npcs.draw({
-        viewProj: vp, camPos: eye,
-        fogColor, fogStart, fogEnd, lightDir: [0.45, 0.78, 0.35],
-      });
-    }
+    // Cleared here, after the shadow pass, which draws to its own target.
+    gl.clearColor(fogColor[0], fogColor[1], fogColor[2], 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    drawWorld(vp, light, false);
     // The target's ring: gold when selected, red while it is a fight.
     const tgt = combat && combat.target;
     if (tgt && !tgt.gone) {

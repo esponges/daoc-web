@@ -111,6 +111,7 @@ node web/skeleton.test.mjs              # the posing maths, for the Norseman
 node web/skeleton.test.mjs troll-warrior  # and for any other converted character
 node web/npc.test.mjs                   # ten simulated minutes of wandering
 node web/combat.test.mjs                # targeting, fights, deaths and respawns
+node web/lighting.test.mjs              # the sun's shadow camera
 ```
 
 `skeleton.test.mjs` passes for all six converted characters — two playable
@@ -240,6 +241,48 @@ best of the other fifteen layouts          r = +0.6286
 stitched per tile index as a PNG strip, and the per-sector slot table into
 `zone.json`. The terrain shader paints them within 4000 units of the camera
 and fades to the atlas by 9000. `G` toggles it, for comparison.
+
+### Light and shadow
+
+The zone files say nothing about the sun. `SECTOR.DAT` has a fog colour and
+nothing else; `lights.csv` places about thirty point lights by type, mostly
+fires. Two rasters look like lighting and are not quite:
+
+- **`shademap.pcx`** is not a lightmap. Fitting it against slope lighting
+  from every sun direction explains almost none of it (best r = 0.18); it
+  follows how bright the ground is instead (r = 0.77 against the atlas), snow
+  against grass. It is most likely the brightness the game gives objects
+  standing at a spot, and is not used.
+- **`shadow.pcx`** is a dark dot under each tree at heightmap resolution:
+  blob shadows for the distance. The real shadows below cover the ground
+  near the player, so it is not used either.
+
+So the sun is this project's: one direction, south-east and about 50° up, a
+warm direct light, and an ambient that comes from the sky above and the
+ground below. `web/lighting.js` holds it, and the terrain, scenery and
+character shaders share it.
+
+Shadows are one 2048px depth map rendered from the sun over a square 4800
+units across, centred on the player. Every program that draws the world
+draws into it with its own shader and the sun's matrix for the camera's, so
+a tree's cut-out canopy casts the holes it shows, the hills shade the valleys
+behind them, and characters and NPCs cast as they are posed. The square
+moves in whole texels, so a shadow's edge does not crawl as the player walks,
+and fades over its outer tenth. Samples are filtered 3×3 and pushed off the
+surface along its normal, with a slope-scaled depth offset in the depth
+pass, which between them keep lit faces from shadowing themselves. `L`
+toggles shadows, `?shadows=0` leaves them out and `?shadow=4096` asks for a
+sharper map over a wider square.
+
+Scenery also carries its own baked light: per-vertex shade that darkens
+eaves, corners and interiors, as the buildings were lit when they were made.
+Whether the game uses it is up to the shape's `NiVertexColorProperty`, and
+that matters. Shapes in mode 2, "ambient and diffuse", 247 of them in this
+zone, hold clean 0..1 values. Shapes in mode 0, "ignore", also carry colours,
+and some are nonsense — the Jordheim gate's run to -2885, a modelling channel
+exported by mistake — which the game never reads because of that 0.
+`propconv` keeps colour only from mode-2 shapes, as four bytes on each
+vertex, and the scenery shader multiplies it in.
 
 ### Water
 
@@ -803,10 +846,11 @@ a large wolf pack until it kills you, and running a badger to its leash.
 
 ## Known limitations
 
-- **The lighting is not the game's.** Terrain and scenery are lit by one
-  made-up sun with no shadows. The zone ships `shademap.pcx` and
-  `shadow.pcx`, and the newer models carry baked vertex colours; none is
-  used yet. There is no sky either, only the fog colour.
+- **The sun is not the game's.** The zone defines none, so its direction
+  and colours are chosen here; there is no time of day, and the point
+  lights in `lights.csv` are not lit. Cast shadows reach 2400 units from the
+  player; beyond that only slope lighting remains. There is no sky either,
+  only the fog colour.
 - **No grass.** `grassmap.pcx` and `densemap.pcx` say where the game
   scatters grass sprites; nothing reads them.
 - **Particle systems are read but not drawn.** Every fixture is placed, but a

@@ -43,8 +43,9 @@ import (
 
 const defaultGame = `C:\Program Files (x86)\Electronic Arts\Dark Age of Camelot`
 
-// vertStride is pos[3] + normal[3] + uv[2], all float32.
-const vertStride = 32
+// vertStride is pos[3] + normal[3] + uv[2], all float32, then the baked
+// shade as four bytes, RGBA.
+const vertStride = 36
 
 type groupOut struct {
 	Texture string `json:"texture"`
@@ -92,6 +93,7 @@ type vertex struct {
 	P  [3]float32
 	N  [3]float32
 	UV [2]float32
+	C  [4]uint8 // baked shade; white where a model has none
 }
 
 func main() {
@@ -209,6 +211,7 @@ func run(game string, zone int, out string, listOnly bool) error {
 	buf := &bytes.Buffer{}
 	for _, v := range verts {
 		writeF32(buf, v.P[0], v.P[1], v.P[2], v.N[0], v.N[1], v.N[2], v.UV[0], v.UV[1])
+		buf.Write(v.C[:])
 	}
 	vertexBytes := buf.Len()
 	for _, i := range indices {
@@ -374,6 +377,14 @@ type texState struct {
 	// model space as the point the card turns about.
 	billboard bool
 	pivot     [3]float32
+	// vertexMode is the NiVertexColorProperty in force: 0 ignores a shape's
+	// vertex colours, 1 makes them emissive, 2 has them scale the lighting.
+	// Only 2 is used, as baked shade -- the darker eaves, corners and
+	// interiors the buildings were lit with when they were made. Shapes set
+	// to 0 do carry colours, and some of those are nonsense: the Jordheim
+	// gate's run to -2885, a modelling channel exported by mistake, which
+	// the game never reads because of that 0.
+	vertexMode uint32
 }
 
 // groupKey is what splits a model's geometry into draws.
@@ -465,7 +476,12 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 				card = cardFrame(d.Vertices, world, st.pivot)
 			}
 			for i, p := range d.Vertices {
-				v := vertex{P: world.Apply(p)}
+				v := vertex{P: world.Apply(p), C: [4]uint8{255, 255, 255, 255}}
+				if st.vertexMode == 2 && i < len(d.Colors) {
+					for k := 0; k < 4; k++ {
+						v.C[k] = uint8(math.Round(255 * math.Max(0, math.Min(1, float64(d.Colors[i][k])))))
+					}
+				}
 				if i < len(d.Normals) {
 					v.N = rotate(world, d.Normals[i])
 				}
@@ -560,6 +576,8 @@ func applyProps(f *nif.File, refs []int32, st texState) texState {
 			if src, ok := f.Block(b.Base.Source).(*nif.SourceTexture); ok && src.FileName != "" {
 				st.texture = texName(src.FileName)
 			}
+		case *nif.VertexColor:
+			st.vertexMode = b.VertexMode
 		case *nif.AlphaProperty:
 			// Bit 9 of the flags is the alpha-test enable. Trees need it:
 			// the canopy is a few quads with a cut-out leaf texture.

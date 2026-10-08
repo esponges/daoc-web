@@ -10,6 +10,8 @@
 // and the instance transform maps model Z to world height exactly as
 // modelMatrix does in character.js.
 
+import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight } from './lighting.js';
+
 const PROP_VS = `#version 300 es
 precision highp float;
 layout(location = 0) in vec3 aPos;
@@ -17,6 +19,7 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aUV;
 layout(location = 3) in vec4 aInst;   // world x, height, world z, yaw
 layout(location = 4) in float aScale;
+layout(location = 5) in vec4 aColor;  // baked shade, 1 where none
 
 uniform mat4 uViewProj;
 uniform vec3 uCamPos;
@@ -28,6 +31,8 @@ uniform vec3 uCamUp;
 
 out vec2 vUV;
 out vec3 vNormal;
+out vec3 vWorld;
+out vec3 vShade;
 out float vDist;
 
 void main() {
@@ -50,6 +55,8 @@ void main() {
     ));
   }
   vUV = aUV;
+  vShade = aColor.rgb;
+  vWorld = world;
   vDist = length(world - uCamPos);
   gl_Position = uViewProj * vec4(world, 1.0);
 }`;
@@ -58,10 +65,12 @@ const PROP_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 in vec3 vNormal;
+in vec3 vWorld;
+in vec3 vShade;
 in float vDist;
 
 uniform sampler2D uTex;
-uniform vec3 uLightDir;
+${LIGHT_GLSL}
 uniform vec3 uFogColor;
 uniform float uFogStart;
 uniform float uFogEnd;
@@ -83,10 +92,11 @@ void main() {
   // needing the props sorted back to front.
   if (uAlphaTest > 0.5 && texel.a < 0.5) discard;
   vec3 n = normalize(vNormal);
-  // Two-sided: foliage quads and thin boards are seen from both faces, and
-  // the exporter does not wind them consistently.
-  float lambert = abs(dot(n, normalize(uLightDir)));
-  vec3 lit = texel.rgb * (0.45 + 0.55 * lambert);
+  // Leaves are lit from either side: a canopy quad's normal says nothing
+  // about which way its leaves face. Everything else trusts its normals.
+  // The baked shade is the light the model was made with -- darker eaves,
+  // corners and interiors -- and scales whatever reaches it.
+  vec3 lit = texel.rgb * vShade * lightAt(n, vWorld, uAlphaTest > 0.5);
   outColor = vec4(mix(lit, uFogColor, fog), 1.0);
 }`;
 
@@ -137,8 +147,8 @@ export async function createProps(gl, base) {
 
   const prog = program(gl, PROP_VS, PROP_FS, 'props');
   const U = {};
-  for (const n of ['uViewProj', 'uCamPos', 'uTex', 'uLightDir', 'uFogColor', 'uFogStart', 'uFogEnd', 'uAlphaTest',
-    'uAdditive', 'uBillboard', 'uCamRight', 'uCamUp']) {
+  for (const n of ['uViewProj', 'uCamPos', 'uTex', 'uFogColor', 'uFogStart', 'uFogEnd', 'uAlphaTest',
+    'uAdditive', 'uBillboard', 'uCamRight', 'uCamUp', ...LIGHT_UNIFORMS]) {
     U[n] = gl.getUniformLocation(prog, n);
   }
 
@@ -183,6 +193,13 @@ export async function createProps(gl, base) {
     gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 12);
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 2, gl.FLOAT, false, stride, 24);
+    // Older conversions have no shade bytes; white stands in.
+    if (stride >= 36) {
+      gl.enableVertexAttribArray(5);
+      gl.vertexAttribPointer(5, 4, gl.UNSIGNED_BYTE, true, stride, 32);
+    } else {
+      gl.vertexAttrib4f(5, 1, 1, 1, 1);
+    }
     gl.bindBuffer(gl.ARRAY_BUFFER, ibuf);
     gl.enableVertexAttribArray(3);
     gl.vertexAttribPointer(3, 4, gl.FLOAT, false, 20, 0);
@@ -232,7 +249,7 @@ export async function createProps(gl, base) {
     gl.useProgram(prog);
     gl.uniformMatrix4fv(U.uViewProj, false, ctx.viewProj);
     gl.uniform3fv(U.uCamPos, ctx.camPos);
-    gl.uniform3fv(U.uLightDir, ctx.lightDir);
+    bindLight(gl, U, ctx.light);
     gl.uniform3fv(U.uFogColor, ctx.fogColor);
     gl.uniform1f(U.uFogStart, ctx.fogStart);
     gl.uniform1f(U.uFogEnd, ctx.fogEnd);
@@ -247,7 +264,8 @@ export async function createProps(gl, base) {
     // so a wall hides a torch behind it, but write none, so overlapping
     // flames add up instead of cutting holes in one another.
     let calls = 0;
-    for (const glow of [false, true]) {
+    // Glows cast no shadow: they are light, not matter.
+    for (const glow of ctx.shadowPass ? [false] : [false, true]) {
       if (glow) {
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE);

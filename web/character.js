@@ -16,6 +16,7 @@
 // every joint regardless of how the artist oriented it.
 
 import { Skeleton, xform, Clip } from './skeleton.js';
+import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight } from './lighting.js';
 
 const MAX_BONES = 52; // the largest bone count on any one shape, with headroom
 
@@ -32,6 +33,7 @@ uniform vec3 uCamPos;
 uniform vec4 uBones[${MAX_BONES * 3}];
 out vec3 vNormal;
 out vec2 vUV;
+out vec3 vWorld;
 out float vDist;
 
 // Bone matrices arrive as three rows of four; the fourth row is implicit.
@@ -60,6 +62,7 @@ void main() {
   vec4 world = uModel * vec4(skinned, 1.0);
   vNormal = mat3(uModel) * normal;
   vUV = aUV;
+  vWorld = world.xyz;
   vDist = length(world.xyz - uCamPos);
   gl_Position = uViewProj * world;
 }
@@ -69,6 +72,7 @@ const CHAR_FS = `#version 300 es
 precision highp float;
 in vec3 vNormal;
 in vec2 vUV;
+in vec3 vWorld;
 in float vDist;
 uniform sampler2D uTex;
 uniform float uHasTex;
@@ -76,7 +80,7 @@ uniform vec3 uDiffuse;
 uniform vec3 uFogColor;
 uniform float uFogStart;
 uniform float uFogEnd;
-uniform vec3 uLightDir;
+${LIGHT_GLSL}
 out vec4 outColor;
 void main() {
   vec3 base = uDiffuse;
@@ -84,9 +88,7 @@ void main() {
   vec3 n = normalize(vNormal);
   // Two-sided: the meshes are thin shells and some faces end up away from the
   // light, which otherwise leaves whole limbs unlit.
-  float diff = abs(dot(n, normalize(uLightDir)));
-  float ambient = 0.50 + 0.18 * n.y;
-  vec3 lit = base * (ambient + 0.70 * diff);
+  vec3 lit = base * lightAt(n, vWorld, true);
   float fog = clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   outColor = vec4(mix(lit, uFogColor, fog), 1.0);
 }
@@ -114,7 +116,7 @@ export async function createCharacter(gl, base, helpers) {
   const prog = program(gl, CHAR_VS, CHAR_FS, 'character');
   const U = uniforms(gl, prog, [
     'uViewProj', 'uModel', 'uCamPos', 'uBones', 'uTex', 'uHasTex',
-    'uDiffuse', 'uFogColor', 'uFogStart', 'uFogEnd', 'uLightDir',
+    'uDiffuse', 'uFogColor', 'uFogStart', 'uFogEnd', ...LIGHT_UNIFORMS,
   ]);
 
   const vao = gl.createVertexArray();
@@ -199,7 +201,7 @@ export async function createCharacter(gl, base, helpers) {
     gl.uniform3fv(U.uFogColor, ctx.fogColor);
     gl.uniform1f(U.uFogStart, ctx.fogStart);
     gl.uniform1f(U.uFogEnd, ctx.fogEnd);
-    gl.uniform3fv(U.uLightDir, ctx.lightDir);
+    bindLight(gl, U, ctx.light);
     gl.uniform1i(U.uTex, 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindVertexArray(vao);
