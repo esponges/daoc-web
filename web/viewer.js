@@ -13,7 +13,8 @@ import { createNPCs, bodyRadius, pickNPC } from './npc.js';
 import { createRing } from './ring.js';
 import { createCombat } from './combat.js';
 import { Animator } from './animator.js';
-import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows } from './lighting.js';
+import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows, setSkyLight, SUN_DIR } from './lighting.js';
+import { createSky } from './sky.js';
 
 const ZONE = 'data/zone100';
 
@@ -685,8 +686,20 @@ async function main() {
   }, { passive: false });
 
   // --- HUD ---
+  // The region's sky, if zoneconv found one. It also decides the fog and the
+  // light: SECTOR.DAT's fog is a darker teal the sky file overrides, and
+  // with the sky's colour the far hills fade into the horizon behind them.
+  let sky = null;
+  if (man.sky) {
+    try {
+      sky = await createSky(gl, ZONE, man.sky, { program, uniforms, loadImage });
+      setSkyLight(sky.ambient, sky.sun);
+    } catch (e) {
+      console.warn('sky not loaded:', e.message);
+    }
+  }
   const fog = man.fog;
-  const fogColor = [fog.r / 255, fog.g / 255, fog.b / 255];
+  const fogColor = sky ? sky.fog : [fog.r / 255, fog.g / 255, fog.b / 255];
   $('title').textContent = man.name + '  (zone ' + man.zone + ')';
   $('i-grid').textContent = grid + ' x ' + grid + ' @ ' + cell + 'u';
   $('i-height').textContent = man.minHeight + ' .. ' + man.maxHeight + 'u';
@@ -937,6 +950,7 @@ async function main() {
     // Cleared here, after the shadow pass, which draws to its own target.
     gl.clearColor(fogColor[0], fogColor[1], fogColor[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if (sky) sky.draw({ f: f.map((x) => x / fl), s: camRight, u: camUp }, FOV, w / h, SUN_DIR, now / 1000);
     drawWorld(vp, light, false);
     // The target's ring: gold when selected, red while it is a fight.
     const tgt = combat && combat.target;

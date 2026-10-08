@@ -45,6 +45,7 @@ type manifest struct {
 	Start        [4]int     `json:"start"`
 	Fog          fogOut     `json:"fog"`
 	Splat        *splatOut  `json:"splat,omitempty"` // ground detail layers; see splat.go
+	Sky          *skyOut    `json:"sky,omitempty"`   // the region's skydome; see sky.go
 }
 
 type waterOut struct {
@@ -257,6 +258,11 @@ func run(game string, zoneNum int, zoneName, outRoot string) error {
 		} else {
 			man.Splat = sp
 		}
+	}
+	if sk, err := buildSky(game, zoneNum, outDir); err != nil {
+		fmt.Printf("  sky skipped: %v\n", err)
+	} else {
+		man.Sky = sk
 	}
 
 	mj, err := json.MarshalIndent(man, "", "  ")

@@ -13,13 +13,30 @@
 // shows. Outside the square there are no cast shadows, and the edge fades so
 // the boundary is not a line on the ground.
 
+// Until a sky file says otherwise (setSkyLight), these stand in.
 // Direction toward the sun, scene space (x, height, z): south-east of
 // overhead, about 50 degrees up, so shadows read without being stretched.
 export const SUN_DIR = normalize3([0.45, 0.78, 0.35]);
 
-const SUN_COLOR = [0.78, 0.73, 0.63];
-const SKY_COLOR = [0.56, 0.61, 0.70];
-const GROUND_COLOR = [0.40, 0.37, 0.32];
+let SUN_COLOR = [0.78, 0.73, 0.63];
+let SKY_COLOR = [0.56, 0.61, 0.70];
+let GROUND_COLOR = [0.40, 0.37, 0.32];
+
+// The sky file's light is a colour times an amount for each of ambient and
+// direct (sky_midgard.dat: a pale blue ambient at 0.6, white sun at 0.5).
+// How the game's renderer scales those is not known, and taken at face value
+// they leave sunlit grass at about 0.9 of its texture; EXPOSURE lifts the
+// whole scene so it lands near 1.2, keeping the file's balance between the
+// two. The ground below gives back a little less than the sky above.
+const EXPOSURE = 1.35;
+const BOUNCE = 0.7;
+
+// setSkyLight takes the sky file's ambient and direct light, 0..1 RGB.
+export function setSkyLight(ambient, sun) {
+  SKY_COLOR = ambient.map((v) => v * EXPOSURE);
+  GROUND_COLOR = ambient.map((v) => v * EXPOSURE * BOUNCE);
+  SUN_COLOR = sun.map((v) => v * EXPOSURE);
+}
 
 // The texture unit the shadow map lives on in every program. The terrain
 // takes 0-3 for its atlas and ground layers.

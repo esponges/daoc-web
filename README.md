@@ -257,9 +257,13 @@ fires. Two rasters look like lighting and are not quite:
   blob shadows for the distance. The real shadows below cover the ground
   near the player, so it is not used either.
 
-So the sun is this project's: one direction, south-east and about 50° up, a
-warm direct light, and an ambient that comes from the sky above and the
-ground below. `web/lighting.js` holds it, and the terrain, scenery and
+The sun's direction is this project's: south-east and about 50° up. Its
+colour and the ambient come from the region's sky file (see [Sky](#sky)):
+a white direct light at 0.5 and a pale blue ambient at 0.6, lifted together
+by one exposure factor of 1.35, because taken at face value they leave
+sunlit grass at about 0.9 of its texture and how the game's renderer scales
+them is not known. The ambient comes from the sky above and, at 0.7 of it,
+the ground below. `web/lighting.js` holds it, and the terrain, scenery and
 character shaders share it.
 
 Shadows are one 2048px depth map rendered from the sun over a square 4800
@@ -283,6 +287,34 @@ and some are nonsense — the Jordheim gate's run to -2885, a modelling channel
 exported by mistake — which the game never reads because of that 0.
 `propconv` keeps colour only from mode-2 shapes, as four bytes on each
 vertex, and the scenery shader multiplies it in.
+
+### Sky
+
+`zones/zones.mpk` holds `zones.dat`, an INI that maps each zone to a region
+(`[zone100]` → `region=100`) and each region to its sky, music and grass
+(`[region100]` → `skydome=sky_midgard.dat`). The sky files are INIs too, in
+`zones/sky/sky.mpk`, and each describes a whole sky:
+
+- **Canopy colours** for dawn, day and dusk, clear and stormy: the zenith and
+  four rings down to the horizon on the east side and on the west. Midgard's
+  clear day runs from 115,159,229 overhead to 229,229,229 at the horizon.
+- **Two cloud layers**, each a texture with how often it tiles across the dome
+  and how fast it scrolls ("multiplied by 0.001 in the code", the file says),
+  plus the clouds' tint and opacity at each ring, down to none at the horizon.
+- **Fog and light**: the distance fog colour, and the ambient and direct
+  light with an amount for each.
+- **Celestial objects**: the sun and moon with their textures, colours at
+  their height and at the horizon, blending and size.
+- Stars, storms, rain and snow, which are not used.
+
+`zoneconv` follows that chain, converts the clear day into `zone.json` and
+the cloud and sun textures into `sky/`. The viewer draws the sky first as one
+full-screen pass, each pixel's colour from its view ray: the canopy with the
+rings spaced evenly in elevation, which the file does not specify, and east
+blended into west; the two cloud decks projected onto a flat ceiling so they
+crowd toward the horizon; and the sun's disc and glow added over them,
+placed where the shadows say it is. The sky's fog colour replaces
+`SECTOR.DAT`'s darker teal, so far hills fade into the horizon behind them.
 
 ### Water
 
@@ -846,11 +878,11 @@ a large wolf pack until it kills you, and running a badger to its leash.
 
 ## Known limitations
 
-- **The sun is not the game's.** The zone defines none, so its direction
-  and colours are chosen here; there is no time of day, and the point
-  lights in `lights.csv` are not lit. Cast shadows reach 2400 units from the
-  player; beyond that only slope lighting remains. There is no sky either,
-  only the fog colour.
+- **It is always a clear midday.** The sky file has dawn, dusk, night, stars,
+  a moon and storms; only the clear day is converted, and the sun's direction
+  is chosen here rather than following a clock. The point lights in
+  `lights.csv` are not lit. Cast shadows reach 2400 units from the player;
+  beyond that only slope lighting remains.
 - **No grass.** `grassmap.pcx` and `densemap.pcx` say where the game
   scatters grass sprites; nothing reads them.
 - **Particle systems are read but not drawn.** Every fixture is placed, but a
