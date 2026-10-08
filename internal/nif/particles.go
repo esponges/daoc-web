@@ -123,7 +123,8 @@ type Controller struct {
 
 // ParticleSystemController is NiParticleSystemController, the largest block
 // in this file by some margin: emitter geometry, rates, lifetimes and the
-// live particle array, all of which this pipeline discards.
+// live particle array. The emission settings drive the viewer's particles;
+// the saved particle array is discarded.
 type ParticleSystemController struct {
 	Controller
 	Speed        float32
@@ -138,6 +139,7 @@ type ParticleSystemController struct {
 	EmitRate     float32
 	Lifetime     float32
 	LifetimeRand float32
+	StartRandom  [3]float32 // half-size of the box particles are born in, emitter space
 	Emitter      int32
 	NumParticles int
 	NumValid     int
@@ -439,7 +441,7 @@ func (f *File) readParticleController(r *reader) (*ParticleSystemController, err
 	if v >= 0x04000002 {
 		r.u16() // emit flags
 	}
-	r.vec3() // start random
+	c.StartRandom = r.vec3()
 	c.Emitter = r.i32()
 	if v >= 0x04000002 {
 		r.u16() // unknown short

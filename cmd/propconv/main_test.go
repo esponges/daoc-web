@@ -260,3 +260,47 @@ func TestTorchFlickers(t *testing.T) {
 		t.Errorf("corona pulse %v, want 5 keys from 1 down to about 0.91", corona.Pulse)
 	}
 }
+
+// TestLogFireParticles converts the log fire and checks its two emitters
+// come through as the model sets them: a fast, short-lived additive flame
+// and a slow, long-lived blended smoke that grows as it rises.
+func TestLogFireParticles(t *testing.T) {
+	game := gamePath(t)
+	var verts []vertex
+	var indices []uint32
+	mo, err := convertModel(game, modelDef{Name: "Fire", File: "logfire.nif"}, &verts, &indices)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(mo.Particles) != 2 {
+		t.Fatalf("%d particle systems, want flame and smoke", len(mo.Particles))
+	}
+	var flame, smoke *particleOut
+	for i := range mo.Particles {
+		p := &mo.Particles[i]
+		switch p.Texture {
+		case "flame000":
+			flame = p
+		case "grysmoke":
+			smoke = p
+		}
+	}
+	if flame == nil || smoke == nil {
+		t.Fatalf("textures %s and %s, want flame000 and grysmoke", mo.Particles[0].Texture, mo.Particles[1].Texture)
+	}
+	if !flame.Additive || flame.Rate != 90 || flame.Life[0] < 0.39 || flame.Life[0] > 0.41 || flame.Spin != 1 {
+		t.Errorf("flame: additive %v, rate %v, life %v, spin %v", flame.Additive, flame.Rate, flame.Life, flame.Spin)
+	}
+	if smoke.Additive || smoke.Life[0] != 3 || smoke.Grow != 3 || len(smoke.Color) != 3 {
+		t.Errorf("smoke: additive %v, life %v, grow %v, %d colour keys", smoke.Additive, smoke.Life, smoke.Grow, len(smoke.Color))
+	}
+	// Both spray up: the cone's vertical direction is 0, along the
+	// emitter's +Z, and the smoke starts above the flames.
+	if flame.Vertical[0] != 0 || smoke.Vertical[0] != 0 || smoke.Origin[2] <= flame.Origin[2] {
+		t.Errorf("vertical %v / %v, origins %v / %v", flame.Vertical, smoke.Vertical, flame.Origin, smoke.Origin)
+	}
+	// The flame never has more alive than the model's own particle array.
+	if alive := flame.Rate * (flame.Life[0] + flame.Life[1]); alive > 36.5 {
+		t.Errorf("flame keeps %.1f alive; the model holds 36", alive)
+	}
+}

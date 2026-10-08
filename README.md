@@ -492,6 +492,37 @@ at load the pulse would never be seen, so it loops. Nodes that animate whole
 parts — the Blacksmith has one, so do the keep and a guard tower — are not
 played.
 
+### Particles
+
+Six of the zone's models carry particle systems, 22 in all: the log fire's
+flame and smoke, the Blacksmith's forge fire and chimney smoke, the dwarven
+forges' sparks, glow and smoke, and the portals' streams. A
+`NiParticleSystemController` holds an emitter's settings — rate, lifetime,
+speed, a direction cone, size, and the box particles are born in — and
+points at the emitter node that places and aims it and at the particle
+geometry whose properties give texture and blending. A chain of modifiers
+grows and fades particles, tints them along a colour curve over their life,
+and spins them. The numbers are sensible as they stand: the log fire's flame
+makes 90 a second that live 0.4 s, so 36 alive, and the model's own saved
+particle array holds exactly 36.
+
+`propconv` writes those settings per model in the model's own space. The
+viewer runs them without simulating anything: an emitter that makes R a
+second for up to L seconds never has more than R×L alive, so it gets that
+many slots, slot k is reborn every R×L / R seconds offset by k / R, and its
+age is a function of the clock. Where in the box it starts, which way in the
+cone it flies and how fast all come from a hash of the slot and the rebirth,
+so the vertex shader places every particle from the time and its slot
+number, one instanced draw per emitter per placement. Additive glows add
+light; smoke blends over what is behind it. Neither writes depth.
+
+What the data says is drawn as it says, which leaves the smoke faint: its
+texture's alpha peaks at 0.26 and the colour curve's at 0.31, so a puff is at
+most 8% opaque. A `NiParticleBomb` that kicks the forge sparks about is not
+modelled, and only the log fire's stone ring has a fire: the newer
+`x06_campfire` rings carry no emitter, and nothing in the zone files puts
+one on them.
+
 ### Characters
 
 A race model is not one mesh. `NVikingM.NIF` and `NTrollM.NIF` each hold 49
@@ -939,10 +970,10 @@ a large wolf pack until it kills you, and running a badger to its leash.
   square, but nothing stops a tuft inside a building or under a fence on
   ground the map marks as meadow; the shapes are a reading of the atlas, not
   the game's code.
-- **Particle systems are read but not drawn.** Every fixture is placed, but a
-  campfire is only its logs: its flame, smoke and the forge sparks are
-  emitters this pipeline parses and discards. The newer torches and braziers
-  draw their flames as glowing, scrolling cards instead, and those burn.
+- **Some fire pits are cold.** The 13 `x06_campfire` stone rings carry no
+  emitter and nothing in the zone's files adds one, so they stay unlit. The
+  forge sparks' `NiParticleBomb` impulse is not modelled, and particles are
+  not sorted, so overlapping smoke can blend in the wrong order.
 - **Two textures are missing from the install.** `BAG.nif` names `mfiga6.dds`
   and `mheada3.dds`, which exist nowhere in the game directory; those three
   props draw white.

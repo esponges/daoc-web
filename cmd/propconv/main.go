@@ -75,6 +75,8 @@ type modelOut struct {
 	Min    [3]float32 `json:"min"`
 	Max    [3]float32 `json:"max"`
 	Groups []groupOut `json:"groups"`
+	// Particles are the model's emitters; see particles.go.
+	Particles []particleOut `json:"particles,omitempty"`
 }
 
 type instanceOut struct {
@@ -194,6 +196,9 @@ func run(game string, zone int, out string, listOnly bool) error {
 			if g.Texture != "" {
 				wantTex[g.Texture] = true
 			}
+		}
+		for _, p := range mo.Particles {
+			wantTex[p.Texture] = true
 		}
 		slot[id] = len(outModel)
 		outModel = append(outModel, *mo)
@@ -601,6 +606,7 @@ func convertModel(game string, def modelDef, verts *[]vertex, indices *[]uint32)
 		return nil, fmt.Errorf("no drawable geometry")
 	}
 	mo.Min, mo.Max = min, max
+	mo.Particles = particleSystems(f)
 	return mo, nil
 }
 

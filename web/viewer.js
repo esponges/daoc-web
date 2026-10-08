@@ -16,6 +16,7 @@ import { Animator } from './animator.js';
 import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows, setSkyLight, SUN_DIR } from './lighting.js';
 import { createSky } from './sky.js';
 import { createGrass } from './grass.js';
+import { createParticles } from './particles.js';
 
 const ZONE = 'data/zone100';
 
@@ -485,6 +486,9 @@ async function main() {
     console.warn('scenery not loaded:', e.message);
   }
 
+  // Fire, smoke and sparks from the scenery's own emitters.
+  const particles = props ? createParticles(gl, props, { program, uniforms }) : null;
+
   // --- grass ---
   // Optional too: zones converted before grass.go have none.
   let grass = null;
@@ -586,7 +590,7 @@ async function main() {
   // Debug handle: lets you jump the camera from the console, e.g.
   //   daoc.goto(120, 90, 800)   // heightmap cell x, y, metres above ground
   globalThis.daoc = {
-    cam, orbit, player, char, props, npcs, combat, anim, manifest: man, heights, grass,
+    cam, orbit, player, char, props, npcs, combat, anim, manifest: man, heights, grass, particles,
     heightAt: (cx, cy) => H(Math.round(cx), Math.round(cy)),
     groundAt,
     // Put the character on a given heightmap cell, e.g. daoc.warp(60, 70).
@@ -952,6 +956,8 @@ async function main() {
       // tinted by the translucent surface rather than drawn over it.
       char.draw({ ...ctx, model: charModel });
       if (npcs) npcs.draw(ctx);
+      // Particles cast no shadow, and go in last, over everything solid.
+      if (particles && !shadowPass) particles.draw(ctx);
     };
 
     // --- shadow pass ---

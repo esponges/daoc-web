@@ -245,6 +245,7 @@ export async function createProps(gl, base) {
   // prop draws white rather than taking the whole zone down with it.
   const names = new Set();
   for (const m of manifest.models) for (const g of m.groups) if (g.texture) names.add(g.texture);
+  for (const m of manifest.models) for (const e of m.particles || []) names.add(e.texture);
 
   const white = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, white);
@@ -326,6 +327,8 @@ export async function createProps(gl, base) {
 
   return {
     draw,
+    // texture finds one of the scenery's textures by name, for the particles.
+    texture: (name) => textures.get(name) || white,
     models,
     manifest,
     missingTextures: missing,
