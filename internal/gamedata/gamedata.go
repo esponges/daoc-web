@@ -7,6 +7,7 @@
 //	monsters.csv  model ID -> figure, a skin per slot, scale
 //	monnifs.csv   figure   -> .nif base name, animation set
 //	anims.csv     anim set -> one clip per role: walk, run, idle, death, ...
+//	canims.csv    anim set -> combat clips: attacks, flinch, combat idle
 //	animnifs.csv  clip     -> .kfa file, frame count, fps, loop or clamp
 //	skins.csv     skin     -> texture name, and which skinNNN.mpk holds it
 //
@@ -45,6 +46,9 @@ type Figure struct {
 	Name    string
 	File    string // base name in figures/, no extension, case as written
 	AnimSet int
+	// Type is 1 for the player-race figures, whose combat sets carry the
+	// humanoid weapon and hand-to-hand clips, and 0 for creatures.
+	Type int
 }
 
 // Skin is one row of skins.csv.
@@ -80,6 +84,9 @@ type Tables struct {
 	// AnimSets maps an anim set to its clips by role, keyed by the
 	// lower-cased column name in anims.csv: "walk", "run", "idle", ...
 	AnimSets map[int]map[string]int
+	// CombatSets is the same for canims.csv, which shares the anim-set
+	// numbering: "att med", "flinch", "c-idle", "h2h att m", ...
+	CombatSets map[int]map[string]int
 }
 
 // Load reads the tables from the install at game.
@@ -90,7 +97,7 @@ func Load(game string) (*Tables, error) {
 	}
 	t := &Tables{
 		Monsters: map[int]Monster{}, Figures: map[int]Figure{}, Skins: map[int]Skin{},
-		Anims: map[int]Anim{}, AnimSets: map[int]map[string]int{},
+		Anims: map[int]Anim{}, AnimSets: map[int]map[string]int{}, CombatSets: map[int]map[string]int{},
 	}
 
 	rows, _, err := table(a, "monsters.csv")
@@ -115,7 +122,7 @@ func Load(game string) (*Tables, error) {
 		return nil, err
 	}
 	for _, r := range rows {
-		f := Figure{ID: num(r, 0), Name: col(r, 1), File: col(r, 2), AnimSet: num(r, 3)}
+		f := Figure{ID: num(r, 0), Name: col(r, 1), File: col(r, 2), AnimSet: num(r, 3), Type: num(r, 10)}
 		t.Figures[f.ID] = f
 	}
 
@@ -136,10 +143,23 @@ func Load(game string) (*Tables, error) {
 		t.Anims[an.ID] = an
 	}
 
-	rows, header, err := table(a, "anims.csv")
+	if t.AnimSets, err = roleTable(a, "anims.csv"); err != nil {
+		return nil, err
+	}
+	if t.CombatSets, err = roleTable(a, "canims.csv"); err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+
+// roleTable reads a table with one row per anim set and one column per role,
+// each cell naming a row of animnifs.csv.
+func roleTable(a *mpak.Archive, name string) (map[int]map[string]int, error) {
+	rows, header, err := table(a, name)
 	if err != nil {
 		return nil, err
 	}
+	out := map[int]map[string]int{}
 	for _, r := range rows {
 		set := map[string]int{}
 		for c := 2; c < len(r) && c < len(header); c++ {
@@ -154,9 +174,9 @@ func Load(game string) (*Tables, error) {
 				set[role] = v
 			}
 		}
-		t.AnimSets[num(r, 0)] = set
+		out[num(r, 0)] = set
 	}
-	return t, nil
+	return out, nil
 }
 
 // Clip resolves one role in a figure's anim set.
@@ -164,10 +184,19 @@ func (t *Tables) Clip(fig Figure, role string) (Anim, bool) {
 	return t.SetClip(fig.AnimSet, role)
 }
 
-// SetClip resolves one role in an anim set.
+// SetClip resolves one role in an anim set: walk, run, idle, death, ...
 func (t *Tables) SetClip(set int, role string) (Anim, bool) {
-	id, ok := t.AnimSets[set][role]
-	if !ok {
+	return t.resolve(t.AnimSets[set][role])
+}
+
+// CombatClip resolves one role in an anim set's combat row: "att med",
+// "flinch", "c-idle", "h2h att m", ...
+func (t *Tables) CombatClip(set int, role string) (Anim, bool) {
+	return t.resolve(t.CombatSets[set][role])
+}
+
+func (t *Tables) resolve(id int) (Anim, bool) {
+	if id <= 0 {
 		return Anim{}, false
 	}
 	an, ok := t.Anims[id]

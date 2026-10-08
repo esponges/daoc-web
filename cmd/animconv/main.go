@@ -91,53 +91,113 @@ func run(game, char string, list, gaitOnly bool, top int, names, as string) erro
 		return scan(game, nodes, skel, gaitOnly, top)
 	}
 	if names == "" {
-		if names, as, err = fromAnimSet(game, char); err != nil {
+		jobs, err := fromAnimSet(game, char)
+		if err != nil {
 			return err
 		}
+		return convert(game, char, nodes, skel, jobs)
 	}
-	return convert(game, char, nodes, skel, names, as)
+	// Named clips are taken to loop; they are almost always locomotion.
+	src := strings.Split(names, ",")
+	dst := src
+	if as != "" {
+		if dst = strings.Split(as, ","); len(dst) != len(src) {
+			return fmt.Errorf("-as has %d names for %d animations", len(dst), len(src))
+		}
+	}
+	jobs := make([]job, len(src))
+	for i := range src {
+		jobs[i] = job{strings.TrimSpace(src[i]), strings.TrimSpace(dst[i]), true}
+	}
+	return convert(game, char, nodes, skel, jobs)
 }
 
-// tableRoles are the clips taken from a model's anim set when none are named,
-// keyed by the anims.csv column and written under the name the viewer uses.
-var tableRoles = []string{"idle", "walk", "run"}
+// A job is one clip to convert: the .kfa base name, the name the viewer will
+// know it by, and whether it loops or plays once and holds.
+type job struct {
+	src, out string
+	loop     bool
+}
+
+// A tableRole is one clip taken from a model's tables when none are named:
+// the name the viewer uses, and the column it comes from -- in anims.csv for
+// movement and death, canims.csv for combat.
+type tableRole struct {
+	out, column string
+	combat      bool
+}
+
+var tableRoles = []tableRole{
+	{"idle", "idle", false},
+	{"walk", "walk", false},
+	{"run", "run", false},
+	{"death", "death", false},
+	{"cidle", "c-idle", true},
+	{"flinch", "flinch", true},
+	{"attack1", "att med", true},
+	{"attack2", "att high", true},
+	{"attack3", "att low", true},
+}
+
+// unarmedAttacks replace the three attacks for a player-race figure. Their
+// "att" columns are one-handed weapon swings, and nothing here holds a
+// weapon yet; the hand-to-hand set is what an empty-handed fighter uses.
+var unarmedAttacks = map[string]string{
+	"attack1": "h2h att m",
+	"attack2": "h2h att h",
+	"attack3": "h2h att l",
+}
 
 // fromAnimSet picks the clips the game itself plays for this model, from the
 // anim set charconv recorded out of monnifs.csv.
-func fromAnimSet(game, char string) (names, as string, err error) {
+func fromAnimSet(game, char string) ([]job, error) {
 	b, err := os.ReadFile(filepath.Join(char, "char.json"))
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 	var m struct {
+		Model   int `json:"model"`
 		AnimSet int `json:"animSet"`
 	}
 	if err := json.Unmarshal(b, &m); err != nil {
-		return "", "", err
+		return nil, err
 	}
 	if m.AnimSet == 0 {
-		return "", "", fmt.Errorf("%s has no anim set; give -anims, or -list to search", char)
+		return nil, fmt.Errorf("%s has no anim set; give -anims, or -list to search", char)
 	}
 	t, err := gamedata.Load(game)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
-	var src, dst []string
-	for _, role := range tableRoles {
-		an, ok := t.SetClip(m.AnimSet, role)
+	humanoid := t.Figures[t.Monsters[m.Model].Figure].Type == 1
+	var jobs []job
+	for _, r := range tableRoles {
+		col := r.column
+		if humanoid && unarmedAttacks[r.out] != "" {
+			col = unarmedAttacks[r.out]
+		}
+		var an gamedata.Anim
+		var ok bool
+		if r.combat {
+			an, ok = t.CombatClip(m.AnimSet, col)
+		} else {
+			an, ok = t.SetClip(m.AnimSet, col)
+		}
 		if !ok {
-			fmt.Printf("  anim set %d has no %s clip\n", m.AnimSet, role)
+			fmt.Printf("  anim set %d has no %s clip\n", m.AnimSet, col)
 			continue
 		}
-		src = append(src, strings.TrimSuffix(an.File, filepath.Ext(an.File)))
-		dst = append(dst, role)
-		fmt.Printf("  anim set %d %-5s -> %-16s %q, %d frames at %d fps\n",
-			m.AnimSet, role, an.File, an.Name, an.Frames, an.FPS)
+		jobs = append(jobs, job{strings.TrimSuffix(an.File, filepath.Ext(an.File)), r.out, an.Loop})
+		mode := "once"
+		if an.Loop {
+			mode = "loop"
+		}
+		fmt.Printf("  anim set %d %-9s %-10s -> %-18s %s  %q\n", m.AnimSet, col, r.out, an.File, mode, an.Name)
 	}
-	if len(src) == 0 {
-		return "", "", fmt.Errorf("anim set %d resolves no clips", m.AnimSet)
+	if len(jobs) == 0 {
+		return nil, fmt.Errorf("anim set %d resolves no clips", m.AnimSet)
 	}
-	return strings.Join(src, ","), strings.Join(dst, ","), nil
+	return jobs, nil
 }
 
 // loadAnimNodes reads the bone registry. Line N is the name of bone index N.
@@ -320,40 +380,38 @@ type animOut struct {
 	Name     string     `json:"name"`
 	Source   string     `json:"source"`
 	Duration float32    `json:"duration"`
+	Loop     bool       `json:"loop"` // false: play once and hold the last frame
 	Tracks   []trackOut `json:"tracks"`
 	Unmapped []string   `json:"unmapped,omitempty"`
 }
 
-type indexOut struct {
-	Animations []struct {
-		Name     string  `json:"name"`
-		File     string  `json:"file"`
-		Source   string  `json:"source"`
-		Duration float32 `json:"duration"`
-		Tracks   int     `json:"tracks"`
-	} `json:"animations"`
+type indexEntry struct {
+	Name     string  `json:"name"`
+	File     string  `json:"file"`
+	Source   string  `json:"source"`
+	Duration float32 `json:"duration"`
+	Loop     bool    `json:"loop"`
+	Tracks   int     `json:"tracks"`
 }
 
-func convert(game, char string, nodes []string, skel map[string]bool, names, as string) error {
-	src := strings.Split(names, ",")
-	var dst []string
-	if as != "" {
-		dst = strings.Split(as, ",")
-		if len(dst) != len(src) {
-			return fmt.Errorf("-as has %d names for %d animations", len(dst), len(src))
-		}
-	} else {
-		dst = append(dst, src...)
-	}
+type indexOut struct {
+	Animations []indexEntry `json:"animations"`
+}
 
+func convert(game, char string, nodes []string, skel map[string]bool, jobs []job) error {
 	dir := filepath.Join(char, "anim")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
+	// Merge into what is already there, so a second run can add clips or
+	// replace some -- the tables' set first, then hand-picked locomotion
+	// over the top of it -- without dropping the rest.
 	var idx indexOut
-	for i, name := range src {
-		name = strings.TrimSpace(name)
-		out := strings.TrimSpace(dst[i])
+	if b, err := os.ReadFile(filepath.Join(dir, "index.json")); err == nil {
+		_ = json.Unmarshal(b, &idx)
+	}
+	for _, jb := range jobs {
+		name, out := jb.src, jb.out
 		path, err := findCase(filepath.Join(game, "anims"), name+".kfa")
 		if err != nil {
 			return err
@@ -363,7 +421,7 @@ func convert(game, char string, nodes []string, skel map[string]bool, names, as 
 			return fmt.Errorf("%s: %w", name, err)
 		}
 
-		ao := animOut{Name: out, Source: filepath.Base(path), Duration: a.Duration}
+		ao := animOut{Name: out, Source: filepath.Base(path), Duration: a.Duration, Loop: jb.loop}
 		keys := 0
 		for _, t := range a.Tracks {
 			// A track for a bone this model does not have is dropped, not
@@ -398,13 +456,16 @@ func convert(game, char string, nodes []string, skel map[string]bool, names, as 
 		if err := os.WriteFile(filepath.Join(dir, file), js, 0o644); err != nil {
 			return err
 		}
-		idx.Animations = append(idx.Animations, struct {
-			Name     string  `json:"name"`
-			File     string  `json:"file"`
-			Source   string  `json:"source"`
-			Duration float32 `json:"duration"`
-			Tracks   int     `json:"tracks"`
-		}{out, file, ao.Source, ao.Duration, len(ao.Tracks)})
+		entry := indexEntry{out, file, ao.Source, ao.Duration, ao.Loop, len(ao.Tracks)}
+		replaced := false
+		for k := range idx.Animations {
+			if idx.Animations[k].Name == out {
+				idx.Animations[k], replaced = entry, true
+			}
+		}
+		if !replaced {
+			idx.Animations = append(idx.Animations, entry)
+		}
 
 		fmt.Printf("  %-8s <- %-16s %5.2fs  %3d tracks (%d dropped), %4d keys, %d bytes\n",
 			out, ao.Source, ao.Duration, len(ao.Tracks), len(ao.Unmapped), keys, len(js))

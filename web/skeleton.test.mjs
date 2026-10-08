@@ -231,14 +231,23 @@ if (clips) {
       }
       worstReach = Math.max(worstReach, Math.abs(reach() / reachRef - 1));
       const footTop = Math.max(boneHeight(lFoot), boneHeight(rFoot));
-      if (boneHeight(head) <= footTop) inverted++;
+      // A death is supposed to end lying down; only the loops must stand.
+      if (c.loop && boneHeight(head) <= footTop) inverted++;
       minFoot = Math.min(minFoot, boneHeight(lFoot), boneHeight(rFoot));
     }
   }
   check('clips never produce a non-finite transform', badFrames === 0, badFrames + ' bad values');
   check('head-to-pelvis distance stays within a quarter of idle\'s',
     worstReach < 0.25, 'worst ' + (100 * worstReach).toFixed(1) + '% of ' + reachRef.toFixed(1) + 'u');
-  check('the head never drops to the feet', inverted === 0, inverted + ' frames');
+  check('the head never drops to the feet in a looping clip', inverted === 0, inverted + ' frames');
+  if (clips.death) {
+    skel.poseClip(clips.idle || clips[names[0]], 0);
+    const standing = boneHeight(head);
+    skel.poseClip(clips.death, clips.death.duration);
+    const lying = boneHeight(head);
+    check('a death ends with the head down near the ground', lying < 0.5 * standing,
+      'head ' + standing.toFixed(1) + 'u standing, ' + lying.toFixed(1) + 'u at the end of death');
+  }
   check('feet never pass far below the ground plane', minFoot > -12,
     'lowest foot ' + minFoot.toFixed(1) + 'u');
 

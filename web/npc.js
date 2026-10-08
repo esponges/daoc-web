@@ -9,12 +9,16 @@
 // Each spawn group puts a few of one character around a home point and lets
 // them wander it: idle a while, pick a spot nearby, walk there, repeat. They
 // share one loaded model per character -- the mesh, textures and clips --
-// and each keeps only its own position and animation clock, posing the shared
-// skeleton just before it is drawn.
+// and each keeps only its own position and animation state, posing the
+// shared skeleton just before it is drawn.
+//
+// Fighting is combat.js's business. While an NPC is in a fight, or dead, the
+// wandering here leaves it alone.
 
 import { createCharacter, modelMatrix } from './character.js';
+import { Animator } from './animator.js';
 
-// Cross-fade between idle and walk; a little longer than the player's, since
+// Cross-fade between base clips; a little longer than the player's, since
 // nothing is waiting on an NPC to respond.
 const FADE = 0.3;
 
@@ -23,10 +27,10 @@ const FADE = 0.3;
 const DRAW_DISTANCE = 14000;
 
 // How fast an NPC turns, in radians per second.
-const TURN_RATE = 3.5;
+export const TURN_RATE = 3.5;
 
 // Small deterministic generator, so the same file spawns the same scene.
-function mulberry32(seed) {
+export function mulberry32(seed) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6D2B79F5) >>> 0;
@@ -37,11 +41,24 @@ function mulberry32(seed) {
   };
 }
 
-function turnToward(cur, target, maxStep) {
+export function turnToward(cur, target, maxStep) {
   let d = (target - cur) % (Math.PI * 2);
   if (d > Math.PI) d -= Math.PI * 2;
   if (d < -Math.PI) d += Math.PI * 2;
   return cur + Math.max(-maxStep, Math.min(maxStep, d));
+}
+
+// angleOff is how far heading a is from heading b, 0..PI.
+export function angleOff(a, b) {
+  return Math.abs((((a - b) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+}
+
+// bodyRadius is how far a figure's body reaches from its centre along the way
+// it faces, which is what melee range is measured between. Its width is no
+// use: a player race's bind pose has the arms straight out.
+export function bodyRadius(ch, scale) {
+  const m = ch.manifest;
+  return 0.5 * (m.max[1] - m.min[1]) * scale;
 }
 
 // createNPCs loads the spawn file and every character it names. world gives
@@ -62,9 +79,13 @@ export async function createNPCs(gl, url, helpers, world) {
       if (!ch.clips.idle || !ch.clips.walk) {
         throw new Error('needs idle and walk clips; run animconv');
       }
-      // The walk's own pace, so the feet stay planted at 1x.
-      const walk = ch.groundSpeed('walk');
-      types.set(name, { ch, walk: walk > 0 ? walk : 40 });
+      // The walk's own pace, so the feet stay planted at 1x. The run is
+      // read the same way but less reliably -- a running foot is barely
+      // down -- so it is only trusted inside a sane band of the walk's.
+      const walk = ch.groundSpeed('walk') || 40;
+      let run = ch.groundSpeed('run');
+      if (!(run > 1.5 * walk && run < 8 * walk)) run = 3 * walk;
+      types.set(name, { ch, walk, run, title: ch.manifest.title || name });
     } catch (e) {
       console.warn('npc ' + name + ' not loaded:', e.message);
     }
@@ -84,70 +105,100 @@ export async function createNPCs(gl, url, helpers, world) {
   };
 
   const npcs = [];
-  for (const g of spec.groups) {
+  spec.groups.forEach((g, gi) => {
     const type = types.get(g.char);
-    if (!type) continue;
+    if (!type) return;
     const hx = g.x * cell, hy = g.y * cell, radius = (g.radius ?? 4) * cell;
     for (let i = 0; i < (g.count ?? 1); i++) {
       const [x, y] = pickSpot(hx, hy, radius);
-      // Scale from the table, times any the spawn adds: monsters.csv draws
-      // the small grey wolf at half the large one's size from one model.
+      // Scale from the table, times any the spawn adds.
       const scale = type.ch.scale * (g.scale ?? 1);
+      const hp = g.hp ?? 60;
       npcs.push({
-        name: g.char, type, x, y, hx, hy, radius, scale,
+        name: type.title, char: g.char, group: gi, type, x, y, hx, hy, radius, scale,
         yaw: rng() * Math.PI * 2,
         speed: type.walk * scale,
+        runSpeed: type.run * scale,
         idleMin: g.idle?.[0] ?? 3, idleMax: g.idle?.[1] ?? 10,
         state: 'idle', timer: rng() * 6, tx: x, ty: y,
-        // Staggered clocks, or a pack would breathe in unison.
-        anim: { cur: 'idle', prev: null, t: rng() * 10, prevT: 0, fade: 1 },
+        anim: new Animator(type.ch, { fade: FADE }),
+        // Fighting. aggro is how close the player may come before an
+        // aggressive NPC attacks unprovoked; 0 means it only fights back.
+        hp, maxHp: hp,
+        damage: g.damage ?? [3, 7],
+        swing: g.swing ?? 2.5,
+        hitChance: g.hit ?? 0.7,
+        aggro: g.aggro ?? 0,
+        body: bodyRadius(type.ch, scale),
+        fight: null, dead: false, gone: false,
       });
     }
+  });
+
+  // respawn puts an NPC back at a fresh spot near home, whole and calm.
+  function respawn(n) {
+    [n.x, n.y] = pickSpot(n.hx, n.hy, n.radius);
+    n.hp = n.maxHp;
+    n.dead = n.gone = false;
+    n.fight = null;
+    n.state = 'idle';
+    n.timer = n.idleMin + rng() * (n.idleMax - n.idleMin);
+    n.anim.clear();
+    n.anim.setBase('idle');
+  }
+
+  // wanderTo sends an NPC walking to a spot, on its own or because combat.js
+  // has sent it home.
+  function wanderTo(n, x, y) {
+    n.tx = x; n.ty = y;
+    n.state = 'walk';
+    // Give up on a target it cannot reach in reasonable time.
+    n.timer = 4 * Math.hypot(n.tx - n.x, n.ty - n.y) / n.speed + 2;
+  }
+
+  // step moves an NPC toward (tx, ty) at speed, turning first. Returns the
+  // distance left, or -1 if water was in the way.
+  function step(n, tx, ty, speed, dt) {
+    const dx = tx - n.x, dy = ty - n.y, d = Math.hypot(dx, dy);
+    if (d < 1e-3) return 0;
+    // Same heading convention as the player: yaw y faces (sin y, -cos y).
+    const want = Math.atan2(dx, -dy);
+    n.yaw = turnToward(n.yaw, want, TURN_RATE * dt);
+    // Move only once roughly facing the target, so it turns on the spot
+    // instead of sweeping round in a wide arc.
+    if (angleOff(want, n.yaw) >= 0.6) return d;
+    const s = Math.min(d, speed * dt);
+    const nx = n.x + Math.sin(n.yaw) * s, ny = n.y - Math.cos(n.yaw) * s;
+    if (isWet(nx, ny)) return -1;
+    n.x = nx; n.y = ny;
+    return d - s;
   }
 
   function update(dt) {
     for (const n of npcs) {
-      if (n.state === 'idle') {
-        n.timer -= dt;
-        if (n.timer <= 0) {
-          [n.tx, n.ty] = pickSpot(n.hx, n.hy, n.radius);
-          n.state = 'walk';
-          // Give up on a target it cannot reach in reasonable time.
-          n.timer = 4 * Math.hypot(n.tx - n.x, n.ty - n.y) / n.speed + 2;
-        }
-      } else {
-        const dx = n.tx - n.x, dy = n.ty - n.y, d = Math.hypot(dx, dy);
-        n.timer -= dt;
-        if (d < Math.max(12, n.speed * dt) || n.timer <= 0) {
-          n.state = 'idle';
-          n.timer = n.idleMin + rng() * (n.idleMax - n.idleMin);
+      // In a fight or dead, combat.js drives position and clips; the clocks
+      // still run here.
+      if (!n.fight && !n.dead) {
+        if (n.state === 'idle') {
+          n.timer -= dt;
+          if (n.timer <= 0) wanderTo(n, ...pickSpot(n.hx, n.hy, n.radius));
         } else {
-          // Same heading convention as the player: yaw y faces (sin y, -cos y).
-          const want = Math.atan2(dx, -dy);
-          n.yaw = turnToward(n.yaw, want, TURN_RATE * dt);
-          // Walk only once roughly facing the target, so it turns on the
-          // spot instead of sweeping round in a wide arc.
-          const off = Math.abs(((want - n.yaw) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
-          if (off < 0.6) {
-            const step = Math.min(d, n.speed * dt);
-            const nx = n.x + Math.sin(n.yaw) * step, ny = n.y - Math.cos(n.yaw) * step;
-            if (!isWet(nx, ny)) { n.x = nx; n.y = ny; } else n.timer = 0;
+          n.timer -= dt;
+          // Arrival is judged before moving, so the frame that ends a walk
+          // is not also a frame of walking.
+          const left = Math.hypot(n.tx - n.x, n.ty - n.y);
+          if (left >= Math.max(12, n.speed * dt) && n.timer > 0) {
+            if (step(n, n.tx, n.ty, n.speed, dt) < 0) n.timer = 0; // water ahead
+          } else {
+            n.state = 'idle';
+            n.timer = n.idleMin + rng() * (n.idleMax - n.idleMin);
+            // Coming home from a fight heals.
+            if (n.returning) { n.returning = false; n.hp = n.maxHp; }
           }
         }
+        n.anim.setBase(n.state === 'walk' ? 'walk' : 'idle');
       }
-
-      const a = n.anim;
-      const want = n.state === 'walk' ? 'walk' : 'idle';
-      if (want !== a.cur) {
-        a.prev = a.cur; a.prevT = a.t;
-        a.cur = want; a.t = 0; a.fade = 0;
-      }
-      a.t += dt;
-      if (a.prev) a.prevT += dt;
-      if (a.fade < 1) {
-        a.fade = Math.min(1, a.fade + dt / FADE);
-        if (a.fade >= 1) a.prev = null;
-      }
+      n.anim.update(dt);
     }
   }
 
@@ -156,10 +207,9 @@ export async function createNPCs(gl, url, helpers, world) {
     drawn = 0;
     const [cx, , cz] = ctx.camPos;
     for (const n of npcs) {
-      if (Math.hypot(n.x - cx, n.y - cz) > DRAW_DISTANCE) continue;
-      const { ch } = n.type, a = n.anim;
-      ch.poseBlend(a.prev, a.prevT, a.cur, a.t, a.fade);
-      ch.draw({ ...ctx, model: modelMatrix(n.x, groundAt(n.x, n.y), n.y, n.yaw, n.scale) });
+      if (n.gone || Math.hypot(n.x - cx, n.y - cz) > DRAW_DISTANCE) continue;
+      n.anim.pose();
+      n.type.ch.draw({ ...ctx, model: modelMatrix(n.x, groundAt(n.x, n.y), n.y, n.yaw, n.scale) });
       drawn++;
     }
   }
@@ -169,6 +219,10 @@ export async function createNPCs(gl, url, helpers, world) {
     types,
     update,
     draw,
+    respawn,
+    wanderTo,
+    step,
+    rng,
     get drawn() { return drawn; },
   };
 }

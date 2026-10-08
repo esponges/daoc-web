@@ -2,6 +2,7 @@ package gamedata_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"daocweb/internal/gamedata"
@@ -80,4 +81,34 @@ func mustClip(t *testing.T, tb *gamedata.Tables, fig gamedata.Figure, role strin
 		t.Fatalf("%s has no %s clip", fig.File, role)
 	}
 	return an
+}
+
+// Combat clips come from canims.csv, keyed by the same anim set. A creature's
+// row names its own attacks; a player race's carries the humanoid ones.
+func TestCombatClips(t *testing.T) {
+	tb := load(t)
+	want := []struct {
+		set        int
+		role, file string
+		loop       bool
+	}{
+		{7, "att med", "wlf_alo.kfa", false},
+		{7, "flinch", "wlf_hits.kfa", false},
+		{7, "c-idle", "wlf_grwl.kfa", true},
+		{54, "att med", "rat_atthi.kfa", false},
+		{24, "h2h att m", "A_H_H2H_Med.kfa", false},
+		{24, "c-idle", "ci_h_1s.kfa", true},
+	}
+	for _, w := range want {
+		an, ok := tb.CombatClip(w.set, w.role)
+		if !ok || !strings.EqualFold(an.File, w.file) || an.Loop != w.loop {
+			t.Errorf("set %d %s = %+v, want %s loop=%v", w.set, w.role, an, w.file, w.loop)
+		}
+	}
+	if fig := tb.Figures[237]; fig.Type != 1 {
+		t.Errorf("ntrollm type %d, want 1 (player race)", fig.Type)
+	}
+	if fig := tb.Figures[212]; fig.Type != 0 {
+		t.Errorf("wolf type %d, want 0 (creature)", fig.Type)
+	}
 }

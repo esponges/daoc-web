@@ -237,6 +237,15 @@ export async function createCharacter(gl, base, helpers) {
       skel.poseCross(clips[from] || null, fromTime, b, toTime, clips[from] ? f : 1);
       return true;
     },
+    // poseLayered is poseBlend with a one-shot action on top at weight w,
+    // over the upper body only when upper is set.
+    poseLayered: (from, fromT, to, toT, f, act, actT, w, upper) => {
+      const b = clips[to];
+      if (!b) return false;
+      skel.poseLayered(clips[from] || null, fromT, b, toT, clips[from] ? f : 1,
+        clips[act] || null, actT, w, upper ? skel.upperBodyMask() : null);
+      return true;
+    },
     clipDuration: (name) => (clips[name] ? clips[name].duration : 0),
     // groundSpeed is a clip's own travel speed in model units per second,
     // read from its planted feet; 0 if absent or not a gait.

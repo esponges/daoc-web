@@ -21,6 +21,40 @@
   #hud dt { color: #6f8ba6; }
   #hud dd { margin: 0; }
   #hud .keys { margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(120,170,220,.2); color: #7e9ab4; }
+  /* Combat: your health and your target's, bottom centre; the log, bottom left. */
+  #fight {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 10;
+    display: flex; gap: 14px; pointer-events: none;
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e8eef5;
+  }
+  .unit {
+    width: 220px; padding: 7px 9px; border-radius: 8px;
+    background: rgba(8,14,22,.8); border: 1px solid rgba(120,170,220,.28);
+  }
+  .unit .name { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .unit .name small { color: #8aa3bb; }
+  .bar { height: 9px; border-radius: 5px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 100%; background: #4cc26a; transition: width .15s; }
+  .bar.low i { background: #e0a43a; }
+  .bar.crit i { background: #e05252; }
+  #target-box { visibility: hidden; }
+  #target-box.on { visibility: visible; }
+  #target-box.engaged { border-color: rgba(240,120,110,.75); }
+  #log {
+    position: fixed; left: 12px; bottom: 18px; z-index: 10; width: 360px; max-width: calc(100vw - 24px);
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    pointer-events: none; text-shadow: 0 1px 2px #000;
+  }
+  #log div { color: #cfd8e3; }
+  #log .hit { color: #ffd76a; }
+  #log .hit-in { color: #ff8a7a; }
+  #log .miss, #log .miss-in { color: #9aa8b6; }
+  #log .kill { color: #8fe39a; }
+  #log .death { color: #ff5a5a; font-weight: bold; }
+  @media (max-width: 760px) {
+    #fight { flex-direction: column; gap: 6px; bottom: 10px; }
+    #log { bottom: 140px; }
+  }
   #err {
     position: fixed; inset: 0; z-index: 20; display: none; place-content: center;
     padding: 40px; background: #0b0f14;
@@ -48,8 +82,19 @@
     <dt>pos</dt><dd id="i-pos">—</dd>
     <dt>fps</dt><dd id="i-fps">—</dd>
   </dl>
-  <div class="keys">WASD move · drag = orbit camera · wheel = zoom<br>shift = sprint · alt = walk · C = free-fly camera · F = wireframe</div>
+  <div class="keys">WASD move · drag = orbit camera · wheel = zoom<br>shift = sprint · alt = walk · C = free-fly camera · F = wireframe<br>Tab = target · 1 = attack on/off · Esc = clear target</div>
 </div>
+<div id="fight">
+  <div class="unit" id="you-box">
+    <div class="name"><span id="you-name">You</span><small id="you-hp">—</small></div>
+    <div class="bar" id="you-bar"><i></i></div>
+  </div>
+  <div class="unit" id="target-box">
+    <div class="name"><span id="tgt-name">—</span><small id="tgt-hp">—</small></div>
+    <div class="bar" id="tgt-bar"><i></i></div>
+  </div>
+</div>
+<div id="log"></div>
 <div id="err"></div>
 <script type="module" src="viewer.js"></script>
 </body>

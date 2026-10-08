@@ -151,6 +151,7 @@ type manifest struct {
 	ForwardY    int        `json:"forwardY"`
 	// From the game tables when the model has a row there. Scale is how
 	// much larger than authored the game draws it; AnimSet picks its clips.
+	Title   string     `json:"title,omitempty"` // display name: "Large Grey Wolf"
 	Model   int        `json:"model,omitempty"`
 	Scale   float64    `json:"scale"`
 	AnimSet int        `json:"animSet,omitempty"`
@@ -234,6 +235,7 @@ func main() {
 // into char.json for the viewer and animconv.
 var meta = struct {
 	model, animSet int
+	title          string
 	scale          float64
 }{scale: 1}
 
@@ -272,6 +274,7 @@ func fromTables(game string, id int) (outfit, error) {
 		}
 	}
 	meta.model, meta.scale, meta.animSet = id, m.Scale, fig.AnimSet
+	meta.title = m.Name
 	fmt.Printf("model %d %q: figure %d %s, scale %.2f, anim set %d\n",
 		id, m.Name, fig.ID, o.figure, m.Scale, fig.AnimSet)
 	return o, nil
@@ -528,6 +531,7 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 		Name:        name,
 		Source:      figure,
 		ForwardY:    fwd,
+		Title:       meta.title,
 		Model:       meta.model,
 		Scale:       meta.scale,
 		AnimSet:     meta.animSet,

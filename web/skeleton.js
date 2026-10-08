@@ -402,6 +402,9 @@ export class Clip {
     this.name = json.name;
     this.source = json.source;
     this.duration = json.duration || 0;
+    // A clip that does not loop -- an attack, a flinch, a death -- plays
+    // once and holds its last frame rather than starting over.
+    this.loop = json.loop !== false;
     this.tracks = [];
     this.missing = [];
     for (const t of json.tracks || []) {
@@ -420,10 +423,11 @@ Skeleton.prototype.poseClip = function (clip, time) {
   for (let i = 0; i < n; i++) this.animLocal[i].set(this.bindLocal[i]);
   if (!clip || !clip.tracks.length) { this.resolve(); return; }
 
-  // Clips loop, and a negative time is as valid as a large one.
+  // Looping clips wrap, and a negative time is as valid as a large one;
+  // the rest clamp to their ends.
   const d = clip.duration;
   let t = time;
-  if (d > 0) { t = time % d; if (t < 0) t += d; }
+  if (d > 0) t = clip.loop ? ((time % d) + d) % d : Math.max(0, Math.min(d, time));
 
   const q = this._q || (this._q = new Float32Array(4));
   const v = this._v || (this._v = new Float32Array(3));
@@ -527,7 +531,7 @@ Skeleton.prototype.samplePose = function (clip, time, pose) {
 
   const d = clip.duration;
   let t = time;
-  if (d > 0) { t = time % d; if (t < 0) t += d; }
+  if (d > 0) t = clip.loop ? ((time % d) + d) % d : Math.max(0, Math.min(d, time));
 
   const q = this._q || (this._q = new Float32Array(4));
   const v = this._v || (this._v = new Float32Array(3));
@@ -640,4 +644,73 @@ Skeleton.prototype.groundSpeed = function (clip) {
     }
   }
   return speeds.length ? speeds.reduce((s, x) => s + x, 0) / speeds.length : 0;
+};
+
+// --- layering ---------------------------------------------------------------
+//
+// A cross-fade swaps the whole body from one clip to another, which is right
+// for idle to walk but wrong for swinging while running: the legs would stop
+// to throw the punch. A layer plays one clip over another with a per-bone
+// weight, so an attack can own the spine, arms and head while the run keeps
+// the pelvis and legs.
+
+// upperBodyMask is 1 for the torso, arms and head, 0 for the root, pelvis
+// and legs, which stay with the base.
+//
+// Where the torso starts depends on the body. A humanoid Biped hangs its
+// thighs off Bip01 Spine, not the pelvis, so taking Spine would take the
+// legs with it; the upper body there is Spine1 and up. A quadruped's thighs
+// hang off the pelvis. Either way, no thigh's subtree is ever included.
+Skeleton.prototype.upperBodyMask = function () {
+  if (this._upper) return this._upper;
+  const n = this.bones.length, mask = new Float32Array(n);
+  let top = this.boneId('Bip01 Spine1');
+  if (top < 0) top = this.boneId('Bip01 Spine');
+  const legs = new Set([this.boneId('Bip01 L Thigh'), this.boneId('Bip01 R Thigh')]);
+  for (const i of this.order) {
+    const p = this.bones[i].parent;
+    if (legs.has(i)) continue;
+    if (i === top || (p >= 0 && mask[p] === 1)) mask[i] = 1;
+  }
+  return (this._upper = mask);
+};
+
+// blendPoseMasked is blendPose with a weight per bone: f * mask[i], or f
+// for every bone when mask is null.
+Skeleton.prototype.blendPoseMasked = function (a, b, f, mask, out) {
+  if (!mask) return this.blendPose(a, b, f, out);
+  const n = this.animLocal.length;
+  for (let i = 0; i < n; i++) {
+    const w = f * mask[i];
+    slerpQuat(a.rot, i * 4, b.rot, i * 4, w, out.rot, i * 4);
+    for (let k = 0; k < 3; k++) {
+      const j = i * 3 + k;
+      out.trans[j] = a.trans[j] + (b.trans[j] - a.trans[j]) * w;
+    }
+    out.scale[i] = a.scale[i] + (b.scale[i] - a.scale[i]) * w;
+  }
+  return out;
+};
+
+// poseLayered is poseCross with an action on top: the a-to-b cross-fade
+// gives the base, then clip act at time tAct is laid over it at weight w,
+// on the bones mask selects (all of them when mask is null).
+Skeleton.prototype.poseLayered = function (a, ta, b, tb, f, act, tAct, w, mask) {
+  if (!act || w <= 0) { this.poseCross(a, ta, b, tb, f); return; }
+  const n = this.animLocal.length;
+  this._poseA = this._poseA || makePose(n);
+  this._poseB = this._poseB || makePose(n);
+  this._poseOut = this._poseOut || makePose(n);
+  this._poseAct = this._poseAct || makePose(n);
+  this._poseBase = this._poseBase || makePose(n);
+  let base;
+  if (!b || f <= 0) base = this.samplePose(a, ta, this._poseA);
+  else if (!a || f >= 1) base = this.samplePose(b, tb, this._poseB);
+  else {
+    this.samplePose(a, ta, this._poseA);
+    this.samplePose(b, tb, this._poseB);
+    base = this.blendPose(this._poseA, this._poseB, f, this._poseBase);
+  }
+  this.samplePose(act, tAct, this._poseAct);
+  this.applyPose(this.blendPoseMasked(base, this._poseAct, Math.min(1, w), mask, this._poseOut));
 };

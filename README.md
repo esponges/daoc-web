@@ -40,17 +40,20 @@ go run ./cmd/zoneconv -zone 100 -name "Vale of Mularn"   # terrain
 go run ./cmd/propconv -zone 100                          # trees, buildings, props
 
 # A character is an outfit: one shape per slot plus the texture to dress it.
+# With no -anims, animconv converts the clips the game's tables assign the
+# race: idle, walk, run, death, combat stance, flinch and three attacks.
 go run ./cmd/charconv -outfit troll-plate
-go run ./cmd/animconv -char web/data/char/troll-plate \
-  -anims "Troll_idle,Troll_walk,troll_run" -as "idle,walk,run"
+go run ./cmd/animconv -char web/data/char/troll-plate
 
 # The Norseman is still there; ?char=norseman in the URL switches to him.
+# The second run swaps in the locomotion clip-scoring found; index.json
+# merges, so his combat clips stay.
 go run ./cmd/charconv -outfit norseman
+go run ./cmd/animconv -char web/data/char/norseman
 go run ./cmd/animconv -char web/data/char/norseman \
   -anims "I_VM,W_VM,R_VM" -as "idle,walk,run"
 
-# NPCs are converted by their model number in monsters.csv; with no -anims,
-# animconv takes the idle, walk and run the game's own tables assign them.
+# NPCs are converted by their model number in monsters.csv.
 for m in 56 47 572 153; do go run ./cmd/charconv -model $m; done
 for c in large-grey-wolf small-grey-wolf badger norse-male; do
   go run ./cmd/animconv -char web/data/char/$c
@@ -63,9 +66,11 @@ Where they stand is `web/spawns/zone100.json`, which is this project's own
 placement — see [NPCs](#npcs). `?npcs=0` leaves them out.
 
 Controls: `WASD` to move, drag to orbit the camera, wheel to zoom, shift to
-sprint, alt to walk, `C` for the free-fly camera, `F` for wireframe. The
-console exposes a `daoc` handle — `daoc.warp(60, 70)` puts the character on a
-heightmap cell.
+sprint, alt to walk, `C` for the free-fly camera, `F` for wireframe. `Tab`
+targets the nearest NPC in front of the camera (again to cycle), `1` switches
+auto-attack on and off, `Esc` clears the target. The console exposes a `daoc`
+handle — `daoc.warp(60, 70)` puts the character on a heightmap cell, and
+`daoc.warp(125, 128)` next to the wolves.
 
 Movement uses DAoC's own rates: 85 units/s walking, 191 running, and the gait's
 phase advances with ground covered rather than with time, so the feet keep pace
@@ -96,6 +101,7 @@ go test ./...            # container, heightmap and NIF parsing against the real
 node web/skeleton.test.mjs              # the posing maths, for the Norseman
 node web/skeleton.test.mjs troll-plate  # and for any other converted character
 node web/npc.test.mjs                   # ten simulated minutes of wandering
+node web/combat.test.mjs                # targeting, fights, deaths and respawns
 ```
 
 `skeleton.test.mjs` passes for all six converted characters — two playable
@@ -585,6 +591,66 @@ The sixteen left over are specialised: textures embedded as `NiPixelData`,
 `NiTextureEffect` projections on spell-like models, colour and
 texture-transform controllers, and two "coco" models.
 
+## Combat
+
+Basic melee, deliberately the simplest version of DAoC's: select a target,
+switch attack on, and you swing whenever your swing timer is up, the target is
+within reach and inside your front arc. Each swing rolls once to hit and once
+for damage. Standing still, you square up to the target; moving, you can still
+swing at anything in front of you.
+
+### The clips come from the tables
+
+Combat animation lives in a second table, `canims.csv`, numbered by the same
+anim sets as `anims.csv`: medium, high and low attacks, a flinch, a combat
+stance, and the weapon-specific variants of each. `animconv` converts nine
+roles per character — idle, walk, run and death from one table, the combat
+stance, flinch and three attacks from the other — and records whether each
+loops. A creature's row names its own clips (`wlf_alo`, `wlf_hits`,
+`wlf_grwl`, `wlf_deth` for the wolf; the badger borrows the rat's). A player
+race's attack columns are one-handed weapon swings; with nothing in hand, the
+player-race figures (monnifs.csv's type 1) take the hand-to-hand set
+`A_H_H2H_*` instead. All nine bind every track on every character.
+
+### Two things animation needed
+
+**Clips that play once.** Everything until now looped. An attack, a flinch or
+a death plays through and stops; a death holds its last frame, and the
+skeleton checks now confirm each one ends with the head within ten units of
+the ground.
+
+**Layers.** A cross-fade swaps the whole body, which would stop your legs to
+throw a punch. An action can instead be laid over the upper body, so the
+attack owns the torso, arms and head while the run keeps the pelvis and legs.
+Where the upper body starts is not obvious: a humanoid Biped hangs its thighs
+off `Bip01 Spine`, not the pelvis, so a mask from Spine down takes the legs
+with it. The mask starts at `Spine1` and never includes a thigh's subtree; the
+combat test checks an upper-body attack moves the running thigh by exactly
+zero.
+
+`web/animator.js` holds both, for the player and every NPC alike: a looping
+base that cross-fades between idle, walk, run and the combat stance, and a
+one-shot action on top.
+
+### NPCs fight back
+
+Hit an NPC and it fights back: it closes at its run speed — read from its run
+clip's feet like the walk, within a sane band of it — takes up its combat
+stance and swings on its own timer. Its packmates within 900 units join in.
+Large grey wolves are aggressive and attack anything that comes within 400
+units; everything else only fights back. Chase one more than 2500 units past
+its home and it gives up and walks back, healing when it arrives. Killed, it
+plays its death, lies 15 seconds, vanishes, and respawns at home 20 seconds
+later.
+
+You have 220 hit points and regenerate after six seconds out of combat. Die
+and every NPC on you goes home; five seconds later you are back on your feet
+where you started.
+
+`node web/combat.test.mjs` plays these fights out against the real spawn file
+and characters: killing a small grey wolf while its packmates join, standing in
+a large wolf pack until it kills you, and running a badger to its leash.
+
 ## Known limitations
 
 - **Ground-level texturing is blurry.** The LOD atlas is 2048px over 65536
@@ -622,10 +688,14 @@ texture-transform controllers, and two "coco" models.
   together. Meshes and textures are independent here, so nothing stops it.
 - **NPC placement is invented.** The client ships no spawn data, so where the
   wolves and villagers stand is this project's choice, not the live game's.
-- **NPCs only idle and walk.** They wander inside a radius of their spawn
-  point; they do not run, fight, flee, die, notice the player or avoid each
-  other, and like the player they walk through trees and buildings. They keep
-  out of the lakes, judged by each lake's bounding box and surface height.
+- **Combat is auto-attack and nothing else.** No styles, spells, weapons,
+  shields, parry, block or evade, levels, experience or loot; the hit points,
+  damage and swing times are this project's numbers, not the game's. The
+  player fights bare-handed with the hand-to-hand clips, since nothing is held
+  yet. NPCs never flee, and chase in a straight line through trees and
+  buildings, as everything here walks through them.
+- **No target indicator in the world.** The selected target shows in the HUD
+  panel only; nothing is drawn under it.
 - **16 of 633 figures do not parse** — see [Parsing the rest of
   figures/](#parsing-the-rest-of-figures).
 - Heightmap edges stop at sample 255 (65280 units), 256 units short of the

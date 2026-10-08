@@ -9,7 +9,9 @@
 
 import { createCharacter, modelMatrix } from './character.js';
 import { createProps } from './props.js';
-import { createNPCs } from './npc.js';
+import { createNPCs, bodyRadius } from './npc.js';
+import { createCombat } from './combat.js';
+import { Animator } from './animator.js';
 
 const ZONE = 'data/zone100';
 
@@ -37,6 +39,9 @@ const FADE = 0.18;
 
 // Clips that are stride cycles, and so can hand their phase to one another.
 const LOCOMOTION = new Set(['walk', 'run']);
+
+// The player's hit points. A grey wolf takes a third of them in a fair fight.
+const PLAYER_HP = 220;
 
 const $ = (id) => document.getElementById(id);
 
@@ -371,15 +376,32 @@ async function main() {
 
   // Spawn on the rising ground south-east of the lake, which is open enough
   // to see the gait and close enough to walk to the shore.
+  const SPAWN = [112 * cell, 118 * cell];
+  const anim = new Animator(char, { carry: LOCOMOTION, fade: FADE });
+  anim.t = 0;
   const player = {
-    x: 112 * cell, y: 118 * cell, // world X and Y, i.e. heightmap cells
+    x: SPAWN[0], y: SPAWN[1], // world X and Y, i.e. heightmap cells
     yaw: Math.PI, phase: 0, gait: 0, clip: null, blend: 1,
+    // A fighter, as combat.js sees one. Bare-handed, so a modest hitter
+    // with a quick swing; the numbers are this project's, not the game's.
+    name: 'you', hp: PLAYER_HP, maxHp: PLAYER_HP, damage: [9, 17], swing: 2.2,
+    hitChance: 0.85, body: bodyRadius(char, char.scale), dead: false, anim,
   };
 
-  // Animation state: the clip playing, the one fading out behind it, and a
-  // clock for each. Two clocks rather than one because the outgoing clip
-  // carries on at its own rate while it fades.
-  const anim = { cur: 'idle', prev: null, t: 0, prevT: 0, fade: 1 };
+  // --- combat ---
+  const logEl = $('log');
+  const log = (text, kind = 'info') => {
+    const line = document.createElement('div');
+    line.className = kind;
+    line.textContent = text;
+    logEl.appendChild(line);
+    while (logEl.childElementCount > 7) logEl.firstChild.remove();
+  };
+  const combat = npcs ? createCombat({
+    player, npcs, log,
+    // Back on your feet where you started, as at a bindstone.
+    onPlayerDeath: () => { [player.x, player.y] = SPAWN; },
+  }) : null;
 
   // --- cameras ---
   // Two modes: an orbit camera chasing the character, and the original
@@ -412,7 +434,7 @@ async function main() {
   // Debug handle: lets you jump the camera from the console, e.g.
   //   daoc.goto(120, 90, 800)   // heightmap cell x, y, metres above ground
   globalThis.daoc = {
-    cam, orbit, player, char, props, npcs, anim, manifest: man, heights,
+    cam, orbit, player, char, props, npcs, combat, anim, manifest: man, heights,
     heightAt: (cx, cy) => H(Math.round(cx), Math.round(cy)),
     groundAt,
     // Put the character on a given heightmap cell, e.g. daoc.warp(60, 70).
@@ -439,6 +461,14 @@ async function main() {
   addEventListener('keydown', (e) => {
     keys.add(e.code);
     if (e.code === 'KeyF') wireframe = !wireframe;
+    // Combat. Tab would otherwise move focus out of the page.
+    if (combat && e.code === 'Tab') {
+      e.preventDefault();
+      const t = combat.targetNext(orbit.yaw);
+      if (t) log('You target ' + 'the ' + t.name + '.', 'info');
+    }
+    if (combat && e.code === 'Digit1' && !e.repeat) combat.toggleAttack(orbit.yaw);
+    if (combat && e.code === 'Escape') combat.clearTarget();
     if (e.code === 'KeyC') {
       followMode = !followMode;
       // Hand the free camera the view it was just looking from, so toggling
@@ -517,7 +547,7 @@ async function main() {
     if (keys.has('KeyD')) { mx += camR[0]; my += camR[1]; }
     if (keys.has('KeyA')) { mx -= camR[0]; my -= camR[1]; }
     const moveLen = Math.hypot(mx, my);
-    if (moveLen > 0 && followMode) {
+    if (moveLen > 0 && followMode && !player.dead) {
       mx /= moveLen; my /= moveLen;
       const sprinting = keys.has('ShiftLeft') || keys.has('ShiftRight');
       const walking = keys.has('AltLeft') || keys.has('AltRight');
@@ -535,45 +565,32 @@ async function main() {
     }
     const intensity = Math.min(1, player.gait / RUN);
 
+    // --- NPCs and the fight ---
+    if (npcs) npcs.update(dt);
+    if (combat) combat.update(dt, { moving: player.gait > 0 });
+
     // --- animation ---
     // Which clip the character should be in. Sprint has no cycle of its own,
     // so it reuses the run and lets the rate below carry the extra speed.
-    const want = player.gait === 0 ? 'idle' : player.gait <= WALK ? 'walk' : 'run';
-    if (want !== anim.cur) {
-      // Start a cross-fade. The outgoing clip keeps its own clock running
-      // through the fade, so it finishes its stride rather than freezing.
-      anim.prev = anim.cur;
-      anim.prevT = anim.t;
-      const carry = LOCOMOTION.has(want) && LOCOMOTION.has(anim.cur);
-      const dOld = char.clipDuration(anim.cur), dNew = char.clipDuration(want);
-      // Walk and run are both stride cycles. Carrying the normalised phase
-      // across means the swing foot stays the swing foot; starting the new
-      // clip at zero would cross the legs mid-transition.
-      anim.t = carry && dOld > 0 ? ((anim.t % dOld) / dOld) * dNew : 0;
-      anim.cur = want;
-      anim.fade = 0;
-    }
+    // Standing in a fight is the combat stance rather than the idle.
+    const fighting = combat && (combat.attacking || npcs.npcs.some((n) => n.fight === player));
+    const still = fighting && anim.has('cidle') ? 'cidle' : 'idle';
+    anim.setBase(player.gait === 0 ? still : player.gait <= WALK ? 'walk' : 'run');
     // A recorded clip is authored for one speed. Advancing its own clock in
     // proportion to how fast the character is actually moving keeps the feet
     // planted instead of skating -- the same rule as the procedural phase,
     // applied to a cycle someone else timed.
-    const rate = (name) => {
+    anim.update(dt, (name) => {
       // Divided by the race's scale: a troll drawn 1.3x larger covers 1.3x
       // the ground per stride, so its cycle has to run that much slower.
       if (name === 'walk') return Math.max(player.gait, WALK) / (WALK * char.scale);
       if (name === 'run') return Math.max(player.gait, RUN) / (RUN * char.scale);
       return 1;
-    };
-    anim.t += dt * rate(anim.cur);
-    if (anim.prev) anim.prevT += dt * rate(anim.prev);
-    if (anim.fade < 1) {
-      anim.fade = Math.min(1, anim.fade + dt / FADE);
-      if (anim.fade >= 1) anim.prev = null;
-    }
+    });
 
     // Prefer DAoC's own animation; fall back to the procedural gait if
     // animconv has not been run.
-    const blended = char.poseBlend(anim.prev, anim.prevT, anim.cur, anim.t, anim.fade);
+    const blended = anim.pose();
     player.clip = blended ? anim.cur : null;
     player.blend = blended && anim.prev ? anim.fade : 1;
     if (!blended) {
@@ -589,8 +606,6 @@ async function main() {
       ? 0
       : 1.6 * intensity * (1 - Math.cos(player.phase * 2)) * 0.5;
     const charModel = modelMatrix(player.x, playerGround + bob, player.y, player.yaw, char.scale);
-
-    if (npcs) npcs.update(dt);
 
     // --- place the camera ---
     let eye, target;
@@ -714,9 +729,29 @@ async function main() {
       (player.clip
         ? '  · ' + (anim.prev
             ? anim.prev + ' → ' + anim.cur + ' ' + Math.round(anim.fade * 100) + '%'
-            : anim.cur + '.kfa')
+            : anim.cur + '.kfa') + (anim.act ? ' + ' + anim.act + (anim.upper ? ' (upper)' : '') : '')
         : '  · procedural');
     $('i-mode').textContent = followMode ? 'third person' : 'free fly';
+    if (combat) {
+      const bar = (el, hp, max) => {
+        const f = Math.max(0, hp / max);
+        el.firstElementChild.style.width = (100 * f).toFixed(1) + '%';
+        el.classList.toggle('low', f < 0.5 && f >= 0.25);
+        el.classList.toggle('crit', f < 0.25);
+      };
+      $('you-name').textContent = char.manifest.title || 'You';
+      $('you-hp').textContent = player.dead ? 'dead' : Math.ceil(player.hp) + ' / ' + player.maxHp;
+      bar($('you-bar'), player.hp, player.maxHp);
+      const t = combat.target, box = $('target-box');
+      box.classList.toggle('on', !!t);
+      if (t) {
+        $('tgt-name').textContent = t.name;
+        $('tgt-hp').textContent = t.dead ? 'dead'
+          : Math.ceil(t.hp) + ' / ' + t.maxHp + '  ·  ' + Math.round(Math.hypot(t.x - player.x, t.y - player.y)) + 'u';
+        bar($('tgt-bar'), t.hp, t.maxHp);
+        box.classList.toggle('engaged', combat.attacking);
+      }
+    }
     if (npcs) {
       $('i-npc').textContent = npcs.npcs.length + ' placed, ' + npcs.drawn + ' in view, ' +
         npcs.types.size + ' kinds';

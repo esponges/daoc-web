@@ -8,41 +8,9 @@
 // clip, wandering, turning, water avoidance, cross-fading and posing.
 
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
+import { here, gl, helpers, check, finish } from './testkit.mjs';
 import { createNPCs } from './npc.js';
-
-const here = dirname(fileURLToPath(import.meta.url));
-
-let failures = 0;
-function check(name, ok, detail) {
-  console.log(`  ${ok ? 'ok  ' : 'FAIL'}  ${name}${detail ? '   ' + detail : ''}`);
-  if (!ok) failures++;
-}
-
-// Serve web/ to the modules' relative fetches.
-globalThis.fetch = async (url) => {
-  try {
-    const buf = await readFile(join(here, url));
-    return {
-      ok: true, status: 200,
-      json: async () => JSON.parse(buf.toString('utf8')),
-      arrayBuffer: async () => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength),
-    };
-  } catch {
-    return { ok: false, status: 404 };
-  }
-};
-
-// A WebGL2 context that accepts everything and draws nothing.
-const gl = new Proxy({}, {
-  get: (_, k) => (typeof k === 'string' && /^[A-Z_0-9]+$/.test(k) ? 0 : () => ({})),
-});
-const helpers = {
-  program: () => ({}),
-  uniforms: (_gl, _p, names) => Object.fromEntries(names.map((n) => [n, {}])),
-  loadImage: async () => ({}),
-};
 
 // Flat ground, and a lake laid across the large wolves' home so there is
 // something to avoid: a disc 900 units across, centred on cell (128, 132).
@@ -108,5 +76,4 @@ check('posing and drawing every NPC succeeds', !drawErr, drawErr ? drawErr.messa
 const finite = npcs.npcs.every((n) => Number.isFinite(n.x + n.y + n.yaw + n.anim.t));
 check('state stays finite', finite);
 
-console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');
-process.exitCode = failures ? 1 : 0;
+finish();

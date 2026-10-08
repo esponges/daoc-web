@@ -1,11 +1,16 @@
 {
-  "_comment": "Hand-written placement for Vale of Mularn. The client ships no spawn data -- the server places every creature -- so these positions are this project's own, not the live game's. x and y are heightmap cells (256 units each), the same as daoc.warp(); radius is in cells too. char names a directory under web/data/char/. idle is the range of seconds to stand between wanders.",
+  "_comment": "Hand-written placement for Vale of Mularn. The client ships no spawn data -- the server places every creature -- so these positions, and the fighting numbers, are this project's own, not the live game's. x and y are heightmap cells (256 units each), the same as daoc.warp(); radius is in cells too. char names a directory under web/data/char/. idle is the range of seconds to stand between wanders. hp, damage [min, max], swing (seconds) and hit (chance) are for combat; aggro is how close, in units, the player may come before it attacks unprovoked (0: only fights back). Attacking one of a group brings its packmates within 900 units in too.",
   "seed": 100,
   "groups": [
-    { "char": "large-grey-wolf", "x": 128, "y": 132, "radius": 6, "count": 3, "idle": [4, 12] },
-    { "char": "small-grey-wolf", "x": 98, "y": 138, "radius": 5, "count": 4, "idle": [3, 9] },
-    { "char": "badger", "x": 122, "y": 100, "radius": 5, "count": 3, "idle": [5, 14] },
-    { "char": "norse-male", "x": 196, "y": 211, "radius": 7, "count": 6, "idle": [6, 20] },
-    { "char": "norse-male", "x": 190, "y": 116, "radius": 4, "count": 3, "idle": [6, 20] }
+    { "char": "large-grey-wolf", "x": 128, "y": 132, "radius": 6, "count": 3, "idle": [4, 12],
+      "hp": 90, "damage": [5, 10], "swing": 2.6, "hit": 0.7, "aggro": 400 },
+    { "char": "small-grey-wolf", "x": 98, "y": 138, "radius": 5, "count": 4, "idle": [3, 9],
+      "hp": 40, "damage": [2, 6], "swing": 2.2, "hit": 0.65 },
+    { "char": "badger", "x": 122, "y": 100, "radius": 5, "count": 3, "idle": [5, 14],
+      "hp": 70, "damage": [4, 9], "swing": 2.4, "hit": 0.7 },
+    { "char": "norse-male", "x": 196, "y": 211, "radius": 7, "count": 6, "idle": [6, 20],
+      "hp": 100, "damage": [4, 10], "swing": 2.5, "hit": 0.7 },
+    { "char": "norse-male", "x": 190, "y": 116, "radius": 4, "count": 3, "idle": [6, 20],
+      "hp": 100, "damage": [4, 10], "swing": 2.5, "hit": 0.7 }
   ]
 }
