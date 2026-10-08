@@ -209,6 +209,49 @@ func (f *File) parseWorldBlock(r *reader, typ string) (any, error) {
 		e.Value = r.str()
 		return e, nil
 
+	// The integer tags the 10.1.0.0 creature exporter attaches: "Arborist"
+	// and the like, a count and that many values. Nothing downstream reads
+	// them, but over a hundred figures carry one, and with no block length
+	// there is no stepping over them unread.
+	case "NiIntegersExtraData":
+		f.readExtraPrefix(r)
+		n := int(r.u32())
+		if !r.need(n * 4) {
+			return nil, r.err
+		}
+		vals := make([]uint32, n)
+		for i := range vals {
+			vals[i] = r.u32()
+		}
+		return vals, nil
+
+	case "NiIntegerExtraData":
+		f.readExtraPrefix(r)
+		return r.u32(), nil
+
+	case "NiBooleanExtraData":
+		f.readExtraPrefix(r)
+		return r.boolean(), nil
+
+	case "NiFloatExtraData":
+		f.readExtraPrefix(r)
+		return r.f32(), nil
+
+	case "NiColorExtraData":
+		f.readExtraPrefix(r)
+		return [4]float32{r.f32(), r.f32(), r.f32(), r.f32()}, nil
+
+	// Text keys mark moments in an animation: "start", "hit", "end".
+	case "NiTextKeyExtraData":
+		f.readExtraPrefix(r)
+		n := int(r.u32())
+		keys := make(map[float32]string, n)
+		for i := 0; i < n && r.err == nil; i++ {
+			t := r.f32()
+			keys[t] = r.str()
+		}
+		return keys, nil
+
 	// A billboard always faces the camera. Before 10.1.0.0 the mode is
 	// implicit, so the block is exactly a NiNode.
 	case "NiBillboardNode":
@@ -449,4 +492,14 @@ func (f *File) readStripsData(r *reader) (*ShapeData, error) {
 		return nil, fmt.Errorf("strips yielded %d triangles but the block declares %d", len(d.Triangles), nTris)
 	}
 	return d, nil
+}
+
+// readExtraPrefix reads the NiExtraData fields every extra-data block opens
+// with: a name from 10.0.1.0, the next link in the chain before that.
+func (f *File) readExtraPrefix(r *reader) {
+	if f.Version >= Ver1001000 {
+		r.str()
+	} else {
+		r.i32()
+	}
 }

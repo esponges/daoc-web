@@ -498,7 +498,20 @@ func (f *File) readNET(r *reader, o *ObjectNET) {
 func (f *File) readAV(r *reader, a *AVObject) {
 	f.readNET(r, &a.ObjectNET)
 	a.Flags = r.u16()
+	// Attachment points -- "Bip01 R Shield", "HELD" -- are exported with
+	// an all-NaN translation in sixteen of the figures, BritonF1.NIF among
+	// them: the bytes are 7fc00000 (or ffc00000) three times over, in an
+	// otherwise sound block. The game positions those nodes from whatever
+	// is held, so the value never mattered to it. Accept it here, and only
+	// here, and leave the node at its parent's origin.
+	r.lax = true
 	a.Local.Trans = r.vec3()
+	r.lax = false
+	for i, c := range a.Local.Trans {
+		if math.IsNaN(float64(c)) || math.IsInf(float64(c), 0) {
+			a.Local.Trans[i] = 0
+		}
+	}
 	a.Local.Rot = r.mat33()
 	a.Local.Scale = r.f32()
 	if f.Version <= 0x04020200 {
@@ -559,6 +572,15 @@ func (f *File) readGeomCommon(r *reader) (d *ShapeData, nVerts int, err error) {
 	}
 	if r.boolean() {
 		d.Normals = r.vec3s(nVerts)
+		// Bit 12 of the 10.x UV-set field says a tangent and a bitangent
+		// per vertex follow the normals, for normal mapping. The composite
+		// NPC bodies (albbody01heada.nif and its siblings) set it; without
+		// these two arrays the read lands mid-normal and every float after
+		// is skewed by however many bytes it missed.
+		if nUV&0x1000 != 0 {
+			r.vec3s(nVerts) // tangents
+			r.vec3s(nVerts) // bitangents
+		}
 	}
 	d.Center = r.vec3()
 	d.Radius = r.f32()
@@ -571,8 +593,8 @@ func (f *File) readGeomCommon(r *reader) (d *ShapeData, nVerts int, err error) {
 	if v <= 0x04020200 {
 		nUV = int(r.u16())
 	}
-	// The top nibble of the UV-set count is a Bethesda extension; DAoC
-	// leaves it clear, but mask it so a stray bit cannot explode the loop.
+	// The top nibble of the UV-set count carries flags, the tangent bit
+	// handled above among them; the low twelve bits are the count.
 	sets := nUV & 0x0FFF
 	d.UV = make([][][2]float32, sets)
 	for s := 0; s < sets; s++ {
