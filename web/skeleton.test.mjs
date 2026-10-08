@@ -292,6 +292,44 @@ if (clips) {
     check('idle moves the feet far less than walking', ti < tw * 0.5,
       'idle ' + ti.toFixed(1) + 'u vs walk ' + tw.toFixed(1) + 'u');
   }
+
+  // Stepping backward and sideways. A planted foot slides opposite to the
+  // body, so its average velocity while down says which way the clip
+  // carries the figure: the model faces -Y, so backward is +Y and its left
+  // is +X. Mixing up the two strafes, or reading a stray end key as part of
+  // the cycle, shows up here.
+  const steps = { back: [0, 1], strafeL: [1, 0], strafeR: [-1, 0] };
+  for (const [n, [wx, wy]] of Object.entries(steps)) {
+    const c = clips[n];
+    if (!c) continue;
+    let vx = 0, vy = 0, k = 0;
+    const N = 120, dt = c.duration / N;
+    for (const f of [lFoot, rFoot]) {
+      const p = [];
+      for (let i = 0; i <= N; i++) {
+        skel.poseClip(c, Math.min(i * dt, c.duration - 1e-4));
+        p.push([skel.world[f][3], skel.world[f][7], skel.world[f][11]]);
+      }
+      const low = Math.min(...p.map((q) => q[2])) + 0.5;
+      for (let i = 1; i <= N; i++) {
+        if (p[i][2] < low && p[i - 1][2] < low) {
+          vx -= (p[i][0] - p[i - 1][0]) / dt; vy -= (p[i][1] - p[i - 1][1]) / dt; k++;
+        }
+      }
+    }
+    vx /= k || 1; vy /= k || 1;
+    const along = vx * wx + vy * wy, across = Math.abs(vx * wy - vy * wx);
+    check(n + ' carries the body the way its name says', along > 10 && along > across,
+      'body ' + vx.toFixed(1) + ', ' + vy.toFixed(1) + ' u/s');
+    skel.poseClip(c, 0);
+    const first = skel.world.map((m) => Array.from(m));
+    skel.poseClip(c, c.duration);
+    let seam = 0;
+    for (let i = 0; i < first.length; i++) {
+      for (let j = 0; j < 12; j++) seam = Math.max(seam, Math.abs(first[i][j] - skel.world[i][j]));
+    }
+    check(n + ' loops seamlessly', seam < 2.0, 'worst joint delta ' + seam.toFixed(3));
+  }
 }
 
 

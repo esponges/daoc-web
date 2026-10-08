@@ -39,7 +39,11 @@ const STRIDE = 105;
 const FADE = 0.18;
 
 // Clips that are stride cycles, and so can hand their phase to one another.
-const LOCOMOTION = new Set(['walk', 'run']);
+const LOCOMOTION = new Set(['walk', 'run', 'back', 'strafeL', 'strafeR']);
+
+// Clips the game plays for stepping backward and sideways. They are walks,
+// shared by every player race, so their pace is read off their own feet.
+const STEPS = ['back', 'strafeL', 'strafeR'];
 
 // Vertical field of view, shared by the projection and click-picking.
 const FOV = Math.PI / 3;
@@ -394,6 +398,9 @@ async function main() {
   // to see the gait and close enough to walk to the shore.
   const SPAWN = [112 * cell, 118 * cell];
   const anim = new Animator(char, { carry: LOCOMOTION, fade: FADE });
+  // Ground speed of each step clip at 1x, in model units per second.
+  const stepPace = {};
+  for (const n of STEPS) if (char.clips[n]) stepPace[n] = char.groundSpeed(n);
   anim.t = 0;
   const player = {
     x: SPAWN[0], y: SPAWN[1], // world X and Y, i.e. heightmap cells
@@ -616,12 +623,14 @@ async function main() {
     const pr = [Math.cos(player.yaw), Math.sin(player.yaw)];
     let mx = pf[0] * fwdKey + pr[0] * sideKey, my = pf[1] * fwdKey + pr[1] * sideKey;
     const moveLen = Math.hypot(mx, my);
-    player.back = control && fwdKey < 0 && sideKey === 0;
+    player.back = control && fwdKey < 0;
+    player.side = control && fwdKey === 0 ? sideKey : 0;
     if (moveLen > 0 && control) {
       mx /= moveLen; my /= moveLen;
       const sprinting = keys.has('ShiftLeft') || keys.has('ShiftRight');
-      // Backing up is always at a walk, which is how the game does it.
-      const speed = player.back || walkMode ? WALK : sprinting ? SPRINT : RUN;
+      // Backing up and sidestepping are always at a walk: their clips are
+      // walks, and run at three times their pace they would scurry.
+      const speed = player.back || player.side || walkMode ? WALK : sprinting ? SPRINT : RUN;
       const d = speed * dt;
       player.x = Math.max(0, Math.min(extent, player.x + mx * d));
       player.y = Math.max(0, Math.min(extent, player.y + my * d));
@@ -650,7 +659,12 @@ async function main() {
     // Standing in a fight is the combat stance rather than the idle.
     const fighting = combat && (combat.attacking || npcs.npcs.some((n) => n.fight === player));
     const still = fighting && anim.has('cidle') ? 'cidle' : 'idle';
-    anim.setBase(player.gait === 0 ? still : player.gait <= WALK ? 'walk' : 'run');
+    const forward = player.gait <= WALK ? 'walk' : 'run';
+    const strafe = player.side > 0 ? 'strafeR' : 'strafeL';
+    anim.setBase(player.gait === 0 ? still
+      : player.back ? (anim.has('back') ? 'back' : 'walk')
+      : player.side ? (anim.has(strafe) ? strafe : forward)
+      : forward);
     // A recorded clip is authored for one speed. Advancing its own clock in
     // proportion to how fast the character is actually moving keeps the feet
     // planted instead of skating -- the same rule as the procedural phase,
@@ -658,8 +672,9 @@ async function main() {
     anim.update(dt, (name) => {
       // Divided by the race's scale: a troll drawn 1.3x larger covers 1.3x
       // the ground per stride, so its cycle has to run that much slower.
-      // Backing up plays the walk in reverse.
-      if (name === 'walk') return (player.back ? -1 : 1) * Math.max(player.gait, WALK) / (WALK * char.scale);
+      // With no clip for backing up, the walk plays in reverse.
+      if (name === 'walk') return (player.back && !anim.has('back') ? -1 : 1) * Math.max(player.gait, WALK) / (WALK * char.scale);
+      if (stepPace[name] > 5) return Math.max(player.gait, WALK) / (stepPace[name] * char.scale);
       if (name === 'run') return Math.max(player.gait, RUN) / (RUN * char.scale);
       return 1;
     });

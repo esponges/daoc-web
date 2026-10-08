@@ -108,12 +108,13 @@ func run(game, char string, list, gaitOnly bool, top int, names, as string) erro
 	t, _ := gamedata.Load(game) // optional here: only the rates come from it
 	jobs := make([]job, len(src))
 	for i := range src {
-		jobs[i] = job{strings.TrimSpace(src[i]), strings.TrimSpace(dst[i]), 1, true}
+		jobs[i] = job{strings.TrimSpace(src[i]), strings.TrimSpace(dst[i]), 1, true, 0}
 		// A clip named by hand still has a row in animnifs.csv, which says
 		// how fast the game plays it.
 		if t != nil {
 			if an, ok := t.ByFile(jobs[i].src + ".kfa"); ok {
 				jobs[i].rate = an.Rate()
+				jobs[i].length = an.Length()
 			}
 		}
 	}
@@ -126,6 +127,7 @@ type job struct {
 	src, out string
 	rate     float64 // playback speed relative to the keys; 1 if unknown
 	loop     bool
+	length   float64 // seconds the tables say the clip lasts; 0 if unknown
 }
 
 // A tableRole is one clip taken from a model's tables when none are named:
@@ -140,6 +142,9 @@ var tableRoles = []tableRole{
 	{"idle", "idle", false},
 	{"walk", "walk", false},
 	{"run", "run", false},
+	{"back", "back", false},
+	{"strafeL", "slide left", false},
+	{"strafeR", "slide right", false},
 	{"death", "death", false},
 	{"cidle", "c-idle", true},
 	{"flinch", "flinch", true},
@@ -211,7 +216,16 @@ func fromAnimSet(game, char string) ([]job, error) {
 			fmt.Printf("  anim set %d has no %s clip\n", m.AnimSet, col)
 			continue
 		}
-		jobs = append(jobs, job{strings.TrimSuffix(an.File, filepath.Ext(an.File)), r.out, an.Rate(), an.Loop})
+		// Some sets fill the step columns with the forward walk -- the
+		// badger's "back" is its walk -- which would carry it the wrong
+		// way. Without a clip of its own the viewer makes do with the walk.
+		if r.out == "back" || r.out == "strafeL" || r.out == "strafeR" {
+			if w, ok := t.SetClip(m.AnimSet, "walk"); ok && strings.EqualFold(w.File, an.File) {
+				fmt.Printf("  anim set %d %s is just the walk; skipped\n", m.AnimSet, col)
+				continue
+			}
+		}
+		jobs = append(jobs, job{strings.TrimSuffix(an.File, filepath.Ext(an.File)), r.out, an.Rate(), an.Loop, an.Length()})
 		mode := "once"
 		if an.Loop {
 			mode = "loop"
@@ -447,6 +461,17 @@ func convert(game, char string, nodes []string, skel map[string]bool, jobs []job
 		}
 
 		ao := animOut{Name: out, Source: filepath.Base(path), Duration: a.Duration, Loop: jb.loop, Rate: jb.rate}
+		// A stray key past the end would otherwise stretch the clip: the
+		// right strafe has a second of standing still after its stride,
+		// held by one key at 2s, where its row says 15 frames at 15. Only
+		// a tail that is nothing but such a key is cut. The rows are not
+		// always right the other way -- the wolf's walk is listed at 10
+		// frames and keyed through 3.6s -- so keys that carry motion past
+		// the row's length are trusted over it.
+		if jb.length > 0 && float64(a.Duration) > jb.length+0.5/15 && strayTail(a, jb.length) {
+			fmt.Printf("  %-8s keys run to %.2fs; the tables say %.2fs, so it ends there\n", out, a.Duration, jb.length)
+			ao.Duration = float32(jb.length)
+		}
 		keys := 0
 		for _, t := range a.Tracks {
 			// A track for a bone this model does not have is dropped, not
@@ -524,4 +549,32 @@ func findCase(dir, name string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("%s not found in %s", name, dir)
+}
+
+// strayTail reports whether every key after length seconds sits on the
+// clip's very last instant: a lone end key with nothing between it and the
+// stride, rather than motion the tables forgot to count.
+func strayTail(a *anim, length float64) bool {
+	const eps = 0.5 / 15
+	late := func(t float32) bool {
+		return float64(t) > length+eps && t < a.Duration-eps
+	}
+	for _, t := range a.Tracks {
+		for _, k := range t.Rotations {
+			if late(k.Time) {
+				return false
+			}
+		}
+		for _, k := range t.Trans {
+			if late(k.Time) {
+				return false
+			}
+		}
+		for _, k := range t.Scales {
+			if late(k.Time) {
+				return false
+			}
+		}
+	}
+	return true
 }

@@ -253,6 +253,15 @@ func (a Anim) Rate() float64 {
 	return float64(a.FPS) / float64(a.Base)
 }
 
+// Length is how long the clip lasts in seconds of its own keys: frames at
+// the base rate. 0 if the row does not say.
+func (a Anim) Length() float64 {
+	if a.Frames <= 0 || a.Base <= 0 {
+		return 0
+	}
+	return float64(a.Frames) / float64(a.Base)
+}
+
 // ByFile finds the first animnifs.csv row that plays a .kfa, for clips named
 // by file rather than reached through an anim set.
 func (t *Tables) ByFile(file string) (Anim, bool) {

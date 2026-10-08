@@ -66,9 +66,9 @@ go run ./cmd/serve                                       # then open localhost:8
 Where they stand is `web/spawns/zone100.json`, which is this project's own
 placement — see [NPCs](#npcs). `?npcs=0` leaves them out.
 
-Controls are the game's: `W`/`S` move forward and back (backing up is at a
-walk), `A`/`D` turn the character with the camera behind it, `Q`/`E`
-strafe. Hold the right mouse button and drag to look around without turning;
+Controls are the game's: `W`/`S` move forward and back, `A`/`D` turn the
+character with the camera behind it, `Q`/`E` strafe. Backing up and
+strafing are at a walk, each with the game's own clip. Hold the right mouse button and drag to look around without turning;
 the camera swings back behind once you move. Wheel zooms, shift sprints, `R`
 toggles between running (the default) and walking, `C` switches to the
 free-fly camera, `F` to wireframe. Left-click an
@@ -693,6 +693,24 @@ bounce more than seven times too fast. `animconv` now writes each clip's rate,
 from its role's row or, for a clip named by hand, from the first row that
 plays that file, and the animator runs everything but walk and run at it;
 those two are already paced by ground speed.
+
+### Stepping back and sideways
+
+`anims.csv` has columns for backing up and for sliding left and right, and
+every player race points them at the same three human clips: `WB_Hm`,
+`St_hm_L` and `St_hm_R`. They are walks, about 35 to 45 units a second at
+1x, so the viewer moves the character at walking pace for them and runs each
+clip at the rate its own planted feet give, as it does the walk. The test
+reads which way each clip carries the body from the same feet: backward for
+one, to its own left and right for the other two.
+
+Two of the table's answers needed checking. `St_hm_R` is keyed through 2s
+while its row says 15 frames at 15, and the second second is one stray end
+key with the figure standing still; `animconv` now ends a clip where its
+row says, but only when nothing but such a key lies beyond. It cannot simply
+trust the rows: the wolf's walk is listed at 10 frames and really moves for
+3.6s. And the badger's "back" column is its forward walk, which would carry
+it the wrong way, so a step column that only repeats the walk is skipped.
 
 ### Targeting by clicking
 
