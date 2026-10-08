@@ -57,6 +57,7 @@ type outfit struct {
 	shapes   string
 	model    int               // monsters.csv row; the race's scale is read from it
 	textures map[string]string // shape-name prefix -> .dds; longest prefix wins
+	equip    []equip           // items held on the skeleton's sockets
 }
 
 var outfits = map[string]outfit{
@@ -94,6 +95,30 @@ var outfits = map[string]outfit{
 			"Legs":   "pltLegs01_04.dds",
 			"Gloves": "pltGloves01_04.dds",
 			"Boots":  "pltBoots01_04.dds",
+		},
+	},
+	// A Midgard warrior as the realm would kit one out. Chain is Midgard's
+	// heaviest armour -- pskins.csv's realm prefixes run Albion to plate,
+	// Hibernia to scale and Midgard to chain -- and a hammer and shield are
+	// a warrior's own weapons. The chain is the tier below plate in every
+	// slot, dressed in the one chn* texture family that covers them all.
+	"troll-warrior": {
+		desc:   "Troll warrior in chain, with hammer and shield",
+		figure: "NTrollM.NIF",
+		model:  137,
+		shapes: "HeadA1,Body4,LBody3,Arms4,Legs3,Gloves2,Boots4",
+		textures: map[string]string{
+			"Head":   "tro_m_Head01.dds",
+			"Body":   "chnbody05_10_m.dds",
+			"LBody":  "chnbody05_10_m.dds",
+			"Arms":   "chnarms05_10.dds",
+			"Legs":   "chnlegs05_10.dds",
+			"Gloves": "chngloves05_10.dds",
+			"Boots":  "chnboots05_10.dds",
+		},
+		equip: []equip{
+			{Slot: "right", Bone: "Bip01 R Held", Item: "N_1h_warhammer01", Name: "norse warhammer"},
+			{Slot: "left", Bone: "Bip01 L Shield", Item: "M_Shield_Crescent", Name: "Mid Shield 01"},
 		},
 	},
 }
@@ -151,12 +176,15 @@ type manifest struct {
 	ForwardY    int        `json:"forwardY"`
 	// From the game tables when the model has a row there. Scale is how
 	// much larger than authored the game draws it; AnimSet picks its clips.
-	Title   string     `json:"title,omitempty"` // display name: "Large Grey Wolf"
-	Model   int        `json:"model,omitempty"`
-	Scale   float64    `json:"scale"`
-	AnimSet int        `json:"animSet,omitempty"`
-	Bones   []boneOut  `json:"bones"`
-	Shapes  []shapeOut `json:"shapes"`
+	Title   string  `json:"title,omitempty"` // display name: "Large Grey Wolf"
+	Model   int     `json:"model,omitempty"`
+	Scale   float64 `json:"scale"`
+	AnimSet int     `json:"animSet,omitempty"`
+	// Items held on sockets, each converted beside the character into
+	// equip/<slot>/, itself a one-bone character.
+	Equip  []equip    `json:"equip,omitempty"`
+	Bones  []boneOut  `json:"bones"`
+	Shapes []shapeOut `json:"shapes"`
 }
 
 func main() {
@@ -211,6 +239,7 @@ func main() {
 	if *shapeList == "" {
 		*shapeList = o.shapes
 	}
+	meta.equip = o.equip
 	for k, v := range o.textures {
 		slotTextures[k] = v
 	}
@@ -236,6 +265,7 @@ func main() {
 var meta = struct {
 	model, animSet int
 	title          string
+	equip          []equip
 	scale          float64
 }{scale: 1}
 
@@ -535,6 +565,7 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 		Model:       meta.model,
 		Scale:       meta.scale,
 		AnimSet:     meta.animSet,
+		Equip:       meta.equip,
 		Format:      "pos3f,normal3f,uv2f,bone4u8,weight4f; then uint32 indices",
 		VertexCount: len(verts) / vertStride,
 		IndexCount:  len(indices),
@@ -552,6 +583,20 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 	}
 	if err := os.WriteFile(filepath.Join(dir, "char.json"), js, 0o644); err != nil {
 		return err
+	}
+
+	// Equipment, after the character so its sockets can be checked.
+	for _, e := range meta.equip {
+		found := false
+		for _, b := range bones {
+			found = found || b.Name == e.Bone
+		}
+		if !found {
+			return fmt.Errorf("no socket %q on %s for %s", e.Bone, figure, e.Item)
+		}
+		if err := convertItem(game, e, filepath.Join(dir, "equip", e.Slot)); err != nil {
+			return fmt.Errorf("equip %s: %w", e.Slot, err)
+		}
 	}
 
 	if !noTex {

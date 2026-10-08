@@ -18,7 +18,7 @@ const ZONE = 'data/zone100';
 // Which converted character to load. ?char=norseman switches back without a
 // rebuild; each one carries its own animations, so the clips follow the model.
 const CHARACTER = 'data/char/' +
-  (new URLSearchParams(location.search).get('char') || 'troll-plate')
+  (new URLSearchParams(location.search).get('char') || 'troll-warrior')
     .replace(/[^a-zA-Z0-9_-]/g, '');
 
 // DAoC's own movement rates, in world units per second. A zone is 65536 units
@@ -382,9 +382,13 @@ async function main() {
   const player = {
     x: SPAWN[0], y: SPAWN[1], // world X and Y, i.e. heightmap cells
     yaw: Math.PI, phase: 0, gait: 0, clip: null, blend: 1,
-    // A fighter, as combat.js sees one. Bare-handed, so a modest hitter
-    // with a quick swing; the numbers are this project's, not the game's.
-    name: 'you', hp: PLAYER_HP, maxHp: PLAYER_HP, damage: [9, 17], swing: 2.2,
+    // A fighter, as combat.js sees one. What it holds sets the numbers:
+    // a warhammer hits harder and swings slower than a fist, and a shield
+    // blocks some of what comes from the front. They are this project's
+    // numbers, not the game's.
+    name: 'you', hp: PLAYER_HP, maxHp: PLAYER_HP,
+    damage: char.armed ? [15, 27] : [9, 17], swing: char.armed ? 3.0 : 2.2,
+    blockChance: char.shield ? 0.2 : 0,
     hitChance: 0.85, body: bodyRadius(char, char.scale), dead: false, anim,
   };
 

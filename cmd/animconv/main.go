@@ -137,11 +137,13 @@ var tableRoles = []tableRole{
 	{"attack1", "att med", true},
 	{"attack2", "att high", true},
 	{"attack3", "att low", true},
+	// Only for a figure with a shield on its arm; see shieldOnly.
+	{"block", "block h", true},
 }
 
-// unarmedAttacks replace the three attacks for a player-race figure. Their
-// "att" columns are one-handed weapon swings, and nothing here holds a
-// weapon yet; the hand-to-hand set is what an empty-handed fighter uses.
+// unarmedAttacks replace the three attacks for an empty-handed player-race
+// figure. Its "att" columns are one-handed weapon swings; with nothing in
+// the hand, the hand-to-hand set is what fits.
 var unarmedAttacks = map[string]string{
 	"attack1": "h2h att m",
 	"attack2": "h2h att h",
@@ -158,6 +160,9 @@ func fromAnimSet(game, char string) ([]job, error) {
 	var m struct {
 		Model   int `json:"model"`
 		AnimSet int `json:"animSet"`
+		Equip   []struct {
+			Slot string `json:"slot"`
+		} `json:"equip"`
 	}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
@@ -170,10 +175,20 @@ func fromAnimSet(game, char string) ([]job, error) {
 		return nil, err
 	}
 	humanoid := t.Figures[t.Monsters[m.Model].Figure].Type == 1
+	// What it holds decides how it fights: a weapon in the right hand
+	// takes the one-handed swings, a shield on the left adds a block.
+	armed, shield := false, false
+	for _, e := range m.Equip {
+		armed = armed || e.Slot == "right"
+		shield = shield || e.Slot == "left"
+	}
 	var jobs []job
 	for _, r := range tableRoles {
 		col := r.column
-		if humanoid && unarmedAttacks[r.out] != "" {
+		if r.out == "block" && !shield {
+			continue
+		}
+		if humanoid && !armed && unarmedAttacks[r.out] != "" {
 			col = unarmedAttacks[r.out]
 		}
 		var an gamedata.Anim

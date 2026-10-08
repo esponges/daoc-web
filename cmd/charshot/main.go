@@ -63,6 +63,10 @@ type manifest struct {
 	Max         [3]float64 `json:"max"`
 	Bones       []bone     `json:"bones"`
 	Shapes      []shape    `json:"shapes"`
+	Equip       []struct {
+		Slot string `json:"slot"`
+		Bone string `json:"bone"`
+	} `json:"equip"`
 }
 
 // xf is a rigid transform as three rows of four, the same packing the manifest
@@ -285,39 +289,72 @@ func main() {
 	intensity := flag.Float64("gait", 0, "gait intensity, 0 for the bind pose")
 	yaw := flag.Float64("yaw", 215, "camera azimuth in degrees")
 	elev := flag.Float64("elev", 8, "camera elevation in degrees")
+	zoom := flag.Float64("zoom", 1, "magnification; 3 frames roughly a hand and what it holds")
+	look := flag.String("at", "", "with -zoom, centre on this bone instead of the figure")
 	flag.Parse()
 
-	if err := run(*dir, *out, *size, *phase, *intensity, *yaw, *elev); err != nil {
+	if err := run(*dir, *out, *size, *phase, *intensity, *yaw, *elev, *zoom, *look); err != nil {
 		fmt.Fprintln(os.Stderr, "charshot:", err)
 		os.Exit(1)
 	}
 }
 
-func run(dir, out string, size int, phase, intensity, yawDeg, elevDeg float64) error {
+// model is one converted directory: a character, or an item it holds.
+type model struct {
+	man      manifest
+	blob     []byte
+	textures map[string]image.Image
+}
+
+func (m *model) f32(off int) float64 {
+	return float64(math.Float32frombits(binary.LittleEndian.Uint32(m.blob[off:])))
+}
+
+func (m *model) index(i int) int {
+	return int(binary.LittleEndian.Uint32(m.blob[m.man.VertexCount*m.man.Stride+i*4:]))
+}
+
+func loadModel(dir string) (*model, error) {
 	jsRaw, err := os.ReadFile(filepath.Join(dir, "char.json"))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	var man manifest
-	if err := json.Unmarshal(jsRaw, &man); err != nil {
-		return err
+	m := &model{textures: map[string]image.Image{}}
+	if err := json.Unmarshal(jsRaw, &m.man); err != nil {
+		return nil, err
 	}
-	blob, err := os.ReadFile(filepath.Join(dir, "mesh.bin"))
+	if m.blob, err = os.ReadFile(filepath.Join(dir, "mesh.bin")); err != nil {
+		return nil, err
+	}
+	vertBytes := m.man.VertexCount * m.man.Stride
+	if len(m.blob) != vertBytes+m.man.IndexCount*4 {
+		return nil, fmt.Errorf("mesh.bin is %d bytes, manifest implies %d",
+			len(m.blob), vertBytes+m.man.IndexCount*4)
+	}
+	for _, s := range m.man.Shapes {
+		if s.Texture == "" || m.textures[s.Texture] != nil {
+			continue
+		}
+		f, err := os.Open(filepath.Join(dir, "tex", s.Texture))
+		if err != nil {
+			return nil, err
+		}
+		img, err := png.Decode(f)
+		f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", s.Texture, err)
+		}
+		m.textures[s.Texture] = img
+	}
+	return m, nil
+}
+
+func run(dir, out string, size int, phase, intensity, yawDeg, elevDeg, zoom float64, lookAt string) error {
+	ch, err := loadModel(dir)
 	if err != nil {
 		return err
 	}
-	vertBytes := man.VertexCount * man.Stride
-	if len(blob) != vertBytes+man.IndexCount*4 {
-		return fmt.Errorf("mesh.bin is %d bytes, manifest implies %d",
-			len(blob), vertBytes+man.IndexCount*4)
-	}
-
-	f32 := func(off int) float64 {
-		return float64(math.Float32frombits(binary.LittleEndian.Uint32(blob[off:])))
-	}
-	index := func(i int) int {
-		return int(binary.LittleEndian.Uint32(blob[vertBytes+i*4:]))
-	}
+	man := ch.man
 
 	skel, err := newSkeleton(man.Bones)
 	if err != nil {
@@ -325,27 +362,35 @@ func run(dir, out string, size int, phase, intensity, yawDeg, elevDeg float64) e
 	}
 	skel.poseWalk(phase, intensity)
 
-	// Textures, keyed by file name.
-	textures := map[string]image.Image{}
-	for _, s := range man.Shapes {
-		if s.Texture == "" || textures[s.Texture] != nil {
-			continue
-		}
-		f, err := os.Open(filepath.Join(dir, "tex", s.Texture))
+	// Held items: each is a one-bone model whose bone is a socket on this
+	// skeleton, so it is drawn with that socket's world transform.
+	type held struct {
+		m      *model
+		socket int
+	}
+	var items []held
+	for _, e := range man.Equip {
+		m, err := loadModel(filepath.Join(dir, "equip", e.Slot))
 		if err != nil {
-			return err
+			return fmt.Errorf("equip %s: %w", e.Slot, err)
 		}
-		img, err := png.Decode(f)
-		f.Close()
-		if err != nil {
-			return fmt.Errorf("%s: %w", s.Texture, err)
+		s := skel.id(e.Bone)
+		if s < 0 {
+			return fmt.Errorf("equip %s: no socket %q", e.Slot, e.Bone)
 		}
-		textures[s.Texture] = img
+		items = append(items, held{m, s})
 	}
 
 	// Camera: orbit the figure's mid-height at a distance that frames it.
 	h := man.Max[2] - man.Min[2]
 	target := [3]float64{0, 0, man.Min[2] + h*0.52}
+	if lookAt != "" {
+		b := skel.id(lookAt)
+		if b < 0 {
+			return fmt.Errorf("no bone %q", lookAt)
+		}
+		target = skel.world[b].point([3]float64{})
+	}
 	dist := h * 2.1
 	ya, el := yawDeg*math.Pi/180, elevDeg*math.Pi/180
 	eye := [3]float64{
@@ -359,7 +404,7 @@ func run(dir, out string, size int, phase, intensity, yawDeg, elevDeg float64) e
 
 	W, H := size*3/4, size
 	focal := float64(H) * 0.62 * dist / h * h / dist // keeps the figure framed
-	focal = float64(H) * 1.05
+	focal = float64(H) * 1.05 * zoom
 	img := image.NewRGBA(image.Rect(0, 0, W, H))
 	depth := make([]float64, W*H)
 	for i := range depth {
@@ -397,53 +442,62 @@ func run(dir, out string, size int, phase, intensity, yawDeg, elevDeg float64) e
 	}
 
 	drawn, clipped := 0, 0
-	for _, s := range man.Shapes {
-		// Precompute this shape's skinning matrices.
-		mats := make([]xf, len(s.Bones))
-		for b := range s.Bones {
-			mats[b] = mul(skel.world[s.Bones[b]], xf(s.InvBind[b]))
-		}
-		tex := textures[s.Texture]
-		skin := func(vi int) ([3]float64, [3]float64, [2]float64) {
-			o := vi * man.Stride
-			p := [3]float64{f32(o + offPos), f32(o + offPos + 4), f32(o + offPos + 8)}
-			n := [3]float64{f32(o + offNormal), f32(o + offNormal + 4), f32(o + offNormal + 8)}
-			uv := [2]float64{f32(o + offUV), f32(o + offUV + 4)}
-			var sp, sn [3]float64
-			for k := 0; k < 4; k++ {
-				w := f32(o + offWeight + k*4)
-				if w <= 0 {
+	// draw rasterises one model; boneWorld gives the world transform of
+	// each of its bones.
+	draw := func(md *model, boneWorld func(int) xf) {
+		for _, s := range md.man.Shapes {
+			// Precompute this shape's skinning matrices.
+			mats := make([]xf, len(s.Bones))
+			for b := range s.Bones {
+				mats[b] = mul(boneWorld(s.Bones[b]), xf(s.InvBind[b]))
+			}
+			tex := md.textures[s.Texture]
+			f32, index, blob := md.f32, md.index, md.blob
+			skin := func(vi int) ([3]float64, [3]float64, [2]float64) {
+				o := vi * md.man.Stride
+				p := [3]float64{f32(o + offPos), f32(o + offPos + 4), f32(o + offPos + 8)}
+				n := [3]float64{f32(o + offNormal), f32(o + offNormal + 4), f32(o + offNormal + 8)}
+				uv := [2]float64{f32(o + offUV), f32(o + offUV + 4)}
+				var sp, sn [3]float64
+				for k := 0; k < 4; k++ {
+					w := f32(o + offWeight + k*4)
+					if w <= 0 {
+						continue
+					}
+					m := mats[blob[o+offBone+k]]
+					tp, tn := m.point(p), m.dir(n)
+					for c := 0; c < 3; c++ {
+						sp[c] += w * tp[c]
+						sn[c] += w * tn[c]
+					}
+				}
+				return sp, sn, uv
+			}
+
+			for i := s.First; i < s.First+s.Count; i += 3 {
+				var tri [3]pv
+				bad := false
+				for k := 0; k < 3; k++ {
+					p, n, uv := skin(index(i + k))
+					v := project(p, n)
+					v.u, v.v = uv[0], uv[1]
+					if !v.ok {
+						bad = true
+					}
+					tri[k] = v
+				}
+				if bad {
+					clipped++
 					continue
 				}
-				m := mats[blob[o+offBone+k]]
-				tp, tn := m.point(p), m.dir(n)
-				for c := 0; c < 3; c++ {
-					sp[c] += w * tp[c]
-					sn[c] += w * tn[c]
-				}
+				rasterise(img, depth, W, H, tri[0], tri[1], tri[2], tex, s.Diffuse)
+				drawn++
 			}
-			return sp, sn, uv
 		}
-
-		for i := s.First; i < s.First+s.Count; i += 3 {
-			var tri [3]pv
-			bad := false
-			for k := 0; k < 3; k++ {
-				p, n, uv := skin(index(i + k))
-				v := project(p, n)
-				v.u, v.v = uv[0], uv[1]
-				if !v.ok {
-					bad = true
-				}
-				tri[k] = v
-			}
-			if bad {
-				clipped++
-				continue
-			}
-			rasterise(img, depth, W, H, tri[0], tri[1], tri[2], tex, s.Diffuse)
-			drawn++
-		}
+	}
+	draw(ch, func(b int) xf { return skel.world[b] })
+	for _, it := range items {
+		draw(it.m, func(int) xf { return skel.world[it.socket] })
 	}
 
 	f, err := os.Create(out)

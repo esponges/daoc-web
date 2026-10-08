@@ -3,7 +3,8 @@
 A proof of concept: extract Dark Age of Camelot's shipped assets and render
 them in a browser. Currently one zone — **100, Vale of Mularn**, its forest and
 the village of Mularn — with a playable character you can walk around it: a
-**Troll in full plate** by default, or the **Norseman** via `?char=norseman`.
+**Troll warrior** in Midgard chain with a warhammer and shield by default, or
+the **Norseman** via `?char=norseman`.
 Wolves and badgers wander the woods and villagers wander the village, each one
 built from the game's own creature tables by model number.
 
@@ -42,8 +43,8 @@ go run ./cmd/propconv -zone 100                          # trees, buildings, pro
 # A character is an outfit: one shape per slot plus the texture to dress it.
 # With no -anims, animconv converts the clips the game's tables assign the
 # race: idle, walk, run, death, combat stance, flinch and three attacks.
-go run ./cmd/charconv -outfit troll-plate
-go run ./cmd/animconv -char web/data/char/troll-plate
+go run ./cmd/charconv -outfit troll-warrior   # also converts his hammer and shield
+go run ./cmd/animconv -char web/data/char/troll-warrior
 
 # The Norseman is still there; ?char=norseman in the URL switches to him.
 # The second run swaps in the locomotion clip-scoring found; index.json
@@ -99,7 +100,7 @@ caught two bugs the numeric checks passed over.
 ```bash
 go test ./...            # container, heightmap and NIF parsing against the real files
 node web/skeleton.test.mjs              # the posing maths, for the Norseman
-node web/skeleton.test.mjs troll-plate  # and for any other converted character
+node web/skeleton.test.mjs troll-warrior  # and for any other converted character
 node web/npc.test.mjs                   # ten simulated minutes of wandering
 node web/combat.test.mjs                # targeting, fights, deaths and respawns
 ```
@@ -324,14 +325,50 @@ plate variant. That is why an outfit has to pick shape and texture together: the
 tier gives the silhouette and the texture gives the material, and choosing them
 independently gets you plate boots painted like cloth.
 
-`charconv -outfit` names a pairing. Two ship:
+`charconv -outfit` names a pairing. Three ship:
 
 | outfit | model | shapes |
 | --- | --- | --- |
 | `norseman` | `NVikingM.NIF` | `HeadA1,Body1,LBody1,Arms1,Legs1,Gloves1,Boots1` |
 | `troll-plate` | `NTrollM.NIF` | `HeadA1,Body5,Lbody4,Arms6,Legs4,Gloves3,Boots5` |
+| `troll-warrior` | `NTrollM.NIF` | `HeadA1,Body4,LBody3,Arms4,Legs3,Gloves2,Boots4`, plus a warhammer and shield |
 
 `-shapes` and `-tex Slot=file.dds` override either half for experiments.
+
+**Chain is Midgard's armour.** `pskins.csv` prefixes its armour skins by realm
+— `b_` Albion, `h_` Hibernia, `n_` Midgard — and the heaviest each realm wears
+runs Albion to plate, Hibernia to scale and Midgard to chain. A Midgard troll
+warrior in chain is how the realm kits one out; the plate outfit stays for
+comparison. The chain is the tier below plate in every slot, dressed in the one
+`chn*` texture family, `05_10`, that has a texture for all of them. The game's
+own item-to-armour mapping has not been found, so that pairing is chosen by
+eye, with `charshot`.
+
+### Held items
+
+An item is a small static model in `items/` — `items.csv` lists 3000-odd, and
+Midgard's include `n_1h_warhammer01` and seven `M_Shield_*` — and it carries its
+own attachment markers: empty nodes named `HELD`, `BELT`, `BACK` and `GROUND`,
+one for each way it can be worn. The character carries matching sockets on its
+skeleton: `Bip01 R Held` in the right hand, `Bip01 L Shield` on the left
+forearm, `Bip01 L Back` and `R Back` across the shoulders. Wielding is lining
+the two up — the item's `HELD` marker goes where the socket is.
+
+So `charconv` bakes each item's vertices into the frame of its `HELD` marker
+and writes it beside the character, under `equip/<slot>/`, as an ordinary
+character with one bone. The viewer sets that bone to the socket's world
+transform each frame and draws the item with the character's shader; nothing
+else is new. The grip checks out from the numbers: in the bind pose `R Held`
+has its x axis along the fingers and its z axis out of the front of the fist,
+and the hammer's head lies along its own +z, so the handle runs through the
+fist, square to the fingers, head forward.
+
+Shields name three textures — `cloakpattern01`, `symbol_001` and the material,
+`Shield_Wood` or `sh_metal01` — and the first two are nowhere in the install.
+They are the guild's pattern and emblem, composited over the material at
+runtime; `items.csv` flags them with "Strip Textures". Without a guild, the
+material is what is left, and that is what the converter takes: the first
+named texture that exists.
 
 Leaving a slot out is visible rather than subtle: the first troll build omitted
 `Lbody4` and came out with a hole through the midriff, because nothing else
@@ -608,9 +645,17 @@ roles per character — idle, walk, run and death from one table, the combat
 stance, flinch and three attacks from the other — and records whether each
 loops. A creature's row names its own clips (`wlf_alo`, `wlf_hits`,
 `wlf_grwl`, `wlf_deth` for the wolf; the badger borrows the rat's). A player
-race's attack columns are one-handed weapon swings; with nothing in hand, the
-player-race figures (monnifs.csv's type 1) take the hand-to-hand set
-`A_H_H2H_*` instead. All nine bind every track on every character.
+race's attack columns are one-handed weapon swings (`a_h_1s_*`), which is what
+the troll warrior uses with his hammer; an empty-handed player-race figure
+(monnifs.csv's type 1) takes the hand-to-hand set `A_H_H2H_*` instead, and one
+with a shield gets a tenth role, `block` (`b_h_1h_high`). What a character
+holds is read from its `char.json`, so the clips follow the equipment. All of
+them bind every track on every character.
+
+The warhammer's strike is quick: in the middle tenth of the swing the hand
+travels 72 units, about 20 m/s, from wound back behind the shoulder to out in
+front. The swing ends exactly where the combat stance begins, so the two blend
+without a seam.
 
 ### Two things animation needed
 
@@ -643,7 +688,9 @@ its home and it gives up and walks back, healing when it arrives. Killed, it
 plays its death, lies 15 seconds, vanishes, and respawns at home 20 seconds
 later.
 
-You have 220 hit points and regenerate after six seconds out of combat. Die
+You have 220 hit points and regenerate after six seconds out of combat. With
+the hammer you hit for 15–27 every 3 seconds (bare-handed, 9–17 every 2.2),
+and the shield blocks a fifth of the blows that come from in front. Die
 and every NPC on you goes home; five seconds later you are back on your feet
 where you started.
 
@@ -688,12 +735,15 @@ a large wolf pack until it kills you, and running a badger to its leash.
   together. Meshes and textures are independent here, so nothing stops it.
 - **NPC placement is invented.** The client ships no spawn data, so where the
   wolves and villagers stand is this project's choice, not the live game's.
-- **Combat is auto-attack and nothing else.** No styles, spells, weapons,
-  shields, parry, block or evade, levels, experience or loot; the hit points,
-  damage and swing times are this project's numbers, not the game's. The
-  player fights bare-handed with the hand-to-hand clips, since nothing is held
-  yet. NPCs never flee, and chase in a straight line through trees and
-  buildings, as everything here walks through them.
+- **Combat is auto-attack and a shield block.** No styles, spells, parry or
+  evade, levels, experience or loot; the hit points, damage, swing times and
+  block chance are this project's numbers, not the game's, and the weapon's
+  own stats in the item tables are not read. NPCs never flee, and chase in a
+  straight line through trees and buildings, as everything here walks
+  through them.
+- **Equipment is fixed per outfit.** The warhammer and shield are named in the
+  outfit; there is no inventory, no swapping, and nothing worn on the belt or
+  back, though the markers and sockets for both are there.
 - **No target indicator in the world.** The selected target shows in the HUD
   panel only; nothing is drawn under it.
 - **16 of 633 figures do not parse** — see [Parsing the rest of

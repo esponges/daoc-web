@@ -3,9 +3,10 @@
 // Deliberately the simplest version of DAoC's model. You select a target and
 // switch attack on; while it is on, you swing whenever your swing timer is up,
 // the target is in reach and roughly in front of you. Each swing rolls once to
-// hit and once for damage. No styles, no weapons, no parry, block or evade,
-// no levels -- each side has hit points, a damage range, a swing time and a
-// hit chance, and the NPC's come from the spawn file.
+// hit and once for damage, and a shield, if you carry one and face the blow,
+// may block it first. No styles, no parry or evade, no levels -- each side
+// has hit points, a damage range, a swing time and a hit chance, and the
+// NPCs' come from the spawn file.
 //
 // None of this touches WebGL, so npc.test.mjs and combat.test.mjs can drive it
 // headlessly.
@@ -119,6 +120,14 @@ export function createCombat({ player, npcs, log = () => {}, onPlayerDeath = () 
     // reach, but not if it has gone far.
     if (distance(from, to) > from.body + to.body + REACH * 2.5) return;
     const you = from === player, them = to === player;
+    // A shield stops a blow outright, but only one it can see coming.
+    if (to.blockChance && facing(to, from) && rng() < to.blockChance) {
+      to.anim.play('block', { upper: true });
+      log(them ? 'You block ' + the(from) + '\'s attack!' : cap(the(to)) + ' blocks your attack!',
+        them ? 'block' : 'miss');
+      if (!them) provoke(to);
+      return;
+    }
     if (rng() > from.hitChance) {
       log(you ? 'You miss ' + the(to) + '!' : cap(the(from)) + ' misses you!', you ? 'miss' : 'miss-in');
       return;

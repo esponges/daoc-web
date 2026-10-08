@@ -1,6 +1,6 @@
 // Headless checks on fighting: the real spawn file, the real characters and
 // their converted combat clips, the player as a plate-armoured troll, and
-// WebGL stubbed out.
+// WebGL stubbed out. The player is the troll warrior, hammer and shield.
 //
 // Run: node web/combat.test.mjs
 //
@@ -23,10 +23,12 @@ const world = { cell, extent, groundAt: () => 0, isWet: () => false };
 
 async function setup() {
   const npcs = await createNPCs(gl, 'spawns/zone100.json', helpers, world);
-  const char = await createCharacter(gl, 'data/char/troll-plate', helpers);
+  const char = await createCharacter(gl, 'data/char/troll-warrior', helpers);
   const anim = new Animator(char);
   const player = {
-    name: 'you', x: 0, y: 0, yaw: 0, hp: 220, maxHp: 220, damage: [9, 17], swing: 2.2,
+    // The viewer's numbers for a hammer and shield.
+    name: 'you', x: 0, y: 0, yaw: 0, hp: 220, maxHp: 220, damage: [15, 27], swing: 3.0,
+    blockChance: 0.2,
     hitChance: 0.85, body: bodyRadius(char, char.scale), dead: false, anim,
   };
   const lines = [];
@@ -95,6 +97,32 @@ console.log('one-shot clips and layering');
     mask[skel.boneId('Bip01 L Foot')] === 0);
 }
 
+console.log('hammer and shield');
+{
+  const w = await setup();
+  const ch = w.char, skel = ch.skeleton;
+  check('the warrior holds a hammer and carries a shield', ch.armed && ch.shield,
+    ch.equip.map((e) => e.slot + ': ' + e.item.manifest.source + ' on ' + e.bone).join(', '));
+  check('armed, it swings the one-handed attacks',
+    ch.clips.attack1.source.toLowerCase().startsWith('a_h_1s'), ch.clips.attack1.source);
+  check('and has a block', !!ch.clips.block && ch.clips.block.loop === false, ch.clips.block?.source);
+  // Through a swing the hammer goes wherever the hand's socket goes.
+  const right = ch.equip.find((e) => e.slot === 'right');
+  const ctx = { viewProj: new Float32Array(16), model: new Float32Array(16), camPos: [0, 0, 0],
+    fogColor: [0, 0, 0], fogStart: 1, fogEnd: 2, lightDir: [0, 1, 0] };
+  let worst = 0, travel = 0, last = null;
+  for (let k = 0; k <= 10; k++) {
+    skel.poseClip(ch.clips.attack1, (k / 10) * ch.clips.attack1.duration);
+    ch.draw(ctx);
+    const held = right.item.skeleton.world[0], socket = skel.world[right.socket];
+    worst = Math.max(worst, ...[...held].map((v, i) => Math.abs(v - socket[i])));
+    if (last) travel = Math.max(travel, Math.hypot(held[3] - last[0], held[7] - last[1], held[11] - last[2]));
+    last = [held[3], held[7], held[11]];
+  }
+  check('the hammer follows the hand through a swing', worst < 1e-6 && travel > 1,
+    `off its socket by ${worst.toExponential(1)}, moves up to ${travel.toFixed(1)}u a step`);
+}
+
 console.log('killing a small grey wolf');
 {
   const w = await setup();
@@ -137,8 +165,10 @@ console.log('walking into a pack of large grey wolves');
 {
   const w = await setup();
   const pack = w.npcs.npcs.filter((n) => n.char === 'large-grey-wolf');
-  // Walk to within their aggro range and stand there doing nothing.
+  // Walk to within their aggro range, face them and do nothing else.
   w.player.x = pack[0].x + 300; w.player.y = pack[0].y;
+  // Facing them: a shield only blocks what comes from in front.
+  w.player.yaw = Math.atan2(pack[0].x - w.player.x, -(pack[0].y - w.player.y));
   run(w, 1);
   check('an aggressive wolf attacks unprovoked', pack[0].fight === w.player);
   // Packmates within assist range of it join; any further off do not.
@@ -150,6 +180,10 @@ console.log('walking into a pack of large grey wolves');
   const t = run(w, 300, { until: () => w.player.dead });
   check('standing still, the player is killed', w.player.dead, `after ${t.toFixed(1)}s`);
   check('the death is announced', w.lines.some(([k]) => k === 'death'));
+  const blocks = w.lines.filter(([k]) => k === 'block').length;
+  const taken = w.lines.filter(([k]) => k === 'hit-in' || k === 'miss-in').length + blocks;
+  check('the shield blocks some of what comes at it', blocks > 0 && blocks < taken,
+    `${blocks} of ${taken} attacks blocked`);
   check('the wolves give up and head home', fought.every((n) => !n.fight && (n.returning || n.dead)));
   run(w, 6);
   check('the player is released whole', !w.player.dead && w.player.hp === w.player.maxHp && w.released() === 1);

@@ -170,6 +170,23 @@ export async function createCharacter(gl, base, helpers) {
     console.warn('recorded animation not loaded:', e.message);
   }
 
+  // --- held items ---
+  // charconv converts each into equip/<slot>/ as a one-bone character baked
+  // into the frame of its HELD marker, so holding one is setting that bone to
+  // the socket's world transform and drawing it with this figure's model
+  // matrix. A missing item is skipped, not fatal.
+  const equip = [];
+  for (const e of man.equip || []) {
+    try {
+      const socket = skel.boneId(e.bone);
+      if (socket < 0) throw new Error('no socket ' + e.bone);
+      const item = await createCharacter(gl, base + '/equip/' + e.slot, helpers);
+      equip.push({ ...e, socket, item });
+    } catch (err) {
+      console.warn('equipment ' + e.slot + ' not loaded:', err.message);
+    }
+  }
+
   // Scratch, reused every frame.
   const tmpA = xform();
   const skinBuf = new Float32Array(MAX_BONES * 3 * 4);
@@ -207,6 +224,12 @@ export async function createCharacter(gl, base, helpers) {
     }
     gl.enable(gl.CULL_FACE);
     gl.bindVertexArray(null);
+
+    // Whatever is held follows its socket in the pose just drawn.
+    for (const e of equip) {
+      e.item.skeleton.world[0].set(skel.world[e.socket]);
+      e.item.draw(ctx);
+    }
   }
 
   return {
@@ -253,6 +276,10 @@ export async function createCharacter(gl, base, helpers) {
     clips,
     clipNames: Object.keys(clips),
     skeleton: skel,
+    equip,
+    // What it holds, which decides how it fights.
+    armed: equip.some((e) => e.slot === 'right'),
+    shield: equip.some((e) => e.slot === 'left'),
     draw,
   };
 }
