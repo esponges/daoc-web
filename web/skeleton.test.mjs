@@ -211,7 +211,17 @@ if (clips) {
   const boneHeight = (i) => skel.world[i][11];
   const head = skel.boneId('Bip01 Head');
   const lFoot = skel.boneId('Bip01 L Foot'), rFoot = skel.boneId('Bip01 R Foot');
-  let worstHead = 0, badFrames = 0, minFoot = Infinity;
+  // "Stays a figure" is a matter of structure, not height. A height band is
+  // the Norseman's alone: a wolf's head is lower, and a badger's run is a
+  // bound that lifts its whole body seventeen units mid-leap. What no sound
+  // clip does is fold the skeleton, so measure the head against the pelvis,
+  // relative to the character's own idle, and keep the head above the feet.
+  const pelvis = skel.boneId('Bip01 Pelvis');
+  const reach = () => Math.hypot(skel.world[head][3] - skel.world[pelvis][3],
+    skel.world[head][7] - skel.world[pelvis][7], skel.world[head][11] - skel.world[pelvis][11]);
+  skel.poseClip(clips.idle || clips[names[0]], 0);
+  const reachRef = reach();
+  let worstReach = 0, badFrames = 0, minFoot = Infinity, inverted = 0;
   for (const n of names) {
     const c = clips[n];
     for (let k = 0; k <= 48; k++) {
@@ -219,15 +229,16 @@ if (clips) {
       for (const m of skel.world) {
         for (const v of m) if (!Number.isFinite(v)) badFrames++;
       }
-      const h = boneHeight(head);
-      // The model is 71.8 units tall; a standing head sits near the top.
-      if (h < 55 || h > 80) worstHead = Math.max(worstHead, Math.abs(h - 67));
+      worstReach = Math.max(worstReach, Math.abs(reach() / reachRef - 1));
+      const footTop = Math.max(boneHeight(lFoot), boneHeight(rFoot));
+      if (boneHeight(head) <= footTop) inverted++;
       minFoot = Math.min(minFoot, boneHeight(lFoot), boneHeight(rFoot));
     }
   }
   check('clips never produce a non-finite transform', badFrames === 0, badFrames + ' bad values');
-  check('the head stays at a standing height through every clip',
-    worstHead === 0, worstHead ? 'off by ' + worstHead.toFixed(1) : 'always 55..80u');
+  check('head-to-pelvis distance stays within a quarter of idle\'s',
+    worstReach < 0.25, 'worst ' + (100 * worstReach).toFixed(1) + '% of ' + reachRef.toFixed(1) + 'u');
+  check('the head never drops to the feet', inverted === 0, inverted + ' frames');
   check('feet never pass far below the ground plane', minFoot > -12,
     'lowest foot ' + minFoot.toFixed(1) + 'u');
 
@@ -352,8 +363,13 @@ if (clips && clips.walk && clips.idle) {
   // Baseline from the same pipeline, so the comparison is not against the
   // un-normalised bind matrices the check above just characterised.
   skel.poseCross(null, 0, null, 0, 0);
-  const bindShin = boneLen('Bip01 L Foot', 'Bip01 L Calf');
+  // The foot's own parent: the calf on a biped, the HorseLink on a
+  // quadruped, whose hock sits between the two and bends.
+  const footParent = man.bones[man.bones[skel.boneId('Bip01 L Foot')].parent ?? -1]?.name || 'Bip01 L Calf';
+  const bindShin = boneLen('Bip01 L Foot', footParent);
 
+  skel.poseClip(idle, 0);
+  const standHead = skel.world[head][11];
   let bad = 0, hiHead = -Infinity, loHead = Infinity, worstShin = 0;
   for (let s = 0; s <= 10; s++) {
     for (let k = 0; k < 8; k++) {
@@ -361,12 +377,12 @@ if (clips && clips.walk && clips.idle) {
       for (const m of skel.world) for (const v of m) if (!Number.isFinite(v)) bad++;
       hiHead = Math.max(hiHead, skel.world[head][11]);
       loHead = Math.min(loHead, skel.world[head][11]);
-      worstShin = Math.max(worstShin, Math.abs(boneLen('Bip01 L Foot', 'Bip01 L Calf') - bindShin));
+      worstShin = Math.max(worstShin, Math.abs(boneLen('Bip01 L Foot', footParent) - bindShin));
     }
   }
   check('blended poses are finite', bad === 0, bad + ' bad values');
   check('the figure stays upright through a blend',
-    loHead > 55 && hiHead < 80, 'head ' + loHead.toFixed(1) + '..' + hiHead.toFixed(1) + 'u');
+    loHead > 0.75 * standHead && hiHead < 1.25 * standHead, 'head ' + loHead.toFixed(1) + '..' + hiHead.toFixed(1) + 'u');
   check('bones keep their length mid-blend',
     worstShin < 0.02, 'shin drifts ' + worstShin.toExponential(2) + 'u of ' + bindShin.toFixed(1) + 'u');
 

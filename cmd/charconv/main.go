@@ -35,6 +35,7 @@ import (
 	"strings"
 
 	"daocweb/internal/dds"
+	"daocweb/internal/gamedata"
 	"daocweb/internal/mpak"
 	"daocweb/internal/nif"
 )
@@ -54,6 +55,7 @@ type outfit struct {
 	desc     string
 	figure   string
 	shapes   string
+	model    int               // monsters.csv row; the race's scale is read from it
 	textures map[string]string // shape-name prefix -> .dds; longest prefix wins
 }
 
@@ -63,6 +65,7 @@ var outfits = map[string]outfit{
 	"norseman": {
 		desc:   "Norseman in starter cloth",
 		figure: "NVikingM.NIF",
+		model:  153, // "Norse Male", drawn at 1.09
 		shapes: "HeadA1,Body1,LBody1,Arms1,Legs1,Gloves1,Boots1",
 		textures: map[string]string{
 			"Head":   "nor_m_head01.dds",
@@ -81,6 +84,7 @@ var outfits = map[string]outfit{
 	"troll-plate": {
 		desc:   "Troll in full plate",
 		figure: "NTrollM.NIF",
+		model:  137, // "Troll Male", drawn at 1.30
 		shapes: "HeadA1,Body5,Lbody4,Arms6,Legs4,Gloves3,Boots5",
 		textures: map[string]string{
 			"Head":   "tro_m_Head01.dds",
@@ -145,8 +149,13 @@ type manifest struct {
 	Max         [3]float32 `json:"max"`
 	UpAxis      string     `json:"upAxis"`
 	ForwardY    int        `json:"forwardY"`
-	Bones       []boneOut  `json:"bones"`
-	Shapes      []shapeOut `json:"shapes"`
+	// From the game tables when the model has a row there. Scale is how
+	// much larger than authored the game draws it; AnimSet picks its clips.
+	Model   int        `json:"model,omitempty"`
+	Scale   float64    `json:"scale"`
+	AnimSet int        `json:"animSet,omitempty"`
+	Bones   []boneOut  `json:"bones"`
+	Shapes  []shapeOut `json:"shapes"`
 }
 
 func main() {
@@ -159,18 +168,44 @@ func main() {
 	texList := flag.String("tex", "", "per-slot texture overrides, e.g. Body=pltBody01_01_m.dds,Legs=...")
 	listOnly := flag.Bool("list", false, "list available shapes and exit")
 	noTex := flag.Bool("no-tex", false, "skip texture extraction")
+	model := flag.Int("model", 0, "convert a creature by its monsters.csv model ID instead of an outfit")
 	flag.Parse()
 
-	o, ok := outfits[*outfitName]
-	if !ok {
-		fmt.Fprintf(os.Stderr, "charconv: unknown outfit %q; have %s\n", *outfitName, outfitNames())
+	fail := func(err error) {
+		fmt.Fprintln(os.Stderr, "charconv:", err)
 		os.Exit(1)
+	}
+	var o outfit
+	if *model > 0 {
+		var err error
+		if o, err = fromTables(*game, *model); err != nil {
+			fail(err)
+		}
+		if *name == "" {
+			*name = slug(o.desc)
+		}
+	} else {
+		var ok bool
+		if o, ok = outfits[*outfitName]; !ok {
+			fmt.Fprintf(os.Stderr, "charconv: unknown outfit %q; have %s\n", *outfitName, outfitNames())
+			os.Exit(1)
+		}
+		if *name == "" {
+			*name = *outfitName
+		}
+		// An outfit names its race's row only for the scale and clips;
+		// its shapes and textures stay the hand-picked ones.
+		if o.model > 0 {
+			t, err := gamedata.Load(*game)
+			if err != nil {
+				fail(err)
+			}
+			m := t.Monsters[o.model]
+			meta.model, meta.scale, meta.animSet = m.ID, m.Scale, t.Figures[m.Figure].AnimSet
+		}
 	}
 	if *figure == "" {
 		*figure = o.figure
-	}
-	if *name == "" {
-		*name = *outfitName
 	}
 	if *shapeList == "" {
 		*shapeList = o.shapes
@@ -188,12 +223,90 @@ func main() {
 			slotTextures[strings.TrimSpace(k)] = strings.TrimSpace(v)
 		}
 	}
-	fmt.Printf("%s: %s\n", *outfitName, o.desc)
+	fmt.Printf("%s: %s\n", *name, o.desc)
 
 	if err := run(*game, *figure, *name, *out, *shapeList, *listOnly, *noTex); err != nil {
-		fmt.Fprintln(os.Stderr, "charconv:", err)
-		os.Exit(1)
+		fail(err)
 	}
+}
+
+// meta is what the game tables say about the model being converted, carried
+// into char.json for the viewer and animconv.
+var meta = struct {
+	model, animSet int
+	scale          float64
+}{scale: 1}
+
+// fromTables builds an outfit from a creature's row in monsters.csv: its
+// figure, and a skin for each slot the row fills.
+//
+// A creature figure usually has a single shape -- the wolf is one strip mesh
+// called "Editable Mesh" -- so the body skin also stands in for any shape
+// whose name is not a slot, through the empty fallback prefix.
+func fromTables(game string, id int) (outfit, error) {
+	t, err := gamedata.Load(game)
+	if err != nil {
+		return outfit{}, err
+	}
+	m, ok := t.Monsters[id]
+	if !ok {
+		return outfit{}, fmt.Errorf("no model %d in monsters.csv", id)
+	}
+	fig, ok := t.Figures[m.Figure]
+	if !ok || fig.File == "" {
+		return outfit{}, fmt.Errorf("model %d (%s): figure %d not in monnifs.csv", id, m.Name, m.Figure)
+	}
+	path, err := findCase(filepath.Join(game, "figures"), fig.File+".nif")
+	if err != nil {
+		return outfit{}, fmt.Errorf("model %d (%s): %w", id, m.Name, err)
+	}
+	o := outfit{desc: m.Name, figure: filepath.Base(path), model: id, textures: map[string]string{}}
+	for slot, sid := range m.Skins {
+		s, ok := t.Skins[sid]
+		if !ok {
+			return outfit{}, fmt.Errorf("model %d: %s skin %d not in skins.csv", id, slot, sid)
+		}
+		o.textures[slot] = s.DDS()
+		if slot == "Body" {
+			o.textures[""] = s.DDS()
+		}
+	}
+	meta.model, meta.scale, meta.animSet = id, m.Scale, fig.AnimSet
+	fmt.Printf("model %d %q: figure %d %s, scale %.2f, anim set %d\n",
+		id, m.Name, fig.ID, o.figure, m.Scale, fig.AnimSet)
+	return o, nil
+}
+
+// slug turns a table name into a directory name: "Large Grey Wolf" ->
+// "large-grey-wolf".
+func slug(s string) string {
+	var b strings.Builder
+	dash := false
+	for _, r := range strings.ToLower(s) {
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
+			b.WriteRune(r)
+			dash = false
+		} else if !dash && b.Len() > 0 {
+			b.WriteByte('-')
+			dash = true
+		}
+	}
+	return strings.TrimSuffix(b.String(), "-")
+}
+
+// findCase finds a file regardless of case: the tables write "wolf" for
+// figures/Wolf.NIF.
+func findCase(dir, name string) (string, error) {
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+	for _, e := range ents {
+		if strings.EqualFold(e.Name(), name) {
+			return filepath.Join(dir, e.Name()), nil
+		}
+	}
+	return "", fmt.Errorf("%s not found in %s", name, dir)
 }
 
 func outfitNames() string {
@@ -246,6 +359,9 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 		if s = strings.TrimSpace(s); s != "" {
 			wanted[strings.ToLower(s)] = true
 		}
+	}
+	if len(wanted) == 0 {
+		wanted = defaultShapes(f)
 	}
 
 	world := f.WorldTransforms()
@@ -412,6 +528,9 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 		Name:        name,
 		Source:      figure,
 		ForwardY:    fwd,
+		Model:       meta.model,
+		Scale:       meta.scale,
+		AnimSet:     meta.animSet,
 		Format:      "pos3f,normal3f,uv2f,bone4u8,weight4f; then uint32 indices",
 		VertexCount: len(verts) / vertStride,
 		IndexCount:  len(indices),
@@ -541,7 +660,9 @@ func buildSkeleton(f *nif.File) ([]boneOut, map[int32]int) {
 
 // textureFor picks a slot texture by longest matching shape-name prefix.
 func textureFor(shape string) string {
-	best, bestLen := "", 0
+	// An empty prefix is the fallback: it matches every shape, and loses to
+	// any real one.
+	best, bestLen := "", -1
 	for prefix, tex := range slotTextures {
 		if len(prefix) > bestLen && strings.HasPrefix(strings.ToLower(shape), strings.ToLower(prefix)) {
 			best, bestLen = tex, len(prefix)
@@ -662,4 +783,48 @@ func forwardSign(f *nif.File, world []nif.Transform) int {
 		return -1
 	}
 	return 1
+}
+
+// shapeStem drops the ":NN" instance tag the exporter appends to shape names.
+func shapeStem(name string) string {
+	s := strings.ToLower(name)
+	if c := strings.IndexByte(s, ':'); c >= 0 {
+		s = s[:c]
+	}
+	return s
+}
+
+// defaultShapes picks what to draw when nothing names the shapes.
+//
+// A race figure carries every armour tier of every slot, and drawing them all
+// stacks each outfit on top of the others. Where the shapes are named by slot
+// and tier, take the lightest tier of each slot -- what an unarmoured NPC
+// wears -- and the first head. Anything else is a creature, whose shapes are
+// all simply parts of it.
+func defaultShapes(f *nif.File) map[string]bool {
+	var stems []string
+	seen := map[string]bool{}
+	for _, b := range f.Blocks {
+		if s, ok := b.(*nif.TriShape); ok && !seen[shapeStem(s.Name)] {
+			seen[shapeStem(s.Name)] = true
+			stems = append(stems, shapeStem(s.Name))
+		}
+	}
+	sort.Strings(stems)
+	slots := []string{"heada", "body", "lbody", "arms", "legs", "gloves", "boots"}
+	pick := map[string]bool{}
+	for _, slot := range slots {
+		for _, s := range stems {
+			if rest, ok := strings.CutPrefix(s, slot); ok && rest != "" && strings.Trim(rest, "0123456789") == "" {
+				pick[s] = true // sorted, so this is the lowest tier
+				break
+			}
+		}
+	}
+	if len(pick) == 0 {
+		for _, s := range stems {
+			pick[s] = true
+		}
+	}
+	return pick
 }

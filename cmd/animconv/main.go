@@ -31,6 +31,7 @@ import (
 	"strconv"
 	"strings"
 
+	"daocweb/internal/gamedata"
 	"daocweb/internal/nif"
 )
 
@@ -90,9 +91,53 @@ func run(game, char string, list, gaitOnly bool, top int, names, as string) erro
 		return scan(game, nodes, skel, gaitOnly, top)
 	}
 	if names == "" {
-		return fmt.Errorf("give -anims, or -list to search")
+		if names, as, err = fromAnimSet(game, char); err != nil {
+			return err
+		}
 	}
 	return convert(game, char, nodes, skel, names, as)
+}
+
+// tableRoles are the clips taken from a model's anim set when none are named,
+// keyed by the anims.csv column and written under the name the viewer uses.
+var tableRoles = []string{"idle", "walk", "run"}
+
+// fromAnimSet picks the clips the game itself plays for this model, from the
+// anim set charconv recorded out of monnifs.csv.
+func fromAnimSet(game, char string) (names, as string, err error) {
+	b, err := os.ReadFile(filepath.Join(char, "char.json"))
+	if err != nil {
+		return "", "", err
+	}
+	var m struct {
+		AnimSet int `json:"animSet"`
+	}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return "", "", err
+	}
+	if m.AnimSet == 0 {
+		return "", "", fmt.Errorf("%s has no anim set; give -anims, or -list to search", char)
+	}
+	t, err := gamedata.Load(game)
+	if err != nil {
+		return "", "", err
+	}
+	var src, dst []string
+	for _, role := range tableRoles {
+		an, ok := t.SetClip(m.AnimSet, role)
+		if !ok {
+			fmt.Printf("  anim set %d has no %s clip\n", m.AnimSet, role)
+			continue
+		}
+		src = append(src, strings.TrimSuffix(an.File, filepath.Ext(an.File)))
+		dst = append(dst, role)
+		fmt.Printf("  anim set %d %-5s -> %-16s %q, %d frames at %d fps\n",
+			m.AnimSet, role, an.File, an.Name, an.Frames, an.FPS)
+	}
+	if len(src) == 0 {
+		return "", "", fmt.Errorf("anim set %d resolves no clips", m.AnimSet)
+	}
+	return strings.Join(src, ","), strings.Join(dst, ","), nil
 }
 
 // loadAnimNodes reads the bone registry. Line N is the name of bone index N.
