@@ -1,6 +1,7 @@
 package gamedata_test
 
 import (
+	"math"
 	"os"
 	"strings"
 	"testing"
@@ -110,5 +111,19 @@ func TestCombatClips(t *testing.T) {
 	}
 	if fig := tb.Figures[212]; fig.Type != 0 {
 		t.Errorf("wolf type %d, want 0 (creature)", fig.Type)
+	}
+}
+
+// Idles are played slower than they were keyed; everything else at speed.
+func TestPlaybackRate(t *testing.T) {
+	tb := load(t)
+	for file, want := range map[string]float64{
+		"troll_idle.kfa": 2.0 / 15, "I_hm.kfa": 4.0 / 15, "wlf_idle.kfa": 12.0 / 15,
+		"troll_walk.kfa": 1, "a_h_1s_med.kfa": 1,
+	} {
+		an, ok := tb.ByFile(file)
+		if !ok || math.Abs(an.Rate()-want) > 1e-9 {
+			t.Errorf("%s rate %v, want %v", file, an.Rate(), want)
+		}
 	}
 }

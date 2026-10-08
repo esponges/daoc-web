@@ -11,7 +11,7 @@
 // an attack laid over the upper body only.
 
 import { here, gl, helpers, check, finish } from './testkit.mjs';
-import { createNPCs, bodyRadius } from './npc.js';
+import { createNPCs, bodyRadius, pickNPC } from './npc.js';
 import { createCharacter } from './character.js';
 import { createCombat, inReach, distance, ASSIST } from './combat.js';
 import { Animator } from './animator.js';
@@ -95,6 +95,50 @@ console.log('one-shot clips and layering');
     mask[skel.boneId('Bip01 Head')] === 1 && mask[skel.boneId('Bip01 R Hand')] === 1 &&
     mask[skel.boneId('Bip01 Pelvis')] === 0 && mask[skel.boneId('Bip01 L Thigh')] === 0 &&
     mask[skel.boneId('Bip01 L Foot')] === 0);
+}
+
+console.log('playback rate');
+{
+  const w = await setup();
+  const ch = w.char;
+  check('the troll idle plays at the rate the game gives it', Math.abs(ch.clipRate('idle') - 2 / 15) < 1e-6,
+    `${ch.clipRate('idle').toFixed(3)}x`);
+  const a = new Animator(ch);
+  a.t = 0;
+  a.update(1);
+  check('so a second of idle advances its clock by 2/15 s', Math.abs(a.t - 2 / 15) < 1e-6, a.t.toFixed(4) + 's');
+  a.setBase('walk'); a.fade = 1; a.prev = null;
+  const t0 = a.t;
+  a.update(1, () => 1.5);
+  check('a stride cycle follows the caller\'s ground-speed rate instead', Math.abs(a.t - t0 - 1.5) < 1e-6);
+  check('an attack lasts its clip, at rate 1', Math.abs(a.play('attack1') - ch.clipDuration('attack1')) < 1e-6);
+}
+
+console.log('clicking on an NPC');
+{
+  const w = await setup();
+  const ground = () => 0;
+  const wolf = w.npcs.npcs.find((n) => n.char === 'large-grey-wolf');
+  // A camera 400 units off and 60 up, looking at the wolf's middle: low
+  // enough that something stood between the two is genuinely in the way.
+  const eye = [wolf.x + 400, 60, wolf.y];
+  const mid = [wolf.x, wolf.type.ch.height * wolf.scale * 0.5, wolf.y];
+  const dir = mid.map((v, i) => v - eye[i]);
+  check('a ray through an NPC picks it', pickNPC(w.npcs.npcs, eye, dir, ground) === wolf);
+  const beside = [dir[0], dir[1], dir[2] + 300];
+  const other = pickNPC(w.npcs.npcs, eye, beside, ground);
+  check('a ray beside it does not', other !== wolf, other ? 'hit ' + other.name : 'nothing');
+  const sky = [dir[0], dir[1] + 600, dir[2]];
+  check('a ray over its head does not', pickNPC(w.npcs.npcs, eye, sky, ground) !== wolf);
+  // Another NPC stood in front takes the click.
+  const badger = w.npcs.npcs.find((n) => n.char === 'badger');
+  const [bx, by] = [badger.x, badger.y];
+  badger.x = wolf.x + 150; badger.y = wolf.y;
+  check('the nearer of two in line is picked', pickNPC(w.npcs.npcs, eye, dir, ground) === badger);
+  badger.dead = true;
+  check('a corpse is not', pickNPC(w.npcs.npcs, eye, dir, ground) === wolf);
+  badger.dead = false; badger.x = bx; badger.y = by;
+  check('select makes it the target', w.combat.select(wolf) === wolf && w.combat.target === wolf);
 }
 
 console.log('hammer and shield');

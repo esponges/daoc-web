@@ -105,9 +105,17 @@ func run(game, char string, list, gaitOnly bool, top int, names, as string) erro
 			return fmt.Errorf("-as has %d names for %d animations", len(dst), len(src))
 		}
 	}
+	t, _ := gamedata.Load(game) // optional here: only the rates come from it
 	jobs := make([]job, len(src))
 	for i := range src {
-		jobs[i] = job{strings.TrimSpace(src[i]), strings.TrimSpace(dst[i]), true}
+		jobs[i] = job{strings.TrimSpace(src[i]), strings.TrimSpace(dst[i]), 1, true}
+		// A clip named by hand still has a row in animnifs.csv, which says
+		// how fast the game plays it.
+		if t != nil {
+			if an, ok := t.ByFile(jobs[i].src + ".kfa"); ok {
+				jobs[i].rate = an.Rate()
+			}
+		}
 	}
 	return convert(game, char, nodes, skel, jobs)
 }
@@ -116,6 +124,7 @@ func run(game, char string, list, gaitOnly bool, top int, names, as string) erro
 // know it by, and whether it loops or plays once and holds.
 type job struct {
 	src, out string
+	rate     float64 // playback speed relative to the keys; 1 if unknown
 	loop     bool
 }
 
@@ -202,7 +211,7 @@ func fromAnimSet(game, char string) ([]job, error) {
 			fmt.Printf("  anim set %d has no %s clip\n", m.AnimSet, col)
 			continue
 		}
-		jobs = append(jobs, job{strings.TrimSuffix(an.File, filepath.Ext(an.File)), r.out, an.Loop})
+		jobs = append(jobs, job{strings.TrimSuffix(an.File, filepath.Ext(an.File)), r.out, an.Rate(), an.Loop})
 		mode := "once"
 		if an.Loop {
 			mode = "loop"
@@ -396,6 +405,7 @@ type animOut struct {
 	Source   string     `json:"source"`
 	Duration float32    `json:"duration"`
 	Loop     bool       `json:"loop"` // false: play once and hold the last frame
+	Rate     float64    `json:"rate"` // playback speed: animnifs.csv fps over base fps
 	Tracks   []trackOut `json:"tracks"`
 	Unmapped []string   `json:"unmapped,omitempty"`
 }
@@ -436,7 +446,7 @@ func convert(game, char string, nodes []string, skel map[string]bool, jobs []job
 			return fmt.Errorf("%s: %w", name, err)
 		}
 
-		ao := animOut{Name: out, Source: filepath.Base(path), Duration: a.Duration, Loop: jb.loop}
+		ao := animOut{Name: out, Source: filepath.Base(path), Duration: a.Duration, Loop: jb.loop, Rate: jb.rate}
 		keys := 0
 		for _, t := range a.Tracks {
 			// A track for a bone this model does not have is dropped, not

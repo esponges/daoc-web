@@ -92,6 +92,13 @@ export function createCombat({ player, npcs, log = () => {}, onPlayerDeath = () 
 
   function clearTarget() { st.target = null; st.attacking = false; }
 
+  // select makes a clicked NPC the target. Attack, if on, carries over to it.
+  function select(n) {
+    if (!n || n.dead || n.gone) return null;
+    st.target = n;
+    return n;
+  }
+
   // toggleAttack switches auto-attack, picking a target first if there is
   // none, which is what pressing attack with nothing selected does in-game.
   function toggleAttack(viewYaw) {
@@ -282,6 +289,7 @@ export function createCombat({ player, npcs, log = () => {}, onPlayerDeath = () 
     get attacking() { return st.attacking; },
     targetNext,
     clearTarget,
+    select,
     toggleAttack,
     update,
   };

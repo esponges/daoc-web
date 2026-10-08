@@ -61,6 +61,35 @@ export function bodyRadius(ch, scale) {
   return 0.5 * (m.max[1] - m.min[1]) * scale;
 }
 
+// pickNPC finds the living NPC a ray hits first, or null. The ray is in
+// scene space -- x, height, z, where z is world Y -- from origin along dir.
+//
+// Each NPC stands in for an upright cylinder as tall as it is drawn and as
+// wide as its body, which is generous enough to click on a wolf side-on
+// without having to find its leg.
+export function pickNPC(npcs, origin, dir, groundAt) {
+  let best = null, bestT = Infinity;
+  const [ox, oy, oz] = origin, [dx, dy, dz] = dir;
+  for (const n of npcs) {
+    if (n.dead || n.gone) continue;
+    const h = n.type.ch.height * n.scale;
+    const r = Math.max(n.body, 0.3 * h, 12);
+    const g = groundAt(n.x, n.y);
+    // Where the ray meets the cylinder's wall, in the ground plane.
+    const px = ox - n.x, pz = oz - n.y;
+    const a = dx * dx + dz * dz, b = 2 * (px * dx + pz * dz), c = px * px + pz * pz - r * r;
+    const disc = b * b - 4 * a * c;
+    if (a < 1e-9 || disc < 0) continue;
+    const sq = Math.sqrt(disc);
+    for (const t of [(-b - sq) / (2 * a), (-b + sq) / (2 * a)]) {
+      if (t <= 0 || t >= bestT) continue;
+      const y = oy + dy * t;
+      if (y >= g && y <= g + h) { best = n; bestT = t; break; }
+    }
+  }
+  return best;
+}
+
 // createNPCs loads the spawn file and every character it names. world gives
 // the terrain: groundAt(x, y), isWet(x, y), the cell size and zone extent.
 export async function createNPCs(gl, url, helpers, world) {

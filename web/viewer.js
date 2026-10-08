@@ -9,7 +9,8 @@
 
 import { createCharacter, modelMatrix } from './character.js';
 import { createProps } from './props.js';
-import { createNPCs, bodyRadius } from './npc.js';
+import { createNPCs, bodyRadius, pickNPC } from './npc.js';
+import { createRing } from './ring.js';
 import { createCombat } from './combat.js';
 import { Animator } from './animator.js';
 
@@ -39,6 +40,9 @@ const FADE = 0.18;
 
 // Clips that are stride cycles, and so can hand their phase to one another.
 const LOCOMOTION = new Set(['walk', 'run']);
+
+// Vertical field of view, shared by the projection and click-picking.
+const FOV = Math.PI / 3;
 
 // The player's hit points. A grey wolf takes a third of them in a fair fight.
 const PLAYER_HP = 220;
@@ -218,16 +222,20 @@ async function main() {
   const cell = man.cellUnits;
   const H = (x, y) => heights[Math.min(grid - 1, Math.max(0, y)) * grid + Math.min(grid - 1, Math.max(0, x))];
 
-  // Nearest-neighbour is fine for building the mesh, where every vertex sits
-  // on a sample, but a character walking between samples would stair-step in
-  // 256-unit jumps. Sample the same grid bilinearly for ground contact.
+  // The height of the ground as drawn. Each cell of the mesh below is two
+  // triangles split along the (x+1, y)-(x, y+1) diagonal, so this
+  // interpolates across the same two triangles. Bilinear sampling would agree
+  // at the samples but not between them -- by up to a quarter of the cell's
+  // twist, tens of units on a steep hillside -- which left the target ring
+  // buried under the slope it was meant to lie on, and feet a little in or
+  // above the visible ground.
   const groundAt = (wx, wy) => {
     const fx = wx / cell, fy = wy / cell;
     const x0 = Math.floor(fx), y0 = Math.floor(fy);
     const tx = fx - x0, ty = fy - y0;
-    const a = H(x0, y0) * (1 - tx) + H(x0 + 1, y0) * tx;
-    const b = H(x0, y0 + 1) * (1 - tx) + H(x0 + 1, y0 + 1) * tx;
-    return a * (1 - ty) + b * ty;
+    const h00 = H(x0, y0), h10 = H(x0 + 1, y0), h01 = H(x0, y0 + 1), h11 = H(x0 + 1, y0 + 1);
+    if (tx + ty <= 1) return h00 + (h10 - h00) * tx + (h01 - h00) * ty;
+    return h11 + (h01 - h11) * (1 - tx) + (h10 - h11) * (1 - ty);
   };
 
   // --- terrain mesh ---
@@ -406,6 +414,7 @@ async function main() {
     // Back on your feet where you started, as at a bindstone.
     onPlayerDeath: () => { [player.x, player.y] = SPAWN; },
   }) : null;
+  const ring = combat ? createRing(gl, { program, uniforms }) : null;
 
   // --- cameras ---
   // Two modes: an orbit camera chasing the character, and the original
@@ -425,6 +434,8 @@ async function main() {
   }
   let followMode = true;
   let lastEye = [...cam.pos];
+  // Where the camera was last frame, for turning a click into a ray.
+  const view = { eye: null, target: null };
 
   // Shortest-way-round turn, so the character never spins the long way to
   // face a new heading.
@@ -486,8 +497,39 @@ async function main() {
   });
   addEventListener('keyup', (e) => keys.delete(e.code));
   let dragging = false;
-  canvas.addEventListener('mousedown', (e) => { dragging = true; e.preventDefault(); });
-  addEventListener('mouseup', () => { dragging = false; });
+  // A click -- pressed and released without dragging -- selects whatever NPC
+  // is under the cursor; a drag orbits the camera as before.
+  let downAt = null;
+  canvas.addEventListener('mousedown', (e) => {
+    dragging = true;
+    downAt = [e.clientX, e.clientY];
+    e.preventDefault();
+  });
+  addEventListener('mouseup', (e) => {
+    dragging = false;
+    if (!downAt || !combat || !view.eye) return;
+    const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
+    downAt = null;
+    if (moved > 4) return;
+    // A ray from the eye through the clicked pixel, built from the camera's
+    // own basis and field of view.
+    const r = canvas.getBoundingClientRect();
+    const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
+    const ny = 1 - ((e.clientY - r.top) / r.height) * 2;
+    const [ex, ey, ez] = view.eye, [tx, ty, tz] = view.target;
+    let f = [tx - ex, ty - ey, tz - ez];
+    const fl = Math.hypot(...f); f = f.map((v) => v / fl);
+    let s = [-f[2], 0, f[0]]; // forward x up(0,1,0)
+    const sl = Math.hypot(...s) || 1; s = s.map((v) => v / sl);
+    const u = [s[1] * f[2] - s[2] * f[1], s[2] * f[0] - s[0] * f[2], s[0] * f[1] - s[1] * f[0]];
+    const k = Math.tan(FOV / 2), aspect = r.width / r.height;
+    const dir = [0, 1, 2].map((i) => f[i] + s[i] * nx * k * aspect + u[i] * ny * k);
+    const hit = pickNPC(npcs.npcs, view.eye, dir, groundAt);
+    if (hit && hit !== combat.target) {
+      combat.select(hit);
+      log('You target the ' + hit.name + '.', 'info');
+    }
+  });
   addEventListener('mousemove', (e) => {
     if (!dragging) return;
     if (followMode) {
@@ -654,7 +696,8 @@ async function main() {
 
     const far = 160000;
     const near = followMode ? 15 : 20;
-    const vp = mul(perspective(Math.PI / 3, w / h, near, far), lookAt(eye, target, [0, 1, 0]));
+    const vp = mul(perspective(FOV, w / h, near, far), lookAt(eye, target, [0, 1, 0]));
+    view.eye = eye; view.target = target;
     const fogStart = far * 0.25, fogEnd = far * 0.92;
 
     gl.useProgram(terrainProg);
@@ -695,6 +738,13 @@ async function main() {
         viewProj: vp, camPos: eye,
         fogColor, fogStart, fogEnd, lightDir: [0.45, 0.78, 0.35],
       });
+    }
+    // The target's ring: gold when selected, red while it is a fight.
+    const tgt = combat && combat.target;
+    if (tgt && !tgt.gone) {
+      const hostile = combat.attacking || tgt.fight === player;
+      const color = tgt.dead ? [0.55, 0.55, 0.55] : hostile ? [0.95, 0.25, 0.2] : [1.0, 0.82, 0.25];
+      ring.draw(vp, tgt.x, tgt.y, tgt.body * 1.15 + 10, groundAt, color, now / 1000);
     }
 
     if (waters.length) {

@@ -405,6 +405,9 @@ export class Clip {
     // A clip that does not loop -- an attack, a flinch, a death -- plays
     // once and holds its last frame rather than starting over.
     this.loop = json.loop !== false;
+    // How fast the game plays it relative to its keys (animnifs.csv fps
+    // over base fps): 1 for most, far less for the idles.
+    this.rate = json.rate > 0 ? json.rate : 1;
     this.tracks = [];
     this.missing = [];
     for (const t of json.tracks || []) {

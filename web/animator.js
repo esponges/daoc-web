@@ -47,7 +47,8 @@ export class Animator {
 
   // play starts a one-shot action. hold keeps its last frame (a death);
   // upper confines it to the spine and above. Returns the clip's duration,
-  // or 0 if the character has no such clip.
+  // or 0 if the character has no such clip. The duration is in seconds of
+  // real time, after the clip's playback rate.
   play(name, { hold = false, upper = false } = {}) {
     const d = this.ch.clipDuration(name);
     if (!d) return 0;
@@ -56,7 +57,7 @@ export class Animator {
     if (!this.act) this.actW = 0;
     this.act = name; this.actT = 0;
     this.hold = hold; this.upper = upper;
-    return d;
+    return d / this.ch.clipRate(name);
   }
 
   get acting() { return !!this.act; }
@@ -65,24 +66,35 @@ export class Animator {
   // clear drops any action at once, for a figure brought back to life.
   clear() { this.act = null; this.actW = 0; this.hold = false; }
 
+  // speed is how fast a clip's clock runs. A stride cycle's is the caller's
+  // to set from ground speed, which already keeps the feet planted; anything
+  // else runs at the rate the game plays it, which for an idle is a fraction
+  // of the speed it was keyed at.
+  speed(name, rate) {
+    return this.carry.has(name) ? rate(name) : rate(name) * this.ch.clipRate(name);
+  }
+
   // update advances the clocks. rate(name) scales the base clips' speed,
   // so a walk can play faster when the figure is moving faster.
   update(dt, rate = () => 1) {
-    this.t += dt * rate(this.cur);
-    if (this.prev) this.prevT += dt * rate(this.prev);
+    this.t += dt * this.speed(this.cur, rate);
+    if (this.prev) this.prevT += dt * this.speed(this.prev, rate);
     if (this.fade < 1) {
       this.fade = Math.min(1, this.fade + dt / this.fadeTime);
       if (this.fade >= 1) this.prev = null;
     }
     if (this.act) {
-      this.actT += dt;
+      // The action's clock is in clip time; the fades are in real time.
+      const r = this.ch.clipRate(this.act);
+      this.actT += dt * r;
       const d = this.ch.clipDuration(this.act);
+      const left = (d - this.actT) / r;
       if (this.hold) {
         this.actW = Math.min(1, this.actW + dt / ACT_IN);
-      } else if (this.actT >= d) {
+      } else if (left <= 0) {
         this.act = null; this.actW = 0;
-      } else if (this.actT > d - ACT_OUT) {
-        this.actW = Math.max(0, Math.min(this.actW, (d - this.actT) / ACT_OUT));
+      } else if (left < ACT_OUT) {
+        this.actW = Math.max(0, Math.min(this.actW, left / ACT_OUT));
       } else {
         this.actW = Math.min(1, this.actW + dt / ACT_IN);
       }

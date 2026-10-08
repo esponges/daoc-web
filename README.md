@@ -67,8 +67,10 @@ Where they stand is `web/spawns/zone100.json`, which is this project's own
 placement — see [NPCs](#npcs). `?npcs=0` leaves them out.
 
 Controls: `WASD` to move, drag to orbit the camera, wheel to zoom, shift to
-sprint, alt to walk, `C` for the free-fly camera, `F` for wireframe. `Tab`
-targets the nearest NPC in front of the camera (again to cycle), `1` switches
+sprint, alt to walk, `C` for the free-fly camera, `F` for wireframe. Click an
+NPC to target it, or `Tab`
+for the nearest in front of the camera (again to cycle); a ring marks it, gold
+when selected and red in a fight. `1` switches
 auto-attack on and off, `Esc` clears the target. The console exposes a `daoc`
 handle — `daoc.warp(60, 70)` puts the character on a heightmap cell, and
 `daoc.warp(125, 128)` next to the wolves.
@@ -677,6 +679,37 @@ zero.
 base that cross-fades between idle, walk, run and the combat stance, and a
 one-shot action on top.
 
+### Playing clips at the game's speed
+
+`animnifs.csv` gives every clip two frame rates, `fps` and `base fps`, and the
+game plays the clip at their ratio. Almost every clip is 15 over 15. The idles
+are not: the troll's is **2 over 15**, the human idle 4 over 15, the wolf's
+12 over 15. Played at keyed speed, the troll's slow idle breath became a
+bounce more than seven times too fast. `animconv` now writes each clip's rate,
+from its role's row or, for a clip named by hand, from the first row that
+plays that file, and the animator runs everything but walk and run at it;
+those two are already paced by ground speed.
+
+### Targeting by clicking
+
+A click — a press and release without dragging, so orbiting the camera still
+works — casts a ray from the eye through the cursor, built from the camera's
+own basis and field of view. Each living NPC stands in for an upright
+cylinder as tall as it is drawn and as wide as its body, and the nearest one
+the ray enters is selected. The combat test checks the obvious cases: a ray
+through a wolf picks it, one beside or over it does not, a badger stood in
+between takes the click instead, and a corpse never does.
+
+The selected target gets a ring on the ground, rebuilt each frame with every
+vertex set on the terrain beneath it so it lies over slopes. Building it
+exposed a mismatch: the terrain mesh splits each 256-unit cell into two
+triangles along one diagonal, but ground height was sampled bilinearly. The
+two agree at the samples and differ in between by up to a quarter of the
+cell's twist — tens of units on a hillside — which buried the ring under the
+slope it was meant to lie on, and had left feet slightly in or above the drawn
+ground. `groundAt` now interpolates across the same two triangles the GPU
+draws.
+
 ### NPCs fight back
 
 Hit an NPC and it fights back: it closes at its run speed — read from its run
@@ -744,8 +777,6 @@ a large wolf pack until it kills you, and running a badger to its leash.
 - **Equipment is fixed per outfit.** The warhammer and shield are named in the
   outfit; there is no inventory, no swapping, and nothing worn on the belt or
   back, though the markers and sockets for both are there.
-- **No target indicator in the world.** The selected target shows in the HUD
-  panel only; nothing is drawn under it.
 - **16 of 633 figures do not parse** — see [Parsing the rest of
   figures/](#parsing-the-rest-of-figures).
 - Heightmap edges stop at sample 255 (65280 units), 256 units short of the

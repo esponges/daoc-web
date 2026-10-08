@@ -270,6 +270,7 @@ export async function createCharacter(gl, base, helpers) {
       return true;
     },
     clipDuration: (name) => (clips[name] ? clips[name].duration : 0),
+    clipRate: (name) => (clips[name] ? clips[name].rate : 1),
     // groundSpeed is a clip's own travel speed in model units per second,
     // read from its planted feet; 0 if absent or not a gait.
     groundSpeed: (name) => (clips[name] ? skel.groundSpeed(clips[name]) : 0),

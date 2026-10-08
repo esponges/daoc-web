@@ -71,7 +71,8 @@ type Anim struct {
 	Name   string
 	File   string // .kfa in anims/
 	Frames int
-	FPS    int
+	FPS    int // the rate the game plays it at
+	Base   int // the rate it was authored at; FPS/Base is the playback speed
 	Loop   bool
 }
 
@@ -139,7 +140,7 @@ func Load(game string) (*Tables, error) {
 	}
 	for _, r := range rows {
 		an := Anim{ID: num(r, 0), Name: col(r, 1), File: col(r, 2),
-			Frames: num(r, 3), FPS: num(r, 4), Loop: strings.EqualFold(col(r, 6), "loop")}
+			Frames: num(r, 3), FPS: num(r, 4), Base: num(r, 5), Loop: strings.EqualFold(col(r, 6), "loop")}
 		t.Anims[an.ID] = an
 	}
 
@@ -239,4 +240,27 @@ func col(r []string, i int) string {
 func num(r []string, i int) int {
 	v, _ := strconv.Atoi(col(r, i))
 	return v
+}
+
+// Rate is how fast the game plays a clip relative to how it was authored:
+// the fps column over the base fps column. Most are 15 over 15. The idles
+// are the exception -- the troll's is 2 over 15, so the game plays it at a
+// seventh and a half of its keyed speed, a slow breath rather than a pant.
+func (a Anim) Rate() float64 {
+	if a.FPS <= 0 || a.Base <= 0 {
+		return 1
+	}
+	return float64(a.FPS) / float64(a.Base)
+}
+
+// ByFile finds the first animnifs.csv row that plays a .kfa, for clips named
+// by file rather than reached through an anim set.
+func (t *Tables) ByFile(file string) (Anim, bool) {
+	best := Anim{}
+	for _, an := range t.Anims {
+		if strings.EqualFold(an.File, file) && (best.ID == 0 || an.ID < best.ID) {
+			best = an
+		}
+	}
+	return best, best.ID != 0
 }
