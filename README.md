@@ -68,6 +68,12 @@ go run ./cmd/serve                                       # then open localhost:8
 Where they stand is `web/spawns/zone100.json`, which is this project's own
 placement — see [NPCs](#npcs). `?npcs=0` leaves them out.
 
+Any other converted zone opens with `?zone=N`, e.g. `?zone=9` for Avalon Marsh
+or `?zone=0` for Camelot Hills, after `go run ./cmd/worldconv` has converted
+them; see [the census](#the-census). Those start in the zone's middle and have
+no NPCs, since the spawn file is Mularn's. In the console, `daoc.warp(x, y)`
+moves the character to a heightmap cell (world units / 256).
+
 Controls are the game's: `W`/`S` move forward and back, `A`/`D` turn the
 character with the camera behind it, `Q`/`E` strafe. Backing up and
 strafing are at a walk, each with the game's own clip. Hold the right mouse button and drag to look around without turning;
@@ -1119,7 +1125,8 @@ a large wolf pack until it kills you, and running a badger to its leash.
 - **The rest of the world is measured, not viewable.** The census reads
   99.6% of scenery models and dungeon pieces and converts 95% of outdoor
   placements, and `worldconv` converts 118 of the 120 outdoor zones present,
-  but the viewer still opens zone 100 only. Fifty-four zones use an older
+  and the viewer opens any of them with `?zone=N`, but without NPCs and
+  starting in the middle, with no way to pick a zone from inside it. Fifty-four zones use an older
   `fixtures.csv` with a heading but no axis-angle, and Z 0 for anything on
   the ground; those headings are converted and those props set on the
   terrain, but neither has been checked by eye. The atlas tile layout is

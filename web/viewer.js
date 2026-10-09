@@ -18,7 +18,11 @@ import { createSky } from './sky.js';
 import { createGrass } from './grass.js';
 import { createParticles } from './particles.js';
 
-const ZONE = 'data/zone100';
+// Which converted zone: ?zone=9 opens data/zone009, as worldconv writes it.
+// Vale of Mularn, zone 100, is the default and the only one with NPCs.
+const ZONE_ARG = new URLSearchParams(location.search).get('zone');
+const ZONE_NUM = ZONE_ARG && /^\d+$/.test(ZONE_ARG) ? Number(ZONE_ARG) : 100;
+const ZONE = 'data/zone' + String(ZONE_NUM).padStart(3, '0');
 
 // Which converted character to load. ?char=norseman switches back without a
 // rebuild; each one carries its own animations, so the clips follow the model.
@@ -314,7 +318,9 @@ async function main() {
   if (!gl) throw new Error('WebGL2 is not available in this browser.');
 
   // --- load converted data ---
-  const man = await fetchJSON(ZONE + '/zone.json');
+  const man = await fetchJSON(ZONE + '/zone.json').catch((e) => {
+    throw new Error(`zone ${ZONE_NUM} is not converted (${e.message}); run go run ./cmd/worldconv`);
+  });
   const [heightBuf, atlasImg] = await Promise.all([
     fetchBuffer(ZONE + '/' + man.heights),
     loadImage(ZONE + '/' + man.atlas),
@@ -509,7 +515,8 @@ async function main() {
   let npcs = null;
   try {
     // ?npcs=0 leaves them out, for looking at the zone on its own.
-    if (new URLSearchParams(location.search).get('npcs') !== '0') {
+    // The spawn file is Mularn's; elsewhere its coordinates mean nothing.
+    if (ZONE_NUM === 100 && new URLSearchParams(location.search).get('npcs') !== '0') {
       npcs = await createNPCs(gl, 'spawns/zone100.json', { program, uniforms, loadImage },
         { cell, extent, groundAt, isWet });
     }
@@ -518,8 +525,9 @@ async function main() {
   }
 
   // Spawn on the rising ground south-east of the lake, which is open enough
-  // to see the gait and close enough to walk to the shore.
-  const SPAWN = [112 * cell, 118 * cell];
+  // to see the gait and close enough to walk to the shore. Other zones carry
+  // no start point the converters read, so they start in the middle.
+  const SPAWN = ZONE_NUM === 100 ? [112 * cell, 118 * cell] : [128 * cell, 128 * cell];
   const anim = new Animator(char, { carry: LOCOMOTION, fade: FADE });
   // Ground speed of each step clip at 1x, in model units per second.
   const stepPace = {};
