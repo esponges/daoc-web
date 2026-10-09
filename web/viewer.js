@@ -312,7 +312,62 @@ async function loadDetail(gl, zone, sp, aniso) {
 
 // ---------------------------------------------------------------------- main
 
+// --- zone picker -----------------------------------------------------------
+
+// The zones worldconv converted, from the zones.json it writes. Picking one
+// reloads the viewer on it, keeping the other URL options; a fresh page is
+// the simplest way to let go of the old zone's GPU data. It is set up before
+// the zone loads, so a zone that fails can still be left.
+async function zonePicker() {
+  const sel = $('zone-pick'), prev = $('zone-prev'), next = $('zone-next');
+  let zones = [];
+  try {
+    zones = await fetchJSON('data/zones.json');
+  } catch {
+    // Not written yet: offer the current zone alone.
+  }
+  if (!zones.some((z) => z.num === ZONE_NUM)) zones.push({ num: ZONE_NUM, name: 'Zone ' + ZONE_NUM });
+  zones.sort((a, b) => a.num - b.num);
+  for (const z of zones) {
+    const o = document.createElement('option');
+    o.value = z.num;
+    let label = String(z.num).padStart(3, '0') + '  ' + z.name + (z.frontier ? ' (frontier)' : '');
+    // Say so where much of the scenery did not convert.
+    if (z.placements && z.converting < z.placements * 0.95) {
+      label += '  · ' + Math.round((100 * z.converting) / z.placements) + '% props';
+    }
+    o.textContent = label;
+    sel.append(o);
+  }
+  sel.value = String(ZONE_NUM);
+  const at = zones.findIndex((z) => z.num === ZONE_NUM);
+  const go = (num) => {
+    const p = new URLSearchParams(location.search);
+    p.set('zone', num);
+    location.search = p.toString();
+  };
+  sel.addEventListener('change', () => go(sel.value));
+  // Letters would jump the list to another zone, and reload; the game's
+  // keys are for moving, so they only move.
+  sel.addEventListener('keydown', (e) => {
+    if (!['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab', ' ', 'Home', 'End'].includes(e.key)) {
+      e.preventDefault();
+      sel.blur();
+    }
+  });
+  prev.disabled = at <= 0;
+  next.disabled = at < 0 || at >= zones.length - 1;
+  prev.addEventListener('click', () => at > 0 && go(zones[at - 1].num));
+  next.addEventListener('click', () => at < zones.length - 1 && go(zones[at + 1].num));
+  addEventListener('keydown', (e) => {
+    if (e.target instanceof Element && e.target.closest('#zones')) return;
+    if (e.code === 'BracketLeft') prev.click();
+    if (e.code === 'BracketRight') next.click();
+  });
+}
+
 async function main() {
+  zonePicker().catch((e) => console.warn('zone picker:', e.message));
   const canvas = $('gl');
   const gl = canvas.getContext('webgl2', { antialias: true, depth: true });
   if (!gl) throw new Error('WebGL2 is not available in this browser.');

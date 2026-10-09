@@ -56,6 +56,24 @@
     #fight { flex-direction: column; gap: 6px; bottom: 10px; }
     #log { bottom: 140px; }
   }
+  /* Zone picker, top right: the zones worldconv converted. */
+  #zones {
+    position: fixed; top: 12px; right: 12px; z-index: 30; /* over #err, to leave a zone that fails */
+    display: flex; align-items: center; gap: 6px;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: #cfe3f5; background: rgba(8,14,22,.78);
+    border: 1px solid rgba(120,170,220,.28); border-radius: 8px;
+    padding: 6px 8px; backdrop-filter: blur(6px);
+  }
+  #zones select, #zones button {
+    font: inherit; color: inherit; background: rgba(255,255,255,.06);
+    border: 1px solid rgba(120,170,220,.3); border-radius: 5px; padding: 3px 6px;
+  }
+  #zones select { max-width: 280px; }
+  #zones button { cursor: pointer; min-width: 26px; }
+  #zones button:disabled { opacity: .35; cursor: default; }
+  #zones select:focus-visible, #zones button:focus-visible { outline: 2px solid #8fd0ff; outline-offset: 1px; }
+  @media (max-width: 760px) { #zones { top: auto; bottom: 90px; right: 12px; } #zones select { max-width: 52vw; } }
   #err {
     position: fixed; inset: 0; z-index: 20; display: none; place-content: center;
     padding: 40px; background: #0b0f14;
@@ -83,7 +101,7 @@
     <dt>pos</dt><dd id="i-pos">—</dd>
     <dt>fps</dt><dd id="i-fps">—</dd>
   </dl>
-  <div class="keys">W/S forward/back · A/D turn · Q/E strafe · right-drag = look around · wheel = zoom<br>shift = sprint · R = walk/run · C = free-fly camera · F = wireframe · G = ground detail · L = shadows · V = grass<br>click or Tab = target · 1 = attack on/off · Esc = clear target</div>
+  <div class="keys">W/S forward/back · A/D turn · Q/E strafe · right-drag = look around · wheel = zoom<br>shift = sprint · R = walk/run · C = free-fly camera · F = wireframe · G = ground detail · L = shadows · V = grass<br>click or Tab = target · 1 = attack on/off · Esc = clear target<br>[ / ] = previous / next zone</div>
 </div>
 <div id="fight">
   <div class="unit" id="you-box">
@@ -94,6 +112,11 @@
     <div class="name"><span id="tgt-name">—</span><small id="tgt-hp">—</small></div>
     <div class="bar" id="tgt-bar"><i></i></div>
   </div>
+</div>
+<div id="zones" aria-label="Zone">
+  <button id="zone-prev" title="Previous zone ( [ )" aria-label="Previous zone">‹</button>
+  <select id="zone-pick" aria-label="Zone"></select>
+  <button id="zone-next" title="Next zone ( ] )" aria-label="Next zone">›</button>
 </div>
 <div id="log"></div>
 <div id="err"></div>

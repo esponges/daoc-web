@@ -7,7 +7,10 @@
 // A zone is convertible when its terrain reads. Its scenery is converted
 // when its tables read; propconv must then place exactly as many fixtures as
 // the census counted converting, since both bake through internal/scenery.
-// Everything written lands in web/data, which is not committed.
+// Everything written lands in web/data, which is not committed, along with
+// zones.json, the list of converted zones the viewer's zone picker offers.
+// -index rewrites that list from what is already converted, converting
+// nothing.
 package main
 
 import (
@@ -35,6 +38,7 @@ type census struct {
 type row struct {
 	Num        int    `json:"num"`
 	Name       string `json:"name"`
+	Frontier   bool   `json:"frontier"`
 	Terrain    string `json:"terrain"`
 	Scenery    string `json:"scenery"`
 	Placements int    `json:"placements"`
@@ -46,24 +50,75 @@ func main() {
 	report := flag.String("census", filepath.Join("docs", "census", "census.json"), "the census to take zones from")
 	out := flag.String("out", filepath.Join("web", "data"), "output directory")
 	workers := flag.Int("j", runtime.NumCPU()/2+1, "zones converted in parallel")
+	indexOnly := flag.Bool("index", false, "only rewrite zones.json from the zones already converted")
 	flag.Parse()
+	if *indexOnly {
+		rows, err := readCensus(*report)
+		if err == nil {
+			err = writeIndex(*out, rows)
+		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "worldconv:", err)
+			os.Exit(1)
+		}
+		return
+	}
 	if err := run(*game, *report, *out, *workers); err != nil {
 		fmt.Fprintln(os.Stderr, "worldconv:", err)
 		os.Exit(1)
 	}
 }
 
-func run(game, report, out string, workers int) error {
+func readCensus(report string) ([]row, error) {
 	raw, err := os.ReadFile(report)
 	if err != nil {
-		return fmt.Errorf("%w (run the census first)", err)
+		return nil, fmt.Errorf("%w (run the census first)", err)
 	}
 	var c census
 	if err := json.Unmarshal(raw, &c); err != nil {
+		return nil, err
+	}
+	return c.Zones.Rows, nil
+}
+
+// indexEntry is one zones.json entry: a converted zone, and how much of its
+// scenery converted.
+type indexEntry struct {
+	Num        int    `json:"num"`
+	Name       string `json:"name"`
+	Frontier   bool   `json:"frontier,omitempty"`
+	Placements int    `json:"placements"`
+	Converting int    `json:"converting"`
+}
+
+// writeIndex lists every census zone whose zone.json is in out.
+func writeIndex(out string, rows []row) error {
+	var idx []indexEntry
+	for _, r := range rows {
+		if _, err := os.Stat(filepath.Join(out, fmt.Sprintf("zone%03d", r.Num), "zone.json")); err != nil {
+			continue
+		}
+		idx = append(idx, indexEntry{r.Num, r.Name, r.Frontier, r.Placements, r.Converting})
+	}
+	sort.Slice(idx, func(i, j int) bool { return idx[i].Num < idx[j].Num })
+	b, err := json.MarshalIndent(idx, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(out, "zones.json"), append(b, '\n'), 0o644); err != nil {
+		return err
+	}
+	fmt.Printf("zones.json lists %d converted zones\n", len(idx))
+	return nil
+}
+
+func run(game, report, out string, workers int) error {
+	rows, err := readCensus(report)
+	if err != nil {
 		return err
 	}
 	var zones []row
-	for _, r := range c.Zones.Rows {
+	for _, r := range rows {
 		if r.Terrain == "ok" {
 			zones = append(zones, r)
 		}
@@ -120,6 +175,9 @@ func run(game, report, out string, workers int) error {
 		}
 	}
 	fmt.Printf("\n%d zones converted, %d with problems\n", len(zones)-len(bad), len(bad))
+	if err := writeIndex(out, rows); err != nil {
+		return err
+	}
 	if len(bad) > 0 {
 		return fmt.Errorf("\n  %s", strings.Join(bad, "\n  "))
 	}
