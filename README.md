@@ -95,6 +95,8 @@ at any speed.
 | `animconv` | recorded animations; by default the model's own anim set, `-list` scores every clip |
 | `charshot` | renders an exported character to a PNG, no browser needed |
 | `nifdump` | inspects a `.nif`; `-bind` checks the bind pose, `-shapes` lists geometry, `-tex` each shape's textures and blending |
+| `census` | reads every asset in the install and reports what parses and converts; see [Verifying](#verifying) |
+| `worldconv` | runs `zoneconv` and `propconv` on every outdoor zone the census marks convertible, and checks each against it |
 | `mpakls` | lists and extracts from MPAK archives |
 | `serve` | static file server for `web/` |
 
@@ -106,7 +108,8 @@ caught two bugs the numeric checks passed over.
 ## Verifying
 
 ```bash
-go test ./...            # container, heightmap and NIF parsing against the real files
+go test ./...            # container, heightmap and NIF parsing against the real files, and the census
+go test -short ./...     # the same without the census
 node web/skeleton.test.mjs              # the posing maths, for the Norseman
 node web/skeleton.test.mjs troll-warrior  # and for any other converted character
 node web/npc.test.mjs                   # ten simulated minutes of wandering
@@ -136,7 +139,47 @@ rasters combined by factors read out of `SECTOR.DAT`, with the tile orientation
 inferred statistically. Nothing connects the two. Of 1006 fixtures, **87.4% sit
 on the derived terrain exactly** — within half a unit, where a unit is about an
 inch — and the mean disagreement is **1.34 units**. A wrong scale factor, a
-wrong offset or a flipped axis would put that in the hundreds.
+wrong offset or a flipped axis a wrong offset or a flipped axis would put that in the hundreds.
+
+### The census
+
+The checks above prove one zone. The census measures the whole install:
+
+```bash
+go run ./cmd/census      # about 15 s; writes docs/census/census.json and README.md
+```
+
+It reads every item of each asset class through the code the converters use,
+and records which read and why the rest do not, grouped by cause, with a
+count per folder and a few example names:
+
+| class | what counts as read |
+| --- | --- |
+| scenery | each model in `zones/Nifs`, `frontiers/NIFS` and `Newtowns/zones/Nifs` parses |
+| dungeon pieces | each model in `zones/Dnifs` and `frontiers/dnifs` parses |
+| city blocks | each model in a city zone's `nifs` folder parses |
+| figures | each `figures/*.nif` parses |
+| animations | each `anims/*.kfa` parses and every track resolves to a bone |
+| textures | each texture the models above name is found and decodes |
+
+Zones come from `zones.dat`, counted by type, with those whose folder is
+missing named. Every outdoor zone present is dry-run: terrain read, and every
+model its fixtures place baked in memory, so the report gives each zone's
+placements converting and the models that do not.
+
+[`docs/census/README.md`](docs/census/README.md) is the result for reading
+and `docs/census/census.json` the baseline. Both are generated, never edited:
+names, counts and causes only, sorted, so a re-run on the same install gives
+the same bytes and a diff shows exactly what a change gained or lost.
+
+`go test ./cmd/census` runs the census and fails if any class reads fewer
+items than the baseline records, or fewer outdoor placements convert. It is
+skipped under `-short` and when there is no install. After a change that
+reads more, re-run the census and commit the new report to raise the bar.
+
+`go run ./cmd/worldconv` then converts every outdoor zone whose terrain the
+census could read into `web/data`, about 3 GB, and fails unless each zone's
+`props.json` places exactly the fixtures the census counted converting.
 
 ## File formats, as worked out from the shipped data
 
@@ -430,7 +473,59 @@ is how two of the layout bugs above announced themselves, but that check is
 disabled inside particle data. `NiAutoNormalParticles` means the engine
 generates the normals at runtime, so the array the exporter wrote is never read
 by the game, and in `NDwrfville.nif` it contains a NaN among other
-uninitialised bytes. The footer landing at end-of-file still covers the block.
+uninitialised bytes. The footer landing at end-of-file by the game. The footer landing at end-of-file still covers the block.
+
+#### The rest of the install
+
+The [census](#the-census) took the reader past one zone. Over every scenery
+model, dungeon piece, city block and figure, seven unread block types stopped
+most of the failures: 213 of the 217 in `zones/Nifs` alone. A few more turned
+up behind them. All of these are now read:
+
+| block | what it is | drawn |
+| --- | --- | --- |
+| `NiTextureEffect` | a projected or environment-mapped texture: wet stone, crystal shine | no |
+| `NiTextureTransformController` + `NiFloatData` | a texture slot's UV offset, scale or rotation over time | no |
+| `NiGeomMorpherController` + `NiMorphData` | vertex morph targets over time | no; the base pose draws |
+| `NiAlphaController`, `NiMaterialColorController`, `NiLightColorController` + `NiPosData` | alpha and colour over time | no |
+| `NiVisController` + `NiVisData`, `NiPathController`, `NiFlipController` | show/hide, motion along a path, texture flipbooks | no |
+| `NiFogProperty`, `NiVectorExtraData`, `NiBinaryExtraData` | per-model fog, tagged data | no |
+| `NiPlanarCollider`, `NiSphericalCollider` | particles bouncing off a plane or sphere | no |
+| `NiGravity` | a particle modifier pulling along a direction or towards a point | yes |
+| `NiPixelData` + `NiPalette` | a texture stored inside the model | yes |
+
+Gravity is drawn as constant acceleration, in the particle shader's
+closed-form path: half the acceleration times age squared. A system's
+gravities are summed as they act at its emitter, which is exact for planar
+gravity and an approximation for point gravity, whose pull changes direction
+as particles move. The labyrinth fires show it: they spray straight down and
+a point 350 units overhead pulls them back up into flame. Models that are
+nothing but emitters, as those fires are, now convert with no geometry.
+
+Embedded textures come in 24- and 32-bit colour, 8-bit palettised, and DXT1
+and DXT5. They are decoded and written as `<model>_<block>.png` beside the
+rest, so the viewer loads them like any other; the Avalon pier's stone is one.
+
+Four things the bytes settled:
+
+- **`NiPixelData` has three unknown bytes after bits-per-pixel**, before the
+  eight fast-compare bytes. In `avpier.nif` only that reading puts the palette
+  reference on the very next block and makes the one 128×128 level account for
+  every pixel byte.
+- **Point and spot lights carry attenuation.** `readLight` had treated every
+  light as a directional one, which no file in Mularn contradicted. In
+  `k_forge.nif` the forge's point light ends 0, 0, 0.0004 — constant, linear,
+  quadratic — before its colour controller starts.
+- **`NiFlipController` has an extra float at 10.1.0.0**, between the texture
+  slot and the frame delta; it is zero in `ghostKing01.nif`.
+- **Morph weight keys can be junk.** The base target in `kelpnon.nif` is keyed
+  at -FLT_MAX, a denormal and a NaN, with sound vertices after them. The
+  weights are not drawn, so they are read without the non-finite check; the
+  vertex vectors keep it.
+
+Failures are typed (`nif.Error`: unsupported, corrupt data, read past end,
+footer mismatch, bad header, with the block and its type), which is how the
+census groups them without reading messages.
 
 ### Scenery
 
@@ -840,9 +935,11 @@ Creatures pushed the NIF parser from 444 to **617 of the 633** figure models:
   the value never mattered to it. The parser accepts NaN there and nowhere
   else, and zeroes it.
 
-The sixteen left over are specialised: textures embedded as `NiPixelData`,
+The sixteen left over were specialised: textures embedded as `NiPixelData`,
 `NiTextureEffect` projections on spell-like models, colour and
-texture-transform controllers, and two "coco" models.
+texture-transform controllers, and two "coco" models. The block types the
+[census](#the-rest-of-the-install) closed take that to 632; the one remaining,
+`halfogrecoco.nif`, has a NaN in its vertex data.
 
 ## Combat
 
@@ -985,8 +1082,9 @@ a large wolf pack until it kills you, and running a badger to its leash.
   emotes, swimming, jumping, death — are reachable by name through `animconv`
   but not wired to anything. Sprint reuses the run cycle, played faster,
   rather than having one of its own.
-- **38 of 4032 `.kfa` files do not parse.** They are a small minority and
-  `-list` reports them; none is in the humanoid locomotion set.
+- **5 of 4032 `.kfa` files do not parse**, each with a non-finite value in
+  its keyframe data. `-list` reports them; none is in the humanoid
+  locomotion set.
 - **No collision.** The character follows the heightmap and walks through
   anything else, including trees, buildings and the lake surface. The data is
   there to fix it: `nifs.csv` has a Collide flag and a radius per model, and
@@ -1010,8 +1108,24 @@ a large wolf pack until it kills you, and running a badger to its leash.
 - **Equipment is fixed per outfit.** The warhammer and shield are named in the
   outfit; there is no inventory, no swapping, and nothing worn on the belt or
   back, though the markers and sockets for both are there.
-- **16 of 633 figures do not parse** — see [Parsing the rest of
+- **1 of 633 figures does not parse** — see [Parsing the rest of
   figures/](#parsing-the-rest-of-figures).
+- **Some of what is read is not drawn.** Projected and environment textures,
+  vertex morphs, alpha, colour, visibility and UV animation, flipbooks, fog
+  properties and particle collisions are read exactly so the models holding
+  them parse, and those models draw without them;
+  [`docs/census/README.md`](docs/census/README.md) counts the files carrying
+  each. Point gravity is approximated as it acts at the emitter.
+- **The rest of the world is measured, not viewable.** The census reads
+  99.6% of scenery models and dungeon pieces and converts 95% of outdoor
+  placements, and `worldconv` converts 118 of the 120 outdoor zones present,
+  but the viewer still opens zone 100 only. Fifty-four zones use an older
+  `fixtures.csv` with a heading but no axis-angle, and Z 0 for anything on
+  the ground; those headings are converted and those props set on the
+  terrain, but neither has been checked by eye. The atlas tile layout is
+  chosen per zone by brightness against height, which is weak in a few
+  (Uppland, Avalon Marsh). City blocks read at 80%: 28 of Jordheim's
+  blocks stop on non-finite vertex data.
 - Heightmap edges stop at sample 255 (65280 units), 256 units short of the
   nominal zone edge. Harmless here; matters when stitching zones together.
 

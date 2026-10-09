@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"daocweb/internal/mpak"
+	"daocweb/internal/zone"
 )
 
 type grassOut struct {
@@ -49,7 +49,7 @@ type grassSprite struct {
 }
 
 func buildGrass(game string, zoneNum, grid int, outDir string) (*grassOut, error) {
-	_, reg, err := regionOf(game, zoneNum)
+	_, reg, err := zone.RegionOf(game, zoneNum)
 	if err != nil {
 		return nil, err
 	}
@@ -106,15 +106,15 @@ func buildGrass(game string, zoneNum, grid int, outDir string) (*grassOut, error
 	out.AtlasPx = 512
 
 	// Where each group grows, and how thickly.
-	datArc, err := mpak.Open(filepath.Join(game, "zones", fmt.Sprintf("zone%03d", zoneNum), fmt.Sprintf("dat%03d.mpk", zoneNum)))
+	z, err := zone.Open(game, zoneNum)
 	if err != nil {
 		return nil, err
 	}
-	gm, err := decodePCX(datArc, "grassmap.pcx")
+	gm, err := z.PCX("grassmap.pcx")
 	if err != nil {
 		return nil, err
 	}
-	dm, err := decodePCX(datArc, "densemap.pcx")
+	dm, err := z.PCX("densemap.pcx")
 	if err != nil {
 		return nil, err
 	}

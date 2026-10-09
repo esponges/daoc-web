@@ -18,14 +18,12 @@ import (
 	"path/filepath"
 
 	"daocweb/internal/dds"
-	"daocweb/internal/mpak"
-	"daocweb/internal/pcx"
-	"daocweb/internal/sector"
+	"daocweb/internal/zone"
 )
 
 // A DAoC zone spans 65536 world units and is sampled by a 256x256 height
 // raster, so one raster cell covers 256 units.
-const zoneUnits = 65536
+const zoneUnits = zone.Units
 
 type manifest struct {
 	Zone         int        `json:"zone"`
@@ -81,28 +79,20 @@ func main() {
 const defaultGamePath = `C:\Program Files (x86)\Electronic Arts\Dark Age of Camelot`
 
 func run(game string, zoneNum int, zoneName, outRoot string) error {
-	zoneDir := filepath.Join(game, "zones", fmt.Sprintf("zone%03d", zoneNum))
-	if _, err := os.Stat(zoneDir); err != nil {
-		return fmt.Errorf("zone directory %s: %w", zoneDir, err)
+	z, err := zone.Open(game, zoneNum)
+	if err != nil {
+		return err
 	}
 	outDir := filepath.Join(outRoot, fmt.Sprintf("zone%03d", zoneNum))
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		return err
 	}
-	fmt.Printf("zone %d  <- %s\n", zoneNum, zoneDir)
+	fmt.Printf("zone %d  <- %s\n", zoneNum, z.Dir)
 
 	// --- zone rasters and metadata -----------------------------------------
-	datArc, err := mpak.Open(filepath.Join(zoneDir, fmt.Sprintf("dat%03d.mpk", zoneNum)))
-	if err != nil {
-		return err
-	}
-	fmt.Printf("  dat%03d.mpk: %d entries\n", zoneNum, len(datArc.Entries))
+	fmt.Printf("  dat%03d.mpk: %d entries\n", zoneNum, len(z.Dat.Entries))
 
-	secRaw, err := datArc.Read("SECTOR.DAT")
-	if err != nil {
-		return err
-	}
-	sec, err := sector.Parse(secRaw)
+	sec, err := z.Sector()
 	if err != nil {
 		return err
 	}
@@ -110,41 +100,16 @@ func run(game string, zoneNum int, zoneName, outRoot string) error {
 	sx, sy := sec.SectorSize()
 	fmt.Printf("  scalefactor=%d offsetfactor=%d sectors=%dx%d\n", sf, of, sx, sy)
 
-	ter, err := decodePCX(datArc, "terrain.pcx")
+	terr, err := z.Terrain(sec)
 	if err != nil {
 		return err
 	}
-	offs, err := decodePCX(datArc, "offset.pcx")
-	if err != nil {
-		return err
-	}
-	if ter.W != offs.W || ter.H != offs.H {
-		return fmt.Errorf("terrain %dx%d and offset %dx%d disagree", ter.W, ter.H, offs.W, offs.H)
-	}
-	grid := ter.W
-	fmt.Printf("  heightmap: %dx%d\n", ter.W, ter.H)
-
-	heights := make([]uint16, grid*grid)
-	minH, maxH := math.MaxInt32, 0
-	for y := 0; y < grid; y++ {
-		for x := 0; x < grid; x++ {
-			h := int(ter.At(x, y))*sf + int(offs.At(x, y))*of
-			if h > 0xFFFF {
-				return fmt.Errorf("height %d at (%d,%d) overflows uint16", h, x, y)
-			}
-			heights[y*grid+x] = uint16(h)
-			if h < minH {
-				minH = h
-			}
-			if h > maxH {
-				maxH = h
-			}
-		}
-	}
+	grid, heights, minH, maxH := terr.Grid, terr.Heights, terr.Min, terr.Max
+	fmt.Printf("  heightmap: %dx%d\n", grid, grid)
 	fmt.Printf("  height range: %d .. %d world units\n", minH, maxH)
 
 	// --- terrain colour atlas from the LOD tiles ---------------------------
-	lodArc, err := mpak.Open(filepath.Join(zoneDir, fmt.Sprintf("lod%03d.mpk", zoneNum)))
+	lodArc, err := z.Archive("lod")
 	if err != nil {
 		return err
 	}
@@ -280,18 +245,6 @@ func run(game string, zoneNum int, zoneName, outRoot string) error {
 	}
 	fmt.Printf("  wrote %s (heights.u16, atlas.png, zone.json)\n", outDir)
 	return nil
-}
-
-func decodePCX(a *mpak.Archive, name string) (*pcx.Image, error) {
-	raw, err := a.Read(name)
-	if err != nil {
-		return nil, err
-	}
-	im, err := pcx.Decode(raw)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", name, err)
-	}
-	return im, nil
 }
 
 // stitch assembles the LOD tiles into one atlas under a candidate layout.

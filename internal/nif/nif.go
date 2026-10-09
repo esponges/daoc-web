@@ -291,11 +291,11 @@ type Extent struct {
 func Parse(b []byte) (*File, error) {
 	nl := bytes.IndexByte(b, '\n')
 	if nl < 0 || nl > 128 {
-		return nil, fmt.Errorf("nif: no header string")
+		return nil, fileError(BadHeader, "", 0, "no header string")
 	}
 	f := &File{HeaderString: string(b[:nl])}
 	if !strings.Contains(f.HeaderString, "File Format") {
-		return nil, fmt.Errorf("nif: bad header string %q", f.HeaderString)
+		return nil, fileError(BadHeader, "", 0, "bad header string %q", f.HeaderString)
 	}
 	r := &reader{b: b, p: nl + 1}
 	f.Version = r.u32()
@@ -308,7 +308,7 @@ func Parse(b []byte) (*File, error) {
 		n := int(r.u32())
 		nTypes := int(r.u16())
 		if r.err != nil {
-			return f, r.err
+			return f, fileError(kindOf(r.err), "", r.p, "header: %w", r.err)
 		}
 		f.BlockTypes = make([]string, nTypes)
 		for i := range f.BlockTypes {
@@ -320,26 +320,26 @@ func Parse(b []byte) (*File, error) {
 		}
 		r.u32() // unknown, always zero in DAoC's files
 		if r.err != nil {
-			return f, r.err
+			return f, fileError(kindOf(r.err), "", r.p, "header: %w", r.err)
 		}
 		f.Blocks = make([]any, n)
 		f.TypeOf = make([]string, n)
 		f.Extents = make([]Extent, n)
 		for i := 0; i < n; i++ {
 			if int(idx[i]) >= nTypes {
-				return f, fmt.Errorf("nif: block %d has type index %d of %d", i, idx[i], nTypes)
+				return f, fileError(Corrupt, "", r.p, "block %d has type index %d of %d", i, idx[i], nTypes)
 			}
 			typ := f.BlockTypes[idx[i]]
 			r.u32() // per-block separator, always zero
 			start := r.p
 			blk, err := f.parseBlock(r, typ)
 			if err != nil {
-				return f, fmt.Errorf("nif: block %d (%s) at %d: %w", i, typ, start, err)
+				return f, blockError(i, typ, start, err)
 			}
 			f.Blocks[i], f.TypeOf[i] = blk, typ
 			f.Extents[i] = Extent{start, r.p, typ}
 			if r.err != nil {
-				return f, fmt.Errorf("nif: block %d (%s) at %d: %w", i, typ, start, r.err)
+				return f, blockError(i, typ, start, r.err)
 			}
 		}
 
@@ -350,44 +350,47 @@ func Parse(b []byte) (*File, error) {
 		// individual fields, all gated inside the block readers.
 		n := int(r.u32())
 		if r.err != nil {
-			return f, r.err
+			return f, fileError(kindOf(r.err), "", r.p, "header: %w", r.err)
 		}
 		f.Blocks = make([]any, 0, n)
 		f.TypeOf = make([]string, 0, n)
 		for i := 0; i < n; i++ {
 			typ := r.str()
 			if r.err != nil {
-				return f, fmt.Errorf("nif: block %d type name: %w", i, r.err)
+				return f, &Error{Kind: kindOf(r.err), Block: i, Offset: r.p, Err: fmt.Errorf("block %d type name: %w", i, r.err)}
 			}
 			start := r.p
 			blk, err := f.parseBlock(r, typ)
 			if err != nil {
-				return f, fmt.Errorf("nif: block %d (%s) at %d: %w", i, typ, start, err)
+				return f, blockError(i, typ, start, err)
 			}
 			f.Blocks = append(f.Blocks, blk)
 			f.TypeOf = append(f.TypeOf, typ)
 			f.Extents = append(f.Extents, Extent{start, r.p, typ})
+			if r.err != nil {
+				return f, blockError(i, typ, start, r.err)
+			}
 		}
 
 	default:
-		return f, fmt.Errorf("nif: unsupported version 0x%08X (%s)", f.Version, f.HeaderString)
+		return f, fileError(Unsupported, "", 0, "unsupported version 0x%08X (%s)", f.Version, f.HeaderString)
 	}
 
 	// Footer: the root block list. It has to consume the rest of the file
 	// exactly; anything left over means a layout above was wrong.
 	nRoots := int(r.u32())
 	if r.err != nil {
-		return f, fmt.Errorf("nif: footer: %w", r.err)
+		return f, fileError(kindOf(r.err), "", r.p, "footer: %w", r.err)
 	}
 	f.Roots = make([]int32, nRoots)
 	for i := range f.Roots {
 		f.Roots[i] = r.i32()
 	}
 	if r.err != nil {
-		return f, fmt.Errorf("nif: footer roots: %w", r.err)
+		return f, fileError(kindOf(r.err), "", r.p, "footer roots: %w", r.err)
 	}
 	if r.p != len(b) {
-		return f, fmt.Errorf("nif: footer ended at %d but file is %d bytes (%d left over); a block layout is wrong",
+		return f, fileError(FooterMismatch, "", r.p, "footer ended at %d but file is %d bytes (%d left over); a block layout is wrong",
 			r.p, len(b), len(b)-r.p)
 	}
 	return f, nil
@@ -946,7 +949,7 @@ func (r *reader) need(n int) bool {
 		return false
 	}
 	if r.p+n > len(r.b) {
-		r.err = fmt.Errorf("read %d bytes at %d past end of %d", n, r.p, len(r.b))
+		r.err = errOf(Overrun, "read %d bytes at %d past end of %d", n, r.p, len(r.b))
 		return false
 	}
 	return true

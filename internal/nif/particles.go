@@ -155,8 +155,8 @@ type Camera struct {
 	Scene    int32
 }
 
-// Light is NiDirectionalLight and NiAmbientLight, which inherit NiLight
-// through NiDynamicEffect.
+// Light is NiDirectionalLight, NiAmbientLight, NiPointLight and NiSpotLight,
+// which inherit NiLight through NiDynamicEffect.
 type Light struct {
 	AVObject
 	Affected []int32
@@ -164,6 +164,10 @@ type Light struct {
 	Ambient  [3]float32
 	Diffuse  [3]float32
 	Specular [3]float32
+	// Point and spot lights only.
+	Attenuation [3]float32 // constant, linear, quadratic
+	Cutoff      float32    // spot only, as is Exponent
+	Exponent    float32
 }
 
 // readController reads the NiTimeController head.
@@ -351,7 +355,7 @@ func (f *File) parseEffectBlock(r *reader, typ string) (any, error) {
 		return f.readLight(r, typ)
 
 	default:
-		return nil, fmt.Errorf("unmodelled block type %q; blocks carry no length so parsing cannot continue", typ)
+		return f.parseCensusBlock(r, typ)
 	}
 }
 
@@ -489,6 +493,18 @@ func (f *File) readLight(r *reader, typ string) (*Light, error) {
 	l.Ambient = r.color3()
 	l.Diffuse = r.color3()
 	l.Specular = r.color3()
+	// Point and spot lights add attenuation, and spots their cone. In
+	// k_forge.nif the forge's point light ends 0, 0, 0.0004 -- constant,
+	// linear, quadratic -- before its colour controller begins.
+	if typ == "NiPointLight" || typ == "NiSpotLight" {
+		for i := range l.Attenuation {
+			l.Attenuation[i] = r.f32()
+		}
+	}
+	if typ == "NiSpotLight" {
+		l.Cutoff = r.f32()
+		l.Exponent = r.f32()
+	}
 	if r.err != nil {
 		return nil, r.err
 	}

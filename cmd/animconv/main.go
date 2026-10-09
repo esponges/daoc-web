@@ -21,18 +21,16 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
 	"daocweb/internal/gamedata"
-	"daocweb/internal/nif"
+	"daocweb/internal/kfa"
 )
 
 const defaultGame = `C:\Program Files (x86)\Electronic Arts\Dark Age of Camelot`
@@ -45,20 +43,16 @@ var gaitBones = []string{
 	"Bip01 L Foot", "Bip01 R Foot",
 }
 
-type track struct {
-	Bone      string
-	Rotations []nif.QuatKey
-	Trans     []nif.VecKey
-	Scales    []nif.FloatKey
-	Start     float32
-	Stop      float32
-}
+// The reading is internal/kfa's, shared with the census.
+type (
+	track = kfa.Track
+	anim  = kfa.Anim
+)
 
-type anim struct {
-	Name     string
-	Duration float32
-	Tracks   []track
-}
+var (
+	readAnim      = kfa.Read
+	loadAnimNodes = kfa.Nodes
+)
 
 func main() {
 	game := flag.String("game", defaultGame, "DAoC install directory")
@@ -238,22 +232,6 @@ func fromAnimSet(game, char string) ([]job, error) {
 	return jobs, nil
 }
 
-// loadAnimNodes reads the bone registry. Line N is the name of bone index N.
-func loadAnimNodes(game string) ([]string, error) {
-	path := filepath.Join(game, "figures", "animnode.dat")
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("open %s: %w", path, err)
-	}
-	defer f.Close()
-	var out []string
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		out = append(out, strings.TrimSpace(sc.Text()))
-	}
-	return out, sc.Err()
-}
-
 // loadCharBones reads the bone names out of a converted character's manifest.
 func loadCharBones(dir string) (map[string]bool, error) {
 	path := filepath.Join(dir, "char.json")
@@ -277,54 +255,6 @@ func loadCharBones(dir string) (map[string]bool, error) {
 		return nil, fmt.Errorf("%s lists no bones", path)
 	}
 	return out, nil
-}
-
-// readAnim walks the two parallel chains and resolves every track to a bone.
-func readAnim(path string, nodes []string) (*anim, error) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	f, err := nif.Parse(raw)
-	if err != nil {
-		return nil, err
-	}
-	if len(f.Roots) == 0 {
-		return nil, fmt.Errorf("no root block")
-	}
-	root, _ := f.Block(f.Roots[0]).(*nif.Node)
-	if root == nil || len(root.ExtraData) == 0 {
-		return nil, fmt.Errorf("root is not a node carrying the track chains")
-	}
-	a := &anim{Name: strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))}
-	s, c := root.ExtraData[0], root.Controller
-	for s >= 0 && c >= 0 {
-		se, _ := f.Block(s).(*nif.StringExtra)
-		kc, _ := f.Block(c).(*nif.KeyframeController)
-		if se == nil || kc == nil {
-			break
-		}
-		idx, err := strconv.Atoi(strings.TrimSpace(se.Value))
-		if err != nil {
-			return nil, fmt.Errorf("track names bone %q, which is not an index", se.Value)
-		}
-		if idx < 0 || idx >= len(nodes) {
-			return nil, fmt.Errorf("track names bone index %d, outside animnode.dat's %d slots", idx, len(nodes))
-		}
-		t := track{Bone: nodes[idx], Start: kc.StartTime, Stop: kc.StopTime}
-		if kd, _ := f.Block(kc.Data).(*nif.KeyframeData); kd != nil {
-			t.Rotations, t.Trans, t.Scales = kd.Rotations, kd.Translations, kd.Scales
-		}
-		if t.Stop > a.Duration {
-			a.Duration = t.Stop
-		}
-		a.Tracks = append(a.Tracks, t)
-		s, c = se.Next, kc.Next
-	}
-	if len(a.Tracks) == 0 {
-		return nil, fmt.Errorf("no tracks")
-	}
-	return a, nil
 }
 
 type scored struct {

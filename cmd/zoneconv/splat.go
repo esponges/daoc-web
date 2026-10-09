@@ -34,7 +34,7 @@ import (
 	"strings"
 
 	"daocweb/internal/dds"
-	"daocweb/internal/mpak"
+	"daocweb/internal/zone"
 )
 
 const (
@@ -75,8 +75,11 @@ func (l maskLayout) String() string {
 }
 
 func buildSplat(game string, zoneNum, sectors int, outDir string) (*splatOut, error) {
-	zoneDir := filepath.Join(game, "zones", fmt.Sprintf("zone%03d", zoneNum))
-	terArc, err := mpak.Open(filepath.Join(zoneDir, fmt.Sprintf("ter%03d.mpk", zoneNum)))
+	z, err := zone.Open(game, zoneNum)
+	if err != nil {
+		return nil, err
+	}
+	terArc, err := z.Archive("ter")
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +201,7 @@ func buildSplat(game string, zoneNum, sectors int, outDir string) (*splatOut, er
 	}
 
 	// --- check against the game's own composite ---
-	texArc, err := mpak.Open(filepath.Join(zoneDir, fmt.Sprintf("tex%03d.mpk", zoneNum)))
+	texArc, err := z.Archive("tex")
 	if err != nil {
 		return nil, err
 	}

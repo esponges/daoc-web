@@ -1,4 +1,4 @@
-package main
+package scenery
 
 // Particle systems: the fire and smoke on the log fires, the forge sparks,
 // the portals' streams.
@@ -10,7 +10,7 @@ package main
 // at the emitter node, whose transform places and aims the cone, and at the
 // particle geometry, whose properties give the texture and blending.
 //
-// None of it is simulated here. propconv writes the settings, in the model's
+// None of it is simulated here. The settings are written, in the model's
 // own space, and the viewer runs them.
 
 import (
@@ -19,7 +19,8 @@ import (
 	"daocweb/internal/nif"
 )
 
-type particleOut struct {
+// Particle is one emitter's settings, for the viewer to run.
+type Particle struct {
 	Texture  string     `json:"texture"`
 	Additive bool       `json:"additive"` // else blended over what is behind
 	Origin   [3]float32 `json:"origin"`   // emitter position, model space
@@ -40,13 +41,23 @@ type particleOut struct {
 	// Colour over the particle's life, [age fraction, r, g, b, a] keys; it
 	// multiplies the texture.
 	Color [][5]float32 `json:"color,omitempty"`
+	// Gravity is the particles' acceleration, model space, units a second
+	// squared: the sum of the system's NiGravity modifiers. It is constant,
+	// so a particle's offset is half of it times its age squared. Planar
+	// gravity is exact. Spherical gravity pulls towards a point and so
+	// changes direction as a particle moves; it is taken as it acts at the
+	// emitter, which holds for particles that stay near their source.
+	// Either kind fades with distance by its decay, also taken at the
+	// emitter.
+	Gravity *[3]float32 `json:"gravity,omitempty"`
 }
 
 // particleSystems lists a model's emitters. Systems whose emitter or
 // geometry is missing, or that emit nothing, are skipped.
-func particleSystems(f *nif.File) []particleOut {
+func particleSystems(tn *texNamer) []Particle {
+	f := tn.f
 	world := f.WorldTransforms()
-	var out []particleOut
+	var out []Particle
 	for _, blk := range f.Blocks {
 		c, ok := blk.(*nif.ParticleSystemController)
 		if !ok || c.EmitRate <= 0 || c.Lifetime <= 0 {
@@ -56,7 +67,7 @@ func particleSystems(f *nif.File) []particleOut {
 		if !ok || int(c.Emitter) < 0 || int(c.Emitter) >= len(world) {
 			continue
 		}
-		p := particleOut{
+		p := Particle{
 			Box:        c.StartRandom,
 			Rate:       c.EmitRate,
 			Life:       [2]float32{c.Lifetime, c.LifetimeRand},
@@ -64,6 +75,11 @@ func particleSystems(f *nif.File) []particleOut {
 			Vertical:   [2]float32{c.VertDir, c.VertAngle},
 			Horizontal: [2]float32{c.HorizDir, c.HorizAngle},
 			Size:       c.Size,
+		}
+		// Modifiers are in the space of the particle geometry's node.
+		frame := nif.Identity
+		if int(c.Target) >= 0 && int(c.Target) < len(world) {
+			frame = world[c.Target]
 		}
 		w := world[c.Emitter]
 		p.Origin = w.Trans
@@ -79,7 +95,7 @@ func particleSystems(f *nif.File) []particleOut {
 			switch b := f.Block(ref).(type) {
 			case *nif.Texturing:
 				if src, ok := f.Block(b.Base.Source).(*nif.SourceTexture); ok && b.HasBase {
-					p.Texture = texName(src.FileName)
+					p.Texture = tn.name(src)
 				}
 			case *nif.AlphaProperty:
 				p.Additive = b.Flags&1 != 0 && (b.Flags>>5)&15 == 0
@@ -104,8 +120,20 @@ func particleSystems(f *nif.File) []particleOut {
 			case *nif.Rotation:
 				p.Spin = mm.Speed
 				m = mm.Next
+			case *nif.Gravity:
+				g := gravityAt(mm, frame, p.Origin)
+				if p.Gravity == nil {
+					p.Gravity = &[3]float32{}
+				}
+				for k := 0; k < 3; k++ {
+					p.Gravity[k] += g[k]
+				}
+				m = mm.Next
 			case *nif.Bomb:
 				// An impulse pushing live particles about; not modelled.
+				m = mm.Next
+			case *nif.Collider:
+				// Particles bouncing off a plane or sphere; not modelled.
 				m = mm.Next
 			default:
 				m = -1
@@ -118,4 +146,32 @@ func particleSystems(f *nif.File) []particleOut {
 		out = append(out, p)
 	}
 	return out
+}
+
+// gravityAt is one NiGravity's acceleration on a particle at origin, in
+// model space; frame takes the modifier's own space there.
+func gravityAt(g *nif.Gravity, frame nif.Transform, origin [3]float32) [3]float32 {
+	pos := frame.Apply(g.Position)
+	var dir [3]float64
+	var dist float64
+	switch g.Type {
+	case 1: // spherical: towards the point
+		for k := 0; k < 3; k++ {
+			dir[k] = float64(pos[k] - origin[k])
+		}
+		dist = math.Sqrt(dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2])
+	default: // planar: along the direction, decaying away from its plane
+		d := rotate(frame, g.Direction)
+		for k := 0; k < 3; k++ {
+			dir[k] = float64(d[k])
+			dist += float64(origin[k]-pos[k]) * dir[k]
+		}
+		dist = math.Abs(dist)
+	}
+	n := math.Sqrt(dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2])
+	if n < 1e-9 {
+		return [3]float32{}
+	}
+	a := float64(g.Force) * math.Exp(-float64(g.Decay)*dist) / n
+	return [3]float32{float32(dir[0] * a), float32(dir[1] * a), float32(dir[2] * a)}
 }

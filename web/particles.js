@@ -37,6 +37,7 @@ uniform vec3 uBox;
 uniform float uRate;
 uniform vec2 uLife, uSpeed, uVert, uHoriz;
 uniform float uSize, uGrow, uFade, uSpin;
+uniform vec3 uGravity;   // model space, units a second squared
 uniform vec4 uColor[6];  // r, g, b, a at uColorT
 uniform float uColorT[6];
 uniform int uColorN;
@@ -93,7 +94,8 @@ void main() {
 
   vec3 dir = vec3(sin(pol) * cos(az), sin(pol) * sin(az), cos(pol));
   vec3 local = start + dir * speed * age;
-  vec3 m = uOrigin + uAxes * local;  // model space, z up
+  // Gravity is constant, so it bends the path by half of it times age squared.
+  vec3 m = uOrigin + uAxes * local + 0.5 * uGravity * age * age;  // model space, z up
 
   // Placed as the props are: yaw about the vertical, scale, then position;
   // model z becomes height.
@@ -150,12 +152,13 @@ const SMOKE_OPACITY = Number(new URLSearchParams(globalThis.location?.search || 
 
 // Emitters further than this from the camera are not drawn.
 const DRAW_DISTANCE = 9000;
+const NO_GRAVITY = new Float32Array(3);
 
 export function createParticles(gl, props, { program, uniforms }) {
   const prog = program(gl, VS, FS, 'particles');
   const U = uniforms(gl, prog, ['uViewProj', 'uCamPos', 'uCamRight', 'uCamUp', 'uTime', 'uPlace',
     'uScale', 'uSeed', 'uOrigin', 'uAxes', 'uBox', 'uRate', 'uLife', 'uSpeed', 'uVert', 'uHoriz',
-    'uSize', 'uGrow', 'uFade', 'uSpin', 'uColor', 'uColorT', 'uColorN', 'uTex', 'uAdditive',
+    'uSize', 'uGravity', 'uGrow', 'uFade', 'uSpin', 'uColor', 'uColorT', 'uColorN', 'uTex', 'uAdditive',
     'uFogStart', 'uFogEnd', 'uFogColor', 'uOpacity']);
 
   const vao = gl.createVertexArray();
@@ -230,6 +233,7 @@ export function createParticles(gl, props, { program, uniforms }) {
         gl.uniform2fv(U.uVert, p.vertical);
         gl.uniform2fv(U.uHoriz, p.horizontal);
         gl.uniform1f(U.uSize, p.size);
+        gl.uniform3fv(U.uGravity, p.gravity || NO_GRAVITY);
         gl.uniform1f(U.uGrow, p.grow);
         gl.uniform1f(U.uFade, p.fade);
         gl.uniform1f(U.uSpin, p.spin);

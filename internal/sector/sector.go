@@ -98,7 +98,17 @@ func (f *File) OffsetFactor() int { return f.Int("terrain", "offsetfactor", 48) 
 
 // SectorSize is the zone's sector grid, which also gives the LOD texture grid.
 func (f *File) SectorSize() (x, y int) {
-	return f.Int("sectorsize", "sizex", 8), f.Int("sectorsize", "sizey", 8)
+	x, y = f.Int("sectorsize", "sizex", 8), f.Int("sectorsize", "sizey", 8)
+	// Six zones -- Avalon Isle, Raumarik, Uppland and others -- write 0 here,
+	// though their LOD archives hold the usual 8x8 tiles and zones.dat
+	// gives them a width and height of 8.
+	if x <= 0 {
+		x = 8
+	}
+	if y <= 0 {
+		y = 8
+	}
+	return x, y
 }
 
 // Waters returns every water body declared by [waterdefs].

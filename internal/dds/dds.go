@@ -177,3 +177,12 @@ func rgb565(v uint16) (r, g, b byte) {
 func lerp(a, b byte, num, den int) byte {
 	return byte((int(a)*(den-num) + int(b)*num) / den)
 }
+
+// DecodeDXT decodes bare DXT1, DXT3 or DXT5 blocks, as NIFs store them
+// inside NiPixelData, without a DDS header around them.
+func DecodeDXT(data []byte, w, h int, fourCC string) (*image.NRGBA, error) {
+	if w <= 0 || h <= 0 {
+		return nil, fmt.Errorf("dds: bad dimensions %dx%d", w, h)
+	}
+	return decodeDXT(image.NewNRGBA(image.Rect(0, 0, w, h)), data, w, h, fourCC)
+}

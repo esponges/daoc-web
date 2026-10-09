@@ -9,8 +9,6 @@ package main
 // casts. This converts the clear day: the viewer has no clock or weather.
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"image"
@@ -21,6 +19,7 @@ import (
 
 	"daocweb/internal/dds"
 	"daocweb/internal/mpak"
+	"daocweb/internal/zone"
 )
 
 type skyOut struct {
@@ -62,7 +61,7 @@ type discOut struct {
 }
 
 func buildSky(game string, zoneNum int, outDir string) (*skyOut, error) {
-	n, reg, err := regionOf(game, zoneNum)
+	n, reg, err := zone.RegionOf(game, zoneNum)
 	if err != nil {
 		return nil, err
 	}
@@ -80,26 +79,26 @@ func buildSky(game string, zoneNum int, outDir string) (*skyOut, error) {
 	if err != nil {
 		return nil, err
 	}
-	ini := parseINI(raw)
+	ini := zone.ParseINI(raw)
 
 	out := &skyOut{Source: file}
 	c := "canopy_color_clear"
-	out.Zenith = rgb(ini.get(c, "day_zenith"))
-	out.Nadir = rgb(ini.get(c, "day_nadir"))
+	out.Zenith = rgb(ini.Get(c, "day_zenith"))
+	out.Nadir = rgb(ini.Get(c, "day_nadir"))
 	for i := 0; i < 4; i++ {
-		out.East[i] = rgb(ini.get(c, fmt.Sprintf("day_east%d", i+1)))
-		out.West[i] = rgb(ini.get(c, fmt.Sprintf("day_west%d", i+1)))
+		out.East[i] = rgb(ini.Get(c, fmt.Sprintf("day_east%d", i+1)))
+		out.West[i] = rgb(ini.Get(c, fmt.Sprintf("day_west%d", i+1)))
 	}
 	c = "cloud_color_clear"
-	out.CloudZenith = rgba(ini.get(c, "day_zenith"))
+	out.CloudZenith = rgba(ini.Get(c, "day_zenith"))
 	for i := 0; i < 4; i++ {
-		out.CloudEast[i] = rgba(ini.get(c, fmt.Sprintf("day_east%d", i+1)))
-		out.CloudWest[i] = rgba(ini.get(c, fmt.Sprintf("day_west%d", i+1)))
+		out.CloudEast[i] = rgba(ini.Get(c, fmt.Sprintf("day_east%d", i+1)))
+		out.CloudWest[i] = rgba(ini.Get(c, fmt.Sprintf("day_west%d", i+1)))
 	}
 	l := "lights_and_fog_clear"
-	out.Fog = rgb(ini.get(l, "day_distance_fog"))
-	out.Ambient = scaled(ini.get(l, "day_ambient_light"), ini.get(l, "day_ambient_light_amount"))
-	out.Sun = scaled(ini.get(l, "day_dynamic_light"), ini.get(l, "day_dynamic_light_amount"))
+	out.Fog = rgb(ini.Get(l, "day_distance_fog"))
+	out.Ambient = scaled(ini.Get(l, "day_ambient_light"), ini.Get(l, "day_ambient_light_amount"))
+	out.Sun = scaled(ini.Get(l, "day_dynamic_light"), ini.Get(l, "day_dynamic_light_amount"))
 
 	dir := filepath.Join(outDir, "sky")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -107,7 +106,7 @@ func buildSky(game string, zoneNum int, outDir string) (*skyOut, error) {
 	}
 	// The clear-weather layers: top, then bottom, drawn in that order.
 	for _, k := range []string{"top", "bot"} {
-		tex := ini.get("main", "cloud_"+k+"_texture")
+		tex := ini.Get("main", "cloud_"+k+"_texture")
 		if tex == "" {
 			continue
 		}
@@ -117,18 +116,18 @@ func buildSky(game string, zoneNum int, outDir string) (*skyOut, error) {
 		}
 		out.Clouds = append(out.Clouds, cloudOut{
 			Texture: "sky/" + png,
-			Tile:    num(ini.get("main", "cloud_"+k+"_tile"), 1),
-			Speed:   num(ini.get("main", "cloud_"+k+"_speed"), 0),
+			Tile:    num(ini.Get("main", "cloud_"+k+"_tile"), 1),
+			Speed:   num(ini.Get("main", "cloud_"+k+"_speed"), 0),
 		})
 	}
 
 	// The sun is whichever celestial object shows by day.
 	for i := 1; i <= 8; i++ {
 		s := fmt.Sprintf("celestial_object%02d", i)
-		if ini.get(s, "day_object") != "true" {
+		if ini.Get(s, "day_object") != "true" {
 			continue
 		}
-		tex := ini.get(s, "shape_texture")
+		tex := ini.Get(s, "shape_texture")
 		png, err := convertSkyTexture(skyDir, tex, dir)
 		if err != nil {
 			// sundisk.bmp has a .tga twin; the art is the same disc.
@@ -139,40 +138,16 @@ func buildSky(game string, zoneNum int, outDir string) (*skyOut, error) {
 		}
 		out.SunDisc = &discOut{
 			Texture:   "sky/" + png,
-			Shape:     rgba(ini.get(s, "shape_color_apex")),
-			Glow:      rgba(ini.get(s, "glow_color_apex")),
-			Scale:     num(ini.get(s, "shape_scale"), 15),
-			GlowScale: num(ini.get(s, "glow_scale"), 15),
-			Distance:  num(ini.get(s, "distance"), 1000),
+			Shape:     rgba(ini.Get(s, "shape_color_apex")),
+			Glow:      rgba(ini.Get(s, "glow_color_apex")),
+			Scale:     num(ini.Get(s, "shape_scale"), 15),
+			GlowScale: num(ini.Get(s, "glow_scale"), 15),
+			Distance:  num(ini.Get(s, "distance"), 1000),
 		}
 		break
 	}
 	fmt.Printf("  sky: %s (zone %d -> region %d), %d cloud layers, fog %v\n", file, zoneNum, n, len(out.Clouds), out.Fog)
 	return out, nil
-}
-
-// regionOf finds a zone's region in zones/zones.mpk's zones.dat and returns
-// its number and its settings -- skydome, grasscsv, grassmap and so on.
-func regionOf(game string, zoneNum int) (int, map[string]string, error) {
-	zarc, err := mpak.Open(filepath.Join(game, "zones", "zones.mpk"))
-	if err != nil {
-		return 0, nil, err
-	}
-	raw, err := zarc.Read("zones.dat")
-	if err != nil {
-		return 0, nil, err
-	}
-	zones := parseINI(raw)
-	region := zones.get(fmt.Sprintf("zone%03d", zoneNum), "region")
-	if region == "" {
-		return 0, nil, fmt.Errorf("zones.dat has no region for zone %d", zoneNum)
-	}
-	n, _ := strconv.Atoi(region)
-	reg := zones[fmt.Sprintf("region%03d", n)]
-	if reg == nil {
-		reg = map[string]string{}
-	}
-	return n, reg, nil
 }
 
 // convertSkyTexture writes one of zones/sky's images as PNG and returns
@@ -234,45 +209,6 @@ func decodeTGA(b []byte) (*image.NRGBA, error) {
 		}
 	}
 	return im, nil
-}
-
-// --- INI ---
-
-type iniFile map[string]map[string]string
-
-// parseINI reads the game's INI dialect: [sections], key = value, and ';'
-// comments, which may also trail a line.
-func parseINI(b []byte) iniFile {
-	out := iniFile{}
-	sec := ""
-	sc := bufio.NewScanner(bytes.NewReader(b))
-	for sc.Scan() {
-		line := sc.Text()
-		if i := strings.IndexByte(line, ';'); i >= 0 {
-			line = line[:i]
-		}
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			sec = strings.ToLower(strings.TrimSpace(line[1 : len(line)-1]))
-			continue
-		}
-		k, v, ok := strings.Cut(line, "=")
-		if !ok {
-			continue
-		}
-		if out[sec] == nil {
-			out[sec] = map[string]string{}
-		}
-		out[sec][strings.ToLower(strings.TrimSpace(k))] = strings.TrimSpace(v)
-	}
-	return out
-}
-
-func (f iniFile) get(sec, key string) string {
-	return f[strings.ToLower(sec)][strings.ToLower(key)]
 }
 
 func ints(s string) []int {
