@@ -936,8 +936,9 @@ func (f *File) WorldTransforms() []Transform {
 // reader walks the byte slice, latching the first error so callers can read a
 // whole block and check once. Past an error every read yields zero.
 type reader struct {
-	// lax disables the non-finite float check. Set only while reading a
-	// particle data block: see readParticleData.
+	// lax disables the non-finite float check. Set only while reading
+	// fields known to hold junk or open ends: particle data (see
+	// readParticleData), morph weights and LOD ranges.
 	lax bool
 	b   []byte
 	p   int

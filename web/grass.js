@@ -121,9 +121,15 @@ function mulberry32(seed) {
 }
 
 // createGrass needs the zone's grass spec from zone.json, the cell size and
-// grid, and the world's groundAt and isWet.
+// grid, and the world's groundAt and isWet. The grass map may be finer than
+// the heightmap (twice as fine in the Shrouded Isles and the frontiers):
+// spec.cellsPerSide says so, and its cells are smaller to match.
 export async function createGrass(gl, base, spec, world, { program, uniforms, loadImage }) {
-  const { cell, grid, groundAt, isWet } = world;
+  const { groundAt, isWet } = world;
+  const grid = spec.cellsPerSide || world.grid;
+  const cell = (world.cell * world.grid) / grid;
+  // Plants per cell, kept to the same number per unit of ground.
+  const perCell = PER_CELL * (cell / world.cell) ** 2;
   const [img, mapBuf] = await Promise.all([
     loadImage(base + '/' + spec.atlas),
     fetch(base + '/' + spec.map).then((r) => {
@@ -203,7 +209,7 @@ export async function createGrass(gl, base, spec, world, { program, uniforms, lo
     const at = (x, y) => (Math.min(grid - 1, Math.max(0, y)) * grid + Math.min(grid - 1, Math.max(0, x))) * 2;
     let most = 0;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) most = Math.max(most, map[at(cx + dx, cy + dy) + 1]);
-    const n = Math.round((most / 255) * PER_CELL);
+    const n = Math.round((most / 255) * perCell);
     const rng = mulberry32(key * 2654435761);
     for (let i = 0; i < n; i++) {
       const fx = cx + rng(), fy = cy + rng();

@@ -308,13 +308,21 @@ func ParseFixtures(b []byte) ([]Fixture, error) {
 			f.OnGround = atoi(row[11]) == 1 && f.Z == 0
 		}
 		f.Scale = atof(row[7]) / 100
-		if f.Scale <= 0 {
+		// Past maxScale it is a typo in the table, not a size: one oak in
+		// West Svealand reads 175150 among neighbours of 150 to 450, and
+		// drawn that big it walls off half the zone.
+		if f.Scale <= 0 || f.Scale > maxScale {
 			f.Scale = 1
 		}
 		out = append(out, f)
 	}
 	return out, nil
 }
+
+// maxScale is the largest placement scale taken at its word. Across every
+// zone in the install, 99.9% of fixtures are at most 5x and the largest
+// sensible one is 12x; the one above that is 1751x.
+const maxScale = 50
 
 // headingYaw turns a clockwise heading in degrees into a yaw in radians,
 // in (-pi, pi].

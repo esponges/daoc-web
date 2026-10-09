@@ -4,7 +4,7 @@
       "name": "scenery",
       "what": "outdoor scenery models: trees, rocks, buildings, keeps",
       "total": 1924,
-      "passed": 1917,
+      "passed": 1918,
       "locations": [
         {
           "path": "Newtowns/zones/Nifs",
@@ -19,7 +19,7 @@
         {
           "path": "zones/Nifs",
           "total": 1343,
-          "passed": 1339
+          "passed": 1340
         }
       ],
       "failures": [
@@ -41,19 +41,6 @@
               "path": "frontiers/NIFS",
               "count": 1
             },
-            {
-              "path": "zones/Nifs",
-              "count": 1
-            }
-          ]
-        },
-        {
-          "cause": "corrupt data in NiLODNode",
-          "count": 1,
-          "examples": [
-            "zones/Nifs/ncarcass.npk"
-          ],
-          "byLocation": [
             {
               "path": "zones/Nifs",
               "count": 1
@@ -867,17 +854,25 @@
     "outdoor": {
       "zones": 120,
       "terrain": 118,
-      "clean": 76,
+      "clean": 105,
+      "detail": 116,
+      "grass": 108,
+      "noGrass": 10,
       "placements": 130278,
-      "converting": 123716,
+      "converting": 127781,
       "modelsTried": 1446,
-      "modelsBaked": 1352
+      "modelsBaked": 1425
     },
     "rows": [
       {
         "num": 0,
         "name": "Camelot Hills",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9793,
+        "grass": "ok",
         "placements": 1876,
         "converting": 1876
       },
@@ -885,6 +880,11 @@
         "num": 1,
         "name": "Salisbury Plains",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9997,
+        "detail": "ok",
+        "detailAgree": 0.9853,
+        "grass": "ok",
         "placements": 733,
         "converting": 733
       },
@@ -892,27 +892,17 @@
         "num": 2,
         "name": "Black Mtns. South",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9935,
+        "grass": "ok",
         "placements": 1745,
-        "converting": 1739,
+        "converting": 1742,
         "failing": [
           {
             "file": "stone4.nif",
             "placements": 3,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "bfarmhouse_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "bhouse2_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "brit_shop_normal.nif",
-            "placements": 1,
             "cause": "no drawable geometry"
           }
         ]
@@ -921,14 +911,15 @@
         "num": 3,
         "name": "Black Mtns. North",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.5262,
+        "detail": "ok",
+        "detailAgree": 0.532,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 726,
-        "converting": 720,
+        "converting": 723,
         "failing": [
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 3,
-            "cause": "model file not found"
-          },
           {
             "file": "stone4.nif",
             "placements": 3,
@@ -940,40 +931,23 @@
         "num": 4,
         "name": "Dartmoor",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.982,
+        "grass": "ok",
         "placements": 1520,
-        "converting": 1515,
-        "failing": [
-          {
-            "file": "A_ruins05_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          },
-          {
-            "file": "A_ruins06_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          },
-          {
-            "file": "A_ruins07_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          },
-          {
-            "file": "b-bindst1_burned.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "bhouse2_reconstructed.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          }
-        ]
+        "converting": 1520
       },
       {
         "num": 6,
         "name": "Cornwall",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.7719,
+        "detail": "ok",
+        "detailAgree": 0.7704,
+        "grass": "ok",
         "placements": 1497,
         "converting": 1497
       },
@@ -981,6 +955,11 @@
         "num": 7,
         "name": "Llyn Barfog",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8744,
+        "detail": "ok",
+        "detailAgree": 0.8809,
+        "grass": "ok",
         "placements": 949,
         "converting": 949
       },
@@ -988,6 +967,11 @@
         "num": 8,
         "name": "Campacorentin Forest",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9776,
+        "grass": "ok",
         "placements": 3029,
         "converting": 3029
       },
@@ -995,6 +979,11 @@
         "num": 9,
         "name": "Avalon Marsh",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8858,
+        "detail": "ok",
+        "detailAgree": 0.8434,
+        "grass": "ok",
         "placements": 1510,
         "converting": 1510
       },
@@ -1002,6 +991,12 @@
         "num": 10,
         "name": "Lyonesse",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.4735,
+        "detail": "ok",
+        "detailAgree": 0.4853,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 920,
         "converting": 920
       },
@@ -1009,6 +1004,12 @@
         "num": 11,
         "name": "Forest Sauvage",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8758,
+        "detail": "ok",
+        "detailAgree": 0.8269,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1786,
         "converting": 1786
       },
@@ -1016,6 +1017,12 @@
         "num": 12,
         "name": "Snowdonia",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8828,
+        "detail": "ok",
+        "detailAgree": 0.7049,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 865,
         "converting": 865
       },
@@ -1023,6 +1030,12 @@
         "num": 14,
         "name": "Pennine Mountains",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8429,
+        "detail": "ok",
+        "detailAgree": 0.7835,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 807,
         "converting": 807
       },
@@ -1030,6 +1043,12 @@
         "num": 15,
         "name": "Hadrian's Wall",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9129,
+        "detail": "ok",
+        "detailAgree": 0.8952,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1421,
         "converting": 1421
       },
@@ -1037,24 +1056,15 @@
         "num": 27,
         "name": "Constantine's Sound",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9131,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 715,
-        "converting": 562,
+        "converting": 685,
         "failing": [
-          {
-            "file": "BpineaCL3.nif",
-            "placements": 72,
-            "cause": "model file not found"
-          },
-          {
-            "file": "vrgrn1CL5.nif",
-            "placements": 28,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 23,
-            "cause": "model file not found"
-          },
           {
             "file": "tutorial_2wall_alb.nif",
             "placements": 16,
@@ -1101,6 +1111,12 @@
         "num": 51,
         "name": "Isle of Glass",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8027,
+        "detail": "ok",
+        "detailAgree": 0.7689,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 812,
         "converting": 812
       },
@@ -1108,6 +1124,11 @@
         "num": 52,
         "name": "Avalon Isle",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9604,
+        "detail": "ok",
+        "detailAgree": 0.92,
+        "grass": "ok",
         "placements": 1528,
         "converting": 1528
       },
@@ -1115,6 +1136,12 @@
         "num": 53,
         "name": "Dales of Devwy",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9475,
+        "detail": "ok",
+        "detailAgree": 0.8988,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 2132,
         "converting": 2132
       },
@@ -1122,6 +1149,11 @@
         "num": 54,
         "name": "Caldey",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9728,
+        "detail": "ok",
+        "detailAgree": 0.8822,
+        "grass": "ok",
         "placements": 1658,
         "converting": 1658
       },
@@ -1129,6 +1161,11 @@
         "num": 55,
         "name": "Gwyddneau",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9549,
+        "detail": "ok",
+        "detailAgree": 0.9063,
+        "grass": "ok",
         "placements": 1218,
         "converting": 1218
       },
@@ -1136,6 +1173,12 @@
         "num": 56,
         "name": "Aldland",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.7315,
+        "detail": "ok",
+        "detailAgree": 0.7342,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1383,
         "converting": 1383
       },
@@ -1143,6 +1186,12 @@
         "num": 57,
         "name": "Inishail Island",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9571,
+        "detail": "ok",
+        "detailAgree": 0.9057,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 536,
         "converting": 536
       },
@@ -1150,6 +1199,11 @@
         "num": 70,
         "name": "Ruins of Atlantis",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9997,
+        "detail": "ok",
+        "detailAgree": 0.9706,
+        "grass": "ok",
         "placements": 1364,
         "converting": 1364
       },
@@ -1157,6 +1211,12 @@
         "num": 71,
         "name": "Ruinerar av Atlantis",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9997,
+        "detail": "ok",
+        "detailAgree": 0.8123,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1377,
         "converting": 1377
       },
@@ -1164,6 +1224,11 @@
         "num": 72,
         "name": "Scrios de Atlantis",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9997,
+        "detail": "ok",
+        "detailAgree": 0.9303,
+        "grass": "ok",
         "placements": 1922,
         "converting": 1922
       },
@@ -1171,6 +1236,11 @@
         "num": 73,
         "name": "Oceanus Hesperos",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9992,
+        "detail": "ok",
+        "detailAgree": 0.9711,
+        "grass": "ok",
         "placements": 1107,
         "converting": 1107
       },
@@ -1178,6 +1248,11 @@
         "num": 74,
         "name": "Mesothalassa",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9442,
+        "grass": "ok",
         "placements": 1220,
         "converting": 1220
       },
@@ -1185,6 +1260,11 @@
         "num": 75,
         "name": "Oceanus Boreal",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.998,
+        "detail": "ok",
+        "detailAgree": 0.9475,
+        "grass": "ok",
         "placements": 1372,
         "converting": 1372
       },
@@ -1192,6 +1272,11 @@
         "num": 76,
         "name": "Oceanus Notos",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9432,
+        "grass": "ok",
         "placements": 1322,
         "converting": 1322
       },
@@ -1199,6 +1284,11 @@
         "num": 77,
         "name": "Oceanus Anatole",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9429,
+        "grass": "ok",
         "placements": 1314,
         "converting": 1314
       },
@@ -1206,6 +1296,11 @@
         "num": 81,
         "name": "Stygian Delta",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9865,
+        "grass": "ok",
         "placements": 2218,
         "converting": 895,
         "failing": [
@@ -1220,6 +1315,11 @@
         "num": 82,
         "name": "Land of Atum",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9465,
+        "grass": "ok",
         "placements": 888,
         "converting": 559,
         "failing": [
@@ -1234,6 +1334,11 @@
         "num": 84,
         "name": "Typhon's Reach",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.8406,
+        "grass": "no grass map",
         "placements": 1096,
         "converting": 1096
       },
@@ -1241,6 +1346,11 @@
         "num": 85,
         "name": "Ashen Isles",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9997,
+        "detail": "ok",
+        "detailAgree": 0.7746,
+        "grass": "no grass map",
         "placements": 613,
         "converting": 613
       },
@@ -1248,28 +1358,33 @@
         "num": 86,
         "name": "Green Glades",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9751,
+        "grass": "no grass map",
         "placements": 2092,
         "converting": 1625,
         "failing": [
           {
             "file": "aeris_oak.nif",
             "placements": 374,
-            "cause": "model file not found"
+            "cause": "bad header"
           },
           {
             "file": "fern.nif",
             "placements": 59,
-            "cause": "model file not found"
+            "cause": "bad header"
           },
           {
             "file": "blackgum.nif",
             "placements": 21,
-            "cause": "model file not found"
+            "cause": "bad header"
           },
           {
             "file": "redwood_dead.nif",
             "placements": 13,
-            "cause": "model file not found"
+            "cause": "bad header"
           }
         ]
       },
@@ -1277,18 +1392,23 @@
         "num": 87,
         "name": "Arbor Glen",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9683,
+        "grass": "ok",
         "placements": 1527,
         "converting": 1204,
         "failing": [
           {
             "file": "aeris_oak.nif",
             "placements": 312,
-            "cause": "model file not found"
+            "cause": "bad header"
           },
           {
             "file": "redwood_dead.nif",
             "placements": 11,
-            "cause": "model file not found"
+            "cause": "bad header"
           }
         ]
       },
@@ -1296,6 +1416,11 @@
         "num": 100,
         "name": "Vale of Mularn",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9943,
+        "grass": "ok",
         "placements": 1006,
         "converting": 1006
       },
@@ -1303,45 +1428,23 @@
         "num": 101,
         "name": "East Svealand",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9932,
+        "grass": "ok",
         "placements": 1289,
-        "converting": 1281,
-        "failing": [
-          {
-            "file": "nrs-hut1_normal.nif",
-            "placements": 2,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "nrshse1_normal.nif",
-            "placements": 2,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "NTavern_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "N_bindst1_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "Nblacksmith_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "lnghse2_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          }
-        ]
+        "converting": 1289
       },
       {
         "num": 102,
         "name": "West Svealand",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9913,
+        "detail": "ok",
+        "detailAgree": 0.9807,
+        "grass": "ok",
         "placements": 1189,
         "converting": 1189
       },
@@ -1349,6 +1452,11 @@
         "num": 103,
         "name": "Gotar",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.7412,
+        "detail": "ok",
+        "detailAgree": 0.8146,
+        "grass": "ok",
         "placements": 1512,
         "converting": 1512
       },
@@ -1356,6 +1464,12 @@
         "num": 104,
         "name": "Muspelheim",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9376,
+        "detail": "ok",
+        "detailAgree": 0.919,
+        "detailBlend": "weighted",
+        "grass": "no grass map",
         "placements": 13,
         "converting": 13
       },
@@ -1363,34 +1477,35 @@
         "num": 105,
         "name": "Myrkwood Forest",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.5025,
+        "detail": "ok",
+        "detailAgree": 0.5568,
+        "grass": "ok",
         "placements": 2140,
-        "converting": 2138,
-        "failing": [
-          {
-            "file": "Ncarcass.nif",
-            "placements": 2,
-            "cause": "corrupt data in NiLODNode"
-          }
-        ]
+        "converting": 2140
       },
       {
         "num": 106,
         "name": "Skona Ravine",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8891,
+        "detail": "ok",
+        "detailAgree": 0.8498,
+        "grass": "ok",
         "placements": 836,
-        "converting": 834,
-        "failing": [
-          {
-            "file": "Ncarcass.nif",
-            "placements": 2,
-            "cause": "corrupt data in NiLODNode"
-          }
-        ]
+        "converting": 836
       },
       {
         "num": 107,
         "name": "Vanern Swamp",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.7566,
+        "detail": "ok",
+        "detailAgree": 0.7133,
+        "grass": "ok",
         "placements": 764,
         "converting": 764
       },
@@ -1398,6 +1513,12 @@
         "num": 108,
         "name": "Raumarik",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9839,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1447,
         "converting": 1447
       },
@@ -1405,6 +1526,12 @@
         "num": 111,
         "name": "Uppland",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.815,
+        "detail": "ok",
+        "detailAgree": 0.6606,
+        "detailBlend": "weighted",
+        "grass": "no grass map",
         "placements": 1620,
         "converting": 1620
       },
@@ -1412,6 +1539,12 @@
         "num": 112,
         "name": "Yggdra Forest",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9073,
+        "detail": "ok",
+        "detailAgree": 0.8435,
+        "detailBlend": "weighted",
+        "grass": "no grass map",
         "placements": 2370,
         "converting": 2370
       },
@@ -1419,6 +1552,12 @@
         "num": 113,
         "name": "Jamtland Mountains",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.948,
+        "detail": "ok",
+        "detailAgree": 0.8911,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1412,
         "converting": 1412
       },
@@ -1426,6 +1565,11 @@
         "num": 115,
         "name": "Odin's Gate",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9845,
+        "grass": "no grass map",
         "placements": 1515,
         "converting": 1515
       },
@@ -1433,55 +1577,23 @@
         "num": 116,
         "name": "Malmohus",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9795,
+        "grass": "ok",
         "placements": 2589,
-        "converting": 2492,
-        "failing": [
-          {
-            "file": "Ncarcass.nif",
-            "placements": 87,
-            "cause": "corrupt data in NiLODNode"
-          },
-          {
-            "file": "nrs-hut1_frozen.nif",
-            "placements": 3,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "nrshse1_frozen.nif",
-            "placements": 2,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "M_ruins01_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          },
-          {
-            "file": "M_ruins02_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          },
-          {
-            "file": "N_bindst1_frozen.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "nblacksmith_frozen.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "ntavern_frozen.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          }
-        ]
+        "converting": 2589
       },
       {
         "num": 151,
         "name": "Aegir's Landing",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9387,
+        "detail": "ok",
+        "detailAgree": 0.8823,
+        "grass": "ok",
         "placements": 1078,
         "converting": 1078
       },
@@ -1489,6 +1601,11 @@
         "num": 152,
         "name": "Gripklosa Mountains",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8161,
+        "detail": "ok",
+        "detailAgree": 0.7995,
+        "grass": "ok",
         "placements": 1355,
         "converting": 1355
       },
@@ -1496,6 +1613,12 @@
         "num": 153,
         "name": "Delling Crater",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9927,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 572,
         "converting": 572
       },
@@ -1503,6 +1626,12 @@
         "num": 154,
         "name": "Faraheim",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9211,
+        "detail": "ok",
+        "detailAgree": 0.8442,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 931,
         "converting": 931
       },
@@ -1510,6 +1639,11 @@
         "num": 155,
         "name": "Munin Sound",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8991,
+        "detail": "ok",
+        "detailAgree": 0.7239,
+        "grass": "ok",
         "placements": 1403,
         "converting": 1403
       },
@@ -1517,6 +1651,11 @@
         "num": 156,
         "name": "Iarnwood",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.6263,
+        "detail": "ok",
+        "detailAgree": 0.6398,
+        "grass": "ok",
         "placements": 1505,
         "converting": 1505
       },
@@ -1532,6 +1671,12 @@
         "num": 158,
         "name": "Modernagrav",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.827,
+        "detail": "ok",
+        "detailAgree": 0.7449,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 513,
         "converting": 513
       },
@@ -1540,14 +1685,14 @@
         "name": "Ellan Vannin",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9749,
+        "grass": "ok",
         "placements": 1985,
-        "converting": 1966,
+        "converting": 1981,
         "failing": [
-          {
-            "file": "WillowCL3.nif",
-            "placements": 12,
-            "cause": "model file not found"
-          },
           {
             "file": "agramon_keepCollision1.nif",
             "placements": 1,
@@ -1564,24 +1709,9 @@
             "cause": "no drawable geometry"
           },
           {
-            "file": "b-bindst1_burned.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
             "file": "bhouse2_burned.nif",
             "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "btavern_burned.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "hlurikhut_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
+            "cause": "corrupt data in NiTriShapeData"
           }
         ]
       },
@@ -1590,6 +1720,11 @@
         "name": "Irish Sea",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9641,
+        "grass": "ok",
         "placements": 92,
         "converting": 92
       },
@@ -1598,469 +1733,159 @@
         "name": "Cathal Valley",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "a sector paints N layers; at most N fit",
+        "grass": "ok",
         "placements": 958,
-        "converting": 911,
-        "failing": [
-          {
-            "file": "NBirchtreeCL5.nif",
-            "placements": 10,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HBirchsingleCL5.nif",
-            "placements": 8,
-            "cause": "model file not found"
-          },
-          {
-            "file": "NPineACL5.nif",
-            "placements": 6,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL5.nif",
-            "placements": 6,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Elm2CL5.nif",
-            "placements": 5,
-            "cause": "model file not found"
-          },
-          {
-            "file": "NpinetreeCL5.nif",
-            "placements": 5,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 3,
-            "cause": "model file not found"
-          },
-          {
-            "file": "vrgrn1CL5.nif",
-            "placements": 3,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL3.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 958
       },
       {
         "num": 167,
         "name": "Odin's Gate",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9801,
+        "grass": "ok",
         "placements": 377,
-        "converting": 222,
-        "failing": [
-          {
-            "file": "NPineACL5.nif",
-            "placements": 40,
-            "cause": "model file not found"
-          },
-          {
-            "file": "NpinetreeCL5.nif",
-            "placements": 36,
-            "cause": "model file not found"
-          },
-          {
-            "file": "npintre1CL5.nif",
-            "placements": 36,
-            "cause": "model file not found"
-          },
-          {
-            "file": "vrgrn1CL5.nif",
-            "placements": 15,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Npinetree-sCL5.nif",
-            "placements": 11,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Npintre1-sCL5.nif",
-            "placements": 11,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Nvrgrn1-sCL5.nif",
-            "placements": 6,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 377
       },
       {
         "num": 168,
         "name": "Jamtland Mountains",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9864,
+        "grass": "ok",
         "placements": 491,
-        "converting": 338,
-        "failing": [
-          {
-            "file": "Npintre1-sCL5.nif",
-            "placements": 50,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Nvrgrn1-sCL5.nif",
-            "placements": 43,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Npinetree-sCL5.nif",
-            "placements": 35,
-            "cause": "model file not found"
-          },
-          {
-            "file": "MidgardTall_WhitePineCL10.nif",
-            "placements": 11,
-            "cause": "model file not found"
-          },
-          {
-            "file": "MidgardTall_WhitePine3CL10.nif",
-            "placements": 8,
-            "cause": "model file not found"
-          },
-          {
-            "file": "NPineACL5.nif",
-            "placements": 4,
-            "cause": "model file not found"
-          },
-          {
-            "file": "vrgrn1CL5.nif",
-            "placements": 2,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 491
       },
       {
         "num": 169,
         "name": "Yggdra Forest",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.979,
+        "grass": "ok",
         "placements": 439,
-        "converting": 238,
-        "failing": [
-          {
-            "file": "Npintre1-sCL5.nif",
-            "placements": 68,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Npinetree-sCL5.nif",
-            "placements": 53,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Nvrgrn1-sCL5.nif",
-            "placements": 46,
-            "cause": "model file not found"
-          },
-          {
-            "file": "NpinetreeCL5.nif",
-            "placements": 13,
-            "cause": "model file not found"
-          },
-          {
-            "file": "NPineACL5.nif",
-            "placements": 11,
-            "cause": "model file not found"
-          },
-          {
-            "file": "vrgrn1CL5.nif",
-            "placements": 10,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 439
       },
       {
         "num": 170,
         "name": "Uppland",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9749,
+        "grass": "ok",
         "placements": 575,
-        "converting": 189,
-        "failing": [
-          {
-            "file": "Npintre1-sCL5.nif",
-            "placements": 164,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Npinetree-sCL5.nif",
-            "placements": 151,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Nvrgrn1-sCL5.nif",
-            "placements": 71,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 575
       },
       {
         "num": 171,
         "name": "Emain Macha",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.8934,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 628,
-        "converting": 543,
-        "failing": [
-          {
-            "file": "HLowtreeCL5.nif",
-            "placements": 32,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 17,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 16,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HiberniaTall_WhitePine3CL10.nif",
-            "placements": 16,
-            "cause": "model file not found"
-          },
-          {
-            "file": "NBirchtreeCL5.nif",
-            "placements": 3,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HiberniaTall_WhitePine3CL5Row.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 628
       },
       {
         "num": 172,
         "name": "Breifine",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9192,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 663,
-        "converting": 512,
-        "failing": [
-          {
-            "file": "HiberniaTall_WhitePine3CL10.nif",
-            "placements": 43,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HLowtreeCL5.nif",
-            "placements": 36,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HiberniaTall_WhitePine3CL5Row.nif",
-            "placements": 24,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 20,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 12,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HBirchsingleCL5.nif",
-            "placements": 9,
-            "cause": "model file not found"
-          },
-          {
-            "file": "NBirchtreeCL5.nif",
-            "placements": 7,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 663
       },
       {
         "num": 173,
         "name": "Cruachan Gorge",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9526,
+        "grass": "ok",
         "placements": 494,
-        "converting": 261,
-        "failing": [
-          {
-            "file": "elm1cl5.nif",
-            "placements": 88,
-            "cause": "model file not found"
-          },
-          {
-            "file": "elm2cl5.nif",
-            "placements": 79,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Hlowtreecl5.nif",
-            "placements": 45,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HiberniaTall_WhitePineCL10.nif",
-            "placements": 9,
-            "cause": "model file not found"
-          },
-          {
-            "file": "hiberniaTall_WhitePine3CL10.nif",
-            "placements": 7,
-            "cause": "model file not found"
-          },
-          {
-            "file": "hiberniaTall_WhitePineCL5.nif",
-            "placements": 3,
-            "cause": "model file not found"
-          },
-          {
-            "file": "hiberniaTall_WhitePine3CL5.nif",
-            "placements": 2,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 494
       },
       {
         "num": 174,
         "name": "Mount Collory",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9175,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 623,
-        "converting": 390,
-        "failing": [
-          {
-            "file": "elm1cl5.nif",
-            "placements": 100,
-            "cause": "model file not found"
-          },
-          {
-            "file": "elm2cl5.nif",
-            "placements": 99,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Hlowtreecl5.nif",
-            "placements": 30,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HiberniaTall_WhitePineCL10.nif",
-            "placements": 3,
-            "cause": "model file not found"
-          },
-          {
-            "file": "hiberniaTall_WhitePine3CL10.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 623
       },
       {
         "num": 175,
         "name": "Snowdonia",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9847,
+        "grass": "ok",
         "placements": 317,
-        "converting": 143,
-        "failing": [
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 102,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 56,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL3.nif",
-            "placements": 16,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 317
       },
       {
         "num": 176,
         "name": "Forest Sauvage",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9556,
+        "grass": "ok",
         "placements": 305,
-        "converting": 103,
-        "failing": [
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 124,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 65,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL3.nif",
-            "placements": 13,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 305
       },
       {
         "num": 177,
         "name": "Pennine Mountains",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9387,
+        "grass": "ok",
         "placements": 399,
-        "converting": 72,
+        "converting": 398,
         "failing": [
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 145,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 64,
-            "cause": "model file not found"
-          },
-          {
-            "file": "pintre1CL3.nif",
-            "placements": 30,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HollyTreeCL5.nif",
-            "placements": 25,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL3.nif",
-            "placements": 24,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL5.nif",
-            "placements": 22,
-            "cause": "model file not found"
-          },
-          {
-            "file": "BpineaCL3.nif",
-            "placements": 16,
-            "cause": "model file not found"
-          },
           {
             "file": "A_ruins01_COLLISION_FIX.nif",
             "placements": 1,
@@ -2073,50 +1898,23 @@
         "name": "Hadrian's Wall",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9997,
+        "detail": "ok",
+        "detailAgree": 0.9128,
+        "grass": "ok",
         "placements": 279,
-        "converting": 123,
-        "failing": [
-          {
-            "file": "WillowCL5.nif",
-            "placements": 40,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 33,
-            "cause": "model file not found"
-          },
-          {
-            "file": "BpineACL3.nif",
-            "placements": 19,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HollyTreeCL5.nif",
-            "placements": 19,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 18,
-            "cause": "model file not found"
-          },
-          {
-            "file": "pintre1CL3.nif",
-            "placements": 15,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL3.nif",
-            "placements": 12,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 279
       },
       {
         "num": 179,
         "name": "Lyonesse",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9996,
+        "detail": "ok",
+        "detailAgree": 0.9709,
+        "grass": "ok",
         "placements": 1138,
         "converting": 1138
       },
@@ -2124,6 +1922,12 @@
         "num": 181,
         "name": "Domnann",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9052,
+        "detail": "ok",
+        "detailAgree": 0.8445,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1281,
         "converting": 1281
       },
@@ -2131,6 +1935,11 @@
         "num": 182,
         "name": "Caillte Garran",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8218,
+        "detail": "ok",
+        "detailAgree": 0.7297,
+        "grass": "ok",
         "placements": 875,
         "converting": 875
       },
@@ -2138,6 +1947,12 @@
         "num": 183,
         "name": "Vale of Balor",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.7815,
+        "detail": "ok",
+        "detailAgree": 0.6538,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 726,
         "converting": 726
       },
@@ -2145,6 +1960,12 @@
         "num": 184,
         "name": "Cothrom Gorge",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.853,
+        "detail": "ok",
+        "detailAgree": 0.7033,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 718,
         "converting": 718
       },
@@ -2152,6 +1973,12 @@
         "num": 185,
         "name": "World's End",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9314,
+        "detail": "ok",
+        "detailAgree": 0.838,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1123,
         "converting": 1123
       },
@@ -2159,6 +1986,11 @@
         "num": 186,
         "name": "Vigilant Rock",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.976,
+        "detail": "ok",
+        "detailAgree": 0.9161,
+        "grass": "ok",
         "placements": 1316,
         "converting": 1316
       },
@@ -2166,6 +1998,12 @@
         "num": 187,
         "name": "Allta Fearann",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9168,
+        "detail": "ok",
+        "detailAgree": 0.8592,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 711,
         "converting": 711
       },
@@ -2173,6 +2011,11 @@
         "num": 200,
         "name": "Lough Derg",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9696,
+        "grass": "ok",
         "placements": 1792,
         "converting": 1792
       },
@@ -2180,6 +2023,11 @@
         "num": 201,
         "name": "Silvermine Mts.",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9635,
+        "grass": "ok",
         "placements": 1235,
         "converting": 1235
       },
@@ -2187,6 +2035,12 @@
         "num": 202,
         "name": "Shannon Estuary",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.8639,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1240,
         "converting": 1240
       },
@@ -2194,6 +2048,11 @@
         "num": 203,
         "name": "Cliffs of Moher",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9756,
+        "grass": "ok",
         "placements": 977,
         "converting": 977
       },
@@ -2201,6 +2060,12 @@
         "num": 204,
         "name": "Lough Gur",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9138,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 2286,
         "converting": 2286
       },
@@ -2208,6 +2073,12 @@
         "num": 205,
         "name": "Bog of Cullen",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9271,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 761,
         "converting": 761
       },
@@ -2215,20 +2086,23 @@
         "num": 206,
         "name": "Valley of Bri Leith",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.972,
+        "grass": "ok",
         "placements": 1327,
-        "converting": 1325,
-        "failing": [
-          {
-            "file": "NBirchtreeCL5.nif",
-            "placements": 2,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 1327
       },
       {
         "num": 207,
         "name": "Connacht",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9771,
+        "grass": "ok",
         "placements": 1836,
         "converting": 1836
       },
@@ -2236,6 +2110,12 @@
         "num": 208,
         "name": "Cursed Forest",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9106,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1781,
         "converting": 1781
       },
@@ -2243,6 +2123,12 @@
         "num": 210,
         "name": "Mount Collory",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.8099,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1217,
         "converting": 1217
       },
@@ -2250,6 +2136,12 @@
         "num": 211,
         "name": "Cruachan Gorge",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.7468,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1321,
         "converting": 1321
       },
@@ -2257,6 +2149,12 @@
         "num": 212,
         "name": "Breifine",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.8698,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1185,
         "converting": 1185
       },
@@ -2264,6 +2162,11 @@
         "num": 214,
         "name": "Emain Macha",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.955,
+        "grass": "ok",
         "placements": 826,
         "converting": 826
       },
@@ -2271,315 +2174,124 @@
         "num": 216,
         "name": "Sheeroe Hills",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9996,
+        "detail": "ok",
+        "detailAgree": 0.951,
+        "grass": "ok",
         "placements": 1696,
-        "converting": 1646,
-        "failing": [
-          {
-            "file": "hlurikhut_nuked.nif",
-            "placements": 14,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "hibrubb18_F.nif",
-            "placements": 8,
-            "cause": "model file not found"
-          },
-          {
-            "file": "hibrubb19_F.nif",
-            "placements": 7,
-            "cause": "model file not found"
-          },
-          {
-            "file": "helfshack_nuked.nif",
-            "placements": 6,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "hshop_nuked.nif",
-            "placements": 6,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "hibrubbcitytoplft_F.nif",
-            "placements": 3,
-            "cause": "model file not found"
-          },
-          {
-            "file": "elftavern2_nuked.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "hbindstone_nuked.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "hibrubbcitybttmlft_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          },
-          {
-            "file": "hibrubbcitybttmrt01_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          },
-          {
-            "file": "hibrubbcitytoplft01_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          },
-          {
-            "file": "hibrubbcitytoprt01_F.nif",
-            "placements": 1,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 1696
       },
       {
         "num": 234,
         "name": "The Proving Grounds",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9589,
+        "grass": "ok",
         "placements": 147,
-        "converting": 27,
-        "failing": [
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 39,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 23,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL5.nif",
-            "placements": 22,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HLowtreeCL5.nif",
-            "placements": 19,
-            "cause": "model file not found"
-          },
-          {
-            "file": "BpineACL3.nif",
-            "placements": 17,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 147
       },
       {
         "num": 235,
         "name": "The Lion's Den",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9869,
+        "grass": "ok",
         "placements": 156,
-        "converting": 60,
-        "failing": [
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 26,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Hlowtreecl5.nif",
-            "placements": 24,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HiberniaTall_WhitePine3CL10.nif",
-            "placements": 16,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 14,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL5.nif",
-            "placements": 9,
-            "cause": "model file not found"
-          },
-          {
-            "file": "BpineACL3.nif",
-            "placements": 7,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 156
       },
       {
         "num": 236,
         "name": "The Hills of Claret",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9462,
+        "grass": "ok",
         "placements": 130,
-        "converting": 51,
-        "failing": [
-          {
-            "file": "HiberniaTall_WhitePine3CL10.nif",
-            "placements": 35,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HlowtreeCl5.nif",
-            "placements": 16,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 12,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 9,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL5.nif",
-            "placements": 7,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 130
       },
       {
         "num": 237,
         "name": "Killaloe",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9042,
+        "grass": "ok",
         "placements": 225,
-        "converting": 136,
-        "failing": [
-          {
-            "file": "WillowCL5.nif",
-            "placements": 34,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Elm1CL5.nif",
-            "placements": 25,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HoaktreeCL5.nif",
-            "placements": 22,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Hlowtreecl5.nif",
-            "placements": 8,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 225
       },
       {
         "num": 238,
         "name": "Thidranki",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9178,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 205,
-        "converting": 80,
-        "failing": [
-          {
-            "file": "elm2cl5.nif",
-            "placements": 46,
-            "cause": "model file not found"
-          },
-          {
-            "file": "elm1cl5.nif",
-            "placements": 42,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Hoaktreecl5.nif",
-            "placements": 37,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 205
       },
       {
         "num": 239,
         "name": "Braemar",
         "terrain": "file not found",
         "placements": 147,
-        "converting": 3,
-        "failing": [
-          {
-            "file": "elm1cl5.nif",
-            "placements": 60,
-            "cause": "model file not found"
-          },
-          {
-            "file": "elm2cl5.nif",
-            "placements": 51,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Hlowtreecl5.nif",
-            "placements": 33,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 147
       },
       {
         "num": 240,
         "name": "Wilton",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9376,
+        "grass": "ok",
         "placements": 181,
-        "converting": 36,
-        "failing": [
-          {
-            "file": "elm2cl5.nif",
-            "placements": 74,
-            "cause": "model file not found"
-          },
-          {
-            "file": "elm1cl5.nif",
-            "placements": 58,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Hlowtreecl5.nif",
-            "placements": 13,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 181
       },
       {
         "num": 241,
         "name": "Molvik",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9299,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 144,
-        "converting": 24,
-        "failing": [
-          {
-            "file": "elm1cl5.nif",
-            "placements": 57,
-            "cause": "model file not found"
-          },
-          {
-            "file": "elm2cl5.nif",
-            "placements": 48,
-            "cause": "model file not found"
-          },
-          {
-            "file": "Hlowtreecl5.nif",
-            "placements": 15,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 144
       },
       {
         "num": 242,
         "name": "TestBG",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9645,
+        "grass": "ok",
         "placements": 12,
         "converting": 10,
         "failing": [
@@ -2599,6 +2311,12 @@
         "num": 250,
         "name": "Caledonia",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.8928,
+        "detailBlend": "weighted",
+        "grass": "no grass map",
         "placements": 421,
         "converting": 421
       },
@@ -2606,6 +2324,12 @@
         "num": 251,
         "name": "Caledonia",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.8928,
+        "detailBlend": "weighted",
+        "grass": "no grass map",
         "placements": 421,
         "converting": 421
       },
@@ -2613,6 +2337,12 @@
         "num": 252,
         "name": "Caledonia",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.8928,
+        "detailBlend": "weighted",
+        "grass": "no grass map",
         "placements": 421,
         "converting": 421
       },
@@ -2621,40 +2351,23 @@
         "name": "Leirvik",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "a sector paints N layers; at most N fit",
+        "grass": "ok",
         "placements": 465,
-        "converting": 399,
-        "failing": [
-          {
-            "file": "NPineACL5.nif",
-            "placements": 29,
-            "cause": "model file not found"
-          },
-          {
-            "file": "HBirchsingleCL5.nif",
-            "placements": 15,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL5.nif",
-            "placements": 15,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL3.nif",
-            "placements": 4,
-            "cause": "model file not found"
-          },
-          {
-            "file": "vrgrn1CL5.nif",
-            "placements": 3,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 465
       },
       {
         "num": 255,
         "name": "Camelot Hills",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9115,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 2115,
         "converting": 2115
       },
@@ -2662,32 +2375,17 @@
         "num": 259,
         "name": "Black Mtns. South",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 1,
+        "detail": "ok",
+        "detailAgree": 0.9935,
+        "grass": "ok",
         "placements": 1997,
-        "converting": 1990,
+        "converting": 1994,
         "failing": [
           {
             "file": "stone4.nif",
             "placements": 3,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "b-bindst1_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "bfarmhouse_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "bhouse2_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "brit_shop_normal.nif",
-            "placements": 1,
             "cause": "no drawable geometry"
           }
         ]
@@ -2696,6 +2394,11 @@
         "num": 263,
         "name": "Vanern Swamp",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9786,
+        "grass": "ok",
         "placements": 1208,
         "converting": 1208
       },
@@ -2703,6 +2406,12 @@
         "num": 264,
         "name": "Vale of Mularn",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.8021,
+        "detail": "ok",
+        "detailAgree": 0.8184,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 1290,
         "converting": 1290
       },
@@ -2710,6 +2419,11 @@
         "num": 265,
         "name": "Gotar",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.7412,
+        "detail": "ok",
+        "detailAgree": 0.8146,
+        "grass": "ok",
         "placements": 1751,
         "converting": 1751
       },
@@ -2717,6 +2431,12 @@
         "num": 269,
         "name": "Bog of Cullen",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9517,
+        "detailBlend": "weighted",
+        "grass": "ok",
         "placements": 961,
         "converting": 961
       },
@@ -2724,6 +2444,11 @@
         "num": 270,
         "name": "Lough Derg",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9978,
+        "detail": "ok",
+        "detailAgree": 0.9545,
+        "grass": "ok",
         "placements": 2084,
         "converting": 2084
       },
@@ -2731,6 +2456,11 @@
         "num": 271,
         "name": "Silvermine Mts.",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9998,
+        "detail": "ok",
+        "detailAgree": 0.9617,
+        "grass": "ok",
         "placements": 1448,
         "converting": 1448
       },
@@ -2739,14 +2469,14 @@
         "name": "Manannan's Room",
         "frontier": true,
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9749,
+        "grass": "ok",
         "placements": 1983,
-        "converting": 1964,
+        "converting": 1979,
         "failing": [
-          {
-            "file": "WillowCL3.nif",
-            "placements": 12,
-            "cause": "model file not found"
-          },
           {
             "file": "agramon_keepCollision1.nif",
             "placements": 1,
@@ -2763,24 +2493,9 @@
             "cause": "no drawable geometry"
           },
           {
-            "file": "b-bindst1_burned.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
             "file": "bhouse2_burned.nif",
             "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "btavern_burned.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
-          },
-          {
-            "file": "hlurikhut_normal.nif",
-            "placements": 1,
-            "cause": "no drawable geometry"
+            "cause": "corrupt data in NiTriShapeData"
           }
         ]
       },
@@ -2788,19 +2503,14 @@
         "num": 330,
         "name": "The Foothills of Albion",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9612,
+        "grass": "ok",
         "placements": 151,
-        "converting": 33,
+        "converting": 146,
         "failing": [
-          {
-            "file": "Elm2CL5.nif",
-            "placements": 82,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL5.nif",
-            "placements": 31,
-            "cause": "model file not found"
-          },
           {
             "file": "DR_Alb_house1.nif",
             "placements": 5,
@@ -2812,44 +2522,25 @@
         "num": 334,
         "name": "The Foothills of Midgard",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9999,
+        "detail": "ok",
+        "detailAgree": 0.9861,
+        "grass": "ok",
         "placements": 194,
-        "converting": 177,
-        "failing": [
-          {
-            "file": "Nvrgrn1-sCL5.nif",
-            "placements": 10,
-            "cause": "model file not found"
-          },
-          {
-            "file": "MidgardTall_WhitePineCL10.nif",
-            "placements": 5,
-            "cause": "model file not found"
-          },
-          {
-            "file": "MidgardTall_WhitePine3CL10.nif",
-            "placements": 2,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 194
       },
       {
         "num": 335,
         "name": "The Foothills of Hibernia",
         "terrain": "ok",
+        "layout": "as named",
+        "layoutAgree": 0.9996,
+        "detail": "ok",
+        "detailAgree": 0.898,
+        "grass": "ok",
         "placements": 171,
-        "converting": 51,
-        "failing": [
-          {
-            "file": "Elm2CL5.nif",
-            "placements": 86,
-            "cause": "model file not found"
-          },
-          {
-            "file": "WillowCL5.nif",
-            "placements": 34,
-            "cause": "model file not found"
-          }
-        ]
+        "converting": 171
       }
     ]
   }

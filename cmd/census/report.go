@@ -30,6 +30,7 @@ func summary(w io.Writer, rep *Report) {
 	o := z.Outdoor
 	fmt.Fprintf(w, "outdoor zones   %d dry-run: terrain %d, clean %d; placements %d of %d convert (%s)\n",
 		o.Zones, o.Terrain, o.Clean, o.Converting, o.Placements, pct(o.Converting, o.Placements))
+	fmt.Fprintf(w, "ground          detail in %d of %d; grass in %d, %d with no grass map\n", o.Detail, o.Terrain, o.Grass, o.NoGrass)
 }
 
 // markdown renders the report for reading. It is generated, like the JSON,
@@ -99,9 +100,12 @@ func markdown(rep *Report) string {
 	p("### Outdoor zones\n\n")
 	p("Each outdoor zone is dry-run: terrain read, and every model its fixtures place baked in memory. ")
 	p("%d zones; terrain reads in %d; %d convert completely. ", o.Zones, o.Terrain, o.Clean)
-	p("%d of %d placements convert (%s), from %d of %d distinct models.\n\n",
+	p("%d of %d placements convert (%s), from %d of %d distinct models. ",
 		o.Converting, o.Placements, pct(o.Converting, o.Placements), o.ModelsBaked, o.ModelsTried)
-	p("| Zone | Name | Terrain | Placements | Converting | Failing models |\n|---:|---|---|---:|---:|---|\n")
+	p("Ground detail converts in %d of the %d with terrain, grass in %d (%d have no grass map). ", o.Detail, o.Terrain, o.Grass, o.NoGrass)
+	p("Layout and detail give their agreement with the game's own pre-blended tiles (r); below 0.6 is unverified, ")
+	p("which in forested zones is mostly the trees' shading in those tiles.\n\n")
+	p("| Zone | Name | Terrain | Layout | Detail | Grass | Placements | Converting | Failing models |\n|---:|---|---|---|---|---|---:|---:|---|\n")
 	for _, r := range z.Rows {
 		var fails []string
 		for i, f := range r.Failing {
@@ -118,7 +122,18 @@ func markdown(rep *Report) string {
 		if r.Frontier {
 			name += " (frontier)"
 		}
-		p("| %03d | %s | %s | %d | %d | %s |\n", r.Num, name, r.Terrain, r.Placements, r.Converting, strings.Join(fails, "; "))
+		layout := r.Layout
+		if r.LayoutAgree != 0 {
+			layout += fmt.Sprintf(" (%.2f)", r.LayoutAgree)
+		}
+		detail := r.Detail
+		if detail == "ok" {
+			detail = fmt.Sprintf("ok (%.2f)", r.DetailAgree)
+			if r.DetailBlend != "" {
+				detail = fmt.Sprintf("ok, %s (%.2f)", r.DetailBlend, r.DetailAgree)
+			}
+		}
+		p("| %03d | %s | %s | %s | %s | %s | %d | %d | %s |\n", r.Num, name, r.Terrain, layout, detail, r.Grass, r.Placements, r.Converting, strings.Join(fails, "; "))
 	}
 	return b.String()
 }

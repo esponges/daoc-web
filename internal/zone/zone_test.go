@@ -215,3 +215,24 @@ func TestHeadingYaw(t *testing.T) {
 		}
 	}
 }
+
+// One oak in West Svealand is scaled 175150% in the table, a typo among
+// neighbours of 150 to 450; drawn that big it hid half the zone.
+func TestScaleTypoIgnored(t *testing.T) {
+	z, err := Open(gamePath(t), 102)
+	if err != nil {
+		t.Skipf("no zone 102: %v", err)
+	}
+	fx, err := z.Fixtures()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, f := range fx {
+		if f.Scale > maxScale {
+			t.Fatalf("fixture %d scaled %vx", i, f.Scale)
+		}
+		if f.NifID == 456 && f.X > 9674 && f.X < 9675 && f.Scale != 1 {
+			t.Fatalf("the 175150%% oak is scaled %vx, want 1", f.Scale)
+		}
+	}
+}

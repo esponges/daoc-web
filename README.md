@@ -155,7 +155,7 @@ wrong offset or a flipped axis a wrong offset or a flipped axis would put that i
 The checks above prove one zone. The census measures the whole install:
 
 ```bash
-go run ./cmd/census      # about 15 s; writes docs/census/census.json and README.md
+go run ./cmd/census      # about a minute; writes docs/census/census.json and README.md
 ```
 
 It reads every item of each asset class through the code the converters use,
@@ -174,7 +174,12 @@ count per folder and a few example names:
 Zones come from `zones.dat`, counted by type, with those whose folder is
 missing named. Every outdoor zone present is dry-run: terrain read, and every
 model its fixtures place baked in memory, so the report gives each zone's
-placements converting and the models that do not.
+placements converting and the models that do not. It also says how each zone
+will look, through the same readers `zoneconv` uses: which way the colour
+atlas's tiles lie and how well that agrees with the game's own tiles, whether
+the ground detail converts (and its agreement, and blend rule), and whether
+the grass does, or why not. A zone whose files read can still draw wrongly;
+these columns are what caught that most zones were drawing no terrain at all.
 
 [`docs/census/README.md`](docs/census/README.md) is the result for reading
 and `docs/census/census.json` the baseline. Both are generated, never edited:
@@ -182,9 +187,11 @@ names, counts and causes only, sorted, so a re-run on the same install gives
 the same bytes and a diff shows exactly what a change gained or lost.
 
 `go test ./cmd/census` runs the census and fails if any class reads fewer
-items than the baseline records, or fewer outdoor placements convert. It is
-skipped under `-short` and when there is no install. After a change that
-reads more, re-run the census and commit the new report to raise the bar.
+items than the baseline records, or fewer outdoor placements convert. It
+also dry-runs the 25 Midgard outdoor zones and fails if any loses its
+terrain, ground detail, grass or a single placement. Both are skipped under
+`-short` and when there is no install. After a change that reads more,
+re-run the census and commit the new report to raise the bar.
 
 `go run ./cmd/worldconv` then converts every outdoor zone whose terrain the
 census could read into `web/data`, about 3 GB, and fails unless each zone's
@@ -259,6 +266,18 @@ swap=false flipX=true  flipY=false   r = +0.2757
 swap=false flipX=true  flipY=true    r = +0.1866
 ```
 
+Unambiguous in Mularn, but not everywhere: in flat or watery zones brightness
+barely follows height, and it picked a wrong layout for 48 of 118 zones,
+Vanern Swamp, Aegir's Landing, Faraheim and Munin Sound among them. There is
+a far better witness. `tex<zone>.mpk` holds the game's own picture of every
+sector (see [Ground detail](#ground-detail)), and the atlas is a picture of
+the same sectors, so `zoneconv` scores each layout by how well the atlas,
+block-averaged, agrees with those tiles. Every Midgard zone then picks the
+tiles as named, by a clear margin (Mularn 1.00 against 0.45 for the best
+other); the layout is the file format's, so another is taken only if it
+agrees better by 0.1 or more. Brightness against height is kept for a zone
+without the tiles.
+
 ### Ground detail
 
 The atlas is what the ground looks like from a distance. Up close the game
@@ -294,6 +313,29 @@ best of the other fifteen layouts          r = +0.6286
 stitched per tile index as a PNG strip, and the per-sector slot table into
 `zone.json`. The terrain shader paints them within 4000 units of the camera
 and fades to the atlas by 9000. `G` toggles it, for comparison.
+
+Other zones differ in the details, all handled the same way (the readers
+are in `internal/ground`):
+
+- **Older zones keep the reference tiles as BMP**, `tex<x>-<y>.bmp`: 256px,
+  8 bits through a palette, stored bottom up. All 1,216 in the install are
+  that one kind, and it is the only kind read.
+- **Some zones average their layers** instead of painting them one over
+  another: each layer counts by its mask weight, the first included, and
+  the sum is divided by the total. The check picks the rule, and
+  `zone.json` says `"blend": "weighted"` where it is the average (Raumarik,
+  Muspelheim, Delling Crater, Faraheim and others); the shader draws both.
+- **Frontier zones keep their own layers** in `frontiers/zones/TerrainTex`,
+  searched before `zones/TerrainTex`, and their **masks are 64px**, scaled
+  up to 128 by nearest texel so a mask's edges stay where they are.
+- **The mask layout is the format's, not the zone's.** Every zone that
+  agrees well has the masks as named and unflipped; where another layout
+  edges ahead by less than 0.1 (Gotar by 0.008, Vanern Swamp by 0.05), the
+  check cannot tell them apart and the named layout is kept.
+
+Agreement is lower in the forested zones, where the game's tiles carry the
+trees' shading: Myrkwood Forest 0.56, Iarnwood 0.64, Uppland 0.66. Up close
+their detail matches the atlas beneath it, so it is kept.
 
 ### Light and shadow
 
@@ -387,6 +429,18 @@ of them below the water line, and 110 (group 11, rocks) sits high on the
 slopes. 0 is group 0, plain grass; over the snow its density is zero on 84%
 of cells, so the density map, not the group, is what keeps grass off snow,
 roads and Mularn's square.
+
+Other zones paint the map differently but by the same rule: a group owns its
+band of ten, so the group is the value divided by ten, rounded down. Gotar
+has every value from 0 to 110, mostly on the tens with soft edges between;
+the Shrouded Isles and the frontiers paint near the middle of each band (5,
+45, 105, 155), and in Aegir's Landing the 45s average 2440 units high,
+under the 3100 sea, where group 4's shells and starfish lie. Every value in
+every Midgard map falls in a group its table has. Those zones also draw both
+maps at 512 against a 256 heightmap (frontier Odin's Gate one of each); the
+cells are kept at the finer resolution, `cellsPerSide` in the manifest, and
+the viewer sizes them to match. A zone whose data has no grass map, such as
+Uppland, grows none.
 
 The shapes are not documented either. Read against the atlas: 0 and 1 are
 upright plants, drawn as two crossed cards; 2 is the rocks and 4 the lily
@@ -558,7 +612,23 @@ Three things about that row are not obvious:
   2.356194 rad (135°) describe one heading. `propconv` takes the axis-angle
   pair, which needs no convention guessed.
 - **`Scale` is a percentage**, bounded per model by the `MinScale`/`MaxScale`
-  columns of `nifs.csv`.
+  columns of `nifs.csv`. One row in the install is a typo: an oak in West
+  Svealand at 175150% among neighbours of 150 to 450. Drawn that big it
+  walled off half the zone, so a scale above 50× is taken as 100%.
+
+Not every placed name is a model file in `zones/Nifs`:
+
+- **Tree clusters.** The frontier zones place many trees five or ten at a
+  time, as `NPineACL5.nif` and the like. `zones/trees/tree_clusters.mpk`
+  holds the table: each cluster's tree and up to ten offsets in its ground
+  plane. A cluster is baked as its tree copied to each offset, one model, so
+  it stays one placement. Without them frontier Uppland placed 189 of 575.
+- **Empty stand-ins.** `zones/Nifs/nrs-hut1_normal.npk` and its `_frozen`
+  twin are bare scene roots. The huts are in `Newtowns/zones/Nifs`, the later
+  detailed towns, so a model that bakes empty is looked for in the next
+  directory.
+- **Borrowed models.** Malmohus places two ruins that live in
+  `frontiers/NIFS`, so the classic zones search there after their own.
 
 Zone 100 places **1006 fixtures from 60 distinct models**, all of which convert,
 and it is a lopsided distribution: 551 are one pine and 228 one evergreen, so
@@ -1125,17 +1195,22 @@ a large wolf pack until it kills you, and running a badger to its leash.
   them parse, and those models draw without them;
   [`docs/census/README.md`](docs/census/README.md) counts the files carrying
   each. Point gravity is approximated as it acts at the emitter.
-- **The rest of the world is measured, not viewable.** The census reads
-  99.6% of scenery models and dungeon pieces and converts 95% of outdoor
-  placements, and `worldconv` converts 118 of the 120 outdoor zones present,
-  and the viewer opens any of them from its zone picker, but without NPCs
-  and starting in the middle of the map. Fifty-four zones use an older
-  `fixtures.csv` with a heading but no axis-angle, and Z 0 for anything on
-  the ground; those headings are converted and those props set on the
-  terrain, but neither has been checked by eye. The atlas tile layout is
-  chosen per zone by brightness against height, which is weak in a few
-  (Uppland, Avalon Marsh). City blocks read at 80%: 28 of Jordheim's
-  blocks stop on non-finite vertex data.
+- **Midgard is checked by eye; the rest of the world is measured.** All 25
+  Midgard outdoor zones draw their terrain, ground detail, grass and every
+  placement, and a test holds them there. The census converts 98% of
+  outdoor placements across all 118 zones `worldconv` converts, and the
+  viewer opens any of them from its zone picker, without NPCs and starting
+  in the middle of the map; but the other realms' zones have only been
+  measured, not looked at. Fifty-four zones use an older `fixtures.csv` with
+  a heading but no axis-angle, and Z 0 for anything on the ground; Midgard's
+  look right, the rest are unchecked. Ground detail agreement is lowest in
+  the forests (Myrkwood Forest 0.56), where the game's tiles carry the
+  trees' shading. City blocks read at 80%: 28 of Jordheim's blocks stop on
+  non-finite vertex data.
+- **A long session in one tab can stall the GPU.** Moving between zones
+  reloads the page, and the viewer hands its WebGL context back as it goes;
+  even so, after many zones in one tab the browser can stop drawing. A fresh
+  tab clears it.
 - Heightmap edges stop at sample 255 (65280 units), 256 units short of the
   nominal zone edge. Harmless here; matters when stitching zones together.
 

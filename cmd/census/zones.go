@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	"daocweb/internal/nif"
 	"daocweb/internal/scenery"
 	"daocweb/internal/zone"
 )
@@ -44,6 +43,9 @@ type OutdoorTotal struct {
 	Zones       int `json:"zones"`
 	Terrain     int `json:"terrain"`     // zones whose terrain reads
 	Clean       int `json:"clean"`       // zones whose terrain and every placement convert
+	Detail      int `json:"detail"`      // zones whose ground detail converts
+	Grass       int `json:"grass"`       // zones whose grass converts
+	NoGrass     int `json:"noGrass"`     // zones with no grass map, so none to convert
 	Placements  int `json:"placements"`  // fixtures placed across them
 	Converting  int `json:"converting"`  // of those, placements whose model converts
 	ModelsTried int `json:"modelsTried"` // distinct models baked
@@ -56,6 +58,19 @@ type ZoneRow struct {
 	Name     string `json:"name"`
 	Frontier bool   `json:"frontier,omitempty"`
 	Terrain  string `json:"terrain"` // "ok" or why not
+	// Layout is how the colour atlas's tiles were found to lie ("as named",
+	// or the layout taken instead), by agreement with the game's own
+	// pre-blended tiles; LayoutAgree is that agreement.
+	Layout      string  `json:"layout,omitempty"`
+	LayoutAgree float64 `json:"layoutAgree,omitempty"`
+	// Detail is "ok" when the ground detail converts, or why not;
+	// DetailAgree is its agreement with the game's tiles, and DetailBlend
+	// "weighted" where the layers are averaged rather than painted.
+	Detail      string  `json:"detail,omitempty"`
+	DetailAgree float64 `json:"detailAgree,omitempty"`
+	DetailBlend string  `json:"detailBlend,omitempty"`
+	// Grass is "ok", "no grass map" for a zone that grows none, or why not.
+	Grass string `json:"grass,omitempty"`
 	// Scenery says why the zone's nifs.csv or fixtures.csv could not be
 	// read; empty when they were.
 	Scenery    string `json:"scenery,omitempty"`
@@ -95,17 +110,9 @@ func (c *bakeCache) bake(dirs []string, file string) error {
 	c.mu.Unlock()
 	r.once.Do(func() {
 		r.err = safely(func() error {
-			raw, err := scenery.FindModel(dirs, file)
-			if err != nil {
-				return err
-			}
-			f, err := nif.Parse(raw)
-			if err != nil {
-				return err
-			}
 			var verts []scenery.Vertex
 			var indices []uint32
-			_, err = scenery.Bake(f, file, file, &verts, &indices)
+			_, err := scenery.ConvertModel(dirs, file, file, &verts, &indices)
 			return err
 		})
 	})
@@ -156,6 +163,15 @@ func zoneCensus(game string, list []zone.Info, workers int) ZoneReport {
 			if r.Scenery == "" && r.Converting == r.Placements {
 				t.Clean++
 			}
+			if r.Detail == "ok" {
+				t.Detail++
+			}
+			switch r.Grass {
+			case "ok":
+				t.Grass++
+			case "no grass map":
+				t.NoGrass++
+			}
 		}
 		t.Placements += r.Placements
 		t.Converting += r.Converting
@@ -193,20 +209,27 @@ func dryRun(game string, info zone.Info, cache *bakeCache) *ZoneRow {
 		return row
 	}
 	row.Frontier = z.Frontier
+	var sx, sy, grid int
 	if err := safely(func() error {
 		sec, err := z.Sector()
 		if err != nil {
 			return err
 		}
-		if _, err := z.Terrain(sec); err != nil {
+		sx, sy = sec.SectorSize()
+		terr, err := z.Terrain(sec)
+		if err != nil {
 			return err
 		}
+		grid = terr.Grid
 		// zoneconv colours the terrain from the LOD tiles, so a zone
 		// without them does not convert.
 		_, err = z.Archive("lod")
 		return err
 	}); err != nil {
 		row.Terrain = cause(err)
+	}
+	if row.Terrain == "ok" {
+		groundCensus(game, z, sx, sy, grid, row)
 	}
 
 	var defs map[int]zone.ModelDef

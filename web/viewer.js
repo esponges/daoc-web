@@ -189,6 +189,7 @@ uniform float uSectors;
 uniform float uZone;
 uniform float uMaskPx;
 uniform float uDetail; // 0 when the zone has no detail layers
+uniform float uBlend; // 1 where layers average by their mask weights
 uniform vec2 uDetailFade; // distance over which detail gives way to the atlas
 uniform vec3 uFogColor;
 uniform float uFogStart;
@@ -205,17 +206,26 @@ vec3 detail() {
   int row = int(sec.y * uSectors + sec.x);
   vec3 c = vec3(0.0);
   vec4 m = vec4(0.0);
+  float wsum = 0.0;
   for (int i = 0; i < 12; i++) {
     vec2 s = texelFetch(uSlots, ivec2(i, row), 0).rg;
     if (s.x < 0.0) break;
     if (i % 3 == 0) m = texture(uMasks, vec3(muv, float(i / 3)));
-    float w = i == 0 ? 1.0 : m[i % 3];
+    // Painted, the first layer is laid solid and each later one over the
+    // stack by its mask. Averaged, every layer counts by its mask, the first
+    // included (see internal/ground), which never quite drops to nothing so
+    // a texel no mask covers shows the first layer.
+    float w = i == 0 ? mix(1.0, max(m.r, 0.001), uBlend) : m[i % 3];
     if (w <= 0.0) continue;
     // Repeats are counted across the zone, so the grass tiles every 256
     // units wherever it is painted.
-    c = mix(c, texture(uLayers, vec3(zuv * s.y, s.x)).rgb, w);
+    vec3 l = texture(uLayers, vec3(zuv * s.y, s.x)).rgb;
+    c = mix(mix(c, l, w), c + l * w, uBlend);
+    wsum += w;
   }
-  return c;
+  // Kept branch-free: the D3D shader compiler behind ANGLE hung the page on
+  // a version of this loop that branched on the blend rule.
+  return c / mix(1.0, wsum, uBlend);
 }
 
 void main() {
@@ -307,7 +317,30 @@ async function loadDetail(gl, zone, sp, aniso) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.bindTexture(gl.TEXTURE_2D, null);
-  return { layers, masks, slots, sectors: sp.sectors, maskPx: sp.maskPx };
+  return { layers, masks, slots, sectors: sp.sectors, maskPx: sp.maskPx, weighted: sp.blend === 'weighted' };
+}
+
+// Stand-ins for a zone without ground detail. The terrain shader samples
+// the detail textures only when uDetail is set, but WebGL refuses a draw
+// whose samplers of different types share a unit, and unset samplers all
+// sit on unit 0 with the atlas: without these the terrain is not drawn.
+function noDetail(gl) {
+  const array = () => {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, t);
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    return t;
+  };
+  const layers = array(), masks = array();
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+  const slots = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, slots);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, 1, 1, 0, gl.RG, gl.FLOAT, new Float32Array([-1, -1]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  return { layers, masks, slots, sectors: 1, maskPx: 1 };
 }
 
 // ---------------------------------------------------------------------- main
@@ -371,6 +404,14 @@ async function main() {
   const canvas = $('gl');
   const gl = canvas.getContext('webgl2', { antialias: true, depth: true });
   if (!gl) throw new Error('WebGL2 is not available in this browser.');
+  // Moving between zones reloads the page. Hand the GPU memory back as it
+  // goes rather than when the browser gets round to it: a zone is a few
+  // hundred MB of textures, and after a dozen zones in one tab the GPU
+  // stalled.
+  addEventListener('pagehide', () => {
+    const lose = gl.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext();
+  });
 
   // --- load converted data ---
   const man = await fetchJSON(ZONE + '/zone.json').catch((e) => {
@@ -493,6 +534,7 @@ async function main() {
       console.warn('ground detail not loaded:', e.message);
     }
   }
+  const ground = detail ? null : noDetail(gl);
 
   // --- water surfaces ---
   // SECTOR.DAT gives each body as two index-aligned shore chains. The surface
@@ -802,7 +844,7 @@ async function main() {
 
   // --- uniform locations ---
   const tU = uniforms(gl, terrainProg, ['uViewProj', 'uCamPos', 'uAtlas', 'uFogColor', 'uFogStart', 'uFogEnd', 'uWireframe',
-    'uLayers', 'uMasks', 'uSlots', 'uSectors', 'uZone', 'uMaskPx', 'uDetail', 'uDetailFade', ...LIGHT_UNIFORMS]);
+    'uLayers', 'uMasks', 'uSlots', 'uBlend', 'uSectors', 'uZone', 'uMaskPx', 'uDetail', 'uDetailFade', ...LIGHT_UNIFORMS]);
 
   // Sun shadows; see lighting.js. ?shadows=0 turns them off, ?shadow=4096
   // asks for a sharper map.
@@ -972,19 +1014,20 @@ async function main() {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.uniform1f(tU.uDetail, detail && detailOn && !shadowPass ? 1 : 0);
-    if (detail) {
-      gl.uniform1i(tU.uLayers, 1);
-      gl.uniform1i(tU.uMasks, 2);
-      gl.uniform1i(tU.uSlots, 3);
-      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D_ARRAY, detail.layers);
-      gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, detail.masks);
-      gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, detail.slots);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.uniform1f(tU.uSectors, detail.sectors);
-      gl.uniform1f(tU.uZone, man.zoneUnits);
-      gl.uniform1f(tU.uMaskPx, detail.maskPx);
-      gl.uniform2f(tU.uDetailFade, DETAIL_NEAR, DETAIL_FAR);
-    }
+    // Bound whether or not the zone has detail; see noDetail.
+    const d = detail || ground;
+    gl.uniform1i(tU.uLayers, 1);
+    gl.uniform1i(tU.uMasks, 2);
+    gl.uniform1i(tU.uSlots, 3);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D_ARRAY, d.layers);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, d.masks);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, d.slots);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1f(tU.uSectors, d.sectors);
+    gl.uniform1f(tU.uZone, man.zoneUnits);
+    gl.uniform1f(tU.uMaskPx, d.maskPx);
+    gl.uniform1f(tU.uBlend, d.weighted ? 1 : 0);
+    gl.uniform2f(tU.uDetailFade, DETAIL_NEAR, DETAIL_FAR);
     gl.bindVertexArray(terrainVAO);
     if (wireframe && !shadowPass) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lbo);
@@ -1112,8 +1155,17 @@ async function main() {
         npcs.types.size + ' kinds';
     }
 
+    // A draw WebGL refuses leaves nothing behind but this, so say so once:
+    // the terrain went missing that way in every zone without ground detail.
+    if (!glChecked) {
+      glChecked = true;
+      const err = gl.getError();
+      if (err) console.warn('WebGL error 0x' + err.toString(16) + ' in the first frame of zone ' + ZONE_NUM);
+    }
+
     requestAnimationFrame(frame);
   }
+  let glChecked = false;
   requestAnimationFrame(frame);
 }
 

@@ -10,14 +10,13 @@ import (
 	"flag"
 	"fmt"
 	"image"
-	"image/draw"
 	"image/png"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
 
-	"daocweb/internal/dds"
+	"daocweb/internal/ground"
 	"daocweb/internal/zone"
 )
 
@@ -109,63 +108,55 @@ func run(game string, zoneNum int, zoneName, outRoot string) error {
 	fmt.Printf("  height range: %d .. %d world units\n", minH, maxH)
 
 	// --- terrain colour atlas from the LOD tiles ---------------------------
-	lodArc, err := z.Archive("lod")
+	lod, err := ground.ReadLOD(z, sx, sy)
 	if err != nil {
 		return err
 	}
-	tiles := map[[2]int]*image.NRGBA{}
-	tileSize := 0
-	for a := 0; a < sx; a++ {
-		for b := 0; b < sy; b++ {
-			name := fmt.Sprintf("lod%02d-%02d.dds", a, b)
-			raw, err := lodArc.Read(name)
-			if err != nil {
-				return err
-			}
-			im, err := dds.Decode(raw)
-			if err != nil {
-				return fmt.Errorf("%s: %w", name, err)
-			}
-			if tileSize == 0 {
-				tileSize = im.Bounds().Dx()
-			} else if im.Bounds().Dx() != tileSize {
-				return fmt.Errorf("%s is %dpx, expected %dpx", name, im.Bounds().Dx(), tileSize)
-			}
-			tiles[[2]int{a, b}] = im
-		}
-	}
-	atlasPx := tileSize * sx
-	fmt.Printf("  lod%03d.mpk: %d tiles of %dpx -> %dx%d atlas\n", zoneNum, len(tiles), tileSize, atlasPx, atlasPx)
+	atlasPx := lod.TileSize * sx
+	fmt.Printf("  lod%03d.mpk: %d tiles of %dpx -> %dx%d atlas\n", zoneNum, len(lod.Tiles), lod.TileSize, atlasPx, atlasPx)
 
-	// The tile index order and axis directions are not documented, so try all
-	// eight layouts and keep whichever best correlates brightness with height
-	// (snow caps are bright; low ground and water are dark).
-	type candidate struct {
-		name string
-		corr float64
-		img  *image.NRGBA
-	}
-	var best *candidate
-	for _, swap := range []bool{false, true} {
-		for _, fx := range []bool{false, true} {
-			for _, fy := range []bool{false, true} {
-				img := stitch(tiles, sx, sy, tileSize, swap, fx, fy)
-				c := &candidate{
-					name: fmt.Sprintf("swap=%-5v flipX=%-5v flipY=%-5v", swap, fx, fy),
-					corr: correlate(img, heights, grid),
-					img:  img,
-				}
-				fmt.Printf("    layout %s  brightness/height r = %+.4f\n", c.name, c.corr)
-				if best == nil || c.corr > best.corr {
-					best = c
-				}
-			}
+	// The tile index order and axis directions are not documented, so try
+	// all eight layouts. Where the zone has the game's own pre-blended tiles
+	// of each sector, those say which is right: the atlas is a picture of
+	// the same sectors (see ground.CheckLayout). Without them, keep whichever
+	// layout best correlates brightness with height (snow caps are bright;
+	// low ground and water are dark), which is weak in flat or watery zones.
+	var ref *ground.Reference
+	if sx == sy {
+		if ref, err = ground.ReadReference(z, sx); err != nil {
+			fmt.Printf("  no reference tiles to check the layout against: %v\n", err)
+			ref = nil
 		}
 	}
-	fmt.Printf("  chosen layout: %s (r = %+.4f)\n", best.name, best.corr)
-	if best.corr < 0.2 {
-		fmt.Printf("  WARNING: weak correlation, texture alignment is unverified\n")
+	var chosen ground.Layout
+	if ref != nil {
+		c, err := ground.CheckLayout(lod, ref)
+		if err != nil {
+			return err
+		}
+		for i, lay := range ground.Layouts() {
+			fmt.Printf("    layout %s  tiles r = %+.4f\n", lay, c.Agreements[i])
+		}
+		chosen = c.Chosen
+		fmt.Printf("  chosen layout: %s (tiles r = %+.4f; best other %+.4f)\n", chosen, c.Agree, c.Other)
+		if c.Agree < 0.6 {
+			fmt.Printf("  WARNING: weak agreement with the reference tiles, texture alignment is unverified\n")
+		}
+	} else {
+		best := -2.0
+		for _, lay := range ground.Layouts() {
+			r := correlate(lod.Stitch(lay), heights, grid)
+			fmt.Printf("    layout %s  brightness/height r = %+.4f\n", lay, r)
+			if r > best {
+				chosen, best = lay, r
+			}
+		}
+		fmt.Printf("  chosen layout: %s (brightness/height r = %+.4f)\n", chosen, best)
+		if best < 0.2 {
+			fmt.Printf("  WARNING: weak correlation, texture alignment is unverified\n")
+		}
 	}
+	atlas := lod.Stitch(chosen)
 
 	// --- write outputs -----------------------------------------------------
 	hBuf := make([]byte, len(heights)*2)
@@ -175,7 +166,7 @@ func run(game string, zoneNum int, zoneName, outRoot string) error {
 	if err := os.WriteFile(filepath.Join(outDir, "heights.u16"), hBuf, 0o644); err != nil {
 		return err
 	}
-	if err := writePNG(filepath.Join(outDir, "atlas.png"), best.img); err != nil {
+	if err := writePNG(filepath.Join(outDir, "atlas.png"), atlas); err != nil {
 		return err
 	}
 
@@ -195,7 +186,7 @@ func run(game string, zoneNum int, zoneName, outRoot string) error {
 		Heights:      "heights.u16",
 		Atlas:        "atlas.png",
 		AtlasPx:      atlasPx,
-		Orientation:  best.name,
+		Orientation:  chosen.String(),
 		Start: [4]int{
 			sec.Int("start", "x", 0), sec.Int("start", "y", 0),
 			sec.Int("start", "z", 0), sec.Int("start", "a", 0),
@@ -245,27 +236,6 @@ func run(game string, zoneNum int, zoneName, outRoot string) error {
 	}
 	fmt.Printf("  wrote %s (heights.u16, atlas.png, zone.json)\n", outDir)
 	return nil
-}
-
-// stitch assembles the LOD tiles into one atlas under a candidate layout.
-func stitch(tiles map[[2]int]*image.NRGBA, sx, sy, tileSize int, swap, flipX, flipY bool) *image.NRGBA {
-	atlasPx := tileSize * sx
-	out := image.NewNRGBA(image.Rect(0, 0, atlasPx, atlasPx))
-	for key, im := range tiles {
-		cx, cy := key[0], key[1]
-		if swap {
-			cx, cy = cy, cx
-		}
-		if flipX {
-			cx = sx - 1 - cx
-		}
-		if flipY {
-			cy = sy - 1 - cy
-		}
-		r := image.Rect(cx*tileSize, cy*tileSize, (cx+1)*tileSize, (cy+1)*tileSize)
-		draw.Draw(out, r, im, im.Bounds().Min, draw.Src)
-	}
-	return out
 }
 
 // correlate scores a candidate atlas by Pearson correlation between per-cell

@@ -108,27 +108,53 @@ type groupKey struct {
 // ModelDirs is where a zone's scenery models live, in search order. Most
 // zones draw only on zones/Nifs. The frontier zones add frontiers/NIFS,
 // which holds their keeps and the like, and still take most of their trees
-// and rocks from zones/Nifs.
+// and rocks from zones/Nifs; the classic zones in turn borrow a few
+// frontier models (Malmohus places two of its ruins), so they search
+// frontiers/NIFS after their own. Newtowns/zones/Nifs follows: the later,
+// detailed towns, whose buildings zones/Nifs keeps only as empty
+// stand-ins (see ConvertModel). zones/trees comes last: it holds the tree
+// cluster table and the trees the clusters are made of (see clusters.go).
 func ModelDirs(game string, frontier bool) []string {
 	z := filepath.Join(game, "zones", "Nifs")
+	fr := filepath.Join(game, "frontiers", "NIFS")
+	n := filepath.Join(game, "Newtowns", "zones", "Nifs")
+	t := filepath.Join(game, "zones", "trees")
 	if frontier {
-		return []string{filepath.Join(game, "frontiers", "NIFS"), z}
+		return []string{fr, z, n, t}
 	}
-	return []string{z}
+	return []string{z, n, fr, t}
 }
 
 // ConvertModel reads a scenery model from the first of dirs that holds it
 // and bakes it into verts and indices; see Bake.
 func ConvertModel(dirs []string, name, file string, verts *[]Vertex, indices *[]uint32) (*Model, error) {
-	raw, err := FindModel(dirs, file)
-	if err != nil {
-		return nil, err
+	if c := ClusterOf(dirs, file); c != nil {
+		return bakeCluster(dirs, c, name, file, verts, indices)
 	}
-	f, err := nif.Parse(raw)
-	if err != nil {
-		return nil, err
+	// A model that is an empty stand-in in one directory may be whole in
+	// the next: zones/Nifs/nrs-hut1_normal.npk is a bare scene root, and
+	// the hut it stands for is Newtowns/zones/Nifs/nrs-hut1_normal.npk.
+	var first error
+	for i, d := range dirs {
+		raw, err := LoadModel(d, file)
+		if err != nil {
+			if first == nil {
+				first = err
+			}
+			continue
+		}
+		f, err := nif.Parse(raw)
+		if err != nil {
+			return nil, err
+		}
+		mo, err := Bake(f, name, file, verts, indices)
+		if errors.Is(err, ErrNoGeometry) && i < len(dirs)-1 {
+			first = err
+			continue
+		}
+		return mo, err
 	}
-	return Bake(f, name, file, verts, indices)
+	return nil, first
 }
 
 // Bake flattens a parsed model, appending its vertices and indices to the
@@ -326,7 +352,7 @@ func Bake(f *nif.File, name, file string, verts *[]Vertex, indices *[]uint32) (*
 		// the labyrinth fires. They draw, with no geometry and bounds
 		// around their emitters.
 		if len(mo.Particles) == 0 {
-			return nil, fmt.Errorf("no drawable geometry")
+			return nil, ErrNoGeometry
 		}
 		mo.Groups = []Group{}
 		for _, p := range mo.Particles {
@@ -460,6 +486,9 @@ func ReadTexture(dirs []string, name string) (image.Image, error) {
 
 // ErrNoModel is a model found in none of the directories searched.
 var ErrNoModel = errors.New("no model archive")
+
+// ErrNoGeometry is a model with nothing to draw.
+var ErrNoGeometry = errors.New("no drawable geometry")
 
 // ErrNoTexture is a texture found in none of the directories searched.
 var ErrNoTexture = errors.New("texture not found")

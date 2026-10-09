@@ -7,13 +7,13 @@ It counts what this project's readers and converters can handle. It holds file n
 
 | Class | Read | Total | Rate |
 |---|---:|---:|---:|
-| scenery | 1917 | 1924 | 99.6% |
+| scenery | 1918 | 1924 | 99.7% |
 | dungeon pieces | 1381 | 1386 | 99.6% |
 | city blocks | 140 | 174 | 80.5% |
 | figures | 632 | 633 | 99.8% |
 | animations | 4027 | 4032 | 99.9% |
 | textures | 6058 | 6742 | 89.9% |
-| outdoor placements | 123716 | 130278 | 95.0% |
+| outdoor placements | 127781 | 130278 | 98.1% |
 
 ## Read, not drawn
 
@@ -61,12 +61,11 @@ Outdoor scenery models: trees, rocks, buildings, keeps.
 |---|---:|---:|
 | `Newtowns/zones/Nifs` | 200 | 202 |
 | `frontiers/NIFS` | 378 | 379 |
-| `zones/Nifs` | 1339 | 1343 |
+| `zones/Nifs` | 1340 | 1343 |
 
 | Cause | Count | Examples |
 |---|---:|---|
 | corrupt data in NiTriShapeData | 4 | Newtowns/zones/Nifs/bfarmhouse_burned.npk, Newtowns/zones/Nifs/bhouse2_burned.npk, frontiers/NIFS/outpost_crumble_T1-2-3-4.nif, zones/Nifs/dr_alb_house1.npk |
-| corrupt data in NiLODNode | 1 | zones/Nifs/ncarcass.npk |
 | unsupported block type NiMeshParticleSystem | 1 | zones/Nifs/dr_demonroom2b.npk |
 | unsupported block type NiParticleMeshes | 1 | zones/Nifs/dr_demonroom2a.npk |
 
@@ -229,127 +228,127 @@ Declared but without a folder in this install:
 
 ### Outdoor zones
 
-Each outdoor zone is dry-run: terrain read, and every model its fixtures place baked in memory. 120 zones; terrain reads in 118; 76 convert completely. 123716 of 130278 placements convert (95.0%), from 1352 of 1446 distinct models.
+Each outdoor zone is dry-run: terrain read, and every model its fixtures place baked in memory. 120 zones; terrain reads in 118; 105 convert completely. 127781 of 130278 placements convert (98.1%), from 1425 of 1446 distinct models. Ground detail converts in 116 of the 118 with terrain, grass in 108 (10 have no grass map). Layout and detail give their agreement with the game's own pre-blended tiles (r); below 0.6 is unverified, which in forested zones is mostly the trees' shading in those tiles.
 
-| Zone | Name | Terrain | Placements | Converting | Failing models |
-|---:|---|---|---:|---:|---|
-| 000 | Camelot Hills | ok | 1876 | 1876 |  |
-| 001 | Salisbury Plains | ok | 733 | 733 |  |
-| 002 | Black Mtns. South | ok | 1745 | 1739 | stone4.nif (3, no drawable geometry); bfarmhouse_normal.nif (1, no drawable geometry); bhouse2_normal.nif (1, no drawable geometry); brit_shop_normal.nif (1, no drawable geometry) |
-| 003 | Black Mtns. North | ok | 726 | 720 | Elm1CL5.nif (3, model file not found); stone4.nif (3, no drawable geometry) |
-| 004 | Dartmoor | ok | 1520 | 1515 | A_ruins05_F.nif (1, model file not found); A_ruins06_F.nif (1, model file not found); A_ruins07_F.nif (1, model file not found); b-bindst1_burned.nif (1, no drawable geometry); bhouse2_reconstructed.nif (1, no drawable geometry) |
-| 006 | Cornwall | ok | 1497 | 1497 |  |
-| 007 | Llyn Barfog | ok | 949 | 949 |  |
-| 008 | Campacorentin Forest | ok | 3029 | 3029 |  |
-| 009 | Avalon Marsh | ok | 1510 | 1510 |  |
-| 010 | Lyonesse | ok | 920 | 920 |  |
-| 011 | Forest Sauvage | ok | 1786 | 1786 |  |
-| 012 | Snowdonia | ok | 865 | 865 |  |
-| 014 | Pennine Mountains | ok | 807 | 807 |  |
-| 015 | Hadrian's Wall | ok | 1421 | 1421 |  |
-| 027 | Constantine's Sound | ok | 715 | 562 | BpineaCL3.nif (72, model file not found); vrgrn1CL5.nif (28, model file not found); Elm1CL5.nif (23, model file not found); tutorial_2wall_alb.nif (16, model file not found); tutorial_2cornertower_alb.nif (4, model file not found); and 6 more |
-| 051 | Isle of Glass | ok | 812 | 812 |  |
-| 052 | Avalon Isle | ok | 1528 | 1528 |  |
-| 053 | Dales of Devwy | ok | 2132 | 2132 |  |
-| 054 | Caldey | ok | 1658 | 1658 |  |
-| 055 | Gwyddneau | ok | 1218 | 1218 |  |
-| 056 | Aldland | ok | 1383 | 1383 |  |
-| 057 | Inishail Island | ok | 536 | 536 |  |
-| 070 | Ruins of Atlantis | ok | 1364 | 1364 |  |
-| 071 | Ruinerar av Atlantis | ok | 1377 | 1377 |  |
-| 072 | Scrios de Atlantis | ok | 1922 | 1922 |  |
-| 073 | Oceanus Hesperos | ok | 1107 | 1107 |  |
-| 074 | Mesothalassa | ok | 1220 | 1220 |  |
-| 075 | Oceanus Boreal | ok | 1372 | 1372 |  |
-| 076 | Oceanus Notos | ok | 1322 | 1322 |  |
-| 077 | Oceanus Anatole | ok | 1314 | 1314 |  |
-| 081 | Stygian Delta | ok | 2218 | 895 | reedclump1.NIF (1323, no drawable geometry) |
-| 082 | Land of Atum | ok | 888 | 559 | reedclump1.NIF (329, no drawable geometry) |
-| 084 | Typhon's Reach | ok | 1096 | 1096 |  |
-| 085 | Ashen Isles | ok | 613 | 613 |  |
-| 086 | Green Glades | ok | 2092 | 1625 | aeris_oak.nif (374, model file not found); fern.nif (59, model file not found); blackgum.nif (21, model file not found); redwood_dead.nif (13, model file not found) |
-| 087 | Arbor Glen | ok | 1527 | 1204 | aeris_oak.nif (312, model file not found); redwood_dead.nif (11, model file not found) |
-| 100 | Vale of Mularn | ok | 1006 | 1006 |  |
-| 101 | East Svealand | ok | 1289 | 1281 | nrs-hut1_normal.nif (2, no drawable geometry); nrshse1_normal.nif (2, no drawable geometry); NTavern_normal.nif (1, no drawable geometry); N_bindst1_normal.nif (1, no drawable geometry); Nblacksmith_normal.nif (1, no drawable geometry); and 1 more |
-| 102 | West Svealand | ok | 1189 | 1189 |  |
-| 103 | Gotar | ok | 1512 | 1512 |  |
-| 104 | Muspelheim | ok | 13 | 13 |  |
-| 105 | Myrkwood Forest | ok | 2140 | 2138 | Ncarcass.nif (2, corrupt data in NiLODNode) |
-| 106 | Skona Ravine | ok | 836 | 834 | Ncarcass.nif (2, corrupt data in NiLODNode) |
-| 107 | Vanern Swamp | ok | 764 | 764 |  |
-| 108 | Raumarik | ok | 1447 | 1447 |  |
-| 111 | Uppland | ok | 1620 | 1620 |  |
-| 112 | Yggdra Forest | ok | 2370 | 2370 |  |
-| 113 | Jamtland Mountains | ok | 1412 | 1412 |  |
-| 115 | Odin's Gate | ok | 1515 | 1515 |  |
-| 116 | Malmohus | ok | 2589 | 2492 | Ncarcass.nif (87, corrupt data in NiLODNode); nrs-hut1_frozen.nif (3, no drawable geometry); nrshse1_frozen.nif (2, no drawable geometry); M_ruins01_F.nif (1, model file not found); M_ruins02_F.nif (1, model file not found); and 3 more |
-| 151 | Aegir's Landing | ok | 1078 | 1078 |  |
-| 152 | Gripklosa Mountains | ok | 1355 | 1355 |  |
-| 153 | Delling Crater | ok | 572 | 572 |  |
-| 154 | Faraheim | ok | 931 | 931 |  |
-| 155 | Munin Sound | ok | 1403 | 1403 |  |
-| 156 | Iarnwood | ok | 1505 | 1505 |  |
-| 157 | Dummy Zone | file not found | 0 | 0 | scenery tables: nifs.csv: only N rows |
-| 158 | Modernagrav | ok | 513 | 513 |  |
-| 163 | Ellan Vannin (frontier) | ok | 1985 | 1966 | WillowCL3.nif (12, model file not found); agramon_keepCollision1.nif (1, no drawable geometry); agramon_keepCollision2.nif (1, no drawable geometry); agramon_keepCollision3.nif (1, no drawable geometry); b-bindst1_burned.nif (1, no drawable geometry); and 3 more |
-| 164 | Irish Sea (frontier) | ok | 92 | 92 |  |
-| 165 | Cathal Valley (frontier) | ok | 958 | 911 | NBirchtreeCL5.nif (10, model file not found); HBirchsingleCL5.nif (8, model file not found); NPineACL5.nif (6, model file not found); WillowCL5.nif (6, model file not found); Elm2CL5.nif (5, model file not found); and 4 more |
-| 167 | Odin's Gate (frontier) | ok | 377 | 222 | NPineACL5.nif (40, model file not found); NpinetreeCL5.nif (36, model file not found); npintre1CL5.nif (36, model file not found); vrgrn1CL5.nif (15, model file not found); Npinetree-sCL5.nif (11, model file not found); and 2 more |
-| 168 | Jamtland Mountains (frontier) | ok | 491 | 338 | Npintre1-sCL5.nif (50, model file not found); Nvrgrn1-sCL5.nif (43, model file not found); Npinetree-sCL5.nif (35, model file not found); MidgardTall_WhitePineCL10.nif (11, model file not found); MidgardTall_WhitePine3CL10.nif (8, model file not found); and 2 more |
-| 169 | Yggdra Forest (frontier) | ok | 439 | 238 | Npintre1-sCL5.nif (68, model file not found); Npinetree-sCL5.nif (53, model file not found); Nvrgrn1-sCL5.nif (46, model file not found); NpinetreeCL5.nif (13, model file not found); NPineACL5.nif (11, model file not found); and 1 more |
-| 170 | Uppland (frontier) | ok | 575 | 189 | Npintre1-sCL5.nif (164, model file not found); Npinetree-sCL5.nif (151, model file not found); Nvrgrn1-sCL5.nif (71, model file not found) |
-| 171 | Emain Macha (frontier) | ok | 628 | 543 | HLowtreeCL5.nif (32, model file not found); HoaktreeCL5.nif (17, model file not found); Elm1CL5.nif (16, model file not found); HiberniaTall_WhitePine3CL10.nif (16, model file not found); NBirchtreeCL5.nif (3, model file not found); and 1 more |
-| 172 | Breifine (frontier) | ok | 663 | 512 | HiberniaTall_WhitePine3CL10.nif (43, model file not found); HLowtreeCL5.nif (36, model file not found); HiberniaTall_WhitePine3CL5Row.nif (24, model file not found); Elm1CL5.nif (20, model file not found); HoaktreeCL5.nif (12, model file not found); and 2 more |
-| 173 | Cruachan Gorge (frontier) | ok | 494 | 261 | elm1cl5.nif (88, model file not found); elm2cl5.nif (79, model file not found); Hlowtreecl5.nif (45, model file not found); HiberniaTall_WhitePineCL10.nif (9, model file not found); hiberniaTall_WhitePine3CL10.nif (7, model file not found); and 2 more |
-| 174 | Mount Collory (frontier) | ok | 623 | 390 | elm1cl5.nif (100, model file not found); elm2cl5.nif (99, model file not found); Hlowtreecl5.nif (30, model file not found); HiberniaTall_WhitePineCL10.nif (3, model file not found); hiberniaTall_WhitePine3CL10.nif (1, model file not found) |
-| 175 | Snowdonia (frontier) | ok | 317 | 143 | Elm1CL5.nif (102, model file not found); HoaktreeCL5.nif (56, model file not found); WillowCL3.nif (16, model file not found) |
-| 176 | Forest Sauvage (frontier) | ok | 305 | 103 | Elm1CL5.nif (124, model file not found); HoaktreeCL5.nif (65, model file not found); WillowCL3.nif (13, model file not found) |
-| 177 | Pennine Mountains (frontier) | ok | 399 | 72 | Elm1CL5.nif (145, model file not found); HoaktreeCL5.nif (64, model file not found); pintre1CL3.nif (30, model file not found); HollyTreeCL5.nif (25, model file not found); WillowCL3.nif (24, model file not found); and 3 more |
-| 178 | Hadrian's Wall (frontier) | ok | 279 | 123 | WillowCL5.nif (40, model file not found); Elm1CL5.nif (33, model file not found); BpineACL3.nif (19, model file not found); HollyTreeCL5.nif (19, model file not found); HoaktreeCL5.nif (18, model file not found); and 2 more |
-| 179 | Lyonesse | ok | 1138 | 1138 |  |
-| 181 | Domnann | ok | 1281 | 1281 |  |
-| 182 | Caillte Garran | ok | 875 | 875 |  |
-| 183 | Vale of Balor | ok | 726 | 726 |  |
-| 184 | Cothrom Gorge | ok | 718 | 718 |  |
-| 185 | World's End | ok | 1123 | 1123 |  |
-| 186 | Vigilant Rock | ok | 1316 | 1316 |  |
-| 187 | Allta Fearann | ok | 711 | 711 |  |
-| 200 | Lough Derg | ok | 1792 | 1792 |  |
-| 201 | Silvermine Mts. | ok | 1235 | 1235 |  |
-| 202 | Shannon Estuary | ok | 1240 | 1240 |  |
-| 203 | Cliffs of Moher | ok | 977 | 977 |  |
-| 204 | Lough Gur | ok | 2286 | 2286 |  |
-| 205 | Bog of Cullen | ok | 761 | 761 |  |
-| 206 | Valley of Bri Leith | ok | 1327 | 1325 | NBirchtreeCL5.nif (2, model file not found) |
-| 207 | Connacht | ok | 1836 | 1836 |  |
-| 208 | Cursed Forest | ok | 1781 | 1781 |  |
-| 210 | Mount Collory | ok | 1217 | 1217 |  |
-| 211 | Cruachan Gorge | ok | 1321 | 1321 |  |
-| 212 | Breifine | ok | 1185 | 1185 |  |
-| 214 | Emain Macha | ok | 826 | 826 |  |
-| 216 | Sheeroe Hills | ok | 1696 | 1646 | hlurikhut_nuked.nif (14, no drawable geometry); hibrubb18_F.nif (8, model file not found); hibrubb19_F.nif (7, model file not found); helfshack_nuked.nif (6, no drawable geometry); hshop_nuked.nif (6, no drawable geometry); and 7 more |
-| 234 | The Proving Grounds (frontier) | ok | 147 | 27 | Elm1CL5.nif (39, model file not found); HoaktreeCL5.nif (23, model file not found); WillowCL5.nif (22, model file not found); HLowtreeCL5.nif (19, model file not found); BpineACL3.nif (17, model file not found) |
-| 235 | The Lion's Den (frontier) | ok | 156 | 60 | Elm1CL5.nif (26, model file not found); Hlowtreecl5.nif (24, model file not found); HiberniaTall_WhitePine3CL10.nif (16, model file not found); HoaktreeCL5.nif (14, model file not found); WillowCL5.nif (9, model file not found); and 1 more |
-| 236 | The Hills of Claret (frontier) | ok | 130 | 51 | HiberniaTall_WhitePine3CL10.nif (35, model file not found); HlowtreeCl5.nif (16, model file not found); Elm1CL5.nif (12, model file not found); HoaktreeCL5.nif (9, model file not found); WillowCL5.nif (7, model file not found) |
-| 237 | Killaloe (frontier) | ok | 225 | 136 | WillowCL5.nif (34, model file not found); Elm1CL5.nif (25, model file not found); HoaktreeCL5.nif (22, model file not found); Hlowtreecl5.nif (8, model file not found) |
-| 238 | Thidranki (frontier) | ok | 205 | 80 | elm2cl5.nif (46, model file not found); elm1cl5.nif (42, model file not found); Hoaktreecl5.nif (37, model file not found) |
-| 239 | Braemar | file not found | 147 | 3 | elm1cl5.nif (60, model file not found); elm2cl5.nif (51, model file not found); Hlowtreecl5.nif (33, model file not found) |
-| 240 | Wilton (frontier) | ok | 181 | 36 | elm2cl5.nif (74, model file not found); elm1cl5.nif (58, model file not found); Hlowtreecl5.nif (13, model file not found) |
-| 241 | Molvik (frontier) | ok | 144 | 24 | elm1cl5.nif (57, model file not found); elm2cl5.nif (48, model file not found); Hlowtreecl5.nif (15, model file not found) |
-| 242 | TestBG (frontier) | ok | 12 | 10 | PvP_proto_arena01.nif (1, model file not found); PvP_proto_arena02.nif (1, model file not found) |
-| 250 | Caledonia | ok | 421 | 421 |  |
-| 251 | Caledonia | ok | 421 | 421 |  |
-| 252 | Caledonia | ok | 421 | 421 |  |
-| 254 | Leirvik (frontier) | ok | 465 | 399 | NPineACL5.nif (29, model file not found); HBirchsingleCL5.nif (15, model file not found); WillowCL5.nif (15, model file not found); WillowCL3.nif (4, model file not found); vrgrn1CL5.nif (3, model file not found) |
-| 255 | Camelot Hills | ok | 2115 | 2115 |  |
-| 259 | Black Mtns. South | ok | 1997 | 1990 | stone4.nif (3, no drawable geometry); b-bindst1_normal.nif (1, no drawable geometry); bfarmhouse_normal.nif (1, no drawable geometry); bhouse2_normal.nif (1, no drawable geometry); brit_shop_normal.nif (1, no drawable geometry) |
-| 263 | Vanern Swamp | ok | 1208 | 1208 |  |
-| 264 | Vale of Mularn | ok | 1290 | 1290 |  |
-| 265 | Gotar | ok | 1751 | 1751 |  |
-| 269 | Bog of Cullen | ok | 961 | 961 |  |
-| 270 | Lough Derg | ok | 2084 | 2084 |  |
-| 271 | Silvermine Mts. | ok | 1448 | 1448 |  |
-| 275 | Manannan's Room (frontier) | ok | 1983 | 1964 | WillowCL3.nif (12, model file not found); agramon_keepCollision1.nif (1, no drawable geometry); agramon_keepCollision2.nif (1, no drawable geometry); agramon_keepCollision3.nif (1, no drawable geometry); b-bindst1_burned.nif (1, no drawable geometry); and 3 more |
-| 330 | The Foothills of Albion | ok | 151 | 33 | Elm2CL5.nif (82, model file not found); WillowCL5.nif (31, model file not found); DR_Alb_house1.nif (5, corrupt data in NiTriShapeData) |
-| 334 | The Foothills of Midgard | ok | 194 | 177 | Nvrgrn1-sCL5.nif (10, model file not found); MidgardTall_WhitePineCL10.nif (5, model file not found); MidgardTall_WhitePine3CL10.nif (2, model file not found) |
-| 335 | The Foothills of Hibernia | ok | 171 | 51 | Elm2CL5.nif (86, model file not found); WillowCL5.nif (34, model file not found) |
+| Zone | Name | Terrain | Layout | Detail | Grass | Placements | Converting | Failing models |
+|---:|---|---|---|---|---|---:|---:|---|
+| 000 | Camelot Hills | ok | as named (1.00) | ok (0.98) | ok | 1876 | 1876 |  |
+| 001 | Salisbury Plains | ok | as named (1.00) | ok (0.99) | ok | 733 | 733 |  |
+| 002 | Black Mtns. South | ok | as named (1.00) | ok (0.99) | ok | 1745 | 1742 | stone4.nif (3, no drawable geometry) |
+| 003 | Black Mtns. North | ok | as named (0.53) | ok, weighted (0.53) | ok | 726 | 723 | stone4.nif (3, no drawable geometry) |
+| 004 | Dartmoor | ok | as named (1.00) | ok (0.98) | ok | 1520 | 1520 |  |
+| 006 | Cornwall | ok | as named (0.77) | ok (0.77) | ok | 1497 | 1497 |  |
+| 007 | Llyn Barfog | ok | as named (0.87) | ok (0.88) | ok | 949 | 949 |  |
+| 008 | Campacorentin Forest | ok | as named (1.00) | ok (0.98) | ok | 3029 | 3029 |  |
+| 009 | Avalon Marsh | ok | as named (0.89) | ok (0.84) | ok | 1510 | 1510 |  |
+| 010 | Lyonesse | ok | as named (0.47) | ok, weighted (0.49) | ok | 920 | 920 |  |
+| 011 | Forest Sauvage | ok | as named (0.88) | ok, weighted (0.83) | ok | 1786 | 1786 |  |
+| 012 | Snowdonia | ok | as named (0.88) | ok, weighted (0.70) | ok | 865 | 865 |  |
+| 014 | Pennine Mountains | ok | as named (0.84) | ok, weighted (0.78) | ok | 807 | 807 |  |
+| 015 | Hadrian's Wall | ok | as named (0.91) | ok, weighted (0.90) | ok | 1421 | 1421 |  |
+| 027 | Constantine's Sound | ok | as named (1.00) | ok, weighted (0.91) | ok | 715 | 685 | tutorial_2wall_alb.nif (16, model file not found); tutorial_2cornertower_alb.nif (4, model file not found); DR_Alb_house1.nif (3, corrupt data in NiTriShapeData); 3tower_alb.nif (2, model file not found); smithing_anvil.nif (2, model file not found); and 3 more |
+| 051 | Isle of Glass | ok | as named (0.80) | ok, weighted (0.77) | ok | 812 | 812 |  |
+| 052 | Avalon Isle | ok | as named (0.96) | ok (0.92) | ok | 1528 | 1528 |  |
+| 053 | Dales of Devwy | ok | as named (0.95) | ok, weighted (0.90) | ok | 2132 | 2132 |  |
+| 054 | Caldey | ok | as named (0.97) | ok (0.88) | ok | 1658 | 1658 |  |
+| 055 | Gwyddneau | ok | as named (0.95) | ok (0.91) | ok | 1218 | 1218 |  |
+| 056 | Aldland | ok | as named (0.73) | ok, weighted (0.73) | ok | 1383 | 1383 |  |
+| 057 | Inishail Island | ok | as named (0.96) | ok, weighted (0.91) | ok | 536 | 536 |  |
+| 070 | Ruins of Atlantis | ok | as named (1.00) | ok (0.97) | ok | 1364 | 1364 |  |
+| 071 | Ruinerar av Atlantis | ok | as named (1.00) | ok, weighted (0.81) | ok | 1377 | 1377 |  |
+| 072 | Scrios de Atlantis | ok | as named (1.00) | ok (0.93) | ok | 1922 | 1922 |  |
+| 073 | Oceanus Hesperos | ok | as named (1.00) | ok (0.97) | ok | 1107 | 1107 |  |
+| 074 | Mesothalassa | ok | as named (1.00) | ok (0.94) | ok | 1220 | 1220 |  |
+| 075 | Oceanus Boreal | ok | as named (1.00) | ok (0.95) | ok | 1372 | 1372 |  |
+| 076 | Oceanus Notos | ok | as named (1.00) | ok (0.94) | ok | 1322 | 1322 |  |
+| 077 | Oceanus Anatole | ok | as named (1.00) | ok (0.94) | ok | 1314 | 1314 |  |
+| 081 | Stygian Delta | ok | as named (1.00) | ok (0.99) | ok | 2218 | 895 | reedclump1.NIF (1323, no drawable geometry) |
+| 082 | Land of Atum | ok | as named (1.00) | ok (0.95) | ok | 888 | 559 | reedclump1.NIF (329, no drawable geometry) |
+| 084 | Typhon's Reach | ok | as named (1.00) | ok (0.84) | no grass map | 1096 | 1096 |  |
+| 085 | Ashen Isles | ok | as named (1.00) | ok (0.77) | no grass map | 613 | 613 |  |
+| 086 | Green Glades | ok | as named (1.00) | ok (0.98) | no grass map | 2092 | 1625 | aeris_oak.nif (374, bad header); fern.nif (59, bad header); blackgum.nif (21, bad header); redwood_dead.nif (13, bad header) |
+| 087 | Arbor Glen | ok | as named (1.00) | ok (0.97) | ok | 1527 | 1204 | aeris_oak.nif (312, bad header); redwood_dead.nif (11, bad header) |
+| 100 | Vale of Mularn | ok | as named (1.00) | ok (0.99) | ok | 1006 | 1006 |  |
+| 101 | East Svealand | ok | as named (1.00) | ok (0.99) | ok | 1289 | 1289 |  |
+| 102 | West Svealand | ok | as named (0.99) | ok (0.98) | ok | 1189 | 1189 |  |
+| 103 | Gotar | ok | as named (0.74) | ok (0.81) | ok | 1512 | 1512 |  |
+| 104 | Muspelheim | ok | as named (0.94) | ok, weighted (0.92) | no grass map | 13 | 13 |  |
+| 105 | Myrkwood Forest | ok | as named (0.50) | ok (0.56) | ok | 2140 | 2140 |  |
+| 106 | Skona Ravine | ok | as named (0.89) | ok (0.85) | ok | 836 | 836 |  |
+| 107 | Vanern Swamp | ok | as named (0.76) | ok (0.71) | ok | 764 | 764 |  |
+| 108 | Raumarik | ok | as named (1.00) | ok, weighted (0.98) | ok | 1447 | 1447 |  |
+| 111 | Uppland | ok | as named (0.81) | ok, weighted (0.66) | no grass map | 1620 | 1620 |  |
+| 112 | Yggdra Forest | ok | as named (0.91) | ok, weighted (0.84) | no grass map | 2370 | 2370 |  |
+| 113 | Jamtland Mountains | ok | as named (0.95) | ok, weighted (0.89) | ok | 1412 | 1412 |  |
+| 115 | Odin's Gate | ok | as named (1.00) | ok (0.98) | no grass map | 1515 | 1515 |  |
+| 116 | Malmohus | ok | as named (1.00) | ok (0.98) | ok | 2589 | 2589 |  |
+| 151 | Aegir's Landing | ok | as named (0.94) | ok (0.88) | ok | 1078 | 1078 |  |
+| 152 | Gripklosa Mountains | ok | as named (0.82) | ok (0.80) | ok | 1355 | 1355 |  |
+| 153 | Delling Crater | ok | as named (1.00) | ok, weighted (0.99) | ok | 572 | 572 |  |
+| 154 | Faraheim | ok | as named (0.92) | ok, weighted (0.84) | ok | 931 | 931 |  |
+| 155 | Munin Sound | ok | as named (0.90) | ok (0.72) | ok | 1403 | 1403 |  |
+| 156 | Iarnwood | ok | as named (0.63) | ok (0.64) | ok | 1505 | 1505 |  |
+| 157 | Dummy Zone | file not found |  |  |  | 0 | 0 | scenery tables: nifs.csv: only N rows |
+| 158 | Modernagrav | ok | as named (0.83) | ok, weighted (0.74) | ok | 513 | 513 |  |
+| 163 | Ellan Vannin (frontier) | ok | as named (1.00) | ok (0.97) | ok | 1985 | 1981 | agramon_keepCollision1.nif (1, no drawable geometry); agramon_keepCollision2.nif (1, no drawable geometry); agramon_keepCollision3.nif (1, no drawable geometry); bhouse2_burned.nif (1, corrupt data in NiTriShapeData) |
+| 164 | Irish Sea (frontier) | ok | as named (1.00) | ok (0.96) | ok | 92 | 92 |  |
+| 165 | Cathal Valley (frontier) | ok | as named (1.00) | a sector paints N layers; at most N fit | ok | 958 | 958 |  |
+| 167 | Odin's Gate (frontier) | ok | as named (1.00) | ok (0.98) | ok | 377 | 377 |  |
+| 168 | Jamtland Mountains (frontier) | ok | as named (1.00) | ok (0.99) | ok | 491 | 491 |  |
+| 169 | Yggdra Forest (frontier) | ok | as named (1.00) | ok (0.98) | ok | 439 | 439 |  |
+| 170 | Uppland (frontier) | ok | as named (1.00) | ok (0.97) | ok | 575 | 575 |  |
+| 171 | Emain Macha (frontier) | ok | as named (1.00) | ok, weighted (0.89) | ok | 628 | 628 |  |
+| 172 | Breifine (frontier) | ok | as named (1.00) | ok, weighted (0.92) | ok | 663 | 663 |  |
+| 173 | Cruachan Gorge (frontier) | ok | as named (1.00) | ok (0.95) | ok | 494 | 494 |  |
+| 174 | Mount Collory (frontier) | ok | as named (1.00) | ok, weighted (0.92) | ok | 623 | 623 |  |
+| 175 | Snowdonia (frontier) | ok | as named (1.00) | ok (0.98) | ok | 317 | 317 |  |
+| 176 | Forest Sauvage (frontier) | ok | as named (1.00) | ok (0.96) | ok | 305 | 305 |  |
+| 177 | Pennine Mountains (frontier) | ok | as named (1.00) | ok (0.94) | ok | 399 | 398 | A_ruins01_COLLISION_FIX.nif (1, no drawable geometry) |
+| 178 | Hadrian's Wall (frontier) | ok | as named (1.00) | ok (0.91) | ok | 279 | 279 |  |
+| 179 | Lyonesse | ok | as named (1.00) | ok (0.97) | ok | 1138 | 1138 |  |
+| 181 | Domnann | ok | as named (0.91) | ok, weighted (0.84) | ok | 1281 | 1281 |  |
+| 182 | Caillte Garran | ok | as named (0.82) | ok (0.73) | ok | 875 | 875 |  |
+| 183 | Vale of Balor | ok | as named (0.78) | ok, weighted (0.65) | ok | 726 | 726 |  |
+| 184 | Cothrom Gorge | ok | as named (0.85) | ok, weighted (0.70) | ok | 718 | 718 |  |
+| 185 | World's End | ok | as named (0.93) | ok, weighted (0.84) | ok | 1123 | 1123 |  |
+| 186 | Vigilant Rock | ok | as named (0.98) | ok (0.92) | ok | 1316 | 1316 |  |
+| 187 | Allta Fearann | ok | as named (0.92) | ok, weighted (0.86) | ok | 711 | 711 |  |
+| 200 | Lough Derg | ok | as named (1.00) | ok (0.97) | ok | 1792 | 1792 |  |
+| 201 | Silvermine Mts. | ok | as named (1.00) | ok (0.96) | ok | 1235 | 1235 |  |
+| 202 | Shannon Estuary | ok | as named (1.00) | ok, weighted (0.86) | ok | 1240 | 1240 |  |
+| 203 | Cliffs of Moher | ok | as named (1.00) | ok (0.98) | ok | 977 | 977 |  |
+| 204 | Lough Gur | ok | as named (1.00) | ok, weighted (0.91) | ok | 2286 | 2286 |  |
+| 205 | Bog of Cullen | ok | as named (1.00) | ok, weighted (0.93) | ok | 761 | 761 |  |
+| 206 | Valley of Bri Leith | ok | as named (1.00) | ok (0.97) | ok | 1327 | 1327 |  |
+| 207 | Connacht | ok | as named (1.00) | ok (0.98) | ok | 1836 | 1836 |  |
+| 208 | Cursed Forest | ok | as named (1.00) | ok, weighted (0.91) | ok | 1781 | 1781 |  |
+| 210 | Mount Collory | ok | as named (1.00) | ok, weighted (0.81) | ok | 1217 | 1217 |  |
+| 211 | Cruachan Gorge | ok | as named (1.00) | ok, weighted (0.75) | ok | 1321 | 1321 |  |
+| 212 | Breifine | ok | as named (1.00) | ok, weighted (0.87) | ok | 1185 | 1185 |  |
+| 214 | Emain Macha | ok | as named (1.00) | ok (0.95) | ok | 826 | 826 |  |
+| 216 | Sheeroe Hills | ok | as named (1.00) | ok (0.95) | ok | 1696 | 1696 |  |
+| 234 | The Proving Grounds (frontier) | ok | as named (1.00) | ok (0.96) | ok | 147 | 147 |  |
+| 235 | The Lion's Den (frontier) | ok | as named (1.00) | ok (0.99) | ok | 156 | 156 |  |
+| 236 | The Hills of Claret (frontier) | ok | as named (1.00) | ok (0.95) | ok | 130 | 130 |  |
+| 237 | Killaloe (frontier) | ok | as named (1.00) | ok (0.90) | ok | 225 | 225 |  |
+| 238 | Thidranki (frontier) | ok | as named (1.00) | ok, weighted (0.92) | ok | 205 | 205 |  |
+| 239 | Braemar | file not found |  |  |  | 147 | 147 |  |
+| 240 | Wilton (frontier) | ok | as named (1.00) | ok (0.94) | ok | 181 | 181 |  |
+| 241 | Molvik (frontier) | ok | as named (1.00) | ok, weighted (0.93) | ok | 144 | 144 |  |
+| 242 | TestBG (frontier) | ok | as named (1.00) | ok (0.96) | ok | 12 | 10 | PvP_proto_arena01.nif (1, model file not found); PvP_proto_arena02.nif (1, model file not found) |
+| 250 | Caledonia | ok | as named (1.00) | ok, weighted (0.89) | no grass map | 421 | 421 |  |
+| 251 | Caledonia | ok | as named (1.00) | ok, weighted (0.89) | no grass map | 421 | 421 |  |
+| 252 | Caledonia | ok | as named (1.00) | ok, weighted (0.89) | no grass map | 421 | 421 |  |
+| 254 | Leirvik (frontier) | ok | as named (1.00) | a sector paints N layers; at most N fit | ok | 465 | 465 |  |
+| 255 | Camelot Hills | ok | as named (1.00) | ok, weighted (0.91) | ok | 2115 | 2115 |  |
+| 259 | Black Mtns. South | ok | as named (1.00) | ok (0.99) | ok | 1997 | 1994 | stone4.nif (3, no drawable geometry) |
+| 263 | Vanern Swamp | ok | as named (1.00) | ok (0.98) | ok | 1208 | 1208 |  |
+| 264 | Vale of Mularn | ok | as named (0.80) | ok, weighted (0.82) | ok | 1290 | 1290 |  |
+| 265 | Gotar | ok | as named (0.74) | ok (0.81) | ok | 1751 | 1751 |  |
+| 269 | Bog of Cullen | ok | as named (1.00) | ok, weighted (0.95) | ok | 961 | 961 |  |
+| 270 | Lough Derg | ok | as named (1.00) | ok (0.95) | ok | 2084 | 2084 |  |
+| 271 | Silvermine Mts. | ok | as named (1.00) | ok (0.96) | ok | 1448 | 1448 |  |
+| 275 | Manannan's Room (frontier) | ok | as named (1.00) | ok (0.97) | ok | 1983 | 1979 | agramon_keepCollision1.nif (1, no drawable geometry); agramon_keepCollision2.nif (1, no drawable geometry); agramon_keepCollision3.nif (1, no drawable geometry); bhouse2_burned.nif (1, corrupt data in NiTriShapeData) |
+| 330 | The Foothills of Albion | ok | as named (1.00) | ok (0.96) | ok | 151 | 146 | DR_Alb_house1.nif (5, corrupt data in NiTriShapeData) |
+| 334 | The Foothills of Midgard | ok | as named (1.00) | ok (0.99) | ok | 194 | 194 |  |
+| 335 | The Foothills of Hibernia | ok | as named (1.00) | ok (0.90) | ok | 171 | 171 |  |

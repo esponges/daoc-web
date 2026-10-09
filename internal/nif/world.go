@@ -296,9 +296,14 @@ func (f *File) parseWorldBlock(r *reader, typ string) (any, error) {
 			return nil, fmt.Errorf("implausible LOD level count %d", n)
 		}
 		l.Ranges = make([][2]float32, n)
+		// A range may be NaN for an open end: Ncarcass.nif gives its two
+		// levels [NaN, 100000] and [0, NaN]. Nothing here picks a level
+		// by range, so they are read as they are.
+		r.lax = true
 		for i := range l.Ranges {
 			l.Ranges[i] = [2]float32{r.f32(), r.f32()}
 		}
+		r.lax = false
 		return l, nil
 
 	// NiScreenLODData picks a level by how much of the screen the prop
@@ -329,9 +334,14 @@ func (f *File) parseWorldBlock(r *reader, typ string) (any, error) {
 			return nil, fmt.Errorf("implausible LOD level count %d", n)
 		}
 		l.Ranges = make([][2]float32, n)
+		// A range may be NaN for an open end: Ncarcass.nif gives its two
+		// levels [NaN, 100000] and [0, NaN]. Nothing here picks a level
+		// by range, so they are read as they are.
+		r.lax = true
 		for i := range l.Ranges {
 			l.Ranges[i] = [2]float32{r.f32(), r.f32()}
 		}
+		r.lax = false
 		return l, nil
 
 	default:
