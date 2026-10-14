@@ -231,7 +231,9 @@ func (f *File) parseEffectBlock(r *reader, typ string) (any, error) {
 	switch typ {
 	// The particle shapes are NiGeometry like any other, so their own
 	// layout holds no surprises.
-	case "NiAutoNormalParticles", "NiRotatingParticles", "NiParticles":
+	// NiParticleMeshes is NiParticles whose particles are whole meshes
+	// (Trollheim's fountains); its own layout adds nothing.
+	case "NiAutoNormalParticles", "NiRotatingParticles", "NiParticles", "NiParticleMeshes":
 		e := &Emitter{}
 		f.readAV(r, &e.AVObject)
 		e.Data = r.i32()
@@ -246,6 +248,31 @@ func (f *File) parseEffectBlock(r *reader, typ string) (any, error) {
 
 	case "NiAutoNormalParticlesData", "NiRotatingParticlesData", "NiParticlesData":
 		return f.readParticleData(r, typ)
+
+	// NiParticleMeshesData is NiRotatingParticlesData and a reference to
+	// the mesh the particles are drawn as.
+	case "NiParticleMeshesData":
+		p, err := f.readParticleData(r, "NiRotatingParticlesData")
+		if err != nil {
+			return nil, err
+		}
+		r.i32() // the particle mesh
+		return p, r.err
+
+	// NiParticleMeshModifier names the meshes particles take. The meshes
+	// are not drawn as particles here; the modifier is read so the files
+	// that carry it parse.
+	case "NiParticleMeshModifier":
+		m := &Modifier{}
+		f.readModifier(r, m)
+		n := int(r.u32())
+		if n < 0 || n > 1<<12 {
+			return nil, fmt.Errorf("implausible particle mesh count %d", n)
+		}
+		for i := 0; i < n; i++ {
+			r.i32()
+		}
+		return m, r.err
 
 	case "NiParticleSystemController", "NiBSPArrayController":
 		return f.readParticleController(r)

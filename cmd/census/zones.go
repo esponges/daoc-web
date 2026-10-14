@@ -20,6 +20,8 @@ type ZoneReport struct {
 	Missing  []ZoneRef    `json:"missing"`
 	Outdoor  OutdoorTotal `json:"outdoor"`
 	Rows     []*ZoneRow   `json:"rows"`
+	// Interiors are the city and dungeon zones present, dry-run.
+	Interiors []*InteriorRow `json:"interiors"`
 }
 
 // KindCount is one zone type: how many zones declare it, how many of those
@@ -186,6 +188,7 @@ func zoneCensus(game string, list []zone.Info, workers int) ZoneReport {
 			t.ModelsBaked++
 		}
 	}
+	rep.Interiors = interiorCensus(game, list, workers)
 	return rep
 }
 

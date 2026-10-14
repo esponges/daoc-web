@@ -1,7 +1,9 @@
 package scenery
 
 import (
+	"fmt"
 	"math"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -95,5 +97,41 @@ func TestStandInFoundWhole(t *testing.T) {
 		if len(v) < 1000 || len(mo.Groups) == 0 {
 			t.Errorf("%s: %d vertices in %d groups, want a whole building", file, len(v), len(mo.Groups))
 		}
+	}
+}
+
+// Jordheim's 31 city blocks all convert: 28 of them carry NaN in a texture
+// coordinate set nothing draws.
+func TestJordheimBlocks(t *testing.T) {
+	game := gamePath(t)
+	dirs := []string{filepath.Join(game, "zones", "zone120", "nifs")}
+	for i := 1; i <= 31; i++ {
+		file := fmt.Sprintf("jord%02d.nif", i)
+		var v []Vertex
+		var ix []uint32
+		if _, err := ConvertModel(dirs, file, file, &v, &ix); err != nil {
+			t.Errorf("%s: %v", file, err)
+		} else if len(v) == 0 {
+			t.Errorf("%s: no vertices", file)
+		}
+	}
+}
+
+// Trollheim's two fountain pieces carry NiParticleMeshes; they convert.
+func TestParticleMeshFountains(t *testing.T) {
+	game := gamePath(t)
+	dirs := []string{filepath.Join(game, "zones", "Dnifs")}
+	for _, file := range []string{"THDHallCpool.NIF", "THDRmfountain.NIF"} {
+		var v []Vertex
+		var ix []uint32
+		mo, err := ConvertModel(dirs, file, file, &v, &ix)
+		if err != nil {
+			t.Errorf("%s: %v", file, err)
+			continue
+		}
+		if len(mo.Groups) == 0 {
+			t.Errorf("%s: nothing to draw", file)
+		}
+		t.Logf("%s: %d vertices, %d groups, %d emitters", file, len(v), len(mo.Groups), len(mo.Particles))
 	}
 }

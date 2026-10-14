@@ -13,10 +13,21 @@ import { createNPCs, bodyRadius, pickNPC } from './npc.js';
 import { createRing } from './ring.js';
 import { createCombat } from './combat.js';
 import { Animator } from './animator.js';
-import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows, setSkyLight, SUN_DIR } from './lighting.js';
+import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows, setSkyLight, setInteriorLight, setPointLights, SUN_DIR } from './lighting.js';
 import { createSky } from './sky.js';
 import { createGrass } from './grass.js';
 import { createParticles } from './particles.js';
+import { loadInterior } from './interior.js';
+import { NetClient } from './net.js';
+import { loadOutdoorCollision } from './collision.js';
+import { createRemote, eventAnim } from './remote.js';
+import { createUI, conColor } from './ui.js';
+
+// ?play=ID joins the game server as that character; without it the viewer
+// runs alone, as it always has. In network mode the server decides the zone,
+// where everything stands and every fight; this page predicts the player's
+// own movement and draws what the server reports.
+const PLAY = (new URLSearchParams(location.search).get('play') || '').replace(/\D/g, '');
 
 // Which converted zone: ?zone=9 opens data/zone009, as worldconv writes it.
 // Vale of Mularn, zone 100, is the default and the only one with NPCs.
@@ -365,6 +376,8 @@ async function zonePicker() {
     const o = document.createElement('option');
     o.value = z.num;
     let label = String(z.num).padStart(3, '0') + '  ' + z.name + (z.frontier ? ' (frontier)' : '');
+    // Cities and dungeons say which they are; outdoor zones say nothing.
+    if (z.kind) label += ' (' + z.kind + ')';
     // Say so where much of the scenery did not convert.
     if (z.placements && z.converting < z.placements * 0.95) {
       label += '  · ' + Math.round((100 * z.converting) / z.placements) + '% props';
@@ -399,24 +412,13 @@ async function zonePicker() {
   });
 }
 
-async function main() {
-  zonePicker().catch((e) => console.warn('zone picker:', e.message));
-  const canvas = $('gl');
-  const gl = canvas.getContext('webgl2', { antialias: true, depth: true });
-  if (!gl) throw new Error('WebGL2 is not available in this browser.');
-  // Moving between zones reloads the page. Hand the GPU memory back as it
-  // goes rather than when the browser gets round to it: a zone is a few
-  // hundred MB of textures, and after a dozen zones in one tab the GPU
-  // stalled.
-  addEventListener('pagehide', () => {
-    const lose = gl.getExtension('WEBGL_lose_context');
-    if (lose) lose.loseContext();
-  });
+// --- the outdoor world -------------------------------------------------------
 
-  // --- load converted data ---
-  const man = await fetchJSON(ZONE + '/zone.json').catch((e) => {
-    throw new Error(`zone ${ZONE_NUM} is not converted (${e.message}); run go run ./cmd/worldconv`);
-  });
+// loadOutdoor builds a zone with a heightmap: its terrain, ground detail and
+// water, where the ground is, where to start and what the HUD says about it.
+// Everything that knows about the heightmap lives here, so main() can run an
+// interior the same way; see interior.js.
+async function loadOutdoor(gl, man) {
   const [heightBuf, atlasImg] = await Promise.all([
     fetchBuffer(ZONE + '/' + man.heights),
     loadImage(ZONE + '/' + man.atlas),
@@ -573,8 +575,157 @@ async function main() {
   const isWet = (wx, wy) => wetBoxes.some((b) =>
     wx >= b.x0 && wx <= b.x1 && wy >= b.y0 && wy <= b.y1 && groundAt(wx, wy) < b.h);
 
+
+  // Spawn on the rising ground south-east of the lake, which is open enough
+  // to see the gait and close enough to walk to the shore. Other zones carry
+  // no start point the converters read, so they start in the middle.
+  const SPAWN = ZONE_NUM === 100 ? [112 * cell, 118 * cell] : [128 * cell, 128 * cell];
+
+  const mid = extent / 2;
+  const overview = { pos: [mid - 26000, man.maxHeight + 9000, mid + 34000], target: [mid, man.minHeight + 1500, mid] };
+
+  const tU = uniforms(gl, terrainProg, ['uViewProj', 'uCamPos', 'uAtlas', 'uFogColor', 'uFogStart', 'uFogEnd', 'uWireframe',
+    'uLayers', 'uMasks', 'uSlots', 'uBlend', 'uSectors', 'uZone', 'uMaskPx', 'uDetail', 'uDetailFade', ...LIGHT_UNIFORMS]);
+  const wU = uniforms(gl, waterProg, ['uViewProj', 'uCamPos', 'uFogColor', 'uFogStart', 'uFogEnd', 'uTime']);
+
+  // The shadow pass draws it too, as a caster: a hill shades the valley
+  // behind it. That pass wants depth only, so no ground detail.
+  const drawGround = ({ viewProj, light, shadowPass, eye, fogColor, fogStart, fogEnd, wireframe, detailOn }) => {
+    gl.useProgram(terrainProg);
+    gl.uniformMatrix4fv(tU.uViewProj, false, viewProj);
+    gl.uniform3fv(tU.uCamPos, eye);
+    gl.uniform3fv(tU.uFogColor, fogColor);
+    gl.uniform1f(tU.uFogStart, fogStart);
+    gl.uniform1f(tU.uFogEnd, fogEnd);
+    bindLight(gl, tU, light);
+    gl.uniform1f(tU.uWireframe, wireframe && !shadowPass ? 1 : 0);
+    gl.uniform1i(tU.uAtlas, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1f(tU.uDetail, detail && detailOn && !shadowPass ? 1 : 0);
+    // Bound whether or not the zone has detail; see noDetail.
+    const d = detail || ground;
+    gl.uniform1i(tU.uLayers, 1);
+    gl.uniform1i(tU.uMasks, 2);
+    gl.uniform1i(tU.uSlots, 3);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D_ARRAY, d.layers);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, d.masks);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, d.slots);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1f(tU.uSectors, d.sectors);
+    gl.uniform1f(tU.uZone, man.zoneUnits);
+    gl.uniform1f(tU.uMaskPx, d.maskPx);
+    gl.uniform1f(tU.uBlend, d.weighted ? 1 : 0);
+    gl.uniform2f(tU.uDetailFade, DETAIL_NEAR, DETAIL_FAR);
+    gl.bindVertexArray(terrainVAO);
+    if (wireframe && !shadowPass) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lbo);
+      gl.drawElements(gl.LINES, lineIdx.length, gl.UNSIGNED_INT, 0);
+    } else {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
+    }
+  };
+
+  const drawWater = ({ vp, eye, fogColor, fogStart, fogEnd, time }) => {
+    if (!waters.length) return;
+    gl.useProgram(waterProg);
+    gl.uniformMatrix4fv(wU.uViewProj, false, vp);
+    gl.uniform3fv(wU.uCamPos, eye);
+    gl.uniform3fv(wU.uFogColor, fogColor);
+    gl.uniform1f(wU.uFogStart, fogStart);
+    gl.uniform1f(wU.uFogEnd, fogEnd);
+    gl.uniform1f(wU.uTime, time);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.disable(gl.CULL_FACE);
+    for (const wb of waters) {
+      gl.bindVertexArray(wb.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, wb.count);
+    }
+    gl.enable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
+  };
+
+  const hud = [
+    ['i-grid', grid + ' x ' + grid + ' @ ' + cell + 'u'],
+    ['i-height', man.minHeight + ' .. ' + man.maxHeight + 'u'],
+    ['i-tris', (quads * 2).toLocaleString()],
+    ['i-atlas', man.atlasPx + ' x ' + man.atlasPx],
+    ['i-align', man.orientation.replace(/\s+/g, ' ')],
+    ['i-water', waters.length
+      ? waters.map((w) => w.name + ' @ ' + w.height).join(', ')
+      : 'none'],
+  ];
+
+  return {
+    kind: 'outdoor', cell, grid, extent, heights, overview, hud,
+    spawn: SPAWN,
+    // The heightmap sample at a cell, for the console helpers.
+    heightAtCell: (cx, cy) => H(Math.round(cx), Math.round(cy)),
+    groundAt: (wx, wy) => groundAt(wx, wy),
+    isWet,
+    clamp: (x, y) => [Math.max(0, Math.min(extent, x)), Math.max(0, Math.min(extent, y))],
+    drawGround, drawWater,
+  };
+}
+
+async function main() {
+  if (PLAY) $('zones').style.display = 'none';
+  else zonePicker().catch((e) => console.warn('zone picker:', e.message));
+  const canvas = $('gl');
+  const gl = canvas.getContext('webgl2', { antialias: true, depth: true });
+  if (!gl) throw new Error('WebGL2 is not available in this browser.');
+  // Moving between zones reloads the page. Hand the GPU memory back as it
+  // goes rather than when the browser gets round to it: a zone is a few
+  // hundred MB of textures, and after a dozen zones in one tab the GPU
+  // stalled.
+  addEventListener('pagehide', () => {
+    const lose = gl.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext();
+  });
+
+  // --- the game server ---
+  // Joined before anything is loaded, since the server says which zone this
+  // character is in and which character to draw.
+  let groundFn = (x, y, z) => z || 0, clampFn = (x, y) => [x, y];
+  let net = null, welcome = null;
+  if (PLAY) {
+    const ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
+    net = new NetClient({ ws, ground: { groundAt: (x, y, z) => groundFn(x, y, z), clamp: (x, y) => clampFn(x, y) } });
+    try {
+      welcome = await net.hello(Number(PLAY));
+    } catch (e) {
+      location.replace('login.html?msg=' + encodeURIComponent(e.message));
+      return;
+    }
+    if (welcome.zone !== ZONE_NUM) { location.replace('?zone=' + welcome.zone + '&play=' + PLAY); return; }
+    net.on.zone = (m) => location.replace('?zone=' + m.zone + '&play=' + PLAY);
+    net.on.close = () => fail('The connection to the game server was lost. Reload the page to play again.');
+  }
+
+  // --- load converted data ---
+  const man = await fetchJSON(ZONE + '/zone.json').catch((e) => {
+    throw new Error(`zone ${ZONE_NUM} is not converted (${e.message}); run go run ./cmd/worldconv`);
+  });
+  // A city or dungeon has no heightmap; its zone.json says which it is.
+  const world = man.kind
+    ? await loadInterior(man, ZONE, { fetchJSON, fetchBuffer })
+    : await loadOutdoor(gl, man);
+  const { cell, grid, extent, groundAt, isWet } = world;
+  groundFn = world.groundAt; clampFn = world.clamp;
+  // Prediction walks into the same trees and walls the server's player does.
+  if (net) {
+    net.mover = world.kind === 'outdoor'
+      ? await loadOutdoorCollision(ZONE, { fetchJSON, fetchBuffer }, 65536).catch(() => null)
+      : world.mover || null;
+  }
+  if (world.kind !== 'outdoor') setInteriorLight();
+  const SPAWN = world.spawn;
+
   // --- character ---
-  const char = await createCharacter(gl, CHARACTER, { program, uniforms, loadImage });
+  const char = await createCharacter(gl, welcome ? 'data/char/' + welcome.char.replace(/[^a-zA-Z0-9_-]/g, '') : CHARACTER,
+    { program, uniforms, loadImage });
   if (char.missingJoints.length) {
     console.warn('skeleton is missing expected joints:', char.missingJoints.join(', '));
   }
@@ -613,7 +764,7 @@ async function main() {
   try {
     // ?npcs=0 leaves them out, for looking at the zone on its own.
     // The spawn file is Mularn's; elsewhere its coordinates mean nothing.
-    if (ZONE_NUM === 100 && new URLSearchParams(location.search).get('npcs') !== '0') {
+    if (!net && ZONE_NUM === 100 && new URLSearchParams(location.search).get('npcs') !== '0') {
       npcs = await createNPCs(gl, 'spawns/zone100.json', { program, uniforms, loadImage },
         { cell, extent, groundAt, isWet });
     }
@@ -621,18 +772,18 @@ async function main() {
     console.warn('npcs not loaded:', e.message);
   }
 
-  // Spawn on the rising ground south-east of the lake, which is open enough
-  // to see the gait and close enough to walk to the shore. Other zones carry
-  // no start point the converters read, so they start in the middle.
-  const SPAWN = ZONE_NUM === 100 ? [112 * cell, 118 * cell] : [128 * cell, 128 * cell];
   const anim = new Animator(char, { carry: LOCOMOTION, fade: FADE });
   // Ground speed of each step clip at 1x, in model units per second.
   const stepPace = {};
   for (const n of STEPS) if (char.clips[n]) stepPace[n] = char.groundSpeed(n);
   anim.t = 0;
   const player = {
-    x: SPAWN[0], y: SPAWN[1], // world X and Y, i.e. heightmap cells
-    yaw: Math.PI, phase: 0, gait: 0, clip: null, blend: 1,
+    x: welcome ? welcome.x : SPAWN[0], y: welcome ? welcome.y : SPAWN[1], // world X and Y, i.e. heightmap cells
+    // Height of the feet: inside, the floor is sought from here, so a
+    // character on a bridge stays on it rather than dropping to the floor
+    // beneath.
+    z: welcome ? welcome.z : world.spawnZ,
+    yaw: welcome ? welcome.yaw : world.spawnYaw ?? Math.PI, phase: 0, gait: 0, clip: null, blend: 1,
     // A fighter, as combat.js sees one. What it holds sets the numbers:
     // a warhammer hits harder and swings slower than a fist, and a shield
     // blocks some of what comes from the front. They are this project's
@@ -652,11 +803,58 @@ async function main() {
     logEl.appendChild(line);
     while (logEl.childElementCount > 7) logEl.firstChild.remove();
   };
-  const combat = npcs ? createCombat({
+  let combat = npcs ? createCombat({
     player, npcs, log,
     // Back on your feet where you started, as at a bindstone.
     onPlayerDeath: () => { [player.x, player.y] = SPAWN; },
   }) : null;
+  // In network mode the server runs the fight. The same handle is given the
+  // keys and clicks here, but each one asks the server, and what they read
+  // is what its last snapshot said.
+  let remote = null, ui = null;
+  if (net) {
+    remote = createRemote(gl, { program, uniforms, loadImage }, { cell });
+    npcs = {
+      get npcs() { return remote.pickables; }, get drawn() { return remote.drawn; },
+      types: remote.types, update() {}, draw() {},
+    };
+    const me = net.me;
+    const dist = (v) => Math.hypot(v.x - player.x, v.y - player.y);
+    combat = {
+      state: {},
+      get target() { return me.target ? remote.views.get(me.target) || null : null; },
+      get attacking() { return me.attacking; },
+      // The nearest living creature in front of the camera; again to cycle.
+      targetNext(viewYaw = player.yaw) {
+        const live = remote.pickables.filter((v) => !v.dead && !v.friendly && dist(v) < 3000);
+        if (!live.length) { net.target(0); return null; }
+        const score = (v) => {
+          let d = Math.atan2(v.x - player.x, -(v.y - player.y)) - viewYaw;
+          d = Math.abs(((d + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
+          return dist(v) * (d > Math.PI / 2 ? 4 : 1);
+        };
+        live.sort((a, b) => score(a) - score(b));
+        const i = live.indexOf(this.target);
+        const v = live[(i + 1) % live.length];
+        net.target(v.id);
+        return v;
+      },
+      clearTarget() { net.target(0); net.attack(false); },
+      select(v) { if (v) net.target(v.id); return v; },
+      toggleAttack(viewYaw) {
+        if (me.dead) return false;
+        if (me.attacking) { net.attack(false); log('You stop attacking.', 'info'); return false; }
+        if (!this.target || this.target.dead) this.targetNext(viewYaw);
+        if (!this.target) { log('You have no target.', 'info'); return false; }
+        net.attack(true);
+        log('You prepare to attack the ' + this.target.name + '.', 'info');
+        return true;
+      },
+      update() {},
+    };
+    ui = createUI(net, { log });
+    log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack.', 'info');
+  }
   const ring = combat ? createRing(gl, { program, uniforms }) : null;
 
   // --- cameras ---
@@ -666,14 +864,13 @@ async function main() {
   // turn the character and the camera with it, and a right-drag swings the
   // offset to look around without turning anyone.
   const orbit = { yaw: Math.PI, off: 0, pitch: 0.30, dist: 320 };
-  const mid = extent / 2;
   const cam = {
-    pos: [mid - 26000, man.maxHeight + 9000, mid + 34000],
+    pos: world.overview.pos,
     yaw: 0, pitch: 0,
     speed: 4000, // world units per second
   };
   {
-    const t = [mid, man.minHeight + 1500, mid];
+    const t = world.overview.target;
     const dx = t[0] - cam.pos[0], dy = t[1] - cam.pos[1], dz = t[2] - cam.pos[2];
     cam.yaw = Math.atan2(dx, -dz);
     cam.pitch = Math.atan2(dy, Math.hypot(dx, dz));
@@ -695,8 +892,8 @@ async function main() {
   // Debug handle: lets you jump the camera from the console, e.g.
   //   daoc.goto(120, 90, 800)   // heightmap cell x, y, metres above ground
   globalThis.daoc = {
-    cam, orbit, player, char, props, npcs, combat, anim, manifest: man, heights, grass, particles,
-    heightAt: (cx, cy) => H(Math.round(cx), Math.round(cy)),
+    cam, orbit, player, char, props, npcs, combat, anim, manifest: man, world, grass, particles, net, remote,
+    heightAt: world.heightAtCell,
     groundAt,
     // Put the character on a given heightmap cell, e.g. daoc.warp(60, 70).
     warp(cx, cy) {
@@ -705,13 +902,13 @@ async function main() {
       return { x: player.x, y: player.y, ground: groundAt(player.x, player.y) };
     },
     goto(cx, cy, above = 1200) {
-      cam.pos = [cx * cell, H(Math.round(cx), Math.round(cy)) + above, cy * cell];
+      cam.pos = [cx * cell, world.heightAtCell(cx, cy) + above, cy * cell];
       return cam.pos;
     },
     look(cx, cy) {
       const dx = cx * cell - cam.pos[0];
       const dz = cy * cell - cam.pos[2];
-      const dy = H(Math.round(cx), Math.round(cy)) - cam.pos[1];
+      const dy = world.heightAtCell(cx, cy) - cam.pos[1];
       cam.yaw = Math.atan2(dx, -dz);
       cam.pitch = Math.atan2(dy, Math.hypot(dx, dz));
     },
@@ -728,10 +925,11 @@ async function main() {
   // Running is the default; R toggles walking.
   let walkMode = false;
   addEventListener('keydown', (e) => {
+    if (ui && ui.key(e)) return;
     keys.add(e.code);
     if (e.code === 'KeyF') wireframe = !wireframe;
     if (e.code === 'KeyG') detailOn = !detailOn;
-    if (e.code === 'KeyL' && shadows && shadows.ok) shadowsOn = !shadowsOn;
+    if (e.code === 'KeyL' && shadows && shadows.ok && world.kind === 'outdoor') shadowsOn = !shadowsOn;
     if (e.code === 'KeyV') grassOn = !grassOn;
     if (e.code === 'KeyR' && !e.repeat) walkMode = !walkMode;
     // Combat. Tab would otherwise move focus out of the page.
@@ -785,7 +983,13 @@ async function main() {
     const u = [s[1] * f[2] - s[2] * f[1], s[2] * f[0] - s[0] * f[2], s[0] * f[1] - s[1] * f[0]];
     const k = Math.tan(FOV / 2), aspect = r.width / r.height;
     const dir = [0, 1, 2].map((i) => f[i] + s[i] * nx * k * aspect + u[i] * ny * k);
-    const hit = pickNPC(npcs.npcs, view.eye, dir, groundAt);
+    let hit = pickNPC(npcs.npcs, view.eye, dir, groundAt);
+    if (!hit && remote) {
+      // A corpse can be clicked to loot it.
+      const corpses = remote.pickables.filter((v) => v.dead).map((v) => Object.create(v, { dead: { value: false } }));
+      const c = pickNPC(corpses, view.eye, dir, groundAt);
+      if (c) { net.target(c.id); return; }
+    }
     if (hit && hit !== combat.target) {
       combat.select(hit);
       log('You target the ' + hit.name + '.', 'info');
@@ -824,16 +1028,9 @@ async function main() {
     }
   }
   const fog = man.fog;
-  const fogColor = sky ? sky.fog : [fog.r / 255, fog.g / 255, fog.b / 255];
+  const fogColor = world.fog ? world.fog.color : sky ? sky.fog : [fog.r / 255, fog.g / 255, fog.b / 255];
   $('title').textContent = man.name + '  (zone ' + man.zone + ')';
-  $('i-grid').textContent = grid + ' x ' + grid + ' @ ' + cell + 'u';
-  $('i-height').textContent = man.minHeight + ' .. ' + man.maxHeight + 'u';
-  $('i-tris').textContent = (quads * 2).toLocaleString();
-  $('i-atlas').textContent = man.atlasPx + ' x ' + man.atlasPx;
-  $('i-align').textContent = man.orientation.replace(/\s+/g, ' ');
-  $('i-water').textContent = waters.length
-    ? waters.map((w) => w.name + ' @ ' + w.height).join(', ')
-    : 'none';
+  for (const [id, text] of world.hud) $(id).textContent = text;
   $('i-props').textContent = props
     ? props.instanceCount + ' placed, ' + props.models.length + ' models, ' +
       props.triangleCount.toLocaleString() + ' tris, ' + props.drawCalls + ' draws'
@@ -843,8 +1040,6 @@ async function main() {
     char.height.toFixed(1) + 'u, drawn at ' + char.scale + 'x';
 
   // --- uniform locations ---
-  const tU = uniforms(gl, terrainProg, ['uViewProj', 'uCamPos', 'uAtlas', 'uFogColor', 'uFogStart', 'uFogEnd', 'uWireframe',
-    'uLayers', 'uMasks', 'uSlots', 'uBlend', 'uSectors', 'uZone', 'uMaskPx', 'uDetail', 'uDetailFade', ...LIGHT_UNIFORMS]);
 
   // Sun shadows; see lighting.js. ?shadows=0 turns them off, ?shadow=4096
   // asks for a sharper map.
@@ -853,12 +1048,77 @@ async function main() {
   const shadows = params.get('shadows') === '0' ? null
     : createShadows(gl, { size: shadowSize, radius: 2400 * Math.sqrt(shadowSize / 2048) });
   if (shadows && !shadows.ok) console.warn('shadow map framebuffer incomplete; drawing without shadows');
-  let shadowsOn = !!(shadows && shadows.ok);
-  const wU = uniforms(gl, waterProg, ['uViewProj', 'uCamPos', 'uFogColor', 'uFogStart', 'uFogEnd', 'uTime']);
+  // No sun reaches an interior, so nothing there casts its shadow.
+  let shadowsOn = !!(shadows && shadows.ok) && world.kind === 'outdoor';
 
   gl.enable(gl.DEPTH_TEST);
   gl.enable(gl.CULL_FACE);
   gl.cullFace(gl.BACK);
+
+  // --- network mode: what the server says happened ---
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  const labelEls = [];
+  function handleEvents(list) {
+    const me = net.me;
+    remote.events(list, me.id);
+    const the = (id) => (id === me.id ? 'you' : 'the ' + (remote.views.get(id)?.name || 'creature'));
+    for (const ev of list) {
+      const mine = ev.from === me.id, toMe = ev.to === me.id;
+      switch (ev.k) {
+        case 'swing':
+          if (mine) eventAnim(anim, ev, player.gait > 0);
+          break;
+        case 'hit':
+          if (toMe) eventAnim(anim, ev, player.gait > 0);
+          if (mine) log('You hit ' + the(ev.to) + (ev.x ? ' with ' + ev.x : '') + ' for ' + ev.n + ' damage!' + (ev.c ? ' Critical!' : ''), ev.x ? 'style' : 'hit');
+          else if (toMe) log(cap(the(ev.from)) + ' hits you for ' + ev.n + ' damage!', 'hit-in');
+          break;
+        case 'miss':
+          if (mine) log('You miss ' + the(ev.to) + '!', 'miss');
+          else if (toMe) log(cap(the(ev.from)) + ' misses you!', 'miss-in');
+          break;
+        case 'block': case 'parry': case 'evade':
+          if (mine) { eventAnim(anim, { k: 'block' }, true); log('You ' + ev.k + ' ' + the(ev.to) + "'s attack!", ev.k); }
+          else if (toMe) log(cap(the(ev.from)) + ' ' + ev.k + (ev.k === 'evade' ? 's' : 's') + ' your attack.', 'miss');
+          break;
+        case 'death': {
+          if (toMe) { log('You have been killed.', 'death'); break; }
+          const v = remote.views.get(ev.to);
+          if (v && !v.isPlayer && Math.hypot(v.x - player.x, v.y - player.y) < 1800) log(cap(the(ev.to)) + ' dies!', 'kill');
+          break;
+        }
+        case 'xp': if (toMe) log('You gain ' + ev.n + ' experience points.', 'xp'); break;
+        case 'level': if (toMe) log(ev.x, 'level'); break;
+        case 'loot': if (toMe) log(ev.x === 'money' ? 'You pick up ' + money(ev.n) + '.' : 'You pick up ' + ev.x + '.', 'loot'); break;
+        default: break;
+      }
+    }
+  }
+  // Names over heads: level and name, coloured by how hard a creature is.
+  function updateLabels(vp) {
+    if (!remote) return;
+    const me = net.me, tgt = combat.target;
+    const list = [...remote.views.values()]
+      .filter((v) => v.anim && Math.hypot(v.x - player.x, v.y - player.y) < 3500)
+      .sort((a, b) => Math.hypot(a.x - player.x, a.y - player.y) - Math.hypot(b.x - player.x, b.y - player.y))
+      .slice(0, 24);
+    list.forEach((v, i) => {
+      let el = labelEls[i];
+      if (!el) { el = document.createElement('div'); el.className = 'label'; document.body.appendChild(el); labelEls[i] = el; }
+      const x = v.x, y = v.e.z + v.type.ch.height * v.scale + 28, z = v.y;
+      const cx = vp[0] * x + vp[4] * y + vp[8] * z + vp[12];
+      const cy = vp[1] * x + vp[5] * y + vp[9] * z + vp[13];
+      const cw = vp[3] * x + vp[7] * y + vp[11] * z + vp[15];
+      if (cw <= 0 || (v.dead && v !== tgt)) { el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      el.style.left = ((cx / cw * 0.5 + 0.5) * innerWidth).toFixed(0) + 'px';
+      el.style.top = ((1 - (cy / cw * 0.5 + 0.5)) * innerHeight).toFixed(0) + 'px';
+      el.textContent = v.name + (v.level && !v.friendly ? '  ' + v.level : '') + (v.dead ? ' (dead)' : '');
+      el.style.color = v.isPlayer ? '#9fe3ff' : v.friendly ? '#c8d0da' : conColor(v.level, me.level);
+      el.classList.toggle('target', v === tgt);
+    });
+    for (let i = list.length; i < labelEls.length; i++) labelEls[i].style.display = 'none';
+  }
 
   let last = performance.now(), fpsAccum = 0, fpsFrames = 0;
   function frame(now) {
@@ -870,49 +1130,83 @@ async function main() {
     // back along the way it faces, Q and E step sideways. The camera hangs
     // behind and turns with it.
     const control = followMode && !player.dead;
-    const turn = control ? (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0) : 0;
-    player.yaw += turn * TURN * dt;
+    let turn = control ? (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0) : 0;
     const fwdKey = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0);
     const sideKey = (keys.has('KeyE') ? 1 : 0) - (keys.has('KeyQ') ? 1 : 0);
-    const pf = [Math.sin(player.yaw), -Math.cos(player.yaw)];
-    const pr = [Math.cos(player.yaw), Math.sin(player.yaw)];
-    let mx = pf[0] * fwdKey + pr[0] * sideKey, my = pf[1] * fwdKey + pr[1] * sideKey;
-    const moveLen = Math.hypot(mx, my);
-    player.back = control && fwdKey < 0;
-    player.side = control && fwdKey === 0 ? sideKey : 0;
-    if (moveLen > 0 && control) {
-      mx /= moveLen; my /= moveLen;
-      const sprinting = keys.has('ShiftLeft') || keys.has('ShiftRight');
-      // Backing up and sidestepping are always at a walk: their clips are
-      // walks, and run at three times their pace they would scurry.
-      const speed = player.back || player.side || walkMode ? WALK : sprinting ? SPRINT : RUN;
-      const d = speed * dt;
-      player.x = Math.max(0, Math.min(extent, player.x + mx * d));
-      player.y = Math.max(0, Math.min(extent, player.y + my * d));
-      // Phase advances with ground covered, not with time, so the feet keep
-      // pace at any speed.
-      player.phase += (d / STRIDE) * Math.PI * 2;
-      player.gait = speed;
-      // Moving brings a camera swung aside back round behind.
-      orbit.off *= Math.max(0, 1 - CAM_RETURN * dt);
+    if (net) {
+      // Network mode: the same steps the server will run, predicted here.
+      const me = net.me;
+      // Standing still in a fight, square up to the target with the turn
+      // key, so the server's own copy of the turn matches.
+      if (control && turn === 0 && fwdKey === 0 && sideKey === 0 && me.attacking && combat.target) {
+        const t = combat.target;
+        let d = Math.atan2(t.x - player.x, -(t.y - player.y)) - player.yaw;
+        d = ((d + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+        if (Math.abs(d) > 0.06) turn = d > 0 ? 1 : -1;
+      }
+      const m = net.update(dt, control
+        ? { fwd: fwdKey, strafe: sideKey, turn, run: !walkMode }
+        : { fwd: 0, strafe: 0, turn: 0, run: false });
+      const sh = net.shown;
+      player.x = sh.x; player.y = sh.y; player.yaw = sh.yaw;
+      player.back = m.back; player.side = m.side;
+      player.gait = m.speed;
+      player.hp = me.hp; player.maxHp = me.maxHp; player.dead = me.dead;
+      if (player.gait > 0) {
+        player.phase += (player.gait * dt / STRIDE) * Math.PI * 2;
+        orbit.off *= Math.max(0, 1 - CAM_RETURN * dt);
+      }
     } else {
-      player.gait = 0;
+      player.yaw += turn * TURN * dt;
+      const pf = [Math.sin(player.yaw), -Math.cos(player.yaw)];
+      const pr = [Math.cos(player.yaw), Math.sin(player.yaw)];
+      let mx = pf[0] * fwdKey + pr[0] * sideKey, my = pf[1] * fwdKey + pr[1] * sideKey;
+      const moveLen = Math.hypot(mx, my);
+      player.back = control && fwdKey < 0;
+      player.side = control && fwdKey === 0 ? sideKey : 0;
+      if (moveLen > 0 && control) {
+        mx /= moveLen; my /= moveLen;
+        const sprinting = keys.has('ShiftLeft') || keys.has('ShiftRight');
+        // Backing up and sidestepping are always at a walk: their clips are
+        // walks, and run at three times their pace they would scurry.
+        const speed = player.back || player.side || walkMode ? WALK : sprinting ? SPRINT : RUN;
+        const d = speed * dt;
+        [player.x, player.y] = world.clamp(player.x + mx * d, player.y + my * d);
+        // Phase advances with ground covered, not with time, so the feet keep
+        // pace at any speed.
+        player.phase += (d / STRIDE) * Math.PI * 2;
+        player.gait = speed;
+        // Moving brings a camera swung aside back round behind.
+        orbit.off *= Math.max(0, 1 - CAM_RETURN * dt);
+      } else {
+        player.gait = 0;
+      }
     }
     orbit.off = ((orbit.off + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
     orbit.yaw = player.yaw + orbit.off;
     const intensity = Math.min(1, player.gait / RUN);
 
     // --- NPCs and the fight ---
-    if (npcs) npcs.update(dt);
-    // Turning counts as moving here, so the fight's own turn toward the
-    // target does not wrestle the A and D keys.
-    if (combat) combat.update(dt, { moving: player.gait > 0 || turn !== 0 });
+    if (net) {
+      remote.sync(net);
+      handleEvents(net.takeEvents());
+      remote.update(dt);
+      ui.update();
+      if (net.me.dead && !player.deathPlayed) { anim.play('death', { hold: true }); player.deathPlayed = true; }
+      if (!net.me.dead && player.deathPlayed) { anim.clear(); player.deathPlayed = false; }
+    } else {
+      if (npcs) npcs.update(dt);
+      // Turning counts as moving here, so the fight's own turn toward the
+      // target does not wrestle the A and D keys.
+      if (combat) combat.update(dt, { moving: player.gait > 0 || turn !== 0 });
+    }
 
     // --- animation ---
     // Which clip the character should be in. Sprint has no cycle of its own,
     // so it reuses the run and lets the rate below carry the extra speed.
     // Standing in a fight is the combat stance rather than the idle.
-    const fighting = combat && (combat.attacking || npcs.npcs.some((n) => n.fight === player));
+    const fighting = net ? net.me.fighting || net.me.attacking
+      : combat && (combat.attacking || npcs.npcs.some((n) => n.fight === player));
     const still = fighting && anim.has('cidle') ? 'cidle' : 'idle';
     const forward = player.gait <= WALK ? 'walk' : 'run';
     const strafe = player.side > 0 ? 'strafeR' : 'strafeL';
@@ -944,7 +1238,8 @@ async function main() {
       char.pose(player.phase, intensity);
     }
 
-    const playerGround = groundAt(player.x, player.y);
+    const playerGround = groundAt(player.x, player.y, player.z);
+    player.z = playerGround;
     // A small vertical bob, twice per stride, sells the weight transfer. The
     // recorded clips already carry their own, so this is only for the
     // procedural fallback.
@@ -967,8 +1262,11 @@ async function main() {
         target[2] - look[2] * orbit.dist,
       ];
       // Never let the chase camera sink into the hillside behind.
-      const floor = groundAt(eye[0], eye[2]) + 40;
+      const floor = groundAt(eye[0], eye[2], eye[1]) + 40;
       if (eye[1] < floor) eye[1] = floor;
+      // Inside, nor end up in a wall or over a ceiling: the clip comes last,
+      // since lifting the eye off a stair behind can put it in the rock.
+      if (world.clipCamera) eye = world.clipCamera(target, eye);
       lastEye = eye;
     } else {
       const right = [Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];
@@ -996,47 +1294,8 @@ async function main() {
     const near = followMode ? 15 : 20;
     const vp = mul(perspective(FOV, w / h, near, far), lookAt(eye, target, [0, 1, 0]));
     view.eye = eye; view.target = target;
-    const fogStart = far * 0.25, fogEnd = far * 0.92;
-
-    // --- terrain ---
-    // The shadow pass draws it too, as a caster: a hill shades the valley
-    // behind it. That pass wants depth only, so no ground detail.
-    const drawTerrain = (viewProj, light, shadowPass) => {
-    gl.useProgram(terrainProg);
-    gl.uniformMatrix4fv(tU.uViewProj, false, viewProj);
-    gl.uniform3fv(tU.uCamPos, eye);
-    gl.uniform3fv(tU.uFogColor, fogColor);
-    gl.uniform1f(tU.uFogStart, fogStart);
-    gl.uniform1f(tU.uFogEnd, fogEnd);
-    bindLight(gl, tU, light);
-    gl.uniform1f(tU.uWireframe, wireframe && !shadowPass ? 1 : 0);
-    gl.uniform1i(tU.uAtlas, 0);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.uniform1f(tU.uDetail, detail && detailOn && !shadowPass ? 1 : 0);
-    // Bound whether or not the zone has detail; see noDetail.
-    const d = detail || ground;
-    gl.uniform1i(tU.uLayers, 1);
-    gl.uniform1i(tU.uMasks, 2);
-    gl.uniform1i(tU.uSlots, 3);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D_ARRAY, d.layers);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D_ARRAY, d.masks);
-    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, d.slots);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform1f(tU.uSectors, d.sectors);
-    gl.uniform1f(tU.uZone, man.zoneUnits);
-    gl.uniform1f(tU.uMaskPx, d.maskPx);
-    gl.uniform1f(tU.uBlend, d.weighted ? 1 : 0);
-    gl.uniform2f(tU.uDetailFade, DETAIL_NEAR, DETAIL_FAR);
-    gl.bindVertexArray(terrainVAO);
-    if (wireframe && !shadowPass) {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lbo);
-      gl.drawElements(gl.LINES, lineIdx.length, gl.UNSIGNED_INT, 0);
-    } else {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
-    }
-    };
+    const fogStart = world.fog ? world.fog.start : far * 0.25;
+    const fogEnd = world.fog ? world.fog.end : far * 0.92;
 
     // The camera's right and up, for cards that turn to face it.
     const f = [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]];
@@ -1053,7 +1312,7 @@ async function main() {
     // player's for the picture, the sun's for the shadow map.
     const drawWorld = (viewProj, light, shadowPass) => {
       const ctx = { viewProj, camPos: eye, camRight, camUp, fogColor, fogStart, fogEnd, light, shadowPass, time: now / 1000 };
-      drawTerrain(viewProj, light, shadowPass);
+      world.drawGround({ viewProj, light, shadowPass, eye, fogColor, fogStart, fogEnd, wireframe, detailOn });
       if (props) props.draw(ctx);
       // Grass casts no shadow: a few inches of blades would only speckle
       // the ground the map already darkens.
@@ -1062,15 +1321,19 @@ async function main() {
       // tinted by the translucent surface rather than drawn over it.
       char.draw({ ...ctx, model: charModel });
       if (npcs) npcs.draw(ctx);
+      if (remote) remote.draw(ctx);
       // Particles cast no shadow, and go in last, over everything solid.
       if (particles && !shadowPass) particles.draw(ctx);
     };
+
+    // Inside, the zone's own lights nearest the eye.
+    if (world.lightsNear) setPointLights(world.lightsNear(eye));
 
     // --- shadow pass ---
     // Centred on the player, or under the free camera.
     let light = null;
     if (shadows && shadowsOn) {
-      const c = followMode ? [player.x, playerGround, player.y] : [eye[0], groundAt(eye[0], eye[2]), eye[2]];
+      const c = followMode ? [player.x, playerGround, player.y] : [eye[0], groundAt(eye[0], eye[2], eye[1]), eye[2]];
       const l = shadows.begin(c);
       drawWorld(l.viewProj, null, true);
       shadows.end();
@@ -1086,29 +1349,13 @@ async function main() {
     // The target's ring: gold when selected, red while it is a fight.
     const tgt = combat && combat.target;
     if (tgt && !tgt.gone) {
-      const hostile = combat.attacking || tgt.fight === player;
+      const hostile = combat.attacking || tgt.fight === player || (net && tgt.fight);
       const color = tgt.dead ? [0.55, 0.55, 0.55] : hostile ? [0.95, 0.25, 0.2] : [1.0, 0.82, 0.25];
       ring.draw(vp, tgt.x, tgt.y, tgt.body * 1.15 + 10, groundAt, color, now / 1000);
     }
 
-    if (waters.length) {
-      gl.useProgram(waterProg);
-      gl.uniformMatrix4fv(wU.uViewProj, false, vp);
-      gl.uniform3fv(wU.uCamPos, eye);
-      gl.uniform3fv(wU.uFogColor, fogColor);
-      gl.uniform1f(wU.uFogStart, fogStart);
-      gl.uniform1f(wU.uFogEnd, fogEnd);
-      gl.uniform1f(wU.uTime, now / 1000);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.disable(gl.CULL_FACE);
-      for (const wb of waters) {
-        gl.bindVertexArray(wb.vao);
-        gl.drawArrays(gl.TRIANGLES, 0, wb.count);
-      }
-      gl.enable(gl.CULL_FACE);
-      gl.disable(gl.BLEND);
-    }
+    world.drawWater({ vp, eye, fogColor, fogStart, fogEnd, time: now / 1000 });
+    if (net) updateLabels(vp);
     gl.bindVertexArray(null);
 
     fpsAccum += dt; fpsFrames++;
@@ -1144,8 +1391,9 @@ async function main() {
       box.classList.toggle('on', !!t);
       if (t) {
         $('tgt-name').textContent = t.name;
+        if (net) $('tgt-name').style.color = t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColor(t.level, net.me.level);
         $('tgt-hp').textContent = t.dead ? 'dead'
-          : Math.ceil(t.hp) + ' / ' + t.maxHp + '  ·  ' + Math.round(Math.hypot(t.x - player.x, t.y - player.y)) + 'u';
+          : (net ? Math.round(t.hp * 100) + '%' : Math.ceil(t.hp) + ' / ' + t.maxHp) + '  ·  ' + Math.round(Math.hypot(t.x - player.x, t.y - player.y)) + 'u';
         bar($('tgt-bar'), t.hp, t.maxHp);
         box.classList.toggle('engaged', combat.attacking);
       }

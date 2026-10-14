@@ -7,13 +7,13 @@ It counts what this project's readers and converters can handle. It holds file n
 
 | Class | Read | Total | Rate |
 |---|---:|---:|---:|
-| scenery | 1918 | 1924 | 99.7% |
-| dungeon pieces | 1381 | 1386 | 99.6% |
-| city blocks | 140 | 174 | 80.5% |
+| scenery | 1923 | 1924 | 99.9% |
+| dungeon pieces | 1385 | 1386 | 99.9% |
+| city blocks | 169 | 174 | 97.1% |
 | figures | 632 | 633 | 99.8% |
 | animations | 4027 | 4032 | 99.9% |
-| textures | 6058 | 6742 | 89.9% |
-| outdoor placements | 127781 | 130278 | 98.1% |
+| textures | 6183 | 6876 | 89.9% |
+| outdoor placements | 127791 | 130278 | 98.1% |
 
 ## Read, not drawn
 
@@ -22,18 +22,18 @@ A model counts as read when every block in it parses. Some blocks are read exact
 | Class | Feature | Files |
 |---|---|---:|
 | scenery | projected and environment textures | 121 |
-| scenery | texture transforms | 95 |
+| scenery | texture transforms | 97 |
 | scenery | alpha animation | 65 |
-| scenery | particle bombs | 45 |
-| scenery | vertex morphs | 43 |
-| scenery | visibility animation | 42 |
+| scenery | particle bombs | 46 |
+| scenery | vertex morphs | 44 |
+| scenery | visibility animation | 43 |
 | scenery | particle collisions | 15 |
 | scenery | fog properties | 12 |
 | scenery | colour animation | 10 |
 | scenery | path animation | 2 |
-| dungeon pieces | projected and environment textures | 396 |
+| dungeon pieces | projected and environment textures | 397 |
 | dungeon pieces | texture transforms | 287 |
-| dungeon pieces | vertex morphs | 145 |
+| dungeon pieces | vertex morphs | 147 |
 | dungeon pieces | fog properties | 30 |
 | dungeon pieces | alpha animation | 24 |
 | dungeon pieces | particle bombs | 24 |
@@ -41,11 +41,11 @@ A model counts as read when every block in it parses. Some blocks are read exact
 | dungeon pieces | colour animation | 11 |
 | dungeon pieces | particle collisions | 11 |
 | dungeon pieces | path animation | 8 |
-| city blocks | texture transforms | 52 |
-| city blocks | fog properties | 38 |
-| city blocks | vertex morphs | 38 |
-| city blocks | particle bombs | 25 |
-| city blocks | projected and environment textures | 20 |
+| city blocks | texture transforms | 75 |
+| city blocks | vertex morphs | 45 |
+| city blocks | fog properties | 40 |
+| city blocks | particle bombs | 26 |
+| city blocks | projected and environment textures | 21 |
 | figures | projected and environment textures | 6 |
 | figures | colour animation | 3 |
 | figures | texture flipbooks | 1 |
@@ -59,15 +59,13 @@ Outdoor scenery models: trees, rocks, buildings, keeps.
 
 | Location | Read | Total |
 |---|---:|---:|
-| `Newtowns/zones/Nifs` | 200 | 202 |
-| `frontiers/NIFS` | 378 | 379 |
-| `zones/Nifs` | 1340 | 1343 |
+| `Newtowns/zones/Nifs` | 202 | 202 |
+| `frontiers/NIFS` | 379 | 379 |
+| `zones/Nifs` | 1342 | 1343 |
 
 | Cause | Count | Examples |
 |---|---:|---|
-| corrupt data in NiTriShapeData | 4 | Newtowns/zones/Nifs/bfarmhouse_burned.npk, Newtowns/zones/Nifs/bhouse2_burned.npk, frontiers/NIFS/outpost_crumble_T1-2-3-4.nif, zones/Nifs/dr_alb_house1.npk |
 | unsupported block type NiMeshParticleSystem | 1 | zones/Nifs/dr_demonroom2b.npk |
-| unsupported block type NiParticleMeshes | 1 | zones/Nifs/dr_demonroom2a.npk |
 
 ## Dungeon pieces
 
@@ -76,12 +74,11 @@ The rooms and corridors dungeons are assembled from.
 | Location | Read | Total |
 |---|---:|---:|
 | `frontiers/dnifs` | 29 | 29 |
-| `zones/Dnifs` | 1352 | 1357 |
+| `zones/Dnifs` | 1356 | 1357 |
 
 | Cause | Count | Examples |
 |---|---:|---|
-| corrupt data in NiTriShapeData | 3 | zones/Dnifs/STONERoom06.npk, zones/Dnifs/m_frontline_patch01_v2.npk, zones/Dnifs/pvp_proto_arena01.npk |
-| unsupported block type NiParticleMeshes | 2 | zones/Dnifs/THDHallCpool.npk, zones/Dnifs/THDRmfountain.npk |
+| corrupt data in NiTriShapeData | 1 | zones/Dnifs/STONERoom06.npk |
 
 ## City blocks
 
@@ -89,14 +86,13 @@ The blocks cities are assembled from, in each city zone's nifs folder.
 
 | Location | Read | Total |
 |---|---:|---:|
-| `zones/zone026/nifs` | 41 | 43 |
+| `zones/zone026/nifs` | 42 | 43 |
 | `zones/zone050/nifs` | 40 | 40 |
-| `zones/zone120/nifs` | 7 | 38 |
+| `zones/zone120/nifs` | 35 | 38 |
 | `zones/zone209/nifs` | 52 | 53 |
 
 | Cause | Count | Examples |
 |---|---:|---|
-| corrupt data in NiTriShapeData | 29 | zones/zone026/nifs/cam29.npk, zones/zone120/nifs/jord01.npk, zones/zone120/nifs/jord02.npk, zones/zone120/nifs/jord04.npk, zones/zone120/nifs/jord05.npk |
 | bad header | 5 | zones/zone026/nifs/cam32_p00.npk, zones/zone120/nifs/jord02_p00.npk, zones/zone120/nifs/jord27_p00.npk, zones/zone120/nifs/jord28_p00.npk, zones/zone209/nifs/tir37_p00.npk |
 
 ## Figures
@@ -129,19 +125,19 @@ Textures the scenery, dungeon and city models name, decoded.
 
 | Location | Read | Total |
 |---|---:|---:|
-| `Newtowns/zones/Nifs` | 796 | 797 |
+| `Newtowns/zones/Nifs` | 805 | 806 |
 | `frontiers/NIFS` | 287 | 294 |
 | `frontiers/dnifs` | 15 | 16 |
-| `zones/Dnifs` | 2016 | 2521 |
-| `zones/Nifs` | 2465 | 2552 |
-| `zones/zone026/nifs` | 281 | 292 |
+| `zones/Dnifs` | 2018 | 2523 |
+| `zones/Nifs` | 2468 | 2563 |
+| `zones/zone026/nifs` | 283 | 294 |
 | `zones/zone050/nifs` | 14 | 79 |
-| `zones/zone120/nifs` | 31 | 33 |
+| `zones/zone120/nifs` | 140 | 143 |
 | `zones/zone209/nifs` | 153 | 158 |
 
 | Cause | Count | Examples |
 |---|---:|---|
-| file not found | 684 | Newtowns/zones/Nifs/_dm_nrstwrwall, frontiers/NIFS/agramon_pattern01, frontiers/NIFS/agramon_pattern01dark, frontiers/NIFS/alb_intwood_lvl1, frontiers/NIFS/brown_dust |
+| file not found | 693 | Newtowns/zones/Nifs/_dm_nrstwrwall, frontiers/NIFS/agramon_pattern01, frontiers/NIFS/agramon_pattern01dark, frontiers/NIFS/alb_intwood_lvl1, frontiers/NIFS/brown_dust |
 
 ## Zones
 
@@ -228,7 +224,7 @@ Declared but without a folder in this install:
 
 ### Outdoor zones
 
-Each outdoor zone is dry-run: terrain read, and every model its fixtures place baked in memory. 120 zones; terrain reads in 118; 105 convert completely. 127781 of 130278 placements convert (98.1%), from 1425 of 1446 distinct models. Ground detail converts in 116 of the 118 with terrain, grass in 108 (10 have no grass map). Layout and detail give their agreement with the game's own pre-blended tiles (r); below 0.6 is unverified, which in forested zones is mostly the trees' shading in those tiles.
+Each outdoor zone is dry-run: terrain read, and every model its fixtures place baked in memory. 120 zones; terrain reads in 118; 106 convert completely. 127791 of 130278 placements convert (98.1%), from 1427 of 1446 distinct models. Ground detail converts in 116 of the 118 with terrain, grass in 108 (10 have no grass map). Layout and detail give their agreement with the game's own pre-blended tiles (r); below 0.6 is unverified, which in forested zones is mostly the trees' shading in those tiles.
 
 | Zone | Name | Terrain | Layout | Detail | Grass | Placements | Converting | Failing models |
 |---:|---|---|---|---|---|---:|---:|---|
@@ -246,7 +242,7 @@ Each outdoor zone is dry-run: terrain read, and every model its fixtures place b
 | 012 | Snowdonia | ok | as named (0.88) | ok, weighted (0.70) | ok | 865 | 865 |  |
 | 014 | Pennine Mountains | ok | as named (0.84) | ok, weighted (0.78) | ok | 807 | 807 |  |
 | 015 | Hadrian's Wall | ok | as named (0.91) | ok, weighted (0.90) | ok | 1421 | 1421 |  |
-| 027 | Constantine's Sound | ok | as named (1.00) | ok, weighted (0.91) | ok | 715 | 685 | tutorial_2wall_alb.nif (16, model file not found); tutorial_2cornertower_alb.nif (4, model file not found); DR_Alb_house1.nif (3, corrupt data in NiTriShapeData); 3tower_alb.nif (2, model file not found); smithing_anvil.nif (2, model file not found); and 3 more |
+| 027 | Constantine's Sound | ok | as named (1.00) | ok, weighted (0.91) | ok | 715 | 688 | tutorial_2wall_alb.nif (16, model file not found); tutorial_2cornertower_alb.nif (4, model file not found); 3tower_alb.nif (2, model file not found); smithing_anvil.nif (2, model file not found); rope_bridge_albion.nif (1, model file not found); and 2 more |
 | 051 | Isle of Glass | ok | as named (0.80) | ok, weighted (0.77) | ok | 812 | 812 |  |
 | 052 | Avalon Isle | ok | as named (0.96) | ok (0.92) | ok | 1528 | 1528 |  |
 | 053 | Dales of Devwy | ok | as named (0.95) | ok, weighted (0.90) | ok | 2132 | 2132 |  |
@@ -290,7 +286,7 @@ Each outdoor zone is dry-run: terrain read, and every model its fixtures place b
 | 156 | Iarnwood | ok | as named (0.63) | ok (0.64) | ok | 1505 | 1505 |  |
 | 157 | Dummy Zone | file not found |  |  |  | 0 | 0 | scenery tables: nifs.csv: only N rows |
 | 158 | Modernagrav | ok | as named (0.83) | ok, weighted (0.74) | ok | 513 | 513 |  |
-| 163 | Ellan Vannin (frontier) | ok | as named (1.00) | ok (0.97) | ok | 1985 | 1981 | agramon_keepCollision1.nif (1, no drawable geometry); agramon_keepCollision2.nif (1, no drawable geometry); agramon_keepCollision3.nif (1, no drawable geometry); bhouse2_burned.nif (1, corrupt data in NiTriShapeData) |
+| 163 | Ellan Vannin (frontier) | ok | as named (1.00) | ok (0.97) | ok | 1985 | 1982 | agramon_keepCollision1.nif (1, no drawable geometry); agramon_keepCollision2.nif (1, no drawable geometry); agramon_keepCollision3.nif (1, no drawable geometry) |
 | 164 | Irish Sea (frontier) | ok | as named (1.00) | ok (0.96) | ok | 92 | 92 |  |
 | 165 | Cathal Valley (frontier) | ok | as named (1.00) | a sector paints N layers; at most N fit | ok | 958 | 958 |  |
 | 167 | Odin's Gate (frontier) | ok | as named (1.00) | ok (0.98) | ok | 377 | 377 |  |
@@ -348,7 +344,298 @@ Each outdoor zone is dry-run: terrain read, and every model its fixtures place b
 | 269 | Bog of Cullen | ok | as named (1.00) | ok, weighted (0.95) | ok | 961 | 961 |  |
 | 270 | Lough Derg | ok | as named (1.00) | ok (0.95) | ok | 2084 | 2084 |  |
 | 271 | Silvermine Mts. | ok | as named (1.00) | ok (0.96) | ok | 1448 | 1448 |  |
-| 275 | Manannan's Room (frontier) | ok | as named (1.00) | ok (0.97) | ok | 1983 | 1979 | agramon_keepCollision1.nif (1, no drawable geometry); agramon_keepCollision2.nif (1, no drawable geometry); agramon_keepCollision3.nif (1, no drawable geometry); bhouse2_burned.nif (1, corrupt data in NiTriShapeData) |
-| 330 | The Foothills of Albion | ok | as named (1.00) | ok (0.96) | ok | 151 | 146 | DR_Alb_house1.nif (5, corrupt data in NiTriShapeData) |
+| 275 | Manannan's Room (frontier) | ok | as named (1.00) | ok (0.97) | ok | 1983 | 1980 | agramon_keepCollision1.nif (1, no drawable geometry); agramon_keepCollision2.nif (1, no drawable geometry); agramon_keepCollision3.nif (1, no drawable geometry) |
+| 330 | The Foothills of Albion | ok | as named (1.00) | ok (0.96) | ok | 151 | 151 |  |
 | 334 | The Foothills of Midgard | ok | as named (1.00) | ok (0.99) | ok | 194 | 194 |  |
 | 335 | The Foothills of Hibernia | ok | as named (1.00) | ok (0.90) | ok | 171 | 171 |  |
+
+### Cities and dungeons
+
+Each city and dungeon zone present is dry-run the same way: its layout read (`city.csv`, or `dungeon.chunk`, `.place` and `.prop`), every model it places baked, and its transform to zone coordinates fitted. 282 zones; the layout reads in 282; 279 convert completely. 19148 of 19605 placements convert (97.7%).
+
+The fit is judged by the zone's own exits (`ZONEJUMP.csv`) and lights (`lights.csv`): how many of them the fitted origin, with x mirrored, puts on the geometry.
+
+| Zone | Name | Kind | Layout | Placements | Converting | Origin | On the geometry | Failing models |
+|---:|---|---|---|---:|---:|---|---:|---|
+| 019 | Stonehenge Barrows | dungeon | ok | 77 | 77 | 23248, 24144, 15968 | 33 of 36 |  |
+| 021 | Tomb of Mithra | dungeon | ok | 165 | 165 | 23673, 23542, 15942 | 41 of 41 |  |
+| 022 | Keltoi Fogou | dungeon | ok | 52 | 52 | 23568, 24097, 15994 | 38 of 38 |  |
+| 023 | Catacombs of Cardova | dungeon | ok | 142 | 142 | 23619, 23611, 16004 | 40 of 40 |  |
+| 024 | Tepok's Mine | dungeon | ok | 49 | 49 | 23500, 23598, 16102 | 34 of 36 |  |
+| 026 | City of Camelot | city | ok | 40 | 40 | 23557, 23607, 8217 | 40 of 40 |  |
+| 048 | Dream | dungeon | ok | 77 | 77 | 23248, 24144, 15968 | 33 of 36 |  |
+| 049 | Marrach Briollag | dungeon | ok | 29 | 29 | 23369, 23396, 16173 | 4 of 4 |  |
+| 050 | Avalon City | city | ok | 33 | 33 | 23629, 23609, 8256 | 30 of 32 |  |
+| 059 | Albion's Glashtin Forges | dungeon | ok | 124 | 124 | 23535, 23559, 15786 | 8 of 8 |  |
+| 060 | Caer Sidi | dungeon | ok | 161 | 2 | 23338, 24044, 15848 | 5 of 109 | STONEHall22.NIF (36, model file not found); STONEHall12.NIF (15, model file not found); STONEHall13.NIF (15, model file not found); STONEHall15.NIF (11, model file not found); STONEHall18.NIF (10, model file not found); and 19 more |
+| 061 | Krondon | dungeon | ok | 102 | 102 | 23264, 23432, 15792 | 11 of 21 |  |
+| 062 | Crystal Cave | dungeon | ok | 2 | 2 | 23300, 24168, 15851 | 7 of 8 |  |
+| 063 | Roman Aqueducts | dungeon | ok | 70 | 70 | 23947, 23441, 15910 | 8 of 8 |  |
+| 065 | Inconnu Crypt | dungeon | ok | 129 | 129 | 23062, 23338, 15882 | 6 of 6 |  |
+| 068 | Lower Crypt | dungeon | ok | 45 | 45 | 23511, 23926, 16060 | 8 of 8 |  |
+| 069 | Albion's Darkspire | dungeon | ok | 77 | 77 | 22999, 23403, 15630 | 3 of 3 |  |
+| 078 | Cetus' Pit | dungeon | ok | 16 | 16 | 23038, 23439, 16040 | 7 of 8 |  |
+| 079 | Sobekite Eternal | dungeon | ok | 244 | 105 | 23882, 23747, 16208 | 44 of 65 | OceanusHall01.NIF (14, model file not found); OceanusHall26.NIF (13, model file not found); OceanusHall11.NIF (11, model file not found); OceanusHall03.NIF (10, model file not found); OceanusHall08.NIF (10, model file not found); and 27 more |
+| 080 | Temple of Twilight | dungeon | ok | 204 | 204 | 23520, 23984, 16096 | 54 of 55 |  |
+| 083 | Halls of Ma'ati | dungeon | ok | 160 | 160 | 23640, 23792, 16184 | 47 of 48 |  |
+| 088 | the Great Pyramid of Stygia | dungeon | ok | 6 | 6 | 23804, 23216, 16012 | 7 of 7 |  |
+| 089 | Deep Volcanus | dungeon | ok | 151 | 151 | 23701, 24112, 15618 | 79 of 89 |  |
+| 091 | Celestius | dungeon | ok | 2 | 2 | 23167, 23465, 7584 | 7 of 7 |  |
+| 092 | Veil Rift | dungeon | ok | 29 | 29 | 23369, 23396, 16173 | 4 of 4 |  |
+| 093 | Shar Labyrinth | dungeon | ok | 9 | 9 | 23154, 23950, 15783 | 4 of 4 |  |
+| 094 | The Queen's Labyrinth | dungeon | ok | 27 | 27 | 23655, 23601, 15757 | 8 of 8 |  |
+| 098 | Hibernia's Darkspire | dungeon | ok | 77 | 77 | 22999, 23403, 15630 | 3 of 3 |  |
+| 099 | Hibernia's Glashtin Forge | dungeon | ok | 133 | 133 | 23088, 23482, 15797 | 8 of 8 |  |
+| 120 | Jordheim | city | ok | 31 | 31 | 23436, 23997, 8111 | 35 of 37 |  |
+| 123 | Aphophian | dungeon | ok | 1 | 1 | 23584, 23904, 0 | — |  |
+| 124 | Hephaestian | dungeon | ok | 1 | 1 | 23584, 23904, 0 | — |  |
+| 125 | Spindelhalla | dungeon | ok | 196 | 196 | 23564, 23719, 16060 | 90 of 90 |  |
+| 126 | Vendo Caverns | dungeon | ok | 54 | 54 | 23569, 23654, 15842 | 34 of 34 |  |
+| 127 | Varulvhamn | dungeon | ok | 184 | 184 | 23966, 23907, 16112 | 105 of 110 |  |
+| 128 | Cursed Tomb | dungeon | ok | 52 | 52 | 23683, 24094, 15993 | 37 of 38 |  |
+| 129 | Nisse's Lair | dungeon | ok | 130 | 130 | 24004, 23702, 15805 | 77 of 86 |  |
+| 149 | Nyttheim | dungeon | ok | 77 | 77 | 23382, 23735, 15912 | 8 of 8 |  |
+| 150 | Trollheim | dungeon | ok | 158 | 158 | 23616, 23400, 15800 | 87 of 138 |  |
+| 160 | Tuscaran Glacier | dungeon | ok | 72 | 72 | 23687, 23653, 16335 | 33 of 51 |  |
+| 161 | Iarnvidiur's Lair | dungeon | ok | 127 | 127 | 24120, 23912, 16104 | 106 of 108 |  |
+| 180 | Fomor | dungeon | ok | 36 | 36 | 23568, 24320, 16136 | 49 of 71 |  |
+| 188 | Midgard's Darkspire | dungeon | ok | 77 | 77 | 22999, 23403, 15630 | 3 of 3 |  |
+| 189 | Midgard's Glashtin Forges | dungeon | ok | 125 | 125 | 23083, 23491, 15791 | 8 of 8 |  |
+| 190 | Tur Suil | dungeon | ok | 179 | 179 | 23728, 23725, 15843 | 78 of 78 |  |
+| 191 | Galladoria | dungeon | ok | 180 | 180 | 23674, 23819, 16135 | 158 of 165 |  |
+| 192 | The High Consul's Sanctum | dungeon | ok | 15 | 15 | 23324, 23388, 15723 | 4 of 6 |  |
+| 193 | The High Consul's Sanctum | dungeon | ok | 15 | 15 | 23324, 23388, 15723 | 4 of 6 |  |
+| 194 | The High Consul's Sanctum | dungeon | ok | 15 | 15 | 23572, 23373, 15789 | 5 of 6 |  |
+| 198 | Shaitan | dungeon | ok | 1 | 1 | 23584, 23904, 0 | — |  |
+| 199 | Volurgon | dungeon | ok | 1 | 1 | 23584, 23904, 0 | — |  |
+| 209 | Tir na Nog | city | ok | 40 | 40 | 23386, 23790, 8177 | 43 of 43 |  |
+| 220 | Coruscating Mine | dungeon | ok | 73 | 73 | 23560, 23602, 16022 | 54 of 57 |  |
+| 221 | Muire Tomb | dungeon | ok | 102 | 102 | 23647, 23525, 15877 | 42 of 43 |  |
+| 222 | Spraggon Den | dungeon | ok | 66 | 66 | 23991, 23974, 16039 | 53 of 53 |  |
+| 223 | Koalinth Caverns | dungeon | ok | 97 | 97 | 23600, 23536, 16104 | 62 of 63 |  |
+| 224 | Treibh Caillte | dungeon | ok | 129 | 129 | 23549, 24016, 16083 | 64 of 70 |  |
+| 226 | Midgard's Abandoned Mines | dungeon | ok | 978 | 978 | 23555, 23838, 16056 | 24 of 24 |  |
+| 227 | Albion's Abandoned Mines | dungeon | ok | 899 | 899 | 23648, 23943, 16079 | 24 of 24 |  |
+| 228 | Hibernia's Abandoned Mines | dungeon | ok | 927 | 927 | 23664, 23736, 15928 | 24 of 24 |  |
+| 229 | Burial Grounds | dungeon | ok | 57 | 57 | 24094, 23893, 15520 | 8 of 9 |  |
+| 233 | Summoner's Hall | dungeon | ok | 72 | 72 | 23509, 23677, 15530 | 26 of 28 |  |
+| 243 | Kobold Undercity | dungeon | ok | 87 | 87 | 23344, 23536, 16208 | 9 of 10 |  |
+| 244 | Passage of Conflict | dungeon | ok | 188 | 188 | 23491, 23582, 16354 | 41 of 46 |  |
+| 245 | The Labyrinth | dungeon | ok | 3085 | 3085 | 23399, 24059, 16400 | 79 of 110 |  |
+| 249 | Darkness Falls | dungeon | ok | 254 | 254 | 23419, 23459, 16320 | 283 of 381 |  |
+| 256 | Forgotten Mines | dungeon | ok | 23 | 23 | 23470, 23586, 15938 | 9 of 9 |  |
+| 257 | Forgotten Mines | dungeon | ok | 26 | 26 | 23537, 23622, 16050 | 9 of 9 |  |
+| 258 | Forgotten Mines | dungeon | ok | 25 | 25 | 23527, 23748, 15944 | 11 of 11 |  |
+| 277 | Frozen Cavern | dungeon | ok | 72 | 72 | 23687, 23653, 16335 | 33 of 51 |  |
+| 278 | Damp Cavern | dungeon | ok | 29 | 29 | 23553, 23728, 15874 | 9 of 9 |  |
+| 279 | Damp Cavern | dungeon | ok | 36 | 36 | 23612, 23649, 15838 | 8 of 9 |  |
+| 280 | Damp Cavern | dungeon | ok | 23 | 23 | 24135, 24246, 16142 | 7 of 9 |  |
+| 281 | Forgotten Sepulchre | dungeon | ok | 30 | 30 | 23651, 23680, 15882 | 9 of 9 |  |
+| 282 | Forgotten Sepulchre | dungeon | ok | 31 | 31 | 23345, 23720, 15921 | 10 of 10 |  |
+| 283 | Forgotten Sepulchre | dungeon | ok | 26 | 26 | 23672, 23720, 15792 | 8 of 8 |  |
+| 284 | Concealed Guardhouse | dungeon | ok | 17 | 17 | 23667, 23390, 15953 | 7 of 7 |  |
+| 285 | Concealed Guardhouse | dungeon | ok | 23 | 23 | 23434, 24200, 15941 | 8 of 8 |  |
+| 286 | Concealed Guardhouse | dungeon | ok | 24 | 24 | 23733, 23598, 15885 | 7 of 7 |  |
+| 287 | The Gossamer Grotto | dungeon | ok | 24 | 24 | 23148, 23402, 15692 | 2 of 2 |  |
+| 288 | The Gossamer Grotto | dungeon | ok | 25 | 25 | 23148, 23402, 15692 | 2 of 2 |  |
+| 289 | The Gossamer Grotto | dungeon | ok | 20 | 20 | 23148, 23402, 15692 | 2 of 2 |  |
+| 290 | Underground Tunnel | dungeon | ok | 22 | 22 | 23548, 23550, 16073 | 8 of 8 |  |
+| 291 | Underground Tunnel | dungeon | ok | 26 | 26 | 23610, 23673, 15929 | 8 of 8 |  |
+| 292 | Underground Tunnel | dungeon | ok | 25 | 25 | 23608, 24170, 15935 | 6 of 6 |  |
+| 293 | Burial Tomb | dungeon | ok | 43 | 43 | 23949, 23672, 16124 | 7 of 8 |  |
+| 294 | Burial Tomb | dungeon | ok | 61 | 61 | 23752, 23642, 15825 | 7 of 7 |  |
+| 295 | Burial Tomb | dungeon | ok | 30 | 30 | 23943, 23547, 16029 | 7 of 7 |  |
+| 296 | Desecrated Grounds | dungeon | ok | 26 | 26 | 24118, 23805, 15923 | 6 of 6 |  |
+| 297 | Desecrated Grounds | dungeon | ok | 23 | 23 | 23242, 23528, 15777 | 2 of 5 |  |
+| 298 | Desecrated Grounds | dungeon | ok | 23 | 23 | 23648, 23320, 15848 | 7 of 7 |  |
+| 300 | Damp Cavern | dungeon | ok | 20 | 20 | 23124, 24390, 15745 | 5 of 5 |  |
+| 301 | Damp Cavern | dungeon | ok | 19 | 19 | 23232, 23592, 16176 | 6 of 6 |  |
+| 302 | Damp Cavern | dungeon | ok | 22 | 22 | 23529, 23482, 15921 | 6 of 7 |  |
+| 303 | Damp Cavern | dungeon | ok | 26 | 26 | 23449, 23522, 15926 | 8 of 8 |  |
+| 304 | Damp Cavern | dungeon | ok | 32 | 32 | 23159, 23561, 15944 | 7 of 7 |  |
+| 305 | Forgotten Sepulchre | dungeon | ok | 18 | 18 | 23289, 23600, 15901 | 4 of 4 |  |
+| 306 | Forgotten Sepulchre | dungeon | ok | 20 | 20 | 23548, 23462, 16010 | 5 of 5 |  |
+| 307 | Forgotten Sepulchre | dungeon | ok | 18 | 18 | 23209, 23659, 15828 | 4 of 4 |  |
+| 308 | Forgotten Sepulchre | dungeon | ok | 18 | 18 | 23558, 23922, 15817 | 5 of 5 |  |
+| 309 | Forgotten Sepulchre | dungeon | ok | 13 | 13 | 23627, 23767, 15782 | 6 of 6 |  |
+| 310 | Concealed Guardhouse | dungeon | ok | 23 | 23 | 23680, 23417, 15827 | 7 of 7 |  |
+| 311 | Concealed Guardhouse | dungeon | ok | 22 | 22 | 23427, 24194, 15844 | 8 of 8 |  |
+| 312 | Concealed Guardhouse | dungeon | ok | 22 | 22 | 23732, 23446, 15891 | 6 of 6 |  |
+| 313 | Concealed Guardhouse | dungeon | ok | 29 | 29 | 23591, 23610, 15828 | 7 of 9 |  |
+| 314 | Concealed Guardhouse | dungeon | ok | 24 | 24 | 23174, 23649, 16010 | 8 of 8 |  |
+| 315 | The Gossamer Grotto | dungeon | ok | 22 | 22 | 23382, 23606, 15903 | 5 of 6 |  |
+| 316 | The Gossamer Grotto | dungeon | ok | 31 | 31 | 23567, 23626, 15891 | 7 of 7 |  |
+| 317 | The Gossamer Grotto | dungeon | ok | 31 | 31 | 23561, 23744, 15916 | 8 of 8 |  |
+| 318 | The Gossamer Grotto | dungeon | ok | 33 | 33 | 23112, 23671, 15826 | 6 of 7 |  |
+| 319 | The Gossamer Grotto | dungeon | ok | 29 | 29 | 23590, 23555, 15935 | 7 of 9 |  |
+| 320 | Underground Tunnel | dungeon | ok | 26 | 26 | 23546, 23542, 15912 | 9 of 9 |  |
+| 321 | Underground Tunnel | dungeon | ok | 30 | 30 | 23610, 23639, 15816 | 7 of 7 |  |
+| 322 | Underground Tunnel | dungeon | ok | 30 | 30 | 23612, 23680, 15816 | 8 of 8 |  |
+| 323 | Underground Tunnel | dungeon | ok | 30 | 30 | 23638, 23814, 15888 | 5 of 6 |  |
+| 324 | Underground Tunnel | dungeon | ok | 35 | 35 | 23680, 23608, 15816 | 9 of 10 |  |
+| 325 | Forgotten Tunnels | dungeon | ok | 67 | 67 | 24080, 23540, 16052 | 49 of 51 |  |
+| 326 | The Hidden Lair | dungeon | ok | 97 | 97 | 23675, 23539, 15842 | 42 of 42 |  |
+| 327 | Caverns of Madness | dungeon | ok | 50 | 50 | 23063, 23414, 15435 | 4 of 4 |  |
+| 328 | The Hidden Lair | dungeon | ok | 140 | 140 | 24024, 23570, 16004 | 62 of 67 |  |
+| 329 | Jarlsberg's Hideout | dungeon | ok | 53 | 53 | 23592, 23599, 15762 | 4 of 4 |  |
+| 331 | Drakulvhamn Sanctum | dungeon | ok | 49 | 49 | 23295, 24123, 15773 | 4 of 4 |  |
+| 332 | Kingdom of the Sidhe | dungeon | ok | 127 | 127 | 24120, 23912, 16104 | 106 of 108 |  |
+| 333 | Battle Atop the Oseberg | dungeon | ok | 57 | 57 | 24094, 23893, 15520 | 8 of 9 |  |
+| 336 | Demonic Prison | dungeon | ok | 78 | 78 | 23075, 23399, 14890 | 2 of 2 |  |
+| 337 | Demonic Prison | dungeon | ok | 73 | 73 | 23074, 23397, 14893 | 2 of 2 |  |
+| 338 | Demonic Prison | dungeon | ok | 79 | 79 | 23081, 23393, 14893 | 2 of 2 |  |
+| 339 | Brimstone Caverns | dungeon | ok | 125 | 125 | 23321, 24189, 15405 | 2 of 4 |  |
+| 340 | Halls of Helgardh | dungeon | ok | 126 | 126 | 23616, 24224, 16128 | 169 of 196 |  |
+| 341 | Cave of Cruachan | dungeon | ok | 137 | 137 | 23118, 24220, 15265 | 2 of 4 |  |
+| 342 | Mid Launch 2 | dungeon | ok | 3 | 3 | 23584, 23904, 0 | — |  |
+| 343 | Alb Launch 2 | dungeon | ok | 2 | 2 | 23584, 23904, 0 | — |  |
+| 344 | Hib Launch 2 | dungeon | ok | 3 | 3 | 23584, 23904, 0 | — |  |
+| 345 | Tomte Prison | dungeon | ok | 66 | 66 | 23545, 23583, 15824 | 17 of 17 |  |
+| 346 | Nisse's Retreat | dungeon | ok | 60 | 60 | 23078, 23725, 15812 | 11 of 14 |  |
+| 348 | The Baron's Gaol | dungeon | ok | 12 | 12 | 23359, 23613, 15715 | 3 of 4 |  |
+| 349 | Lios's Eternal Rest | dungeon | ok | 74 | 74 | 23720, 24096, 15824 | 22 of 22 |  |
+| 350 | Liche's Unrest | dungeon | ok | 69 | 69 | 23327, 24031, 15865 | 18 of 19 |  |
+| 351 | Nephraal�s Gaol | dungeon | ok | 11 | 11 | 23302, 23551, 15811 | 4 of 4 |  |
+| 352 | Morfesa�s Gaol | dungeon | ok | 13 | 13 | 23227, 23638, 15903 | 4 of 4 |  |
+| 353 | Den of Bones | dungeon | ok | 60 | 60 | 23582, 23536, 15914 | 19 of 22 |  |
+| 354 | The Lost Burrow | dungeon | ok | 85 | 85 | 23610, 23647, 15824 | 25 of 25 |  |
+| 355 | Tethra's Stronghold | dungeon | ok | 75 | 75 | 23569, 23554, 15970 | 36 of 40 |  |
+| 356 | Barrow of the Restless Dead | dungeon | ok | 72 | 72 | 23582, 23690, 16110 | 27 of 27 |  |
+| 357 | The Cursed Lair | dungeon | ok | 126 | 126 | 23294, 23897, 15924 | 27 of 27 |  |
+| 358 | Drakulvhamn | dungeon | ok | 88 | 88 | 23552, 23540, 15908 | 20 of 22 |  |
+| 359 | Red Dagger Hideout | dungeon | ok | 145 | 145 | 23718, 23596, 15977 | 63 of 64 |  |
+| 360 | Eirik's Throne Room | dungeon | ok | 1 | 1 | 23494, 23627, 15762 | 5 of 5 |  |
+| 361 | Arachnid's Labyrinth | dungeon | ok | 103 | 103 | 23545, 23730, 15914 | 21 of 24 |  |
+| 362 | The Master's Lair | dungeon | ok | 90 | 90 | 23789, 23593, 15829 | 26 of 29 |  |
+| 363 | Anataeus' Sanctuary | dungeon | ok | 6 | 6 | 23163, 23384, 16055 | 2 of 2 |  |
+| 364 | Keeper Iraeda's Sanctuary | dungeon | ok | 6 | 6 | 23171, 23381, 16151 | 2 of 2 |  |
+| 365 | Bandit Lair | dungeon | ok | 4 | 4 | 23584, 23904, 0 | — |  |
+| 366 | Gnoll Lair | dungeon | ok | 4 | 4 | 23584, 23904, 0 | — |  |
+| 367 | Vandr's Bane | dungeon | ok | 3 | 3 | 23100, 23481, 15497 | 2 of 2 |  |
+| 368 | Past and Present | dungeon | ok | 3 | 3 | 23230, 23551, 15635 | 2 of 2 |  |
+| 369 | Half-Orc Camp | dungeon | ok | 6 | 6 | 23415, 23664, 15800 | 2 of 2 |  |
+| 370 | Brutal Realization | dungeon | ok | 4 | 4 | 23088, 23388, 15674 | 2 of 2 |  |
+| 371 | History Repeats Itself | dungeon | ok | 5 | 5 | 23584, 23904, 0 | — |  |
+| 372 | Hallowed Ruins | dungeon | ok | 7 | 7 | 23584, 23904, 0 | — |  |
+| 373 | Passage of Echoes | dungeon | ok | 36 | 36 | 23436, 23682, 15657 | 4 of 4 |  |
+| 374 | Childe's Tomb | dungeon | ok | 28 | 28 | 23464, 23720, 15688 | 4 of 4 |  |
+| 375 | Lost Passages | dungeon | ok | 23 | 23 | 23366, 24108, 15382 | 4 of 4 |  |
+| 376 | Goblin's Cookery | dungeon | ok | 68 | 68 | 23546, 23799, 16007 | 21 of 25 |  |
+| 377 | The Beastmaster's Den | dungeon | ok | 68 | 68 | 24056, 23608, 15937 | 29 of 30 |  |
+| 378 | Keeper Garran's Sanctuary | dungeon | ok | 6 | 6 | 23170, 23383, 16057 | 2 of 2 |  |
+| 379 | The Funerary Hall | dungeon | ok | 24 | 24 | 23744, 23664, 15808 | 2 of 2 |  |
+| 380 | Lair of Doom | dungeon | ok | 80 | 80 | 23792, 23665, 15817 | 24 of 24 |  |
+| 381 | The Arena | dungeon | ok | 105 | 105 | 23679, 23653, 15889 | 24 of 24 |  |
+| 382 | The Funerary Hall | dungeon | ok | 27 | 27 | 23646, 23360, 15826 | 2 of 2 |  |
+| 383 | The Funerary Hall | dungeon | ok | 28 | 28 | 23646, 23360, 15826 | 2 of 2 |  |
+| 384 | The Ritual Hall | dungeon | ok | 72 | 72 | 23730, 23760, 15900 | 21 of 21 |  |
+| 385 | The Betrayer's Den | dungeon | ok | 78 | 78 | 23774, 23495, 16038 | 20 of 20 |  |
+| 386 | the Sundered Tombs | dungeon | ok | 21 | 21 | 23667, 23635, 15868 | 6 of 7 |  |
+| 387 | the Sundered Tombs | dungeon | ok | 23 | 23 | 23744, 23664, 15792 | 6 of 6 |  |
+| 388 | the Sundered Tombs | dungeon | ok | 22 | 22 | 23744, 23664, 15792 | 6 of 6 |  |
+| 389 | Halls of Flame | dungeon | ok | 33 | 33 | 23500, 23675, 15898 | 4 of 4 |  |
+| 390 | Granite Halls | dungeon | ok | 70 | 70 | 23947, 23441, 15910 | 8 of 8 |  |
+| 391 | Arcane Tower | dungeon | ok | 13 | 13 | 23098, 23439, 15925 | 4 of 4 |  |
+| 392 | The Hall of Reawakening | dungeon | ok | 59 | 59 | 23715, 23654, 15778 | 14 of 15 |  |
+| 393 | The Hidden Crypt | dungeon | ok | 66 | 66 | 23560, 23761, 15828 | 16 of 16 |  |
+| 394 | Constantine's Throne Room | dungeon | ok | 1 | 1 | 23491, 23595, 15672 | 5 of 6 |  |
+| 395 | Lamfhotas' Throne Room | dungeon | ok | 1 | 1 | 23608, 23552, 15784 | 6 of 6 |  |
+| 396 | Depths of Despair | dungeon | ok | 24 | 24 | 23653, 23577, 15609 | 4 of 4 |  |
+| 397 | Childe's Vault | dungeon | ok | 25 | 25 | 23621, 23721, 15768 | 4 of 4 |  |
+| 398 | Arcane Tower | dungeon | ok | 13 | 13 | 23095, 23431, 15909 | 4 of 4 |  |
+| 399 | Arcane Tower | dungeon | ok | 13 | 13 | 23093, 23431, 15916 | 4 of 4 |  |
+| 400 | Burial Tomb | dungeon | ok | 31 | 31 | 23628, 23644, 16043 | 8 of 8 |  |
+| 401 | Burial Tomb | dungeon | ok | 16 | 16 | 23639, 23775, 16184 | 6 of 6 |  |
+| 402 | Burial Tomb | dungeon | ok | 37 | 37 | 23601, 23656, 15796 | 7 of 7 |  |
+| 403 | Burial Tomb | dungeon | ok | 22 | 22 | 23541, 23588, 15717 | 6 of 6 |  |
+| 404 | Burial Tomb | dungeon | ok | 24 | 24 | 23619, 23733, 16002 | 7 of 7 |  |
+| 405 | Desecrated Grounds | dungeon | ok | 20 | 20 | 24118, 23805, 15923 | 6 of 6 |  |
+| 406 | Desecrated Grounds | dungeon | ok | 20 | 20 | 23289, 23761, -6 | 3 of 5 |  |
+| 407 | Desecrated Grounds | dungeon | ok | 24 | 24 | 23736, 23460, 16010 | 7 of 7 |  |
+| 408 | Desecrated Grounds | dungeon | ok | 30 | 30 | 23545, 23667, 15718 | 8 of 8 |  |
+| 409 | Desecrated Grounds | dungeon | ok | 26 | 26 | 23137, 23562, 15900 | 6 of 6 |  |
+| 410 | Forgotten Mines | dungeon | ok | 14 | 14 | 24071, 23549, 15907 | 7 of 7 |  |
+| 411 | Forgotten Mines | dungeon | ok | 19 | 19 | 23530, 23630, 16025 | 6 of 6 |  |
+| 412 | Forgotten Mines | dungeon | ok | 24 | 24 | 23995, 23524, 15914 | 7 of 7 |  |
+| 413 | Forgotten Mines | dungeon | ok | 19 | 19 | 23614, 23560, 15902 | 7 of 7 |  |
+| 414 | Forgotten Mines | dungeon | ok | 17 | 17 | 23531, 23466, 16087 | 7 of 7 |  |
+| 415 | The Funerary Hall | dungeon | ok | 28 | 28 | 23433, 23623, 15908 | 7 of 7 |  |
+| 416 | The Funerary Hall | dungeon | ok | 24 | 24 | 23655, 23434, 15920 | 7 of 7 |  |
+| 417 | The Funerary Hall | dungeon | ok | 24 | 24 | 23320, 23872, 15930 | 6 of 6 |  |
+| 418 | The Funerary Hall | dungeon | ok | 28 | 28 | 23544, 23475, 15896 | 7 of 7 |  |
+| 419 | The Funerary Hall | dungeon | ok | 26 | 26 | 23551, 23430, 15908 | 5 of 5 |  |
+| 420 | the Sundered Tombs | dungeon | ok | 18 | 18 | 23393, 23823, 15968 | 5 of 6 |  |
+| 421 | Dream | dungeon | ok | 196 | 196 | 23564, 23719, 16060 | 90 of 90 |  |
+| 422 | the Sundered Tombs | dungeon | ok | 73 | 73 | 23560, 23602, 16022 | 54 of 57 |  |
+| 423 | Dream | dungeon | ok | 161 | 2 | 23338, 24044, 15848 | 5 of 109 | STONEHall22.NIF (36, model file not found); STONEHall12.NIF (15, model file not found); STONEHall13.NIF (15, model file not found); STONEHall15.NIF (11, model file not found); STONEHall18.NIF (10, model file not found); and 19 more |
+| 424 | Dream | dungeon | ok | 158 | 158 | 23616, 23400, 15800 | 87 of 138 |  |
+| 425 | The Lost Wing | dungeon | ok | 91 | 91 | 23784, 23673, 15810 | 23 of 23 |  |
+| 426 | Deliah's Sanctuary | dungeon | ok | 70 | 70 | 23697, 23751, 15812 | 20 of 21 |  |
+| 427 | The Cursed Barrow | dungeon | ok | 32 | 32 | 23670, 23542, 15814 | 7 of 7 |  |
+| 428 | The Cursed Barrow | dungeon | ok | 32 | 32 | 23805, 23640, 15887 | 7 of 7 |  |
+| 429 | Snyblem's Lair | dungeon | ok | 20 | 20 | 23107, 23544, 15557 | 4 of 4 |  |
+| 430 | the Plutonian Shore | dungeon | ok | 22 | 22 | 23169, 23474, 15764 | 4 of 4 |  |
+| 431 | The Cursed Barrow | dungeon | ok | 32 | 32 | 23802, 23635, 15835 | 6 of 6 |  |
+| 432 | Dismal Grotto | dungeon | ok | 23 | 23 | 23509, 24006, 15934 | 7 of 7 |  |
+| 433 | Snarg's Grotto | dungeon | ok | 35 | 35 | 23115, 23662, 15868 | 4 of 4 |  |
+| 434 | Maze of Tribulation | dungeon | ok | 36 | 36 | 23161, 23748, 15789 | 4 of 4 |  |
+| 435 | The Smelting Pot | dungeon | ok | 27 | 27 | 23245, 24202, 15707 | 4 of 4 |  |
+| 436 | Forges of Flame | dungeon | ok | 33 | 33 | 23500, 23675, 15898 | 4 of 4 |  |
+| 437 | Hammer Hugak's Smithy | dungeon | ok | 25 | 25 | 23106, 23385, 15663 | 4 of 4 |  |
+| 438 | the Goblin Workshop | dungeon | ok | 28 | 28 | 23564, 24023, 15705 | 4 of 4 |  |
+| 439 | Wolak's Crucible | dungeon | ok | 24 | 24 | 23033, 24119, 15786 | 4 of 4 |  |
+| 440 | Marik's Workroom | dungeon | ok | 24 | 24 | 23608, 23532, 15704 | 4 of 4 |  |
+| 441 | Dismal Grotto | dungeon | ok | 13 | 13 | 23734, 23648, 15846 | 8 of 8 |  |
+| 442 | The Steward's Crypt | dungeon | ok | 59 | 59 | 23744, 23668, 15810 | 16 of 16 |  |
+| 443 | Serf's Folly | dungeon | ok | 55 | 55 | 23621, 23672, 15814 | 15 of 15 |  |
+| 444 | Dream | dungeon | ok | 36 | 36 | 23568, 24320, 16136 | 49 of 71 |  |
+| 445 | Dream | dungeon | ok | 160 | 160 | 23640, 23792, 16184 | 47 of 48 |  |
+| 448 | Dark Cavern | dungeon | ok | 22 | 22 | 23792, 23480, 15696 | 4 of 6 |  |
+| 449 | Dark Cavern | dungeon | ok | 33 | 33 | 23072, 23812, 15828 | 7 of 7 |  |
+| 450 | The Cursed Barrow | dungeon | ok | 24 | 24 | 23563, 23688, 15785 | 5 of 5 |  |
+| 451 | The Cursed Barrow | dungeon | ok | 24 | 24 | 23800, 23640, 15793 | 7 of 7 |  |
+| 452 | The Cursed Barrow | dungeon | ok | 20 | 20 | 23744, 23672, 15704 | 6 of 6 |  |
+| 453 | The Cursed Barrow | dungeon | ok | 19 | 19 | 23628, 23901, 15798 | 5 of 5 |  |
+| 454 | The Cursed Barrow | dungeon | ok | 28 | 28 | 23947, 23455, 15736 | 7 of 7 |  |
+| 455 | Dismal Grotto | dungeon | ok | 10 | 10 | 23541, 23596, 15851 | 8 of 9 |  |
+| 456 | Dismal Grotto | dungeon | ok | 14 | 14 | 23992, 23672, 15912 | 8 of 8 |  |
+| 457 | Dismal Grotto | dungeon | ok | 13 | 13 | 24056, 23541, 15924 | 9 of 10 |  |
+| 458 | Dismal Grotto | dungeon | ok | 16 | 16 | 23984, 23664, 15912 | 9 of 9 |  |
+| 459 | Dismal Grotto | dungeon | ok | 15 | 15 | 24130, 23550, 15910 | 9 of 9 |  |
+| 460 | The Accursed Caves | dungeon | ok | 35 | 35 | 23461, 23584, 15907 | 7 of 7 |  |
+| 461 | The Accursed Caves | dungeon | ok | 32 | 32 | 23173, 23654, 15832 | 6 of 6 |  |
+| 462 | The Accursed Caves | dungeon | ok | 25 | 25 | 23486, 23593, 15905 | 7 of 7 |  |
+| 463 | The Accursed Caves | dungeon | ok | 24 | 24 | 23554, 23683, 15898 | 7 of 7 |  |
+| 464 | The Accursed Caves | dungeon | ok | 27 | 27 | 23496, 23735, 16111 | 9 of 9 |  |
+| 465 | Dark Cavern | dungeon | ok | 27 | 27 | 23240, 23672, 16072 | 7 of 8 |  |
+| 466 | Dark Cavern | dungeon | ok | 22 | 22 | 23660, 24190, 15840 | 6 of 6 |  |
+| 467 | Dark Cavern | dungeon | ok | 25 | 25 | 23681, 23427, 15915 | 7 of 7 |  |
+| 468 | Dark Cavern | dungeon | ok | 26 | 26 | 23201, 23579, 15908 | 4 of 6 |  |
+| 469 | Dark Cavern | dungeon | ok | 29 | 29 | 23657, 23553, 15816 | 9 of 10 |  |
+| 470 | Half Orc Command Post | dungeon | ok | 4 | 4 | 23584, 23904, 0 | — |  |
+| 471 | Unused Mine | dungeon | ok | 23 | 23 | 23557, 23805, 15921 | 9 of 9 |  |
+| 472 | Unused Mine | dungeon | ok | 25 | 25 | 23571, 23579, 16184 | 10 of 11 |  |
+| 473 | Unused Mine | dungeon | ok | 20 | 20 | 24129, 23649, 15903 | 7 of 8 |  |
+| 474 | Unused Mine | dungeon | ok | 18 | 18 | 23945, 23534, 15913 | 9 of 9 |  |
+| 475 | Rise of the Spraggons | dungeon | ok | 58 | 58 | 24070, 23618, 16018 | 25 of 25 |  |
+| 476 | The Warrens | dungeon | ok | 35 | 35 | 23651, 24027, 15832 | 18 of 19 |  |
+| 477 | The Accursed Caves | dungeon | ok | 25 | 25 | 23422, 23424, 15808 | 2 of 2 |  |
+| 478 | The Accursed Caves | dungeon | ok | 25 | 25 | 23416, 23392, 15816 | 2 of 2 |  |
+| 479 | The Ancient's Retreat | dungeon | ok | 78 | 78 | 23615, 23650, 15820 | 21 of 25 |  |
+| 480 | The Shaman's Inner Sanctum | dungeon | ok | 72 | 72 | 23072, 23648, 15920 | 19 of 21 |  |
+| 481 | The Accursed Caves | dungeon | ok | 22 | 22 | 23422, 23424, 15808 | 2 of 2 |  |
+| 482 | Unused Mine | dungeon | ok | 22 | 22 | 24118, 23541, 15893 | 7 of 7 |  |
+| 483 | The Brawler's Den | dungeon | ok | 54 | 54 | 23584, 23697, 15879 | 16 of 18 |  |
+| 484 | Felena's Sorrow | dungeon | ok | 49 | 49 | 23590, 23728, 15787 | 16 of 20 |  |
+| 485 | Dream | dungeon | ok | 151 | 151 | 23701, 24112, 15618 | 79 of 89 |  |
+| 487 | The Pit of Despair | dungeon | ok | 59 | 59 | 24160, 23512, 16056 | 32 of 32 |  |
+| 488 | The Forgotten Vein | dungeon | ok | 45 | 45 | 23592, 23530, 15965 | 25 of 26 |  |
+| 489 | Demons' Breach | dungeon | ok | 136 | 136 | 24086, 24111, 15532 | 103 of 114 |  |
+| 491 | Maze of Madness | dungeon | ok | 27 | 27 | 23194, 23761, 15759 | 4 of 4 |  |
+| 492 | the Shattered Lands | dungeon | ok | 30 | 30 | 23186, 23740, 15772 | 4 of 4 |  |
+| 494 | Heart of Darkness | dungeon | ok | 25 | 25 | 23621, 23721, 15768 | 4 of 4 |  |
+| 495 | Inner Sanctum | dungeon | ok | 29 | 29 | 23616, 23458, 16173 | 4 of 4 |  |
+| 496 | the Deep | dungeon | ok | 39 | 39 | 23420, 23680, 15772 | 4 of 4 |  |
+| 497 | Mid Launch | dungeon | ok | 3 | 3 | 23584, 23904, 0 | — |  |
+| 498 | Alb Launch | dungeon | ok | 2 | 2 | 23584, 23904, 0 | — |  |
+| 499 | Hib Launch | dungeon | ok | 3 | 3 | 23584, 23904, 0 | — |  |

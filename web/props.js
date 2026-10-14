@@ -12,6 +12,9 @@
 
 import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight } from './lighting.js';
 
+// Floats per instance: position (3), yaw, scale, axis (3).
+const INST = 8;
+
 const PROP_VS = `#version 300 es
 precision highp float;
 layout(location = 0) in vec3 aPos;
@@ -20,6 +23,7 @@ layout(location = 2) in vec2 aUV;
 layout(location = 3) in vec4 aInst;   // world x, height, world z, yaw
 layout(location = 4) in float aScale;
 layout(location = 5) in vec4 aColor;  // baked shade, 1 where none
+layout(location = 6) in vec3 aAxis;   // the yaw's axis, model space; up for nearly all
 
 uniform mat4 uViewProj;
 uniform vec3 uCamPos;
@@ -53,14 +57,22 @@ out vec3 vWorld;
 out vec3 vShade;
 out float vDist;
 
-void main() {
+// Turns v by the instance's yaw about its axis (Rodrigues). About up,
+// which is every outdoor fixture, it is the plain heading:
+// (c x - s y, s x + c y, z).
+vec3 turn(vec3 v) {
   float c = cos(aInst.w), s = sin(aInst.w);
+  return v * c + cross(aAxis, v) * s + aAxis * dot(aAxis, v) * (1.0 - c);
+}
+
+void main() {
   // Same basis as character.js modelMatrix: model X and Y span the ground
   // plane and model Z is up.
+  vec3 m = turn(aPos);
   vec3 world = vec3(
-    aScale * (c * aPos.x - s * aPos.y) + aInst.x,
-    aScale * aPos.z + aInst.y,
-    aScale * (s * aPos.x + c * aPos.y) + aInst.z
+    aScale * m.x + aInst.x,
+    aScale * m.z + aInst.y,
+    aScale * m.y + aInst.z
   );
   // Every copy runs its animation from its own point in the cycle, so a
   // row of torches does not flicker in step.
@@ -69,11 +81,8 @@ void main() {
     world += aScale * pulse(fract(uTime + phase)) * (uCamRight * aNormal.x + uCamUp * aNormal.y);
     vNormal = normalize(uCamPos - world);
   } else {
-    vNormal = normalize(vec3(
-      c * aNormal.x - s * aNormal.y,
-      aNormal.z,
-      s * aNormal.x + c * aNormal.y
-    ));
+    vec3 n = turn(aNormal);
+    vNormal = normalize(vec3(n.x, n.z, n.y));
   }
   vUV = aUV + uScroll * fract(uTime * 0.1 + phase) * 10.0;
   vShade = aColor.rgb;
@@ -194,15 +203,20 @@ export async function createProps(gl, base) {
   const stride = manifest.stride;
   const models = manifest.models.map((m, i) => {
     const list = perModel[i];
-    const data = new Float32Array(list.length * 5);
+    // Position, yaw, scale and the yaw's axis: up unless the instance
+    // gives one, as a few tipped dungeon props do.
+    const data = new Float32Array(list.length * INST);
     for (let k = 0; k < list.length; k++) {
-      const it = list[k];
+      const it = list[k], o = k * INST, a = it.axis || [0, 0, 1];
       // The fixture's Z is absolute world height, so it goes straight in.
-      data[k * 5 + 0] = it.p[0];
-      data[k * 5 + 1] = it.p[2];
-      data[k * 5 + 2] = it.p[1];
-      data[k * 5 + 3] = it.yaw;
-      data[k * 5 + 4] = it.s;
+      data[o + 0] = it.p[0];
+      data[o + 1] = it.p[2];
+      data[o + 2] = it.p[1];
+      data[o + 3] = it.yaw;
+      data[o + 4] = it.s;
+      data[o + 5] = a[0];
+      data[o + 6] = a[1];
+      data[o + 7] = a[2];
     }
     const ibuf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, ibuf);
@@ -226,11 +240,14 @@ export async function createProps(gl, base) {
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, ibuf);
     gl.enableVertexAttribArray(3);
-    gl.vertexAttribPointer(3, 4, gl.FLOAT, false, 20, 0);
+    gl.vertexAttribPointer(3, 4, gl.FLOAT, false, INST * 4, 0);
     gl.vertexAttribDivisor(3, 1);
     gl.enableVertexAttribArray(4);
-    gl.vertexAttribPointer(4, 1, gl.FLOAT, false, 20, 16);
+    gl.vertexAttribPointer(4, 1, gl.FLOAT, false, INST * 4, 16);
     gl.vertexAttribDivisor(4, 1);
+    gl.enableVertexAttribArray(6);
+    gl.vertexAttribPointer(6, 3, gl.FLOAT, false, INST * 4, 20);
+    gl.vertexAttribDivisor(6, 1);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
     gl.bindVertexArray(null);
 
@@ -336,4 +353,19 @@ export async function createProps(gl, base) {
     triangleCount: manifest.indexCount / 3,
     drawCalls: models.reduce((n, m) => n + (m.count ? m.groups.length : 0), 0),
   };
+}
+
+// instancePoint is where an instance puts a model-space point (Z up), in
+// world space (Y up): the CPU twin of the vertex shader's turn, for code
+// that needs the placed geometry itself, such as finding the floor.
+export function instancePoint(inst, v) {
+  const a = inst.axis || [0, 0, 1];
+  const c = Math.cos(inst.yaw), s = Math.sin(inst.yaw);
+  const d = (a[0] * v[0] + a[1] * v[1] + a[2] * v[2]) * (1 - c);
+  const m = [
+    v[0] * c + (a[1] * v[2] - a[2] * v[1]) * s + a[0] * d,
+    v[1] * c + (a[2] * v[0] - a[0] * v[2]) * s + a[1] * d,
+    v[2] * c + (a[0] * v[1] - a[1] * v[0]) * s + a[2] * d,
+  ];
+  return [inst.s * m[0] + inst.p[0], inst.s * m[2] + inst.p[2], inst.s * m[1] + inst.p[1]];
 }

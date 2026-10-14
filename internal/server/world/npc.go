@@ -1,0 +1,347 @@
+package world
+
+import (
+	"math"
+	"math/rand"
+	"strings"
+)
+
+type npcState int
+
+const (
+	npcIdle npcState = iota
+	npcWalk
+	npcChase
+	npcReturn
+	npcDead
+)
+
+type lootItem struct {
+	ID    string
+	Count int
+}
+
+// NPC is a creature in a zone, run by the server.
+type NPC struct {
+	ID       int64
+	Spawn    Spawn
+	Name     string
+	Model    int
+	Level    int
+	Size     int
+	Scale    float64
+	Body     Body
+	HX, HY   float64 // home
+	Roam     float64
+	Walk     float64 // walking pace, units a second
+	RunSpd   float64
+	HP       int
+	MaxHP    int
+	Damage   float64
+	Swing    float64
+	Reach    float64
+	Parry    float64
+	Evade    float64
+	Block    float64
+	Aggro    float64 // 0 means it only fights back
+	Friendly bool    // guards, villagers, merchants: never attacks, cannot be hurt
+	Tether   float64
+
+	state     npcState
+	timer     float64
+	tx, ty    float64
+	speedNow  float64
+	target    *Player
+	swingAt   float64
+	returning bool
+	hurtBy    map[int64]int // damage dealt by each player, for experience and loot
+	tagger    int64
+	diedAt    float64
+	respawnAt float64
+	loot      []lootItem
+	money     int64
+	lootOwner int64
+	gone      bool
+	rng       *rand.Rand
+}
+
+// newNPC builds a creature from its spawn row.
+func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
+	level := sp.Level
+	if level < 1 {
+		level = 1
+	}
+	size := sp.Size
+	if size <= 0 {
+		size = 50
+	}
+	speed := float64(sp.Speed)
+	if speed < 40 || speed > 400 {
+		speed = Run
+	}
+	n := &NPC{
+		ID: sp.ID, Spawn: sp, Name: sp.Name, Model: sp.Model, Level: level, Size: size,
+		HX: sp.X, HY: sp.Y, Roam: float64(sp.Roam),
+		RunSpd: speed, Walk: math.Max(40, speed*0.45),
+		Damage: npcDamage(level), Swing: npcSwing(size),
+		Reach:    90 + float64(size)*0.9,
+		Friendly: sp.Realm != 0,
+		hurtBy:   map[int64]int{},
+		rng:      rng,
+	}
+	n.Scale = 1
+	if t := cat.Templates[sp.Template]; t != nil {
+		n.Parry, n.Evade, n.Block = float64(t.Parry)/100, float64(t.Evade)/100, float64(t.Block)/100
+		n.Tether = float64(t.Tether)
+	}
+	if n.Tether < 800 || n.Tether > 6000 {
+		n.Tether = 2500
+	}
+	if !n.Friendly && sp.AggroLevel > 0 && sp.AggroRange > 0 {
+		n.Aggro = math.Min(float64(sp.AggroRange), 700)
+	}
+	if n.Roam > 1500 {
+		n.Roam = 1500
+	}
+	n.MaxHP = npcMaxHP(level)
+	n.reset()
+	return n
+}
+
+// reset puts the creature at home, whole and calm.
+func (n *NPC) reset() {
+	n.Body = Body{X: n.HX, Y: n.HY, Yaw: float64(n.Spawn.Heading) / 4096 * 2 * math.Pi}
+	n.Body.Z = n.Spawn.Z
+	n.HP = n.MaxHP
+	n.state = npcIdle
+	n.timer = 1 + n.rng.Float64()*8
+	n.target = nil
+	n.returning = false
+	n.hurtBy = map[int64]int{}
+	n.tagger = 0
+	n.loot, n.money, n.lootOwner = nil, 0, 0
+	n.gone = false
+	n.speedNow = 0
+}
+
+func (n *NPC) dead() bool { return n.state == npcDead }
+
+// pickSpot is a dry spot near home to wander to, or home itself.
+func (n *NPC) pickSpot(z *Zone) (float64, float64) {
+	for i := 0; i < 16; i++ {
+		a := n.rng.Float64() * 2 * math.Pi
+		r := math.Sqrt(n.rng.Float64()) * n.Roam
+		x, y := z.G.Clamp(n.HX+math.Cos(a)*r, n.HY+math.Sin(a)*r)
+		if !z.G.IsWet(x, y) {
+			return x, y
+		}
+	}
+	return n.HX, n.HY
+}
+
+// stepToward moves toward (tx,ty) at a speed, turning first like the viewer's
+// NPCs do. It returns the distance left, or -1 if water is in the way.
+func (n *NPC) stepToward(z *Zone, tx, ty, speed float64) float64 {
+	dx, dy := tx-n.Body.X, ty-n.Body.Y
+	d := math.Hypot(dx, dy)
+	n.speedNow = 0
+	if d < 1e-3 {
+		return 0
+	}
+	want := math.Atan2(dx, -dy)
+	n.Body.Yaw = turnToward(n.Body.Yaw, want, 3.5*TickDT)
+	if angleOff(want, n.Body.Yaw) >= 0.6 {
+		return d
+	}
+	s := math.Min(d, speed*TickDT)
+	nx, ny := n.Body.X+math.Sin(n.Body.Yaw)*s, n.Body.Y-math.Cos(n.Body.Yaw)*s
+	nx, ny = z.G.Clamp(nx, ny)
+	if z.G.IsWet(nx, ny) && !z.G.IsWet(n.Body.X, n.Body.Y) {
+		return -1
+	}
+	if z.Mv != nil {
+		nx, ny = z.Mv.Slide(n.Body.X, n.Body.Y, nx, ny, n.Body.Z)
+	}
+	moved := math.Hypot(nx-n.Body.X, ny-n.Body.Y)
+	n.Body.X, n.Body.Y = nx, ny
+	n.Body.Z = z.G.GroundAt(nx, ny, n.Body.Z)
+	n.speedNow = moved / TickDT
+	return d - s
+}
+
+func turnToward(cur, target, maxStep float64) float64 {
+	d := math.Mod(target-cur, 2*math.Pi)
+	if d > math.Pi {
+		d -= 2 * math.Pi
+	}
+	if d < -math.Pi {
+		d += 2 * math.Pi
+	}
+	return cur + math.Max(-maxStep, math.Min(maxStep, d))
+}
+
+// update runs one tick of a creature's life.
+func (n *NPC) update(z *Zone) {
+	switch n.state {
+	case npcDead:
+		n.speedNow = 0
+		if !n.gone && z.now-n.diedAt > n.corpseTime() {
+			n.gone = true
+			n.loot, n.money = nil, 0
+		}
+		if z.now >= n.respawnAt {
+			n.reset()
+		}
+		return
+	}
+	if n.Friendly {
+		n.wander(z, false)
+		return
+	}
+	// Anything that has hurt it, or an aggressive creature's prey, draws it in.
+	if n.target != nil && (n.target.dead || n.target.closed.Load() || n.target.Zone != z) {
+		n.target = nil
+		if n.state == npcChase {
+			n.goHome()
+		}
+	}
+	if n.target == nil && n.Aggro > 0 && n.state != npcReturn {
+		if p := z.nearestPlayer(n.Body.X, n.Body.Y, n.Aggro, func(p *Player) bool {
+			return !p.dead && p.Char.Level-n.Level < 8
+		}); p != nil {
+			n.engage(p, z)
+		}
+	}
+	switch n.state {
+	case npcChase:
+		n.chase(z)
+	case npcReturn:
+		left := n.stepToward(z, n.HX, n.HY, n.RunSpd)
+		n.HP = int(math.Min(float64(n.MaxHP), float64(n.HP)+math.Max(1, float64(n.MaxHP)*0.08*TickDT)))
+		if left >= 0 && left < 20 || left < 0 {
+			n.state, n.returning = npcIdle, false
+			n.HP = n.MaxHP
+			n.hurtBy = map[int64]int{}
+			n.timer = 2
+			n.speedNow = 0
+		}
+	default:
+		n.wander(z, true)
+	}
+}
+
+func (n *NPC) corpseTime() float64 {
+	if len(n.loot) == 0 && n.money == 0 {
+		return 12
+	}
+	return NPCCorpseSeconds
+}
+
+func (n *NPC) wander(z *Zone, regen bool) {
+	if regen && n.HP < n.MaxHP {
+		n.HP += int(math.Max(1, float64(n.MaxHP)*0.01))
+		if n.HP > n.MaxHP {
+			n.HP = n.MaxHP
+		}
+	}
+	if n.Roam < 40 {
+		n.speedNow = 0
+		return
+	}
+	switch n.state {
+	case npcIdle:
+		n.speedNow = 0
+		n.timer -= TickDT
+		if n.timer <= 0 {
+			n.tx, n.ty = n.pickSpot(z)
+			n.state = npcWalk
+			n.timer = 4*math.Hypot(n.tx-n.Body.X, n.ty-n.Body.Y)/n.Walk + 2
+		}
+	case npcWalk:
+		n.timer -= TickDT
+		left := math.Hypot(n.tx-n.Body.X, n.ty-n.Body.Y)
+		if left >= math.Max(12, n.Walk*TickDT) && n.timer > 0 {
+			if n.stepToward(z, n.tx, n.ty, n.Walk) < 0 {
+				n.timer = 0
+			}
+		} else {
+			n.state = npcIdle
+			n.timer = 3 + n.rng.Float64()*9
+			n.speedNow = 0
+		}
+	}
+}
+
+func (n *NPC) goHome() {
+	n.state = npcReturn
+	n.returning = true
+	n.target = nil
+}
+
+// engage starts a fight with a player, and calls its packmates in.
+func (n *NPC) engage(p *Player, z *Zone) {
+	if n.dead() || n.Friendly {
+		return
+	}
+	first := n.target == nil
+	n.target = p
+	n.state = npcChase
+	if first {
+		n.swingAt = z.now + 0.6
+		// Packmates: others of the same name close by join in.
+		for _, o := range z.npcs {
+			if o != n && !o.dead() && !o.Friendly && o.target == nil && o.state != npcReturn &&
+				o.Name == n.Name && math.Hypot(o.Body.X-n.Body.X, o.Body.Y-n.Body.Y) < 900 {
+				o.target = p
+				o.state = npcChase
+				o.swingAt = z.now + 0.9
+			}
+		}
+	}
+}
+
+// chase closes on the target and strikes when it can.
+func (n *NPC) chase(z *Zone) {
+	p := n.target
+	if math.Hypot(n.Body.X-n.HX, n.Body.Y-n.HY) > n.Tether || math.Hypot(p.Body.X-n.HX, p.Body.Y-n.HY) > n.Tether+1500 {
+		n.goHome()
+		return
+	}
+	dx, dy := p.Body.X-n.Body.X, p.Body.Y-n.Body.Y
+	d := math.Hypot(dx, dy)
+	reach := n.Reach + 20
+	n.Body.Yaw = turnToward(n.Body.Yaw, math.Atan2(dx, -dy), 6*TickDT)
+	if d > reach {
+		if n.stepToward(z, p.Body.X, p.Body.Y, n.RunSpd) < 0 {
+			n.goHome()
+		}
+		return
+	}
+	n.speedNow = 0
+	if z.now >= n.swingAt {
+		n.swingAt = z.now + n.Swing
+		z.npcSwing(n, p)
+	}
+}
+
+// nearestPlayer finds the closest player within range that passes ok.
+func (z *Zone) nearestPlayer(x, y, rng float64, ok func(*Player) bool) *Player {
+	var best *Player
+	bd := rng
+	for _, p := range z.players {
+		if p.closed.Load() || (ok != nil && !ok(p)) {
+			continue
+		}
+		if d := math.Hypot(p.Body.X-x, p.Body.Y-y); d <= bd {
+			best, bd = p, d
+		}
+	}
+	return best
+}
+
+func (n *NPC) title() string {
+	if n.Spawn.Name == "" {
+		return "creature"
+	}
+	return strings.TrimSpace(n.Spawn.Name)
+}

@@ -600,12 +600,20 @@ func (f *File) readGeomCommon(r *reader) (d *ShapeData, nVerts int, err error) {
 	// handled above among them; the low twelve bits are the count.
 	sets := nUV & 0x0FFF
 	d.UV = make([][][2]float32, sets)
+	// Texture coordinates may hold junk: 28 of Jordheim's 31 city blocks
+	// carry seven UV sets, and the fifth begins with NaN (jord01, block 51).
+	// Nothing draws past the first set, so they are read as they are and
+	// anything non-finite becomes 0; positions stay strict. The flag is put
+	// back as it was: particle data reads leniently throughout.
+	lax := r.lax
+	r.lax = true
 	for s := 0; s < sets; s++ {
 		d.UV[s] = make([][2]float32, nVerts)
 		for i := range d.UV[s] {
-			d.UV[s][i] = [2]float32{r.f32(), r.f32()}
+			d.UV[s][i] = [2]float32{finite(r.f32()), finite(r.f32())}
 		}
 	}
+	r.lax = lax
 	if v >= Ver1001000 {
 		r.u16() // consistency flags
 	}
@@ -938,7 +946,7 @@ func (f *File) WorldTransforms() []Transform {
 type reader struct {
 	// lax disables the non-finite float check. Set only while reading
 	// fields known to hold junk or open ends: particle data (see
-	// readParticleData), morph weights and LOD ranges.
+	// readParticleData), morph weights, LOD ranges and UV sets.
 	lax bool
 	b   []byte
 	p   int
@@ -1094,4 +1102,12 @@ func (a Transform) String() string {
 	return fmt.Sprintf("t=(%.2f %.2f %.2f) s=%.3f rot=[%.3f %.3f %.3f | %.3f %.3f %.3f | %.3f %.3f %.3f]",
 		a.Trans[0], a.Trans[1], a.Trans[2], a.Scale,
 		a.Rot[0], a.Rot[1], a.Rot[2], a.Rot[3], a.Rot[4], a.Rot[5], a.Rot[6], a.Rot[7], a.Rot[8])
+}
+
+// finite is v, or 0 where v is NaN or infinite.
+func finite(v float32) float32 {
+	if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
+		return 0
+	}
+	return v
 }

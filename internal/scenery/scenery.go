@@ -63,6 +63,17 @@ type Model struct {
 	// Embedded are the textures the model carries inside itself, by the
 	// name its groups and emitters use; see embedded.go.
 	Embedded map[string]image.Image `json:"-"`
+	// Hull is the model's invisible collision geometry, in model space, kept
+	// for the server; it is never drawn and never written to props.json.
+	Hull *Hull `json:"-"`
+	// Radius is a trunk radius for a model with no hull; see zone.ModelDef.
+	Radius float32 `json:"-"`
+}
+
+// Hull is a model's collision triangles.
+type Hull struct {
+	Verts [][3]float32
+	Tris  [][3]uint32
 }
 
 // Vertex is one baked vertex, Stride bytes when written.
@@ -187,8 +198,8 @@ func Bake(f *nif.File, name, file string, verts *[]Vertex, indices *[]uint32) (*
 	base := uint32(len(*verts))
 	_ = base
 
-	var walk func(ref int32, parent nif.Transform, st texState, depth int)
-	walk = func(ref int32, parent nif.Transform, st texState, depth int) {
+	var walk func(ref int32, parent nif.Transform, st texState, depth int, hull bool)
+	walk = func(ref int32, parent nif.Transform, st texState, depth int, hull bool) {
 		if depth > 64 {
 			return
 		}
@@ -198,8 +209,11 @@ func Bake(f *nif.File, name, file string, verts *[]Vertex, indices *[]uint32) (*
 		}
 		switch b := blk.(type) {
 		case *nif.Node:
-			if isCollision(b.Name) {
-				return
+			if isCollision(b.Name) && !hull {
+				if !isHull(b.Name) {
+					return
+				}
+				hull = true
 			}
 			world := parent.Mul(b.Local)
 			st = applyProps(tn, b.Properties, st)
@@ -216,29 +230,49 @@ func Bake(f *nif.File, name, file string, verts *[]Vertex, indices *[]uint32) (*
 				}
 			}
 			for _, c := range b.Children {
-				walk(c, world, st, depth+1)
+				walk(c, world, st, depth+1, hull)
 			}
 
 		case *nif.LODNode:
-			if isCollision(b.Name) {
-				return
+			if isCollision(b.Name) && !hull {
+				if !isHull(b.Name) {
+					return
+				}
+				hull = true
 			}
 			world := parent.Mul(b.Local)
 			st = applyProps(tn, b.Properties, st)
 			// Only the nearest level is kept: props are seen from the
 			// ground, and drawing every level would stack them.
 			if len(b.Children) > 0 {
-				walk(b.Children[0], world, st, depth+1)
+				walk(b.Children[0], world, st, depth+1, hull)
 			}
 
 		case *nif.TriShape:
-			if isCollision(b.Name) {
-				return
+			if isCollision(b.Name) && !hull {
+				if !isHull(b.Name) {
+					return
+				}
+				hull = true
 			}
 			world := parent.Mul(b.Local)
 			st = applyProps(tn, b.Properties, st)
 			d, _ := f.Block(b.Data).(*nif.ShapeData)
 			if d == nil || len(d.Vertices) == 0 || len(d.Triangles) == 0 {
+				return
+			}
+			if hull {
+				// Collision geometry: kept for the server, never drawn.
+				if mo.Hull == nil {
+					mo.Hull = &Hull{}
+				}
+				first := uint32(len(mo.Hull.Verts))
+				for _, p := range d.Vertices {
+					mo.Hull.Verts = append(mo.Hull.Verts, world.Apply(p))
+				}
+				for _, t := range d.Triangles {
+					mo.Hull.Tris = append(mo.Hull.Tris, [3]uint32{first + uint32(t[0]), first + uint32(t[1]), first + uint32(t[2])})
+				}
 				return
 			}
 			k := groupKey{texture: st.texture, additive: st.additive, billboard: st.billboard}
@@ -302,7 +336,7 @@ func Bake(f *nif.File, name, file string, verts *[]Vertex, indices *[]uint32) (*
 		}
 	}
 	for _, root := range f.Roots {
-		walk(root, nif.Identity, texState{}, 0)
+		walk(root, nif.Identity, texState{}, 0, false)
 	}
 
 	keys := make([]groupKey, 0, len(byTex))
@@ -371,10 +405,25 @@ func Bake(f *nif.File, name, file string, verts *[]Vertex, indices *[]uint32) (*
 // third, "shadowcaster": a coarse, untextured stand-in the game renders only
 // into its shadow pass. Drawn, it is a white lump over the real thing -- the
 // boulders and the Mularn hall base wore one.
+//
+// The dungeon pieces have a switch of their own, "dungswitch", with five
+// branches: "visible", and four the game does not draw -- "collidee",
+// "pickee" (what a click hits), "bounding" (the portals and bounding volume
+// the dungeon's visibility uses) and "attachpoints". Drawn, the portals are
+// white sheets across every doorway.
 func isCollision(name string) bool {
 	n := strings.ToLower(name)
 	return strings.Contains(n, "collidee") || strings.Contains(n, "collision_") ||
-		strings.HasPrefix(n, "collide") || n == "shadowcaster"
+		strings.HasPrefix(n, "collide") || n == "shadowcaster" ||
+		n == "pickee" || n == "bounding" || n == "attachpoints"
+}
+
+// isHull is the part of isCollision that blocks movement: the "collidee"
+// branches. The others -- the shadow caster, the pick hull, the bounding
+// volume -- are not walls.
+func isHull(name string) bool {
+	n := strings.ToLower(name)
+	return strings.Contains(n, "collidee") || strings.Contains(n, "collision_") || strings.HasPrefix(n, "collide")
 }
 
 // applyProps resolves a node's property list, inheriting anything it does not

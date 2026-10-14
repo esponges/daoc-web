@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAoC Web: log in</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0f14; color: #dfe9f3;
+    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  main { width: min(440px, calc(100vw - 32px)); padding: 24px; background: rgba(14,22,32,.92); border: 1px solid rgba(120,170,220,.3); border-radius: 10px; }
+  h1 { margin: 0 0 4px; font-size: 18px; color: #8fd0ff; }
+  p.sub { margin: 0 0 18px; color: #7e9ab4; }
+  h2 { font-size: 13px; color: #8fd0ff; margin: 18px 0 8px; }
+  label { display: block; margin: 8px 0 3px; color: #9db4c9; }
+  input, select, button, a.btn { font: inherit; color: #fff; background: rgba(255,255,255,.07); border: 1px solid rgba(120,170,220,.4);
+    border-radius: 6px; padding: 7px 10px; }
+  input, select { width: 100%; }
+  button, a.btn { cursor: pointer; text-decoration: none; display: inline-block; margin-top: 10px; }
+  button:hover, a.btn:hover { background: rgba(143,208,255,.18); }
+  button.primary, a.primary { border-color: #ffd76a; color: #ffe9a0; }
+  .msg { margin: 0 0 12px; padding: 8px 10px; border-radius: 6px; background: rgba(224,82,82,.15); border: 1px solid rgba(224,82,82,.5); color: #ffb0a8; }
+  .msg:empty { display: none; }
+  .chars { display: grid; gap: 8px; }
+  .char { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 8px 10px;
+    border: 1px solid rgba(120,170,220,.25); border-radius: 8px; background: rgba(255,255,255,.03); }
+  .char b { color: #fff; }
+  .char small { color: #7e9ab4; display: block; }
+  .char button, .char a { margin: 0; }
+  .hidden { display: none; }
+  footer { margin-top: 18px; color: #5f7890; font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>DAoC on the web</h1>
+  <p class="sub">A fan project. Midgard's starting zones, rebuilt in the browser.</p>
+  <div class="msg" id="msg"></div>
+
+  <section id="login" class="hidden">
+    <div id="discord-box" class="hidden">
+      <a class="btn primary" href="/auth/discord">Log in with Discord</a>
+    </div>
+    <form id="admin-box" class="hidden">
+      <label for="pw">Admin password</label>
+      <input id="pw" type="password" autocomplete="current-password">
+      <button type="submit">Log in</button>
+    </form>
+  </section>
+
+  <section id="chars" class="hidden">
+    <div>Logged in as <b id="who"></b> <button id="logout" type="button" style="margin:0 0 0 8px;padding:2px 8px">log out</button></div>
+    <h2>Your characters</h2>
+    <div class="chars" id="list"></div>
+    <div id="create">
+      <h2>New character</h2>
+      <form id="new">
+        <label for="name">Name (3 to 15 letters)</label>
+        <input id="name" maxlength="15" autocomplete="off" required>
+        <label for="arch">Character</label>
+        <select id="arch"></select>
+        <button type="submit">Create</button>
+      </form>
+    </div>
+  </section>
+  <footer>Game assets belong to Electronic Arts. Nothing here is the live game.</footer>
+</main>
+<script type="module" src="login.js"></script>
+</body>
+</html>

@@ -105,3 +105,38 @@ func TestTruncatedIsOverrun(t *testing.T) {
 		t.Errorf("kind %v, want read past end", e.Kind)
 	}
 }
+
+// shapeData4 is a one-triangle NiTriShapeData at 4.2.2.0 whose first
+// vertex x and first texture coordinate u are given.
+func shapeData4(x, u float32) []byte {
+	blk := &bytes.Buffer{}
+	str(blk, "NiTriShapeData")
+	put(blk, uint16(3), uint8(1)) // vertices, present
+	put(blk, x, float32(0), float32(0), float32(1), float32(0), float32(0), float32(0), float32(1), float32(0))
+	put(blk, uint8(0))                                       // no normals
+	put(blk, float32(0), float32(0), float32(0), float32(1)) // centre, radius
+	put(blk, uint8(0))                                       // no colours
+	put(blk, uint16(1))                                      // one UV set
+	put(blk, u, float32(0), float32(1), float32(0), float32(0), float32(1))
+	put(blk, uint16(1), uint32(3), uint16(0), uint16(1), uint16(2)) // one triangle
+	put(blk, uint16(0))                                             // no match groups
+	raw := file4(blk.Bytes())
+	return append(raw, 1, 0, 0, 0, 0, 0, 0, 0) // one root, block 0
+}
+
+// A NaN in a texture coordinate is junk the city blocks carry and is read
+// as 0; a NaN in a vertex position is still corruption.
+func TestNonFiniteUVIsZero(t *testing.T) {
+	f, err := nif.Parse(shapeData4(0, float32(math.NaN())))
+	if err != nil {
+		t.Fatalf("NaN texture coordinate: %v", err)
+	}
+	d := f.Blocks[0].(*nif.ShapeData)
+	if d.UV[0][0][0] != 0 || d.UV[0][1][0] != 1 {
+		t.Errorf("UVs %v, want the NaN read as 0 and the rest kept", d.UV[0])
+	}
+	e := parseErr(t, shapeData4(float32(math.NaN()), 0))
+	if e.Kind != nif.Corrupt || e.Type != "NiTriShapeData" {
+		t.Errorf("NaN position: kind %v, type %q; want corrupt data in NiTriShapeData", e.Kind, e.Type)
+	}
+}

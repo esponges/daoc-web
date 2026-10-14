@@ -189,6 +189,10 @@ type ModelDef struct {
 	ID   int
 	Name string
 	File string
+	// Radius is the model's trunk radius in units (nifs.csv's Radius): how
+	// far from its centre it blocks a walker, for models with no collision
+	// hull of their own, such as trees. 0 when the table gives none.
+	Radius float32
 }
 
 // Fixture is a fixtures.csv row: a model placed in the world.
@@ -260,7 +264,13 @@ func ParseNifs(b []byte) (map[int]ModelDef, error) {
 		if err != nil {
 			continue
 		}
-		out[id] = ModelDef{ID: id, Name: strings.TrimSpace(row[1]), File: strings.TrimSpace(row[2])}
+		def := ModelDef{ID: id, Name: strings.TrimSpace(row[1]), File: strings.TrimSpace(row[2])}
+		if len(row) > 13 {
+			if r, err := strconv.ParseFloat(strings.TrimSpace(row[13]), 32); err == nil && r > 0 {
+				def.Radius = float32(r)
+			}
+		}
+		out[id] = def
 	}
 	return out, nil
 }

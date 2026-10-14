@@ -1,0 +1,54 @@
+/* Panels for network play; see ui.js. */
+.game-ui { font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e8eef5; }
+.game-ui .chat { position: fixed; left: 12px; bottom: 150px; width: 400px; max-width: calc(100vw - 24px); z-index: 12; }
+.game-ui .chat .lines { text-shadow: 0 1px 2px #000; pointer-events: none; }
+.game-ui .chat .lines div { color: #dfe7ef; }
+.game-ui .chat .lines .sys { color: #9fd0ff; }
+.game-ui .chat .lines .all { color: #ffd76a; }
+.game-ui .chat .lines .err { color: #ff9a8a; }
+.game-ui .chat .line { display: none; width: 100%; margin-top: 4px; font: inherit; color: #fff;
+  background: rgba(8,14,22,.85); border: 1px solid rgba(120,170,220,.5); border-radius: 5px; padding: 4px 7px; }
+.game-ui .chat.open .line { display: block; }
+.unit .lvl { color: #ffe066; margin-right: 6px; }
+.bar.thin { height: 5px; margin-top: 4px; }
+.bar.end i { background: #4a8fe0; }
+.bar.xp i { background: #b07ae0; }
+.stylebar { position: fixed; left: 50%; bottom: 74px; transform: translateX(-50%); z-index: 11; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 92vw; }
+.stylebar .style { display: grid; grid-template-columns: auto 1fr; gap: 0 6px; align-items: center; min-width: 108px; text-align: left;
+  font: inherit; color: #9aa8b6; background: rgba(8,14,22,.82); border: 1px solid rgba(120,170,220,.25); border-radius: 6px; padding: 4px 7px; cursor: pointer; }
+.stylebar .style .key { grid-row: span 2; color: #6f8ba6; font-weight: bold; }
+.stylebar .style .nm { color: inherit; }
+.stylebar .style .cost { color: #6f8ba6; font-size: 10px; }
+.stylebar .style.ready { color: #fff; border-color: #ffd76a; box-shadow: 0 0 8px rgba(255,215,106,.45); }
+.stylebar .style.poor .cost { color: #e05252; }
+.panel { position: fixed; z-index: 14; display: none; background: rgba(8,14,22,.92); border: 1px solid rgba(120,170,220,.35);
+  border-radius: 8px; padding: 10px 12px; backdrop-filter: blur(6px); }
+.panel.open { display: block; }
+.panel h2 { margin: 0 0 6px; font-size: 13px; color: #8fd0ff; }
+.pack { right: 12px; top: 60px; width: 330px; max-height: calc(100vh - 90px); overflow: auto; }
+.pack .worn { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.pack .bag { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.pack .cell { min-height: 34px; padding: 3px 4px; border: 1px solid rgba(120,170,220,.18); border-radius: 4px; font-size: 10.5px; overflow: hidden; word-break: break-word; }
+.pack .cell.full { cursor: pointer; background: rgba(255,255,255,.05); }
+.pack .cell.full:hover { border-color: #8fd0ff; }
+.pack .cell small { display: block; color: #6f8ba6; }
+.pack .cell.weapon { color: #ffd76a; }
+.pack .cell.shield { color: #8fc7ff; }
+.pack .cell.armour { color: #9be39b; }
+.pack .cash { margin-top: 8px; color: #ffe066; }
+.loot { left: 50%; top: 22%; transform: translateX(-50%); min-width: 240px; }
+.loot .row { padding: 4px 6px; cursor: pointer; border-radius: 4px; }
+.loot .row:hover { background: rgba(143,208,255,.15); }
+.loot button { margin-top: 6px; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }
+.death { position: fixed; inset: 0; z-index: 13; display: none; place-content: center; text-align: center; font-size: 28px; color: #ff6a6a;
+  background: rgba(40,0,0,.35); text-shadow: 0 2px 6px #000; pointer-events: none; }
+.death.on { display: grid; }
+.label { position: fixed; z-index: 9; transform: translate(-50%, -100%); pointer-events: none; font: 11px/1.2 ui-monospace, Menlo, Consolas, monospace;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000; white-space: nowrap; }
+.label.target { font-weight: bold; }
+#log .xp { color: #c9a0ff; }
+#log .loot { color: #9be39b; }
+#log .level { color: #ffe066; font-weight: bold; }
+#log .style { color: #ffa24a; }
+#log .parry, #log .evade { color: #8fc7ff; }
+@media (max-width: 760px) { .game-ui .chat { bottom: 200px; } .stylebar { bottom: 130px; } .pack { top: 12px; } }

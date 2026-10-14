@@ -4,67 +4,30 @@
       "name": "scenery",
       "what": "outdoor scenery models: trees, rocks, buildings, keeps",
       "total": 1924,
-      "passed": 1918,
+      "passed": 1923,
       "locations": [
         {
           "path": "Newtowns/zones/Nifs",
           "total": 202,
-          "passed": 200
+          "passed": 202
         },
         {
           "path": "frontiers/NIFS",
           "total": 379,
-          "passed": 378
+          "passed": 379
         },
         {
           "path": "zones/Nifs",
           "total": 1343,
-          "passed": 1340
+          "passed": 1342
         }
       ],
       "failures": [
-        {
-          "cause": "corrupt data in NiTriShapeData",
-          "count": 4,
-          "examples": [
-            "Newtowns/zones/Nifs/bfarmhouse_burned.npk",
-            "Newtowns/zones/Nifs/bhouse2_burned.npk",
-            "frontiers/NIFS/outpost_crumble_T1-2-3-4.nif",
-            "zones/Nifs/dr_alb_house1.npk"
-          ],
-          "byLocation": [
-            {
-              "path": "Newtowns/zones/Nifs",
-              "count": 2
-            },
-            {
-              "path": "frontiers/NIFS",
-              "count": 1
-            },
-            {
-              "path": "zones/Nifs",
-              "count": 1
-            }
-          ]
-        },
         {
           "cause": "unsupported block type NiMeshParticleSystem",
           "count": 1,
           "examples": [
             "zones/Nifs/dr_demonroom2b.npk"
-          ],
-          "byLocation": [
-            {
-              "path": "zones/Nifs",
-              "count": 1
-            }
-          ]
-        },
-        {
-          "cause": "unsupported block type NiParticleMeshes",
-          "count": 1,
-          "examples": [
-            "zones/Nifs/dr_demonroom2a.npk"
           ],
           "byLocation": [
             {
@@ -81,7 +44,7 @@
         },
         {
           "feature": "texture transforms",
-          "files": 95
+          "files": 97
         },
         {
           "feature": "alpha animation",
@@ -89,15 +52,15 @@
         },
         {
           "feature": "particle bombs",
-          "files": 45
+          "files": 46
         },
         {
           "feature": "vertex morphs",
-          "files": 43
+          "files": 44
         },
         {
           "feature": "visibility animation",
-          "files": 42
+          "files": 43
         },
         {
           "feature": "particle collisions",
@@ -121,7 +84,7 @@
       "name": "dungeon pieces",
       "what": "the rooms and corridors dungeons are assembled from",
       "total": 1386,
-      "passed": 1381,
+      "passed": 1385,
       "locations": [
         {
           "path": "frontiers/dnifs",
@@ -131,36 +94,20 @@
         {
           "path": "zones/Dnifs",
           "total": 1357,
-          "passed": 1352
+          "passed": 1356
         }
       ],
       "failures": [
         {
           "cause": "corrupt data in NiTriShapeData",
-          "count": 3,
+          "count": 1,
           "examples": [
-            "zones/Dnifs/STONERoom06.npk",
-            "zones/Dnifs/m_frontline_patch01_v2.npk",
-            "zones/Dnifs/pvp_proto_arena01.npk"
+            "zones/Dnifs/STONERoom06.npk"
           ],
           "byLocation": [
             {
               "path": "zones/Dnifs",
-              "count": 3
-            }
-          ]
-        },
-        {
-          "cause": "unsupported block type NiParticleMeshes",
-          "count": 2,
-          "examples": [
-            "zones/Dnifs/THDHallCpool.npk",
-            "zones/Dnifs/THDRmfountain.npk"
-          ],
-          "byLocation": [
-            {
-              "path": "zones/Dnifs",
-              "count": 2
+              "count": 1
             }
           ]
         }
@@ -168,7 +115,7 @@
       "readNotDrawn": [
         {
           "feature": "projected and environment textures",
-          "files": 396
+          "files": 397
         },
         {
           "feature": "texture transforms",
@@ -176,7 +123,7 @@
         },
         {
           "feature": "vertex morphs",
-          "files": 145
+          "files": 147
         },
         {
           "feature": "fog properties",
@@ -212,12 +159,12 @@
       "name": "city blocks",
       "what": "the blocks cities are assembled from, in each city zone's nifs folder",
       "total": 174,
-      "passed": 140,
+      "passed": 169,
       "locations": [
         {
           "path": "zones/zone026/nifs",
           "total": 43,
-          "passed": 41
+          "passed": 42
         },
         {
           "path": "zones/zone050/nifs",
@@ -227,7 +174,7 @@
         {
           "path": "zones/zone120/nifs",
           "total": 38,
-          "passed": 7
+          "passed": 35
         },
         {
           "path": "zones/zone209/nifs",
@@ -236,27 +183,6 @@
         }
       ],
       "failures": [
-        {
-          "cause": "corrupt data in NiTriShapeData",
-          "count": 29,
-          "examples": [
-            "zones/zone026/nifs/cam29.npk",
-            "zones/zone120/nifs/jord01.npk",
-            "zones/zone120/nifs/jord02.npk",
-            "zones/zone120/nifs/jord04.npk",
-            "zones/zone120/nifs/jord05.npk"
-          ],
-          "byLocation": [
-            {
-              "path": "zones/zone026/nifs",
-              "count": 1
-            },
-            {
-              "path": "zones/zone120/nifs",
-              "count": 28
-            }
-          ]
-        },
         {
           "cause": "bad header",
           "count": 5,
@@ -286,23 +212,23 @@
       "readNotDrawn": [
         {
           "feature": "texture transforms",
-          "files": 52
-        },
-        {
-          "feature": "fog properties",
-          "files": 38
+          "files": 75
         },
         {
           "feature": "vertex morphs",
-          "files": 38
+          "files": 45
+        },
+        {
+          "feature": "fog properties",
+          "files": 40
         },
         {
           "feature": "particle bombs",
-          "files": 25
+          "files": 26
         },
         {
           "feature": "projected and environment textures",
-          "files": 20
+          "files": 21
         }
       ]
     },
@@ -387,13 +313,13 @@
     {
       "name": "textures",
       "what": "textures the scenery, dungeon and city models name, decoded",
-      "total": 6742,
-      "passed": 6058,
+      "total": 6876,
+      "passed": 6183,
       "locations": [
         {
           "path": "Newtowns/zones/Nifs",
-          "total": 797,
-          "passed": 796
+          "total": 806,
+          "passed": 805
         },
         {
           "path": "frontiers/NIFS",
@@ -407,18 +333,18 @@
         },
         {
           "path": "zones/Dnifs",
-          "total": 2521,
-          "passed": 2016
+          "total": 2523,
+          "passed": 2018
         },
         {
           "path": "zones/Nifs",
-          "total": 2552,
-          "passed": 2465
+          "total": 2563,
+          "passed": 2468
         },
         {
           "path": "zones/zone026/nifs",
-          "total": 292,
-          "passed": 281
+          "total": 294,
+          "passed": 283
         },
         {
           "path": "zones/zone050/nifs",
@@ -427,8 +353,8 @@
         },
         {
           "path": "zones/zone120/nifs",
-          "total": 33,
-          "passed": 31
+          "total": 143,
+          "passed": 140
         },
         {
           "path": "zones/zone209/nifs",
@@ -439,7 +365,7 @@
       "failures": [
         {
           "cause": "file not found",
-          "count": 684,
+          "count": 693,
           "examples": [
             "Newtowns/zones/Nifs/_dm_nrstwrwall",
             "frontiers/NIFS/agramon_pattern01",
@@ -466,7 +392,7 @@
             },
             {
               "path": "zones/Nifs",
-              "count": 87
+              "count": 95
             },
             {
               "path": "zones/zone026/nifs",
@@ -478,7 +404,7 @@
             },
             {
               "path": "zones/zone120/nifs",
-              "count": 2
+              "count": 3
             },
             {
               "path": "zones/zone209/nifs",
@@ -854,14 +780,14 @@
     "outdoor": {
       "zones": 120,
       "terrain": 118,
-      "clean": 105,
+      "clean": 106,
       "detail": 116,
       "grass": 108,
       "noGrass": 10,
       "placements": 130278,
-      "converting": 127781,
+      "converting": 127791,
       "modelsTried": 1446,
-      "modelsBaked": 1425
+      "modelsBaked": 1427
     },
     "rows": [
       {
@@ -1063,7 +989,7 @@
         "detailBlend": "weighted",
         "grass": "ok",
         "placements": 715,
-        "converting": 685,
+        "converting": 688,
         "failing": [
           {
             "file": "tutorial_2wall_alb.nif",
@@ -1074,11 +1000,6 @@
             "file": "tutorial_2cornertower_alb.nif",
             "placements": 4,
             "cause": "model file not found"
-          },
-          {
-            "file": "DR_Alb_house1.nif",
-            "placements": 3,
-            "cause": "corrupt data in NiTriShapeData"
           },
           {
             "file": "3tower_alb.nif",
@@ -1691,7 +1612,7 @@
         "detailAgree": 0.9749,
         "grass": "ok",
         "placements": 1985,
-        "converting": 1981,
+        "converting": 1982,
         "failing": [
           {
             "file": "agramon_keepCollision1.nif",
@@ -1707,11 +1628,6 @@
             "file": "agramon_keepCollision3.nif",
             "placements": 1,
             "cause": "no drawable geometry"
-          },
-          {
-            "file": "bhouse2_burned.nif",
-            "placements": 1,
-            "cause": "corrupt data in NiTriShapeData"
           }
         ]
       },
@@ -2475,7 +2391,7 @@
         "detailAgree": 0.9749,
         "grass": "ok",
         "placements": 1983,
-        "converting": 1979,
+        "converting": 1980,
         "failing": [
           {
             "file": "agramon_keepCollision1.nif",
@@ -2491,11 +2407,6 @@
             "file": "agramon_keepCollision3.nif",
             "placements": 1,
             "cause": "no drawable geometry"
-          },
-          {
-            "file": "bhouse2_burned.nif",
-            "placements": 1,
-            "cause": "corrupt data in NiTriShapeData"
           }
         ]
       },
@@ -2509,14 +2420,7 @@
         "detailAgree": 0.9612,
         "grass": "ok",
         "placements": 151,
-        "converting": 146,
-        "failing": [
-          {
-            "file": "DR_Alb_house1.nif",
-            "placements": 5,
-            "cause": "corrupt data in NiTriShapeData"
-          }
-        ]
+        "converting": 151
       },
       {
         "num": 334,
@@ -2541,6 +2445,4644 @@
         "grass": "ok",
         "placements": 171,
         "converting": 171
+      }
+    ],
+    "interiors": [
+      {
+        "num": 19,
+        "name": "Stonehenge Barrows",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 77,
+        "converting": 77,
+        "origin": [
+          23248,
+          24144,
+          15968
+        ],
+        "onSurface": 33,
+        "points": 36
+      },
+      {
+        "num": 21,
+        "name": "Tomb of Mithra",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 165,
+        "converting": 165,
+        "origin": [
+          23673,
+          23542,
+          15942
+        ],
+        "onSurface": 41,
+        "points": 41
+      },
+      {
+        "num": 22,
+        "name": "Keltoi Fogou",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 52,
+        "converting": 52,
+        "origin": [
+          23568,
+          24097,
+          15994
+        ],
+        "onSurface": 38,
+        "points": 38
+      },
+      {
+        "num": 23,
+        "name": "Catacombs of Cardova",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 142,
+        "converting": 142,
+        "origin": [
+          23619,
+          23611,
+          16004
+        ],
+        "onSurface": 40,
+        "points": 40
+      },
+      {
+        "num": 24,
+        "name": "Tepok's Mine",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 49,
+        "converting": 49,
+        "origin": [
+          23500,
+          23598,
+          16102
+        ],
+        "onSurface": 34,
+        "points": 36
+      },
+      {
+        "num": 26,
+        "name": "City of Camelot",
+        "kind": "city",
+        "layout": "ok",
+        "placements": 40,
+        "converting": 40,
+        "origin": [
+          23557,
+          23607,
+          8217
+        ],
+        "onSurface": 40,
+        "points": 40
+      },
+      {
+        "num": 48,
+        "name": "Dream",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 77,
+        "converting": 77,
+        "origin": [
+          23248,
+          24144,
+          15968
+        ],
+        "onSurface": 33,
+        "points": 36
+      },
+      {
+        "num": 49,
+        "name": "Marrach Briollag",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 29,
+        "converting": 29,
+        "origin": [
+          23369,
+          23396,
+          16173
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 50,
+        "name": "Avalon City",
+        "kind": "city",
+        "layout": "ok",
+        "placements": 33,
+        "converting": 33,
+        "origin": [
+          23629,
+          23609,
+          8256
+        ],
+        "onSurface": 30,
+        "points": 32
+      },
+      {
+        "num": 59,
+        "name": "Albion's Glashtin Forges",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 124,
+        "converting": 124,
+        "origin": [
+          23535,
+          23559,
+          15786
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 60,
+        "name": "Caer Sidi",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 161,
+        "converting": 2,
+        "failing": [
+          {
+            "file": "STONEHall22.NIF",
+            "placements": 36,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall12.NIF",
+            "placements": 15,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall13.NIF",
+            "placements": 15,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall15.NIF",
+            "placements": 11,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall18.NIF",
+            "placements": 10,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall17.NIF",
+            "placements": 9,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall03.NIF",
+            "placements": 7,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall21.NIF",
+            "placements": 7,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall02.NIF",
+            "placements": 6,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall23.NIF",
+            "placements": 5,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONERoom04.NIF",
+            "placements": 5,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall09.NIF",
+            "placements": 4,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall10.NIF",
+            "placements": 4,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall01.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall05.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall07.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall14.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall16.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONERoom02.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall08.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall11.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall04.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONERoom05.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONERoom06.NIF",
+            "placements": 1,
+            "cause": "corrupt data in NiTriShapeData"
+          }
+        ],
+        "origin": [
+          23338,
+          24044,
+          15848
+        ],
+        "onSurface": 5,
+        "points": 109
+      },
+      {
+        "num": 61,
+        "name": "Krondon",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 102,
+        "converting": 102,
+        "origin": [
+          23264,
+          23432,
+          15792
+        ],
+        "onSurface": 11,
+        "points": 21
+      },
+      {
+        "num": 62,
+        "name": "Crystal Cave",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 2,
+        "converting": 2,
+        "origin": [
+          23300,
+          24168,
+          15851
+        ],
+        "onSurface": 7,
+        "points": 8
+      },
+      {
+        "num": 63,
+        "name": "Roman Aqueducts",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 70,
+        "converting": 70,
+        "origin": [
+          23947,
+          23441,
+          15910
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 65,
+        "name": "Inconnu Crypt",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 129,
+        "converting": 129,
+        "origin": [
+          23062,
+          23338,
+          15882
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 68,
+        "name": "Lower Crypt",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 45,
+        "converting": 45,
+        "origin": [
+          23511,
+          23926,
+          16060
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 69,
+        "name": "Albion's Darkspire",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 77,
+        "converting": 77,
+        "origin": [
+          22999,
+          23403,
+          15630
+        ],
+        "onSurface": 3,
+        "points": 3
+      },
+      {
+        "num": 78,
+        "name": "Cetus' Pit",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 16,
+        "converting": 16,
+        "origin": [
+          23038,
+          23439,
+          16040
+        ],
+        "onSurface": 7,
+        "points": 8
+      },
+      {
+        "num": 79,
+        "name": "Sobekite Eternal",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 244,
+        "converting": 105,
+        "failing": [
+          {
+            "file": "OceanusHall01.NIF",
+            "placements": 14,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall26.NIF",
+            "placements": 13,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall11.NIF",
+            "placements": 11,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall03.NIF",
+            "placements": 10,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall08.NIF",
+            "placements": 10,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall23.NIF",
+            "placements": 9,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall07.NIF",
+            "placements": 8,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall12.NIF",
+            "placements": 6,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall15.NIF",
+            "placements": 6,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall24.NIF",
+            "placements": 5,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall09.NIF",
+            "placements": 4,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall13.NIF",
+            "placements": 4,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall16.NIF",
+            "placements": 4,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall27.NIF",
+            "placements": 4,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall04.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall05.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall34.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall02.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall10.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall14.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall19.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall21.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall28.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusRoom01.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall06.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall17.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall20.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall25.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall29.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall30.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusHall33.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "OceanusRoom04.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          }
+        ],
+        "origin": [
+          23882,
+          23747,
+          16208
+        ],
+        "onSurface": 44,
+        "points": 65
+      },
+      {
+        "num": 80,
+        "name": "Temple of Twilight",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 204,
+        "converting": 204,
+        "origin": [
+          23520,
+          23984,
+          16096
+        ],
+        "onSurface": 54,
+        "points": 55
+      },
+      {
+        "num": 83,
+        "name": "Halls of Ma'ati",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 160,
+        "converting": 160,
+        "origin": [
+          23640,
+          23792,
+          16184
+        ],
+        "onSurface": 47,
+        "points": 48
+      },
+      {
+        "num": 88,
+        "name": "the Great Pyramid of Stygia",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 6,
+        "converting": 6,
+        "origin": [
+          23804,
+          23216,
+          16012
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 89,
+        "name": "Deep Volcanus",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 151,
+        "converting": 151,
+        "origin": [
+          23701,
+          24112,
+          15618
+        ],
+        "onSurface": 79,
+        "points": 89
+      },
+      {
+        "num": 91,
+        "name": "Celestius",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 2,
+        "converting": 2,
+        "origin": [
+          23167,
+          23465,
+          7584
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 92,
+        "name": "Veil Rift",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 29,
+        "converting": 29,
+        "origin": [
+          23369,
+          23396,
+          16173
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 93,
+        "name": "Shar Labyrinth",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 9,
+        "converting": 9,
+        "origin": [
+          23154,
+          23950,
+          15783
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 94,
+        "name": "The Queen's Labyrinth",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 27,
+        "converting": 27,
+        "origin": [
+          23655,
+          23601,
+          15757
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 98,
+        "name": "Hibernia's Darkspire",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 77,
+        "converting": 77,
+        "origin": [
+          22999,
+          23403,
+          15630
+        ],
+        "onSurface": 3,
+        "points": 3
+      },
+      {
+        "num": 99,
+        "name": "Hibernia's Glashtin Forge",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 133,
+        "converting": 133,
+        "origin": [
+          23088,
+          23482,
+          15797
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 120,
+        "name": "Jordheim",
+        "kind": "city",
+        "layout": "ok",
+        "placements": 31,
+        "converting": 31,
+        "origin": [
+          23436,
+          23997,
+          8111
+        ],
+        "onSurface": 35,
+        "points": 37
+      },
+      {
+        "num": 123,
+        "name": "Aphophian",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 1,
+        "converting": 1,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 124,
+        "name": "Hephaestian",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 1,
+        "converting": 1,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 125,
+        "name": "Spindelhalla",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 196,
+        "converting": 196,
+        "origin": [
+          23564,
+          23719,
+          16060
+        ],
+        "onSurface": 90,
+        "points": 90
+      },
+      {
+        "num": 126,
+        "name": "Vendo Caverns",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 54,
+        "converting": 54,
+        "origin": [
+          23569,
+          23654,
+          15842
+        ],
+        "onSurface": 34,
+        "points": 34
+      },
+      {
+        "num": 127,
+        "name": "Varulvhamn",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 184,
+        "converting": 184,
+        "origin": [
+          23966,
+          23907,
+          16112
+        ],
+        "onSurface": 105,
+        "points": 110
+      },
+      {
+        "num": 128,
+        "name": "Cursed Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 52,
+        "converting": 52,
+        "origin": [
+          23683,
+          24094,
+          15993
+        ],
+        "onSurface": 37,
+        "points": 38
+      },
+      {
+        "num": 129,
+        "name": "Nisse's Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 130,
+        "converting": 130,
+        "origin": [
+          24004,
+          23702,
+          15805
+        ],
+        "onSurface": 77,
+        "points": 86
+      },
+      {
+        "num": 149,
+        "name": "Nyttheim",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 77,
+        "converting": 77,
+        "origin": [
+          23382,
+          23735,
+          15912
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 150,
+        "name": "Trollheim",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 158,
+        "converting": 158,
+        "origin": [
+          23616,
+          23400,
+          15800
+        ],
+        "onSurface": 87,
+        "points": 138
+      },
+      {
+        "num": 160,
+        "name": "Tuscaran Glacier",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 72,
+        "converting": 72,
+        "origin": [
+          23687,
+          23653,
+          16335
+        ],
+        "onSurface": 33,
+        "points": 51
+      },
+      {
+        "num": 161,
+        "name": "Iarnvidiur's Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 127,
+        "converting": 127,
+        "origin": [
+          24120,
+          23912,
+          16104
+        ],
+        "onSurface": 106,
+        "points": 108
+      },
+      {
+        "num": 180,
+        "name": "Fomor",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 36,
+        "converting": 36,
+        "origin": [
+          23568,
+          24320,
+          16136
+        ],
+        "onSurface": 49,
+        "points": 71
+      },
+      {
+        "num": 188,
+        "name": "Midgard's Darkspire",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 77,
+        "converting": 77,
+        "origin": [
+          22999,
+          23403,
+          15630
+        ],
+        "onSurface": 3,
+        "points": 3
+      },
+      {
+        "num": 189,
+        "name": "Midgard's Glashtin Forges",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 125,
+        "converting": 125,
+        "origin": [
+          23083,
+          23491,
+          15791
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 190,
+        "name": "Tur Suil",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 179,
+        "converting": 179,
+        "origin": [
+          23728,
+          23725,
+          15843
+        ],
+        "onSurface": 78,
+        "points": 78
+      },
+      {
+        "num": 191,
+        "name": "Galladoria",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 180,
+        "converting": 180,
+        "origin": [
+          23674,
+          23819,
+          16135
+        ],
+        "onSurface": 158,
+        "points": 165
+      },
+      {
+        "num": 192,
+        "name": "The High Consul's Sanctum",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 15,
+        "converting": 15,
+        "origin": [
+          23324,
+          23388,
+          15723
+        ],
+        "onSurface": 4,
+        "points": 6
+      },
+      {
+        "num": 193,
+        "name": "The High Consul's Sanctum",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 15,
+        "converting": 15,
+        "origin": [
+          23324,
+          23388,
+          15723
+        ],
+        "onSurface": 4,
+        "points": 6
+      },
+      {
+        "num": 194,
+        "name": "The High Consul's Sanctum",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 15,
+        "converting": 15,
+        "origin": [
+          23572,
+          23373,
+          15789
+        ],
+        "onSurface": 5,
+        "points": 6
+      },
+      {
+        "num": 198,
+        "name": "Shaitan",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 1,
+        "converting": 1,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 199,
+        "name": "Volurgon",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 1,
+        "converting": 1,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 209,
+        "name": "Tir na Nog",
+        "kind": "city",
+        "layout": "ok",
+        "placements": 40,
+        "converting": 40,
+        "origin": [
+          23386,
+          23790,
+          8177
+        ],
+        "onSurface": 43,
+        "points": 43
+      },
+      {
+        "num": 220,
+        "name": "Coruscating Mine",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 73,
+        "converting": 73,
+        "origin": [
+          23560,
+          23602,
+          16022
+        ],
+        "onSurface": 54,
+        "points": 57
+      },
+      {
+        "num": 221,
+        "name": "Muire Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 102,
+        "converting": 102,
+        "origin": [
+          23647,
+          23525,
+          15877
+        ],
+        "onSurface": 42,
+        "points": 43
+      },
+      {
+        "num": 222,
+        "name": "Spraggon Den",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 66,
+        "converting": 66,
+        "origin": [
+          23991,
+          23974,
+          16039
+        ],
+        "onSurface": 53,
+        "points": 53
+      },
+      {
+        "num": 223,
+        "name": "Koalinth Caverns",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 97,
+        "converting": 97,
+        "origin": [
+          23600,
+          23536,
+          16104
+        ],
+        "onSurface": 62,
+        "points": 63
+      },
+      {
+        "num": 224,
+        "name": "Treibh Caillte",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 129,
+        "converting": 129,
+        "origin": [
+          23549,
+          24016,
+          16083
+        ],
+        "onSurface": 64,
+        "points": 70
+      },
+      {
+        "num": 226,
+        "name": "Midgard's Abandoned Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 978,
+        "converting": 978,
+        "origin": [
+          23555,
+          23838,
+          16056
+        ],
+        "onSurface": 24,
+        "points": 24
+      },
+      {
+        "num": 227,
+        "name": "Albion's Abandoned Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 899,
+        "converting": 899,
+        "origin": [
+          23648,
+          23943,
+          16079
+        ],
+        "onSurface": 24,
+        "points": 24
+      },
+      {
+        "num": 228,
+        "name": "Hibernia's Abandoned Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 927,
+        "converting": 927,
+        "origin": [
+          23664,
+          23736,
+          15928
+        ],
+        "onSurface": 24,
+        "points": 24
+      },
+      {
+        "num": 229,
+        "name": "Burial Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 57,
+        "converting": 57,
+        "origin": [
+          24094,
+          23893,
+          15520
+        ],
+        "onSurface": 8,
+        "points": 9
+      },
+      {
+        "num": 233,
+        "name": "Summoner's Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 72,
+        "converting": 72,
+        "origin": [
+          23509,
+          23677,
+          15530
+        ],
+        "onSurface": 26,
+        "points": 28
+      },
+      {
+        "num": 243,
+        "name": "Kobold Undercity",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 87,
+        "converting": 87,
+        "origin": [
+          23344,
+          23536,
+          16208
+        ],
+        "onSurface": 9,
+        "points": 10
+      },
+      {
+        "num": 244,
+        "name": "Passage of Conflict",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 188,
+        "converting": 188,
+        "origin": [
+          23491,
+          23582,
+          16354
+        ],
+        "onSurface": 41,
+        "points": 46
+      },
+      {
+        "num": 245,
+        "name": "The Labyrinth",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 3085,
+        "converting": 3085,
+        "origin": [
+          23399,
+          24059,
+          16400
+        ],
+        "onSurface": 79,
+        "points": 110
+      },
+      {
+        "num": 249,
+        "name": "Darkness Falls",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 254,
+        "converting": 254,
+        "origin": [
+          23419,
+          23459,
+          16320
+        ],
+        "onSurface": 283,
+        "points": 381
+      },
+      {
+        "num": 256,
+        "name": "Forgotten Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23470,
+          23586,
+          15938
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 257,
+        "name": "Forgotten Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          23537,
+          23622,
+          16050
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 258,
+        "name": "Forgotten Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23527,
+          23748,
+          15944
+        ],
+        "onSurface": 11,
+        "points": 11
+      },
+      {
+        "num": 277,
+        "name": "Frozen Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 72,
+        "converting": 72,
+        "origin": [
+          23687,
+          23653,
+          16335
+        ],
+        "onSurface": 33,
+        "points": 51
+      },
+      {
+        "num": 278,
+        "name": "Damp Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 29,
+        "converting": 29,
+        "origin": [
+          23553,
+          23728,
+          15874
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 279,
+        "name": "Damp Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 36,
+        "converting": 36,
+        "origin": [
+          23612,
+          23649,
+          15838
+        ],
+        "onSurface": 8,
+        "points": 9
+      },
+      {
+        "num": 280,
+        "name": "Damp Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          24135,
+          24246,
+          16142
+        ],
+        "onSurface": 7,
+        "points": 9
+      },
+      {
+        "num": 281,
+        "name": "Forgotten Sepulchre",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 30,
+        "converting": 30,
+        "origin": [
+          23651,
+          23680,
+          15882
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 282,
+        "name": "Forgotten Sepulchre",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 31,
+        "converting": 31,
+        "origin": [
+          23345,
+          23720,
+          15921
+        ],
+        "onSurface": 10,
+        "points": 10
+      },
+      {
+        "num": 283,
+        "name": "Forgotten Sepulchre",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          23672,
+          23720,
+          15792
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 284,
+        "name": "Concealed Guardhouse",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 17,
+        "converting": 17,
+        "origin": [
+          23667,
+          23390,
+          15953
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 285,
+        "name": "Concealed Guardhouse",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23434,
+          24200,
+          15941
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 286,
+        "name": "Concealed Guardhouse",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23733,
+          23598,
+          15885
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 287,
+        "name": "The Gossamer Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23148,
+          23402,
+          15692
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 288,
+        "name": "The Gossamer Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23148,
+          23402,
+          15692
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 289,
+        "name": "The Gossamer Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 20,
+        "converting": 20,
+        "origin": [
+          23148,
+          23402,
+          15692
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 290,
+        "name": "Underground Tunnel",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23548,
+          23550,
+          16073
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 291,
+        "name": "Underground Tunnel",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          23610,
+          23673,
+          15929
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 292,
+        "name": "Underground Tunnel",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23608,
+          24170,
+          15935
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 293,
+        "name": "Burial Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 43,
+        "converting": 43,
+        "origin": [
+          23949,
+          23672,
+          16124
+        ],
+        "onSurface": 7,
+        "points": 8
+      },
+      {
+        "num": 294,
+        "name": "Burial Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 61,
+        "converting": 61,
+        "origin": [
+          23752,
+          23642,
+          15825
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 295,
+        "name": "Burial Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 30,
+        "converting": 30,
+        "origin": [
+          23943,
+          23547,
+          16029
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 296,
+        "name": "Desecrated Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          24118,
+          23805,
+          15923
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 297,
+        "name": "Desecrated Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23242,
+          23528,
+          15777
+        ],
+        "onSurface": 2,
+        "points": 5
+      },
+      {
+        "num": 298,
+        "name": "Desecrated Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23648,
+          23320,
+          15848
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 300,
+        "name": "Damp Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 20,
+        "converting": 20,
+        "origin": [
+          23124,
+          24390,
+          15745
+        ],
+        "onSurface": 5,
+        "points": 5
+      },
+      {
+        "num": 301,
+        "name": "Damp Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 19,
+        "converting": 19,
+        "origin": [
+          23232,
+          23592,
+          16176
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 302,
+        "name": "Damp Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23529,
+          23482,
+          15921
+        ],
+        "onSurface": 6,
+        "points": 7
+      },
+      {
+        "num": 303,
+        "name": "Damp Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          23449,
+          23522,
+          15926
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 304,
+        "name": "Damp Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 32,
+        "converting": 32,
+        "origin": [
+          23159,
+          23561,
+          15944
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 305,
+        "name": "Forgotten Sepulchre",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 18,
+        "converting": 18,
+        "origin": [
+          23289,
+          23600,
+          15901
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 306,
+        "name": "Forgotten Sepulchre",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 20,
+        "converting": 20,
+        "origin": [
+          23548,
+          23462,
+          16010
+        ],
+        "onSurface": 5,
+        "points": 5
+      },
+      {
+        "num": 307,
+        "name": "Forgotten Sepulchre",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 18,
+        "converting": 18,
+        "origin": [
+          23209,
+          23659,
+          15828
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 308,
+        "name": "Forgotten Sepulchre",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 18,
+        "converting": 18,
+        "origin": [
+          23558,
+          23922,
+          15817
+        ],
+        "onSurface": 5,
+        "points": 5
+      },
+      {
+        "num": 309,
+        "name": "Forgotten Sepulchre",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 13,
+        "converting": 13,
+        "origin": [
+          23627,
+          23767,
+          15782
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 310,
+        "name": "Concealed Guardhouse",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23680,
+          23417,
+          15827
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 311,
+        "name": "Concealed Guardhouse",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23427,
+          24194,
+          15844
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 312,
+        "name": "Concealed Guardhouse",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23732,
+          23446,
+          15891
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 313,
+        "name": "Concealed Guardhouse",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 29,
+        "converting": 29,
+        "origin": [
+          23591,
+          23610,
+          15828
+        ],
+        "onSurface": 7,
+        "points": 9
+      },
+      {
+        "num": 314,
+        "name": "Concealed Guardhouse",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23174,
+          23649,
+          16010
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 315,
+        "name": "The Gossamer Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23382,
+          23606,
+          15903
+        ],
+        "onSurface": 5,
+        "points": 6
+      },
+      {
+        "num": 316,
+        "name": "The Gossamer Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 31,
+        "converting": 31,
+        "origin": [
+          23567,
+          23626,
+          15891
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 317,
+        "name": "The Gossamer Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 31,
+        "converting": 31,
+        "origin": [
+          23561,
+          23744,
+          15916
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 318,
+        "name": "The Gossamer Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 33,
+        "converting": 33,
+        "origin": [
+          23112,
+          23671,
+          15826
+        ],
+        "onSurface": 6,
+        "points": 7
+      },
+      {
+        "num": 319,
+        "name": "The Gossamer Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 29,
+        "converting": 29,
+        "origin": [
+          23590,
+          23555,
+          15935
+        ],
+        "onSurface": 7,
+        "points": 9
+      },
+      {
+        "num": 320,
+        "name": "Underground Tunnel",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          23546,
+          23542,
+          15912
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 321,
+        "name": "Underground Tunnel",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 30,
+        "converting": 30,
+        "origin": [
+          23610,
+          23639,
+          15816
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 322,
+        "name": "Underground Tunnel",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 30,
+        "converting": 30,
+        "origin": [
+          23612,
+          23680,
+          15816
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 323,
+        "name": "Underground Tunnel",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 30,
+        "converting": 30,
+        "origin": [
+          23638,
+          23814,
+          15888
+        ],
+        "onSurface": 5,
+        "points": 6
+      },
+      {
+        "num": 324,
+        "name": "Underground Tunnel",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 35,
+        "converting": 35,
+        "origin": [
+          23680,
+          23608,
+          15816
+        ],
+        "onSurface": 9,
+        "points": 10
+      },
+      {
+        "num": 325,
+        "name": "Forgotten Tunnels",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 67,
+        "converting": 67,
+        "origin": [
+          24080,
+          23540,
+          16052
+        ],
+        "onSurface": 49,
+        "points": 51
+      },
+      {
+        "num": 326,
+        "name": "The Hidden Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 97,
+        "converting": 97,
+        "origin": [
+          23675,
+          23539,
+          15842
+        ],
+        "onSurface": 42,
+        "points": 42
+      },
+      {
+        "num": 327,
+        "name": "Caverns of Madness",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 50,
+        "converting": 50,
+        "origin": [
+          23063,
+          23414,
+          15435
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 328,
+        "name": "The Hidden Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 140,
+        "converting": 140,
+        "origin": [
+          24024,
+          23570,
+          16004
+        ],
+        "onSurface": 62,
+        "points": 67
+      },
+      {
+        "num": 329,
+        "name": "Jarlsberg's Hideout",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 53,
+        "converting": 53,
+        "origin": [
+          23592,
+          23599,
+          15762
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 331,
+        "name": "Drakulvhamn Sanctum",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 49,
+        "converting": 49,
+        "origin": [
+          23295,
+          24123,
+          15773
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 332,
+        "name": "Kingdom of the Sidhe",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 127,
+        "converting": 127,
+        "origin": [
+          24120,
+          23912,
+          16104
+        ],
+        "onSurface": 106,
+        "points": 108
+      },
+      {
+        "num": 333,
+        "name": "Battle Atop the Oseberg",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 57,
+        "converting": 57,
+        "origin": [
+          24094,
+          23893,
+          15520
+        ],
+        "onSurface": 8,
+        "points": 9
+      },
+      {
+        "num": 336,
+        "name": "Demonic Prison",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 78,
+        "converting": 78,
+        "origin": [
+          23075,
+          23399,
+          14890
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 337,
+        "name": "Demonic Prison",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 73,
+        "converting": 73,
+        "origin": [
+          23074,
+          23397,
+          14893
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 338,
+        "name": "Demonic Prison",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 79,
+        "converting": 79,
+        "origin": [
+          23081,
+          23393,
+          14893
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 339,
+        "name": "Brimstone Caverns",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 125,
+        "converting": 125,
+        "origin": [
+          23321,
+          24189,
+          15405
+        ],
+        "onSurface": 2,
+        "points": 4
+      },
+      {
+        "num": 340,
+        "name": "Halls of Helgardh",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 126,
+        "converting": 126,
+        "origin": [
+          23616,
+          24224,
+          16128
+        ],
+        "onSurface": 169,
+        "points": 196
+      },
+      {
+        "num": 341,
+        "name": "Cave of Cruachan",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 137,
+        "converting": 137,
+        "origin": [
+          23118,
+          24220,
+          15265
+        ],
+        "onSurface": 2,
+        "points": 4
+      },
+      {
+        "num": 342,
+        "name": "Mid Launch 2",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 3,
+        "converting": 3,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 343,
+        "name": "Alb Launch 2",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 2,
+        "converting": 2,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 344,
+        "name": "Hib Launch 2",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 3,
+        "converting": 3,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 345,
+        "name": "Tomte Prison",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 66,
+        "converting": 66,
+        "origin": [
+          23545,
+          23583,
+          15824
+        ],
+        "onSurface": 17,
+        "points": 17
+      },
+      {
+        "num": 346,
+        "name": "Nisse's Retreat",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 60,
+        "converting": 60,
+        "origin": [
+          23078,
+          23725,
+          15812
+        ],
+        "onSurface": 11,
+        "points": 14
+      },
+      {
+        "num": 348,
+        "name": "The Baron's Gaol",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 12,
+        "converting": 12,
+        "origin": [
+          23359,
+          23613,
+          15715
+        ],
+        "onSurface": 3,
+        "points": 4
+      },
+      {
+        "num": 349,
+        "name": "Lios's Eternal Rest",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 74,
+        "converting": 74,
+        "origin": [
+          23720,
+          24096,
+          15824
+        ],
+        "onSurface": 22,
+        "points": 22
+      },
+      {
+        "num": 350,
+        "name": "Liche's Unrest",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 69,
+        "converting": 69,
+        "origin": [
+          23327,
+          24031,
+          15865
+        ],
+        "onSurface": 18,
+        "points": 19
+      },
+      {
+        "num": 351,
+        "name": "Nephraal�s Gaol",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 11,
+        "converting": 11,
+        "origin": [
+          23302,
+          23551,
+          15811
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 352,
+        "name": "Morfesa�s Gaol",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 13,
+        "converting": 13,
+        "origin": [
+          23227,
+          23638,
+          15903
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 353,
+        "name": "Den of Bones",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 60,
+        "converting": 60,
+        "origin": [
+          23582,
+          23536,
+          15914
+        ],
+        "onSurface": 19,
+        "points": 22
+      },
+      {
+        "num": 354,
+        "name": "The Lost Burrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 85,
+        "converting": 85,
+        "origin": [
+          23610,
+          23647,
+          15824
+        ],
+        "onSurface": 25,
+        "points": 25
+      },
+      {
+        "num": 355,
+        "name": "Tethra's Stronghold",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 75,
+        "converting": 75,
+        "origin": [
+          23569,
+          23554,
+          15970
+        ],
+        "onSurface": 36,
+        "points": 40
+      },
+      {
+        "num": 356,
+        "name": "Barrow of the Restless Dead",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 72,
+        "converting": 72,
+        "origin": [
+          23582,
+          23690,
+          16110
+        ],
+        "onSurface": 27,
+        "points": 27
+      },
+      {
+        "num": 357,
+        "name": "The Cursed Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 126,
+        "converting": 126,
+        "origin": [
+          23294,
+          23897,
+          15924
+        ],
+        "onSurface": 27,
+        "points": 27
+      },
+      {
+        "num": 358,
+        "name": "Drakulvhamn",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 88,
+        "converting": 88,
+        "origin": [
+          23552,
+          23540,
+          15908
+        ],
+        "onSurface": 20,
+        "points": 22
+      },
+      {
+        "num": 359,
+        "name": "Red Dagger Hideout",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 145,
+        "converting": 145,
+        "origin": [
+          23718,
+          23596,
+          15977
+        ],
+        "onSurface": 63,
+        "points": 64
+      },
+      {
+        "num": 360,
+        "name": "Eirik's Throne Room",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 1,
+        "converting": 1,
+        "origin": [
+          23494,
+          23627,
+          15762
+        ],
+        "onSurface": 5,
+        "points": 5
+      },
+      {
+        "num": 361,
+        "name": "Arachnid's Labyrinth",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 103,
+        "converting": 103,
+        "origin": [
+          23545,
+          23730,
+          15914
+        ],
+        "onSurface": 21,
+        "points": 24
+      },
+      {
+        "num": 362,
+        "name": "The Master's Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 90,
+        "converting": 90,
+        "origin": [
+          23789,
+          23593,
+          15829
+        ],
+        "onSurface": 26,
+        "points": 29
+      },
+      {
+        "num": 363,
+        "name": "Anataeus' Sanctuary",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 6,
+        "converting": 6,
+        "origin": [
+          23163,
+          23384,
+          16055
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 364,
+        "name": "Keeper Iraeda's Sanctuary",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 6,
+        "converting": 6,
+        "origin": [
+          23171,
+          23381,
+          16151
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 365,
+        "name": "Bandit Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 4,
+        "converting": 4,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 366,
+        "name": "Gnoll Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 4,
+        "converting": 4,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 367,
+        "name": "Vandr's Bane",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 3,
+        "converting": 3,
+        "origin": [
+          23100,
+          23481,
+          15497
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 368,
+        "name": "Past and Present",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 3,
+        "converting": 3,
+        "origin": [
+          23230,
+          23551,
+          15635
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 369,
+        "name": "Half-Orc Camp",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 6,
+        "converting": 6,
+        "origin": [
+          23415,
+          23664,
+          15800
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 370,
+        "name": "Brutal Realization",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 4,
+        "converting": 4,
+        "origin": [
+          23088,
+          23388,
+          15674
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 371,
+        "name": "History Repeats Itself",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 5,
+        "converting": 5,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 372,
+        "name": "Hallowed Ruins",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 7,
+        "converting": 7,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 373,
+        "name": "Passage of Echoes",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 36,
+        "converting": 36,
+        "origin": [
+          23436,
+          23682,
+          15657
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 374,
+        "name": "Childe's Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 28,
+        "converting": 28,
+        "origin": [
+          23464,
+          23720,
+          15688
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 375,
+        "name": "Lost Passages",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23366,
+          24108,
+          15382
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 376,
+        "name": "Goblin's Cookery",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 68,
+        "converting": 68,
+        "origin": [
+          23546,
+          23799,
+          16007
+        ],
+        "onSurface": 21,
+        "points": 25
+      },
+      {
+        "num": 377,
+        "name": "The Beastmaster's Den",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 68,
+        "converting": 68,
+        "origin": [
+          24056,
+          23608,
+          15937
+        ],
+        "onSurface": 29,
+        "points": 30
+      },
+      {
+        "num": 378,
+        "name": "Keeper Garran's Sanctuary",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 6,
+        "converting": 6,
+        "origin": [
+          23170,
+          23383,
+          16057
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 379,
+        "name": "The Funerary Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23744,
+          23664,
+          15808
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 380,
+        "name": "Lair of Doom",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 80,
+        "converting": 80,
+        "origin": [
+          23792,
+          23665,
+          15817
+        ],
+        "onSurface": 24,
+        "points": 24
+      },
+      {
+        "num": 381,
+        "name": "The Arena",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 105,
+        "converting": 105,
+        "origin": [
+          23679,
+          23653,
+          15889
+        ],
+        "onSurface": 24,
+        "points": 24
+      },
+      {
+        "num": 382,
+        "name": "The Funerary Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 27,
+        "converting": 27,
+        "origin": [
+          23646,
+          23360,
+          15826
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 383,
+        "name": "The Funerary Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 28,
+        "converting": 28,
+        "origin": [
+          23646,
+          23360,
+          15826
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 384,
+        "name": "The Ritual Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 72,
+        "converting": 72,
+        "origin": [
+          23730,
+          23760,
+          15900
+        ],
+        "onSurface": 21,
+        "points": 21
+      },
+      {
+        "num": 385,
+        "name": "The Betrayer's Den",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 78,
+        "converting": 78,
+        "origin": [
+          23774,
+          23495,
+          16038
+        ],
+        "onSurface": 20,
+        "points": 20
+      },
+      {
+        "num": 386,
+        "name": "the Sundered Tombs",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 21,
+        "converting": 21,
+        "origin": [
+          23667,
+          23635,
+          15868
+        ],
+        "onSurface": 6,
+        "points": 7
+      },
+      {
+        "num": 387,
+        "name": "the Sundered Tombs",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23744,
+          23664,
+          15792
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 388,
+        "name": "the Sundered Tombs",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23744,
+          23664,
+          15792
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 389,
+        "name": "Halls of Flame",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 33,
+        "converting": 33,
+        "origin": [
+          23500,
+          23675,
+          15898
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 390,
+        "name": "Granite Halls",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 70,
+        "converting": 70,
+        "origin": [
+          23947,
+          23441,
+          15910
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 391,
+        "name": "Arcane Tower",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 13,
+        "converting": 13,
+        "origin": [
+          23098,
+          23439,
+          15925
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 392,
+        "name": "The Hall of Reawakening",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 59,
+        "converting": 59,
+        "origin": [
+          23715,
+          23654,
+          15778
+        ],
+        "onSurface": 14,
+        "points": 15
+      },
+      {
+        "num": 393,
+        "name": "The Hidden Crypt",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 66,
+        "converting": 66,
+        "origin": [
+          23560,
+          23761,
+          15828
+        ],
+        "onSurface": 16,
+        "points": 16
+      },
+      {
+        "num": 394,
+        "name": "Constantine's Throne Room",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 1,
+        "converting": 1,
+        "origin": [
+          23491,
+          23595,
+          15672
+        ],
+        "onSurface": 5,
+        "points": 6
+      },
+      {
+        "num": 395,
+        "name": "Lamfhotas' Throne Room",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 1,
+        "converting": 1,
+        "origin": [
+          23608,
+          23552,
+          15784
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 396,
+        "name": "Depths of Despair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23653,
+          23577,
+          15609
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 397,
+        "name": "Childe's Vault",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23621,
+          23721,
+          15768
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 398,
+        "name": "Arcane Tower",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 13,
+        "converting": 13,
+        "origin": [
+          23095,
+          23431,
+          15909
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 399,
+        "name": "Arcane Tower",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 13,
+        "converting": 13,
+        "origin": [
+          23093,
+          23431,
+          15916
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 400,
+        "name": "Burial Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 31,
+        "converting": 31,
+        "origin": [
+          23628,
+          23644,
+          16043
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 401,
+        "name": "Burial Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 16,
+        "converting": 16,
+        "origin": [
+          23639,
+          23775,
+          16184
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 402,
+        "name": "Burial Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 37,
+        "converting": 37,
+        "origin": [
+          23601,
+          23656,
+          15796
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 403,
+        "name": "Burial Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23541,
+          23588,
+          15717
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 404,
+        "name": "Burial Tomb",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23619,
+          23733,
+          16002
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 405,
+        "name": "Desecrated Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 20,
+        "converting": 20,
+        "origin": [
+          24118,
+          23805,
+          15923
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 406,
+        "name": "Desecrated Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 20,
+        "converting": 20,
+        "origin": [
+          23289,
+          23761,
+          -6
+        ],
+        "onSurface": 3,
+        "points": 5
+      },
+      {
+        "num": 407,
+        "name": "Desecrated Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23736,
+          23460,
+          16010
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 408,
+        "name": "Desecrated Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 30,
+        "converting": 30,
+        "origin": [
+          23545,
+          23667,
+          15718
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 409,
+        "name": "Desecrated Grounds",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          23137,
+          23562,
+          15900
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 410,
+        "name": "Forgotten Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 14,
+        "converting": 14,
+        "origin": [
+          24071,
+          23549,
+          15907
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 411,
+        "name": "Forgotten Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 19,
+        "converting": 19,
+        "origin": [
+          23530,
+          23630,
+          16025
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 412,
+        "name": "Forgotten Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23995,
+          23524,
+          15914
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 413,
+        "name": "Forgotten Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 19,
+        "converting": 19,
+        "origin": [
+          23614,
+          23560,
+          15902
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 414,
+        "name": "Forgotten Mines",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 17,
+        "converting": 17,
+        "origin": [
+          23531,
+          23466,
+          16087
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 415,
+        "name": "The Funerary Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 28,
+        "converting": 28,
+        "origin": [
+          23433,
+          23623,
+          15908
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 416,
+        "name": "The Funerary Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23655,
+          23434,
+          15920
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 417,
+        "name": "The Funerary Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23320,
+          23872,
+          15930
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 418,
+        "name": "The Funerary Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 28,
+        "converting": 28,
+        "origin": [
+          23544,
+          23475,
+          15896
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 419,
+        "name": "The Funerary Hall",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          23551,
+          23430,
+          15908
+        ],
+        "onSurface": 5,
+        "points": 5
+      },
+      {
+        "num": 420,
+        "name": "the Sundered Tombs",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 18,
+        "converting": 18,
+        "origin": [
+          23393,
+          23823,
+          15968
+        ],
+        "onSurface": 5,
+        "points": 6
+      },
+      {
+        "num": 421,
+        "name": "Dream",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 196,
+        "converting": 196,
+        "origin": [
+          23564,
+          23719,
+          16060
+        ],
+        "onSurface": 90,
+        "points": 90
+      },
+      {
+        "num": 422,
+        "name": "the Sundered Tombs",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 73,
+        "converting": 73,
+        "origin": [
+          23560,
+          23602,
+          16022
+        ],
+        "onSurface": 54,
+        "points": 57
+      },
+      {
+        "num": 423,
+        "name": "Dream",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 161,
+        "converting": 2,
+        "failing": [
+          {
+            "file": "STONEHall22.NIF",
+            "placements": 36,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall12.NIF",
+            "placements": 15,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall13.NIF",
+            "placements": 15,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall15.NIF",
+            "placements": 11,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall18.NIF",
+            "placements": 10,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall17.NIF",
+            "placements": 9,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall03.NIF",
+            "placements": 7,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall21.NIF",
+            "placements": 7,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall02.NIF",
+            "placements": 6,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall23.NIF",
+            "placements": 5,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONERoom04.NIF",
+            "placements": 5,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall09.NIF",
+            "placements": 4,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall10.NIF",
+            "placements": 4,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall01.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall05.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall07.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall14.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall16.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONERoom02.NIF",
+            "placements": 3,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall08.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall11.NIF",
+            "placements": 2,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONEHall04.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONERoom05.NIF",
+            "placements": 1,
+            "cause": "model file not found"
+          },
+          {
+            "file": "STONERoom06.NIF",
+            "placements": 1,
+            "cause": "corrupt data in NiTriShapeData"
+          }
+        ],
+        "origin": [
+          23338,
+          24044,
+          15848
+        ],
+        "onSurface": 5,
+        "points": 109
+      },
+      {
+        "num": 424,
+        "name": "Dream",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 158,
+        "converting": 158,
+        "origin": [
+          23616,
+          23400,
+          15800
+        ],
+        "onSurface": 87,
+        "points": 138
+      },
+      {
+        "num": 425,
+        "name": "The Lost Wing",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 91,
+        "converting": 91,
+        "origin": [
+          23784,
+          23673,
+          15810
+        ],
+        "onSurface": 23,
+        "points": 23
+      },
+      {
+        "num": 426,
+        "name": "Deliah's Sanctuary",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 70,
+        "converting": 70,
+        "origin": [
+          23697,
+          23751,
+          15812
+        ],
+        "onSurface": 20,
+        "points": 21
+      },
+      {
+        "num": 427,
+        "name": "The Cursed Barrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 32,
+        "converting": 32,
+        "origin": [
+          23670,
+          23542,
+          15814
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 428,
+        "name": "The Cursed Barrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 32,
+        "converting": 32,
+        "origin": [
+          23805,
+          23640,
+          15887
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 429,
+        "name": "Snyblem's Lair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 20,
+        "converting": 20,
+        "origin": [
+          23107,
+          23544,
+          15557
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 430,
+        "name": "the Plutonian Shore",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23169,
+          23474,
+          15764
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 431,
+        "name": "The Cursed Barrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 32,
+        "converting": 32,
+        "origin": [
+          23802,
+          23635,
+          15835
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 432,
+        "name": "Dismal Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23509,
+          24006,
+          15934
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 433,
+        "name": "Snarg's Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 35,
+        "converting": 35,
+        "origin": [
+          23115,
+          23662,
+          15868
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 434,
+        "name": "Maze of Tribulation",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 36,
+        "converting": 36,
+        "origin": [
+          23161,
+          23748,
+          15789
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 435,
+        "name": "The Smelting Pot",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 27,
+        "converting": 27,
+        "origin": [
+          23245,
+          24202,
+          15707
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 436,
+        "name": "Forges of Flame",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 33,
+        "converting": 33,
+        "origin": [
+          23500,
+          23675,
+          15898
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 437,
+        "name": "Hammer Hugak's Smithy",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23106,
+          23385,
+          15663
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 438,
+        "name": "the Goblin Workshop",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 28,
+        "converting": 28,
+        "origin": [
+          23564,
+          24023,
+          15705
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 439,
+        "name": "Wolak's Crucible",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23033,
+          24119,
+          15786
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 440,
+        "name": "Marik's Workroom",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23608,
+          23532,
+          15704
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 441,
+        "name": "Dismal Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 13,
+        "converting": 13,
+        "origin": [
+          23734,
+          23648,
+          15846
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 442,
+        "name": "The Steward's Crypt",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 59,
+        "converting": 59,
+        "origin": [
+          23744,
+          23668,
+          15810
+        ],
+        "onSurface": 16,
+        "points": 16
+      },
+      {
+        "num": 443,
+        "name": "Serf's Folly",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 55,
+        "converting": 55,
+        "origin": [
+          23621,
+          23672,
+          15814
+        ],
+        "onSurface": 15,
+        "points": 15
+      },
+      {
+        "num": 444,
+        "name": "Dream",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 36,
+        "converting": 36,
+        "origin": [
+          23568,
+          24320,
+          16136
+        ],
+        "onSurface": 49,
+        "points": 71
+      },
+      {
+        "num": 445,
+        "name": "Dream",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 160,
+        "converting": 160,
+        "origin": [
+          23640,
+          23792,
+          16184
+        ],
+        "onSurface": 47,
+        "points": 48
+      },
+      {
+        "num": 448,
+        "name": "Dark Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23792,
+          23480,
+          15696
+        ],
+        "onSurface": 4,
+        "points": 6
+      },
+      {
+        "num": 449,
+        "name": "Dark Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 33,
+        "converting": 33,
+        "origin": [
+          23072,
+          23812,
+          15828
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 450,
+        "name": "The Cursed Barrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23563,
+          23688,
+          15785
+        ],
+        "onSurface": 5,
+        "points": 5
+      },
+      {
+        "num": 451,
+        "name": "The Cursed Barrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23800,
+          23640,
+          15793
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 452,
+        "name": "The Cursed Barrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 20,
+        "converting": 20,
+        "origin": [
+          23744,
+          23672,
+          15704
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 453,
+        "name": "The Cursed Barrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 19,
+        "converting": 19,
+        "origin": [
+          23628,
+          23901,
+          15798
+        ],
+        "onSurface": 5,
+        "points": 5
+      },
+      {
+        "num": 454,
+        "name": "The Cursed Barrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 28,
+        "converting": 28,
+        "origin": [
+          23947,
+          23455,
+          15736
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 455,
+        "name": "Dismal Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 10,
+        "converting": 10,
+        "origin": [
+          23541,
+          23596,
+          15851
+        ],
+        "onSurface": 8,
+        "points": 9
+      },
+      {
+        "num": 456,
+        "name": "Dismal Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 14,
+        "converting": 14,
+        "origin": [
+          23992,
+          23672,
+          15912
+        ],
+        "onSurface": 8,
+        "points": 8
+      },
+      {
+        "num": 457,
+        "name": "Dismal Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 13,
+        "converting": 13,
+        "origin": [
+          24056,
+          23541,
+          15924
+        ],
+        "onSurface": 9,
+        "points": 10
+      },
+      {
+        "num": 458,
+        "name": "Dismal Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 16,
+        "converting": 16,
+        "origin": [
+          23984,
+          23664,
+          15912
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 459,
+        "name": "Dismal Grotto",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 15,
+        "converting": 15,
+        "origin": [
+          24130,
+          23550,
+          15910
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 460,
+        "name": "The Accursed Caves",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 35,
+        "converting": 35,
+        "origin": [
+          23461,
+          23584,
+          15907
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 461,
+        "name": "The Accursed Caves",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 32,
+        "converting": 32,
+        "origin": [
+          23173,
+          23654,
+          15832
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 462,
+        "name": "The Accursed Caves",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23486,
+          23593,
+          15905
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 463,
+        "name": "The Accursed Caves",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 24,
+        "converting": 24,
+        "origin": [
+          23554,
+          23683,
+          15898
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 464,
+        "name": "The Accursed Caves",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 27,
+        "converting": 27,
+        "origin": [
+          23496,
+          23735,
+          16111
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 465,
+        "name": "Dark Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 27,
+        "converting": 27,
+        "origin": [
+          23240,
+          23672,
+          16072
+        ],
+        "onSurface": 7,
+        "points": 8
+      },
+      {
+        "num": 466,
+        "name": "Dark Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23660,
+          24190,
+          15840
+        ],
+        "onSurface": 6,
+        "points": 6
+      },
+      {
+        "num": 467,
+        "name": "Dark Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23681,
+          23427,
+          15915
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 468,
+        "name": "Dark Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 26,
+        "converting": 26,
+        "origin": [
+          23201,
+          23579,
+          15908
+        ],
+        "onSurface": 4,
+        "points": 6
+      },
+      {
+        "num": 469,
+        "name": "Dark Cavern",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 29,
+        "converting": 29,
+        "origin": [
+          23657,
+          23553,
+          15816
+        ],
+        "onSurface": 9,
+        "points": 10
+      },
+      {
+        "num": 470,
+        "name": "Half Orc Command Post",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 4,
+        "converting": 4,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 471,
+        "name": "Unused Mine",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 23,
+        "converting": 23,
+        "origin": [
+          23557,
+          23805,
+          15921
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 472,
+        "name": "Unused Mine",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23571,
+          23579,
+          16184
+        ],
+        "onSurface": 10,
+        "points": 11
+      },
+      {
+        "num": 473,
+        "name": "Unused Mine",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 20,
+        "converting": 20,
+        "origin": [
+          24129,
+          23649,
+          15903
+        ],
+        "onSurface": 7,
+        "points": 8
+      },
+      {
+        "num": 474,
+        "name": "Unused Mine",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 18,
+        "converting": 18,
+        "origin": [
+          23945,
+          23534,
+          15913
+        ],
+        "onSurface": 9,
+        "points": 9
+      },
+      {
+        "num": 475,
+        "name": "Rise of the Spraggons",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 58,
+        "converting": 58,
+        "origin": [
+          24070,
+          23618,
+          16018
+        ],
+        "onSurface": 25,
+        "points": 25
+      },
+      {
+        "num": 476,
+        "name": "The Warrens",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 35,
+        "converting": 35,
+        "origin": [
+          23651,
+          24027,
+          15832
+        ],
+        "onSurface": 18,
+        "points": 19
+      },
+      {
+        "num": 477,
+        "name": "The Accursed Caves",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23422,
+          23424,
+          15808
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 478,
+        "name": "The Accursed Caves",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23416,
+          23392,
+          15816
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 479,
+        "name": "The Ancient's Retreat",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 78,
+        "converting": 78,
+        "origin": [
+          23615,
+          23650,
+          15820
+        ],
+        "onSurface": 21,
+        "points": 25
+      },
+      {
+        "num": 480,
+        "name": "The Shaman's Inner Sanctum",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 72,
+        "converting": 72,
+        "origin": [
+          23072,
+          23648,
+          15920
+        ],
+        "onSurface": 19,
+        "points": 21
+      },
+      {
+        "num": 481,
+        "name": "The Accursed Caves",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          23422,
+          23424,
+          15808
+        ],
+        "onSurface": 2,
+        "points": 2
+      },
+      {
+        "num": 482,
+        "name": "Unused Mine",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 22,
+        "converting": 22,
+        "origin": [
+          24118,
+          23541,
+          15893
+        ],
+        "onSurface": 7,
+        "points": 7
+      },
+      {
+        "num": 483,
+        "name": "The Brawler's Den",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 54,
+        "converting": 54,
+        "origin": [
+          23584,
+          23697,
+          15879
+        ],
+        "onSurface": 16,
+        "points": 18
+      },
+      {
+        "num": 484,
+        "name": "Felena's Sorrow",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 49,
+        "converting": 49,
+        "origin": [
+          23590,
+          23728,
+          15787
+        ],
+        "onSurface": 16,
+        "points": 20
+      },
+      {
+        "num": 485,
+        "name": "Dream",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 151,
+        "converting": 151,
+        "origin": [
+          23701,
+          24112,
+          15618
+        ],
+        "onSurface": 79,
+        "points": 89
+      },
+      {
+        "num": 487,
+        "name": "The Pit of Despair",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 59,
+        "converting": 59,
+        "origin": [
+          24160,
+          23512,
+          16056
+        ],
+        "onSurface": 32,
+        "points": 32
+      },
+      {
+        "num": 488,
+        "name": "The Forgotten Vein",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 45,
+        "converting": 45,
+        "origin": [
+          23592,
+          23530,
+          15965
+        ],
+        "onSurface": 25,
+        "points": 26
+      },
+      {
+        "num": 489,
+        "name": "Demons' Breach",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 136,
+        "converting": 136,
+        "origin": [
+          24086,
+          24111,
+          15532
+        ],
+        "onSurface": 103,
+        "points": 114
+      },
+      {
+        "num": 491,
+        "name": "Maze of Madness",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 27,
+        "converting": 27,
+        "origin": [
+          23194,
+          23761,
+          15759
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 492,
+        "name": "the Shattered Lands",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 30,
+        "converting": 30,
+        "origin": [
+          23186,
+          23740,
+          15772
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 494,
+        "name": "Heart of Darkness",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 25,
+        "converting": 25,
+        "origin": [
+          23621,
+          23721,
+          15768
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 495,
+        "name": "Inner Sanctum",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 29,
+        "converting": 29,
+        "origin": [
+          23616,
+          23458,
+          16173
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 496,
+        "name": "the Deep",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 39,
+        "converting": 39,
+        "origin": [
+          23420,
+          23680,
+          15772
+        ],
+        "onSurface": 4,
+        "points": 4
+      },
+      {
+        "num": 497,
+        "name": "Mid Launch",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 3,
+        "converting": 3,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 498,
+        "name": "Alb Launch",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 2,
+        "converting": 2,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
+      },
+      {
+        "num": 499,
+        "name": "Hib Launch",
+        "kind": "dungeon",
+        "layout": "ok",
+        "placements": 3,
+        "converting": 3,
+        "origin": [
+          23584,
+          23904,
+          0
+        ],
+        "onSurface": 0,
+        "points": 0
       }
     ]
   }

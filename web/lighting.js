@@ -38,6 +38,29 @@ export function setSkyLight(ambient, sun) {
   SUN_COLOR = sun.map((v) => v * EXPOSURE);
 }
 
+// Inside a city or dungeon there is no sun. The light is a dim ambient and
+// the zone's own point lights (lights.csv): the eight nearest the camera,
+// each falling off smoothly to nothing at its radius. lights.csv gives each
+// a type number, and nothing in the install says what the types look like,
+// so every one is a warm torchlight here. Outdoors the sun is on and there
+// are no point lights, which leaves every outdoor zone lit exactly as before.
+export const MAX_POINT_LIGHTS = 8;
+let SUN_ON = 1;
+let POINTS = []; // { pos: [x, height, z], color: [r, g, b], radius }
+
+// setInteriorLight turns the sun off and sets the ambient for an interior.
+export function setInteriorLight(ambient = [0.27, 0.26, 0.29]) {
+  SUN_ON = 0;
+  SKY_COLOR = ambient;
+  GROUND_COLOR = ambient.map((v) => v * BOUNCE);
+}
+
+// setPointLights sets the lights drawn this frame; at most
+// MAX_POINT_LIGHTS are used.
+export function setPointLights(list) {
+  POINTS = list.slice(0, MAX_POINT_LIGHTS);
+}
+
 // The texture unit the shadow map lives on in every program. The terrain
 // takes 0-3 for its atlas and ground layers.
 export const SHADOW_UNIT = 5;
@@ -55,6 +78,10 @@ uniform highp sampler2DShadow uShadowMap;
 uniform mat4 uLightVP;
 uniform float uShadowOn;
 uniform vec2 uShadowTexel; // one texel in shadow-map uv, and in world units
+uniform float uSunOn;      // 0 inside, where no sun reaches
+uniform int uPointN;
+uniform vec4 uPointPos[${MAX_POINT_LIGHTS}];   // position, radius
+uniform vec3 uPointColor[${MAX_POINT_LIGHTS}];
 
 float sunShadow(vec3 world, vec3 n) {
   if (uShadowOn < 0.5) return 1.0;
@@ -82,12 +109,22 @@ vec3 lightAt(vec3 n, vec3 world, bool twoSided) {
   // already, and testing it would only add acne.
   if (sun > 0.0) sun *= sunShadow(world, d < 0.0 ? -n : n);
   vec3 amb = mix(uGroundColor, uSkyColor, n.y * 0.5 + 0.5);
-  return amb + uSunColor * sun;
+  vec3 lit = amb + uSunColor * sun * uSunOn;
+  for (int i = 0; i < ${MAX_POINT_LIGHTS}; i++) {
+    if (i >= uPointN) break;
+    vec3 l = uPointPos[i].xyz - world;
+    float dist = length(l);
+    float fall = clamp(1.0 - dist / uPointPos[i].w, 0.0, 1.0);
+    if (fall <= 0.0) continue;
+    float d2 = dot(n, l / max(dist, 1e-3));
+    lit += uPointColor[i] * fall * fall * (twoSided ? abs(d2) : max(d2, 0.0));
+  }
+  return lit;
 }
 `;
 
 export const LIGHT_UNIFORMS = ['uSunDir', 'uSunColor', 'uSkyColor', 'uGroundColor',
-  'uShadowMap', 'uLightVP', 'uShadowOn', 'uShadowTexel'];
+  'uShadowMap', 'uLightVP', 'uShadowOn', 'uShadowTexel', 'uSunOn', 'uPointN', 'uPointPos', 'uPointColor'];
 
 // bindLight sets the shared uniforms on the current program. light is the
 // object the shadow map's begin() returns, or null for no shadows.
@@ -98,6 +135,17 @@ export function bindLight(gl, U, light) {
   gl.uniform3fv(U.uGroundColor, GROUND_COLOR);
   gl.uniform1i(U.uShadowMap, SHADOW_UNIT);
   gl.uniform1f(U.uShadowOn, light && light.on ? 1 : 0);
+  gl.uniform1f(U.uSunOn, SUN_ON);
+  gl.uniform1i(U.uPointN, POINTS.length);
+  if (POINTS.length) {
+    const pos = new Float32Array(MAX_POINT_LIGHTS * 4), col = new Float32Array(MAX_POINT_LIGHTS * 3);
+    POINTS.forEach((p, i) => {
+      pos.set([...p.pos, p.radius], i * 4);
+      col.set(p.color, i * 3);
+    });
+    gl.uniform4fv(U.uPointPos, pos);
+    gl.uniform3fv(U.uPointColor, col);
+  }
   if (light) {
     gl.uniformMatrix4fv(U.uLightVP, false, light.viewProj);
     gl.uniform2f(U.uShadowTexel, 1 / light.size, light.texelWorld);

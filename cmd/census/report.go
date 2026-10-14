@@ -31,6 +31,9 @@ func summary(w io.Writer, rep *Report) {
 	fmt.Fprintf(w, "outdoor zones   %d dry-run: terrain %d, clean %d; placements %d of %d convert (%s)\n",
 		o.Zones, o.Terrain, o.Clean, o.Converting, o.Placements, pct(o.Converting, o.Placements))
 	fmt.Fprintf(w, "ground          detail in %d of %d; grass in %d, %d with no grass map\n", o.Detail, o.Terrain, o.Grass, o.NoGrass)
+	in := interiorTotals(z.Interiors)
+	fmt.Fprintf(w, "interiors       %d dry-run: layout %d, complete %d; placements %d of %d convert (%s)\n",
+		in.zones, in.layout, in.complete, in.converting, in.placements, pct(in.converting, in.placements))
 }
 
 // markdown renders the report for reading. It is generated, like the JSON,
@@ -135,5 +138,49 @@ func markdown(rep *Report) string {
 		}
 		p("| %03d | %s | %s | %s | %s | %s | %d | %d | %s |\n", r.Num, name, r.Terrain, layout, detail, r.Grass, r.Placements, r.Converting, strings.Join(fails, "; "))
 	}
+
+	in := interiorTotals(z.Interiors)
+	p("\n### Cities and dungeons\n\n")
+	p("Each city and dungeon zone present is dry-run the same way: its layout read (`city.csv`, or `dungeon.chunk`, `.place` and `.prop`), ")
+	p("every model it places baked, and its transform to zone coordinates fitted. ")
+	p("%d zones; the layout reads in %d; %d convert completely. %d of %d placements convert (%s).\n\n",
+		in.zones, in.layout, in.complete, in.converting, in.placements, pct(in.converting, in.placements))
+	p("The fit is judged by the zone's own exits (`ZONEJUMP.csv`) and lights (`lights.csv`): ")
+	p("how many of them the fitted origin, with x mirrored, puts on the geometry.\n\n")
+	p("| Zone | Name | Kind | Layout | Placements | Converting | Origin | On the geometry | Failing models |\n|---:|---|---|---|---:|---:|---|---:|---|\n")
+	for _, r := range z.Interiors {
+		var fails []string
+		for i, f := range r.Failing {
+			if i == maxExamples {
+				fails = append(fails, fmt.Sprintf("and %d more", len(r.Failing)-i))
+				break
+			}
+			fails = append(fails, fmt.Sprintf("%s (%d, %s)", f.File, f.Placements, f.Cause))
+		}
+		on := "—"
+		if r.Points > 0 {
+			on = fmt.Sprintf("%d of %d", r.OnSurface, r.Points)
+		}
+		p("| %03d | %s | %s | %s | %d | %d | %.0f, %.0f, %.0f | %s | %s |\n", r.Num, r.Name, r.Kind, r.Layout,
+			r.Placements, r.Converting, r.Origin[0], r.Origin[1], r.Origin[2], on, strings.Join(fails, "; "))
+	}
 	return b.String()
+}
+
+type interiorSum struct{ zones, layout, complete, placements, converting int }
+
+func interiorTotals(rows []*InteriorRow) interiorSum {
+	var s interiorSum
+	for _, r := range rows {
+		s.zones++
+		if r.Layout == "ok" {
+			s.layout++
+			if r.Converting == r.Placements {
+				s.complete++
+			}
+		}
+		s.placements += r.Placements
+		s.converting += r.Converting
+	}
+	return s
 }

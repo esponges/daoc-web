@@ -1,7 +1,9 @@
 # daoc-web
 
-A proof of concept: extract Dark Age of Camelot's shipped assets and render
-them in a browser. Currently one zone — **100, Vale of Mularn**, its forest and
+Extract Dark Age of Camelot's shipped assets, render them in a browser, and
+play them: a multiplayer game server runs Midgard's zones, with creatures,
+combat, loot and levels (see [Multiplayer](#multiplayer)). The viewer began as
+a proof of concept on one zone — **100, Vale of Mularn**, its forest and
 the village of Mularn — with a playable character you can walk around it: a
 **Troll warrior** in Midgard chain with a warhammer and shield by default, or
 the **Norseman** via `?char=norseman`.
@@ -36,7 +38,7 @@ anims/Troll_*.kfa ──────────► keyframe tracks ────
 
 ## Running it
 
-Needs Go 1.21+ and a DAoC install.
+Needs Go 1.26+ and a DAoC install.
 
 ```bash
 go run ./cmd/zoneconv -zone 100 -name "Vale of Mularn"   # terrain
@@ -77,6 +79,19 @@ marks zones where much of the scenery did not convert; see
 no NPCs, since the spawn file is Mularn's. In the console, `daoc.warp(x, y)`
 moves the character to a heightmap cell (world units / 256).
 
+Cities and dungeons are in the picker too, marked `(city)` or `(dungeon)`:
+`?zone=120` is Jordheim, `?zone=125` Spindelhalla. They have no heightmap;
+the character starts on the floor at the zone's first exit, facing down the
+passage, and the place is lit by its own torches. One converts on its own
+with
+
+```bash
+go run ./cmd/interiorconv -zone 125 -name Spindelhalla
+```
+
+and `go run ./cmd/worldconv -only interiors` converts all of them; see
+[Cities and dungeons](#cities-and-dungeons).
+
 Controls are the game's: `W`/`S` move forward and back, `A`/`D` turn the
 character with the camera behind it, `Q`/`E` strafe. Backing up and
 strafing are at a walk, each with the game's own clip. Hold the right mouse button and drag to look around without turning;
@@ -105,7 +120,8 @@ at any speed.
 | `charshot` | renders an exported character to a PNG, no browser needed |
 | `nifdump` | inspects a `.nif`; `-bind` checks the bind pose, `-shapes` lists geometry, `-tex` each shape's textures and blending |
 | `census` | reads every asset in the install and reports what parses and converts; see [Verifying](#verifying) |
-| `worldconv` | runs `zoneconv` and `propconv` on every outdoor zone the census marks convertible, and checks each against it |
+| `interiorconv` | one city or dungeon: its pieces placed by its layout, fitted to zone coordinates, with its exits and lights |
+| `worldconv` | runs `zoneconv` and `propconv` on every outdoor zone, and `interiorconv` on every city and dungeon, the census marks convertible, and checks each against it; `-only outdoor` or `-only interiors` for one half |
 | `mpakls` | lists and extracts from MPAK archives |
 | `serve` | static file server for `web/` |
 
@@ -181,6 +197,11 @@ the ground detail converts (and its agreement, and blend rule), and whether
 the grass does, or why not. A zone whose files read can still draw wrongly;
 these columns are what caught that most zones were drawing no terrain at all.
 
+Every city and dungeon present is dry-run the same way: its layout read,
+every model it places baked, and its transform to zone coordinates fitted,
+with how many of its exits and lights that transform puts on the geometry
+(see [Cities and dungeons](#cities-and-dungeons)).
+
 [`docs/census/README.md`](docs/census/README.md) is the result for reading
 and `docs/census/census.json` the baseline. Both are generated, never edited:
 names, counts and causes only, sorted, so a re-run on the same install gives
@@ -189,13 +210,16 @@ the same bytes and a diff shows exactly what a change gained or lost.
 `go test ./cmd/census` runs the census and fails if any class reads fewer
 items than the baseline records, or fewer outdoor placements convert. It
 also dry-runs the 25 Midgard outdoor zones and fails if any loses its
-terrain, ground detail, grass or a single placement. Both are skipped under
+terrain, ground detail, grass or a single placement, and the 13 Midgard
+interiors, failing if one loses a placement or its transform moves or puts
+fewer exits and lights on the geometry. All are skipped under
 `-short` and when there is no install. After a change that reads more,
 re-run the census and commit the new report to raise the bar.
 
 `go run ./cmd/worldconv` then converts every outdoor zone whose terrain the
-census could read into `web/data`, about 3 GB, and fails unless each zone's
-`props.json` places exactly the fixtures the census counted converting.
+census could read, and every city and dungeon whose layout it could, into
+`web/data`, about 7 GB, and fails unless each zone's `props.json` places exactly what
+the census counted converting.
 
 ## File formats, as worked out from the shipped data
 
@@ -665,6 +689,73 @@ step. The coronas' controller flags say clamp rather than loop; played once
 at load the pulse would never be seen, so it loops. Nodes that animate whole
 parts — the Blacksmith has one, so do the keep and a guard tower — are not
 played.
+
+### Cities and dungeons
+
+A city or dungeon zone (its type in `zones.dat`) has no heightmap. It is
+all models, placed by a layout in its `datNNN.mpk`:
+
+- **A city** has `city.csv`: a count, then `n, jordNN.nif` per block. The
+  blocks are modelled where they stand, so each is placed as it is.
+- **A dungeon** has `dungeon.chunk`, the piece models by index, and
+  `dungeon.place`, one row per placed piece: `index, x, y, z, angle, axis x,
+  axis y, axis z, ...`, the turn about any axis rather than a heading.
+  `dungeon.prop` places props the same way, `index, x, y, z, angle, axis xyz,
+  A, B, scale`, but **in the frame of placed piece B**, the tenth column: read
+  so, all 707 of Abandoned Mines' props sit on its floors, where read in the
+  dungeon's own frame a seventh of them float. The pieces are in
+  `zones/Dnifs`; a piece's portal, pick and bounding branches are hidden like
+  outdoor collision hulls.
+- **Both** have `ZONEJUMP.csv`, the exits (`id, name, x1, y1, x2, y2, z1, z2,
+  target`), and `lights.csv` (`x, y, z, type`), and these are in **zone
+  coordinates**, not the layout's.
+
+The layout's space and the zone's differ by a turn and an origin, and
+nothing in the install states either, so `interiorconv` fits them: of the
+four turns, mirrored or not, and origins on a coarse then a fine grid, it
+takes the transform that puts the most exits and lights within one 128-unit
+cell of the placed geometry. Every interior in the install comes out the
+same way: x mirrored, the origin near (23584, 23904), about 16000 up for a
+dungeon and 8100 for Jordheim. The converter bakes the mirror into the
+models once (positions and normals negated in x, winding swapped), so each
+instance stays a plain rotation; an instance written off the vertical axis
+carries that axis in `props.json` beside its angle.
+
+| Zone | Name | Kind | Placed | Origin | Exits and lights on the geometry |
+| ---: | --- | --- | ---: | --- | ---: |
+| 120 | Jordheim | city | 31 | 23436, 23997, 8111 | 35 of 37 |
+| 125 | Spindelhalla | dungeon | 196 | 23564, 23719, 16060 | 90 of 90 |
+| 126 | Vendo Caverns | dungeon | 54 | 23569, 23654, 15842 | 34 of 34 |
+| 127 | Varulvhamn | dungeon | 184 | 23966, 23907, 16112 | 105 of 110 |
+| 128 | Cursed Tomb | dungeon | 52 | 23683, 24094, 15993 | 37 of 38 |
+| 129 | Nisse's Lair | dungeon | 130 | 24004, 23702, 15805 | 77 of 86 |
+| 149 | Nyttheim | dungeon | 77 | 23382, 23735, 15912 | 8 of 8 |
+| 150 | Trollheim | dungeon | 158 | 23616, 23400, 15800 | 87 of 138 |
+| 160 | Tuscaran Glacier | dungeon | 72 | 23687, 23653, 16335 | 33 of 51 |
+| 161 | Iarnvidiur's Lair | dungeon | 127 | 24120, 23912, 16104 | 106 of 108 |
+| 188 | Midgard's Darkspire | dungeon | 77 | 22999, 23403, 15630 | 3 of 3 |
+| 189 | Midgard's Glashtin Forges | dungeon | 125 | 23083, 23491, 15791 | 8 of 8 |
+| 226 | Midgard's Abandoned Mines | dungeon | 978 | 23555, 23838, 16056 | 24 of 24 |
+
+Trollheim and Tuscaran Glacier are the exceptions: a third of their points
+lie off the geometry under any origin. Nisse's Lair falls just short of
+nine in ten. The test reports these three rather than failing on them. The census table gives every other realm's interiors too.
+
+`zone.json` for an interior has `kind`, the fitted `transform`, the
+geometry's `bounds`, its `entrances` and `lights`, and the fog colour and
+distance from its `SECTOR.DAT`. Those fogs are the outdoor sky blue or a
+pale grey, which inside reads as a bright haze, so the viewer closes the
+view with a near-black fog from 1500 to 9000 units instead. It finds the floor by casting down
+onto the upward-facing triangles, gathered once and binned on a 256-unit
+grid, from the character's height plus a 60-unit step, so a ceiling or an
+upper storey is never taken for the floor. The chase camera is pulled in
+short of any solid triangle between it and the character.
+
+Inside, the sun is off and a dim ambient (0.27, 0.26, 0.29) remains. Each
+of the 8 lights nearest the eye adds a warm torch colour (1.15, 0.78, 0.45),
+falling off with the square of the distance to nothing at 700 units.
+`lights.csv` gives each light a type number, and nothing in the install says
+what the types are, so all are lit alike.
 
 ### Particles
 
@@ -1138,12 +1229,146 @@ where you started.
 and characters: killing a small grey wolf while its packmates join, standing in
 a large wolf pack until it kills you, and running a badger to its leash.
 
+## Multiplayer
+
+`go run ./cmd/gameserver` runs the game for several players at once: a Go
+server that owns the world, and the viewer as its client. Midgard's outdoor
+zones are playable, from Vale of Mularn, Myrkwood Forest and Gotar through to
+the Shrouded Isles, and so are its dungeons and Jordheim. The design is in
+`openspec/changes/multiplayer-server/`; the wire format is in
+[`docs/protocol.md`](docs/protocol.md).
+
+### Running it
+
+```bash
+# once: convert the zones, and the creatures that live in them
+go run ./cmd/worldconv -only outdoor           # as above
+go run ./cmd/charconv -outfit troll-warrior && go run ./cmd/animconv -char web/data/char/troll-warrior
+go run ./cmd/charconv -outfit norseman      && go run ./cmd/animconv -char web/data/char/norseman
+# every creature is web/data/char/m<its model number>; convert the ones the zones place:
+go run ./cmd/dbimport -all-models -out server/data/all.db    # a scratch import, to list the models
+for m in $(go run ./cmd/dbimport -out server/data/all.db -q "select distinct model from spawn" | tail -n +2); do
+  go run ./cmd/charconv -model $m -name m$m && go run ./cmd/animconv -char web/data/char/m$m
+done
+
+# the world's population, from the community database (see below)
+git clone https://github.com/OpenDAoC/OpenDAoC-Database server/data/community
+go run ./cmd/dbimport                          # writes server/data/world.db
+
+DAOC_ADMIN_PASSWORD=choose-one go run ./cmd/gameserver   # then open localhost:8777
+```
+
+`dbimport` keeps only the spawns whose creature is converted, so the model
+list comes from an import that keeps them all (`-all-models`, into a scratch
+`-out`), and the real import follows the conversions. Without `world.db` the
+server still starts, with every converted zone empty. A few models do not
+convert (skeletons, composites) and their creatures are left out.
+
+Log in at `/login.html`, make a character (a Troll Warrior starts in Myrkwood
+Forest, a Norse Warrior in Svealand, as the data says) and press Play. Two
+browsers, two characters: each sees the other walk, fight and talk.
+
+**Settings** come from flags, the environment, or `server/data/server.env`
+(`KEY=VALUE` lines; the directory is gitignored). The server refuses to start
+with no way to log in.
+
+| variable | |
+| --- | --- |
+| `DAOC_ADMIN_PASSWORD` or `DAOC_ADMIN_HASH` | the administrator's password, or its bcrypt hash; an administrator may use the `/gm` commands |
+| `DAOC_DISCORD_CLIENT_ID`, `DAOC_DISCORD_CLIENT_SECRET` | log in with Discord: create an application at discord.com/developers, add `<DAOC_PUBLIC_URL>/auth/discord/callback` as its redirect, scope `identify` |
+| `DAOC_PUBLIC_URL` | where browsers reach the server, `http://localhost:8777` by default; `https://` also marks cookies Secure |
+| `DAOC_SESSION_KEY` | signs the session cookie; generated into `server/data/session.key` if unset |
+| `DAOC_ADDR` / `-addr` | the address to listen on; `localhost:8777`, or `:8777` for the whole network |
+
+Players, characters and inventories live in `server/data/players.db`, a SQLite
+file separate from the imported world so re-importing never touches them.
+
+### What the server decides
+
+Everything. The client sends what the player holds down and what they ask for;
+the server moves the character, runs every creature, rolls every blow and
+keeps every item. The browser predicts its own movement with the same maths
+(checked against vectors the Go tests write, to zero difference) and hides the
+latency; other players and creatures are drawn about 120 ms in the past,
+interpolated.
+
+- **Movement and collision.** 85 units a second walking, 191 running, the
+  game's own rates. Trees block as cylinders of the radius `nifs.csv` gives
+  and buildings as the models' own collision hulls, which `propconv` now keeps
+  in `collision.bin`; indoors the walls are the geometry, and a ledge or void
+  is as solid as a wall. Walking off an outdoor zone's edge enters the
+  neighbouring zone; walking into an exit (a dungeon mouth, a city gate)
+  enters that place.
+- **Creatures** are the imported spawns, each placed, levelled and sized by the
+  database, wandering within its roam, aggressive where it is, calling its
+  packmates, giving up a chase at its tether and walking home to heal.
+- **Combat.** Auto-attack with a swing timer from the weapon, a to-hit roll
+  by level, and block, parry and evade from a creature's template or the
+  player's level, block and parry only from the front. A Warrior's styles come
+  from the style table, for the lines of the weapon held: anytime styles,
+  openings after a parry, block or evade, positional ones from the side or
+  behind, and chains (Crushing Blow, then Slam). They cost endurance, which
+  regenerates. The hit points, damage, experience and level numbers are
+  this project's own (`internal/server/world/rules.go`), chosen so that a
+  level-1 fight is a few swings; the style requirements, endurance costs,
+  weapons and creature levels are the imported data's.
+- **Progression.** Kills give experience scaled by the level difference and
+  split by damage dealt, and levels (to 50) give hit points and unlock styles.
+  Dead creatures drop money and loot from their loot tables (or, failing a
+  table, now and then something of their level), for their killer for thirty
+  seconds, taken into a pack of forty. Items go on and off in the pack panel
+  (`I`); a Warrior may wear chain and lighter and carry hammer, axe, sword and
+  shield. Every item change is saved in one transaction with the character.
+- **Death.** You come back at your bind point, or the start, five seconds
+  later, with creatures sent home.
+
+Keys in network mode: `W/S/A/D/Q/E` and the mouse as before, `Enter` to talk
+(`!` to shout, `/who`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
+usable), `I` the pack, a click on a corpse to loot it. Administrators: `/gm goto
+103`, `/gm tp x y`, `/gm level n`, `/gm give <item id>`.
+
+### Where the world's content comes from
+
+The client install has no spawns, stats, loot, styles or persistence: those
+lived on the game's servers. This project takes them from the
+[OpenDAoC database](https://github.com/OpenDAoC/OpenDAoC-Database), published
+under the GPL-3.0. It describes content owned by Electronic Arts. It is **not
+redistributed here**: it is cloned into `server/data/community/`, which is
+gitignored like `web/data/`, and read by this project's own importer into
+`server/data/world.db`, also ignored. No rows, dumps or code from OpenDAoC or
+DOLSharp are committed, so this repository stays MIT, and the server's combat
+rules are written here from documented mechanics. Use is private, on your own
+machine or network. Check the licence and the EA question again before
+hosting it publicly.
+
+What the data spike found, on zone 100: a spawn's region coordinates minus the
+zone's `OffsetX`/`OffsetY` times 8192 are local zone units, with no axis flip,
+and 2,202 of 2,219 spawns land within 300 units of the derived terrain; the
+spawn model numbers are the client's `monsters.csv` ids.
+
+**Importing.** `go run ./cmd/dbimport` takes about 6 seconds, and
+`go run ./cmd/dbimport -q "select name, count(*) from spawn where zone=100 group by name"`
+looks at the result. It parses the dump's SQL itself, so no MySQL is needed,
+and keeps spawns (in zone units), NPC templates, loot, items, styles, exits,
+start locations and bind points. A spawn is dropped if it is in no zone, uses
+a model with no converted character (`web/data/char/m<N>`), or sits more than
+500 units from the derived ground; the counts are printed.
+
+### Tests
+
+```bash
+go test ./internal/server/...    # accounts, the protocol, movement, collision, creatures, combat, loot, a real WebSocket session
+node web/net.test.mjs            # the browser's movement and prediction against the server's vectors
+node web/collision.test.mjs      # and its collision
+```
+
 ## Known limitations
 
 - **It is always a clear midday.** The sky file has dawn, dusk, night, stars,
   a moon and storms; only the clear day is converted, and the sun's direction
-  is chosen here rather than following a clock. The point lights in
-  `lights.csv` are not lit. Cast shadows reach 2400 units from the player;
+  is chosen here rather than following a clock. The point lights in an
+  outdoor zone's `lights.csv` are not lit; only cities and dungeons light
+  theirs, and those cast no shadows. Cast shadows reach 2400 units from the player;
   beyond that only slope lighting remains.
 - **Grass grows through floors.** The density map keeps it off Mularn's
   square, but nothing stops a tuft inside a building or under a fence on
@@ -1164,10 +1389,16 @@ a large wolf pack until it kills you, and running a badger to its leash.
 - **5 of 4032 `.kfa` files do not parse**, each with a non-finite value in
   its keyframe data. `-list` reports them; none is in the humanoid
   locomotion set.
-- **No collision.** The character follows the heightmap and walks through
-  anything else, including trees, buildings and the lake surface. The data is
-  there to fix it: `nifs.csv` has a Collide flag and a radius per model, and
-  the models ship explicit collision hulls that `propconv` currently discards.
+- **Offline, there is no collision.** The single-player viewer still walks
+  through anything but the heightmap. In network mode trees, buildings and
+  dungeon walls block; models with neither a hull nor a trunk radius, such as
+  small props, do not.
+- **Interiors are reached through their exits, and stay thin.** A dungeon
+  mouth in an outdoor zone takes a player in, and the way back out. Dungeons
+  have no water: the game's pools and underground rivers are not converted.
+  Trollheim and Tuscaran Glacier fit worse than the rest, and Nisse's Lair
+  a little worse; see [Cities and dungeons](#cities-and-dungeons). Nothing
+  falls: a ledge is a wall.
 - **The playable outfits are still hand-written.** Creatures come from the
   tables by model number, but the two player outfits pick plate and cloth tiers
   by hand; nothing reads `items.csv` to dress a character from equipment. The
@@ -1176,17 +1407,16 @@ a large wolf pack until it kills you, and running a badger to its leash.
 - **A troll in plate is not a thing the game would build.** Plate is Albion's
   armour and Troll is a Midgard race, so the live client would never put them
   together. Meshes and textures are independent here, so nothing stops it.
-- **NPC placement is invented.** The client ships no spawn data, so where the
-  wolves and villagers stand is this project's choice, not the live game's.
-- **Combat is auto-attack and a shield block.** No styles, spells, parry or
-  evade, levels, experience or loot; the hit points, damage, swing times and
-  block chance are this project's numbers, not the game's, and the weapon's
-  own stats in the item tables are not read. NPCs never flee, and chase in a
-  straight line through trees and buildings, as everything here walks
-  through them.
-- **Equipment is fixed per outfit.** The warhammer and shield are named in the
-  outfit; there is no inventory, no swapping, and nothing worn on the belt or
-  back, though the markers and sockets for both are there.
+- **Population and numbers are a community database's, not the live game's.**
+  Spawns, levels, loot tables and styles are the OpenDAoC database's, which
+  models patch 1.65; the hit points, damage, experience and weapon-skill
+  numbers are this project's. There are no spells, group play, merchants,
+  trainers, quests, crafting, realm-versus-realm or housing, and only the
+  Warrior's styles. A creature type with no converted character, or whose
+  model cannot be drawn, is left out. The style effects beyond damage (stuns,
+  taunts, defence bonuses) are not applied, and style icons are not converted.
+- **Every worn weapon draws as the outfit's.** Troll Warriors always show their
+  hammer and shield; the pack changes the numbers, not the picture.
 - **1 of 633 figures does not parse** — see [Parsing the rest of
   figures/](#parsing-the-rest-of-figures).
 - **Some of what is read is not drawn.** Projected and environment textures,
@@ -1205,8 +1435,10 @@ a large wolf pack until it kills you, and running a badger to its leash.
   a heading but no axis-angle, and Z 0 for anything on the ground; Midgard's
   look right, the rest are unchecked. Ground detail agreement is lowest in
   the forests (Myrkwood Forest 0.56), where the game's tiles carry the
-  trees' shading. City blocks read at 80%: 28 of Jordheim's blocks stop on
-  non-finite vertex data.
+  trees' shading. Of the city blocks, 169 of 174 read; the five that do
+  not are `_p00` files with a bad header, none of them placed by
+  `city.csv`. The other realms' cities and dungeons convert but, like
+  their outdoor zones, have only been measured.
 - **A long session in one tab can stall the GPU.** Moving between zones
   reloads the page, and the viewer hands its WebGL context back as it goes;
   even so, after many zones in one tab the browser can stop drawing. A fresh

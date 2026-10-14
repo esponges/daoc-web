@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"image"
+	"math/bits"
 )
 
 // Decode parses a DDS file into an RGBA image, using only the top mip level.
@@ -38,6 +39,12 @@ func Decode(b []byte) (*image.NRGBA, error) {
 	switch {
 	case pfFlags&pfFourCC != 0 && (fourCC == "DXT1" || fourCC == "DXT3" || fourCC == "DXT5"):
 		return decodeDXT(img, data, w, h, fourCC)
+	case (pfFlags&pfRGB != 0 || pfFlags == 0x41) && rgbBits == 16:
+		masks := [4]uint32{le.Uint32(b[92:]), le.Uint32(b[96:]), le.Uint32(b[100:]), le.Uint32(b[104:])}
+		if pfFlags&0x1 == 0 {
+			masks[3] = 0 // no alpha
+		}
+		return decode16(img, data, w, h, masks)
 	case pfFlags&pfRGB != 0 || pfFlags == 0x41:
 		return decodeRGB(img, data, w, h, rgbBits)
 	default:
@@ -185,4 +192,38 @@ func DecodeDXT(data []byte, w, h int, fourCC string) (*image.NRGBA, error) {
 		return nil, fmt.Errorf("dds: bad dimensions %dx%d", w, h)
 	}
 	return decodeDXT(image.NewNRGBA(image.Rect(0, 0, w, h)), data, w, h, fourCC)
+}
+
+// decode16 reads 16-bit pixels by the header's channel masks -- 565, 4444
+// and 1555 alike; Jordheim's m_chain is one. A channel's bits are widened
+// to eight by repeating them, so full stays full. Without an alpha mask the
+// pixels are opaque.
+func decode16(img *image.NRGBA, data []byte, w, h int, masks [4]uint32) (*image.NRGBA, error) {
+	if need := w * h * 2; len(data) < need {
+		return nil, fmt.Errorf("dds: want %d bytes of pixels, have %d", need, len(data))
+	}
+	channel := func(v, mask uint32) byte {
+		if mask == 0 {
+			return 0xFF
+		}
+		shift := bits.TrailingZeros32(mask)
+		width := bits.OnesCount32(mask)
+		c := (v & mask) >> shift
+		out, n := uint32(0), 0
+		for ; n < 8; n += width {
+			out = out<<width | c
+		}
+		return byte(out >> (n - 8))
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			v := uint32(binary.LittleEndian.Uint16(data[(y*w+x)*2:]))
+			o := img.PixOffset(x, y)
+			img.Pix[o+0] = channel(v, masks[0])
+			img.Pix[o+1] = channel(v, masks[1])
+			img.Pix[o+2] = channel(v, masks[2])
+			img.Pix[o+3] = channel(v, masks[3])
+		}
+	}
+	return img, nil
 }
