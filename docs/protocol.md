@@ -58,7 +58,7 @@ Twenty a second:
 `you` at that step and replays the rest. `fix` means the prediction was wrong
 enough to snap rather than ease. `ents` are the players (`k:"p"`, with `ch`,
 the character to draw) and creatures (`k:"n"`, with `m`, the model number,
-drawn as `data/char/m<N>`) within 14,000 units. `st` is `""`, `fight` or
+drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the name when it has one, within 14,000 units. `st` is `""`, `fight` or
 `dead`. `ev` are the tick's events: `swing`, `hit`, `miss`, `block`, `parry`,
 `evade`, `death`, `xp`, `level`, `loot`, `join`.
 

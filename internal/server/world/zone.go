@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/rand"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -312,7 +313,7 @@ func (z *Zone) npcEntity(n *NPC, to *Player) protocol.Entity {
 		st = "fight"
 	}
 	e := protocol.Entity{
-		ID: n.ID, K: "n", Name: n.title(), Model: n.Model, Level: n.Level,
+		ID: n.ID, K: "n", Name: n.title(), Guild: strings.TrimSpace(n.Spawn.Guild), Model: n.Model, Level: n.Level,
 		X: n.Body.X, Y: n.Body.Y, Z: n.Body.Z, Yaw: n.Body.Yaw, Speed: n.speedNow,
 		HP: math.Max(0, float64(n.HP)/float64(n.MaxHP)), State: st, Aggro: n.Aggro > 0, Friendly: n.Friendly,
 	}

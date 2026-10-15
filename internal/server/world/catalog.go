@@ -71,6 +71,7 @@ type Spawn struct {
 	ID         int64
 	Zone       int
 	Name       string
+	Guild      string
 	Model      int
 	X, Y, Z    float64
 	Heading    int
@@ -286,7 +287,7 @@ func LoadCatalog(path string) (*Catalog, error) {
 
 // SpawnsIn reads a zone's spawns.
 func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
-	rows, err := c.db.Query(`SELECT id,zone,name,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags FROM spawn WHERE zone=?`, zone)
+	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags FROM spawn WHERE zone=?`, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +295,7 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	var out []Spawn
 	for rows.Next() {
 		s := Spawn{}
-		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags); err != nil {
+		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags); err != nil {
 			return nil, err
 		}
 		out = append(out, s)

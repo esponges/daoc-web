@@ -46,6 +46,7 @@
 .label { position: fixed; z-index: 9; transform: translate(-50%, -100%); pointer-events: none; font: 11px/1.2 ui-monospace, Menlo, Consolas, monospace;
   text-shadow: 0 1px 2px #000, 0 0 3px #000; white-space: nowrap; }
 .label.target { font-weight: bold; }
+.label .guild { font-weight: normal; font-size: 10px; color: #b8c0cc; }
 #log .xp { color: #c9a0ff; }
 #log .loot { color: #9be39b; }
 #log .level { color: #ffe066; font-weight: bold; }

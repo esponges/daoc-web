@@ -743,3 +743,16 @@ func TestReachAndDefences(t *testing.T) {
 		t.Errorf("blocked or parried a blow from behind: %v", counts)
 	}
 }
+
+func TestNPCGuildIsSentWithTheSnapshot(t *testing.T) {
+	sp := wolf(1, 30100, 30000, 3)
+	sp.Guild = " Smith "
+	r := newRig(t, sp)
+	a := r.player("Alice", 5, 30000, 30000, true)
+	r.ticks(2)
+	sa := snaps(a)
+	last := sa[len(sa)-1]
+	if len(last.Ents) != 1 || last.Ents[0].Guild != "Smith" {
+		t.Errorf("Alice sees %+v", last.Ents)
+	}
+}

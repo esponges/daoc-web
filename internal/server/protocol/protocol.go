@@ -158,6 +158,7 @@ type Entity struct {
 	K        string  `json:"k"`            // "p" player, "n" npc
 	Name     string  `json:"nm"`           // as it is shown
 	Model    int     `json:"m,omitempty"`  // an NPC's model number
+	Guild    string  `json:"gd,omitempty"` // an NPC's guild or description, shown under its name
 	Char     string  `json:"ch,omitempty"` // a player's character
 	Level    int     `json:"lv,omitempty"`
 	X        float64 `json:"x"`

@@ -84,6 +84,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       v.fight = e.state === 'fight';
       v.isPlayer = e.k === 'p';
       v.friendly = e.friendly;
+      v.guild = e.guild || '';
       if (!v.type || v.type.state !== 'ok') {
         const t = loadType(keyOf(e));
         if (t.state === 'ok' && !v.failed) {

@@ -153,7 +153,7 @@ export class NetClient {
         r = { id: e.id, samples: [], x: e.x, y: e.y, z: e.z, yaw: e.h };
         this.ents.set(e.id, r);
       }
-      r.k = e.k; r.name = e.nm; r.model = e.m || 0; r.char = e.ch || ''; r.level = e.lv || 0;
+      r.k = e.k; r.name = e.nm; r.model = e.m || 0; r.guild = e.gd || ''; r.char = e.ch || ''; r.level = e.lv || 0;
       r.speed = e.sp || 0; r.hp = e.hp; r.state = e.st || ''; r.scale = e.sc || 0;
       r.aggro = !!e.ag; r.loot = !!e.lt; r.friendly = !!e.fr; r.back = !!e.bk; r.side = e.sd || 0;
       r.samples.push({ t, x: e.x, y: e.y, z: e.z, yaw: e.h });

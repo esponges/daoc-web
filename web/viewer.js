@@ -1136,6 +1136,7 @@ async function main() {
       el.style.left = ((cx / cw * 0.5 + 0.5) * innerWidth).toFixed(0) + 'px';
       el.style.top = ((1 - (cy / cw * 0.5 + 0.5)) * innerHeight).toFixed(0) + 'px';
       el.textContent = v.name + (v.level && !v.friendly ? '  ' + v.level : '') + (v.dead ? ' (dead)' : '');
+      if (v.guild && !v.dead) { const g = document.createElement('div'); g.className = 'guild'; g.textContent = '<' + v.guild + '>'; el.append(g); }
       el.style.color = v.isPlayer ? '#9fe3ff' : v.friendly ? '#c8d0da' : conColor(v.level, me.level);
       el.classList.toggle('target', v === tgt);
     });
