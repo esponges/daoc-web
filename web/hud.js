@@ -3,10 +3,18 @@
 // goes in, what the player did comes out through callbacks. The server
 // decides everything; these only display and ask.
 
-import { buildWindow, frame, fontFamily, child, num, str, pt, text, icon, styleIconNumber } from './uiwin.js';
+import { buildWindow, frame, fontFamily, child, num, str, pt, text, icon, styleIconNumber, hrButton } from './uiwin.js';
 
 // Colours of chat lines by kind.
-const LINE_COLOR = { '': '#ffffff', sys: '#9fd0ff', all: '#ffd76a', err: '#ff9a8a' };
+const LINE_COLOR = {
+  '': '#ffffff', sys: '#9fd0ff', all: '#ffd76a', err: '#ff9a8a',
+  // Game messages, as the combat log used to colour them.
+  info: '#cfd8e3', hit: '#ffd76a', 'hit-in': '#ff8a7a', miss: '#9aa8b6', 'miss-in': '#9aa8b6',
+  kill: '#8fe39a', death: '#ff5a5a', block: '#8fc7ff', xp: '#c9a6ff', level: '#ffe066',
+};
+// Lines people write; everything else is a game message. The Chat tab shows
+// only the first kind, Main shows both.
+const SPEECH_KINDS = new Set(['', 'all']);
 
 // createStockChat builds the stock chat window: lines in its text area and an
 // entry bar that shows while typing. size is the window's width and height.
@@ -19,7 +27,8 @@ export function createStockChat(doc, data, { onSend, onToggle, width = 400, heig
   const area = child(wt, 'ChatControlDef');
   const entry = (wt.c || []).find((c) => c.t === 'FullResizeImageDef' && str(c, 'ControlId') === '1002');
   const entryH = entry ? num(entry, 'Height', 16) : 16;
-  const ap = pt(area, 'Position') || { x: 5, y: 12 };
+  const TAB_H = 18; // the stock tab button height; the text area starts below the tabs
+  const ap = { x: (pt(area, 'Position') || { x: 5 }).x, y: TAB_H + 2 };
   const ct = data.tpl('ChatControlTemplate', str(area, 'TemplateName'));
   const off = pt(area, 'TextOffset') || { x: 9, y: 8 };
   const fontName = (ct && str(ct, 'FontName')) || 'chat_small';
@@ -97,13 +106,42 @@ export function createStockChat(doc, data, { onSend, onToggle, width = 400, heig
   });
   input.addEventListener('keyup', (e) => e.stopPropagation());
 
-  const say = (text, kind = '') => {
+  // Every line is kept; the tab picks which are shown.
+  const buffer = [];
+  let tab = 'main';
+  const shown = (e) => tab === 'main' || SPEECH_KINDS.has(e.kind);
+  const lineEl = (e) => {
     const l = doc.createElement('div');
-    l.textContent = text;
-    l.style.color = LINE_COLOR[kind] || LINE_COLOR[''];
-    lines.appendChild(l);
+    l.textContent = e.text;
+    l.style.color = LINE_COLOR[e.kind] || LINE_COLOR[''];
+    return l;
+  };
+  const say = (text, kind = '') => {
+    const e = { text, kind };
+    buffer.push(e);
+    if (buffer.length > maxLines * 4) buffer.shift();
+    if (!shown(e)) return;
+    lines.appendChild(lineEl(e));
     while (lines.childElementCount > maxLines) lines.firstChild.remove();
   };
+  const redraw = () => {
+    lines.textContent = '';
+    for (const e of buffer.filter(shown).slice(-maxLines)) lines.appendChild(lineEl(e));
+  };
+
+  // Tabs along the top, drawn with the stock tab button.
+  const tabButtons = [];
+  [['main', 'Main'], ['chat', 'Chat']].forEach(([id, label], i) => {
+    const b = hrButton(doc, data, 'tab_button', label, 44, () => {
+      tab = id;
+      tabButtons.forEach((t) => t.select(t === b));
+      redraw();
+    });
+    b.select(id === tab);
+    Object.assign(b.el.style, { left: ap.x + 2 + i * 46 + 'px', top: '0px', pointerEvents: 'auto' });
+    win.el.appendChild(b.el);
+    tabButtons.push(b);
+  });
 
   win.el.style.pointerEvents = 'none';
   input.style.pointerEvents = 'auto';
@@ -203,4 +241,48 @@ export function createStockBar(doc, data, { onUse, keys = [] } = {}) {
   }
 
   return { el: root, set, update, get count() { return slots.length; } };
+}
+
+// The server stands a dead character up after this many seconds unless they
+// release sooner (world.PlayerRespawnS).
+export const RESPAWN_SECONDS = 5;
+
+// createStockRelease builds the stock Release window: a timer bar, a line of
+// text and the release buttons. RELEASE and RELEASE BIND both stand the
+// character up at their bind point, the only place the server returns them
+// to; the city and house buttons stay greyed.
+//   onRelease()  the player pressed release
+// update(dead, now) shows the window while dead and runs the timer from the
+// moment of death; now is in seconds.
+export function createStockRelease(doc, data, { onRelease } = {}) {
+  const win = buildWindow(doc, data, 'Release', {
+    onClick: (ev) => {
+      if (ev === 'Release' || ev === 'ReleaseToBind') onRelease?.();
+    },
+    disabled: (ev) => ev === 'ReleaseToCity' || ev === 'ReleaseToHouse',
+  });
+  win.el.style.display = 'none';
+  let since = null;
+  return {
+    el: win.el,
+    get isOpen() {
+      return since !== null;
+    },
+    update(dead, now) {
+      if (!dead) {
+        if (since !== null) {
+          since = null;
+          win.el.style.display = 'none';
+        }
+        return;
+      }
+      if (since === null) {
+        since = now;
+        win.el.style.display = 'block';
+      }
+      const left = Math.max(0, RESPAWN_SECONDS - (now - since));
+      win.setBar('release_timer_time', left / RESPAWN_SECONDS);
+      win.setText('release_timer_text', left > 0 ? `You will be released in ${Math.ceil(left)} seconds` : 'Releasing...');
+    },
+  };
 }

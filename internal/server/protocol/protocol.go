@@ -23,17 +23,18 @@ const StepsPerSecond = 60
 
 // Message types, client to server.
 const (
-	THello  = "hello"  // first message: protocol version and the character to play
-	TInput  = "input"  // a run of fixed movement steps
-	TChat   = "chat"   // say or broadcast
-	TTarget = "target" // select an entity
-	TAttack = "attack" // auto-attack on or off
-	TStyle  = "style"  // use a style by its slot on the bar
-	TLoot   = "loot"   // take an item from a corpse
-	TEquip  = "equip"  // move an item between slots
-	TUse    = "use"    // use a zone exit, etc.
-	TGM     = "gm"     // an administrator's command
-	TPing   = "ping"
+	THello   = "hello"  // first message: protocol version and the character to play
+	TInput   = "input"  // a run of fixed movement steps
+	TChat    = "chat"   // say or broadcast
+	TTarget  = "target" // select an entity
+	TAttack  = "attack" // auto-attack on or off
+	TStyle   = "style"  // use a style by its slot on the bar
+	TLoot    = "loot"   // take an item from a corpse
+	TEquip   = "equip"  // move an item between slots
+	TUse     = "use"    // use a zone exit, etc.
+	TGM      = "gm"     // an administrator's command
+	TPing    = "ping"
+	TRelease = "release" // a dead character asks to be stood up now rather than when the timer ends
 )
 
 // Message types, server to client.
@@ -326,6 +327,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &GM{}
 	case TPing:
 		return TPing, nil, nil
+	case TRelease:
+		return TRelease, nil, nil
 	default:
 		return "", nil, nil
 	}

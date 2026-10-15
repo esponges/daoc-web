@@ -402,6 +402,14 @@ func (z *Zone) killPlayer(p *Player) {
 	}
 }
 
+// ReleasePlayer stands a dead player up now, at their bind point, without
+// waiting for the respawn timer. It does nothing to a living one.
+func (z *Zone) ReleasePlayer(p *Player) {
+	if p.dead {
+		z.respawnPlayer(p)
+	}
+}
+
 // respawnPlayer stands a dead player up at their bind point.
 func (z *Zone) respawnPlayer(p *Player) {
 	bz, x, y, zz, yaw := z.W.bindFor(p)

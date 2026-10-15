@@ -79,6 +79,7 @@ export class NetClient {
   target(id) { this._send({ t: 'target', id }); if (this.me) this.me.target = id; }
   attack(on) { this._send({ t: 'attack', on }); if (this.me) this.me.attacking = on; }
   style(slot) { this._send({ t: 'style', slot }); }
+  release() { this._send({ t: 'release' }); }
   loot(corpse, index) { this._send({ t: 'loot', corpse, index }); }
   equip(from, to) { this._send({ t: 'equip', from, to }); }
   chat(ch, text) { this._send({ t: 'chat', ch, text }); }

@@ -419,6 +419,154 @@ export function labelText(doc, data, c) {
   return { el: root, set };
 }
 
+// hrCells lays a HorizontalResizeImageTemplate out at width w: the left and
+// right ends keep their size and the middle stretches. Cells are
+// {dx, dw, tex, sx, sy, sw, sh} with a common height.
+export function hrCells(tpl, w) {
+  const tn = child(tpl, 'Texture');
+  if (!tn) return { h: 0, cells: [] };
+  const tex = str(tn, 'TextureName');
+  const L = num(tpl, 'LeftWidth'), M = num(tpl, 'RepeatWidth', 1) || 1, R = num(tpl, 'RightWidth'), h = num(tpl, 'Height');
+  const left = pt(tn, 'Left'), mid = pt(tn, 'Repeat'), right = pt(tn, 'Right');
+  const cells = [];
+  const midW = Math.max(0, w - L - R);
+  if (left && L > 0) cells.push({ dx: 0, dw: Math.min(L, w), tex, sx: left.x, sy: left.y, sw: L, sh: h });
+  if (mid && midW > 0) cells.push({ dx: L, dw: midW, tex, sx: mid.x, sy: mid.y, sw: M, sh: h });
+  if (right && R > 0 && w >= L + R) cells.push({ dx: w - R, dw: R, tex, sx: right.x, sy: right.y, sw: R, sh: h });
+  return { h, cells };
+}
+
+function hrImage(doc, data, name, w) {
+  const tpl = data.tpl('HorizontalResizeImageTemplate', name);
+  const e = box(doc, 0, 0, w, 0);
+  if (!tpl) return e;
+  const { h, cells } = hrCells(tpl, w);
+  e.style.height = px(h);
+  for (const c of cells) {
+    const cell = box(doc, c.dx, 0, c.dw, h);
+    paint(cell, data, { ...c, dy: 0, dh: h });
+    e.appendChild(cell);
+  }
+  return e;
+}
+
+// hrButton builds a HorizontalResizeButtonTemplate w pixels wide with a
+// label: stretchable ends and middle in its normal, highlit and pressed
+// looks, the label in the template's font and state colours. It reports a
+// click when released over itself. set(label) changes the text; disable()
+// greys it.
+export function hrButton(doc, data, tplName, label, w, onClick) {
+  const tpl = data.tpl('HorizontalResizeButtonTemplate', tplName);
+  const font = tpl && child(tpl, 'Font');
+  const fontName = font ? str(font, 'Name') : 'arial9';
+  const colors = {
+    Normal: rgba(child(font, 'ColorNormal')) || 'rgb(192,192,192)',
+    Pressed: rgba(child(font, 'ColorPressed')) || 'rgb(255,192,0)',
+    Highlit: rgba(child(font, 'ColorHighlit')) || 'rgb(255,255,255)',
+    Disabled: rgba(child(font, 'ColorDisabled')) || 'rgb(128,128,128)',
+  };
+  const h = (tpl && num(tpl, 'Height')) || 16;
+  const root = box(doc, 0, 0, w, h);
+  root.style.cursor = 'pointer';
+  const states = {};
+  for (const s of ['Normal', 'Pressed', 'NormalHighlit', 'PressedHighlit', 'Disabled']) {
+    const name = tpl ? str(tpl, s) : '';
+    const img = hrImage(doc, data, name && name !== 'undefined' ? name : str(tpl, 'Normal'), w);
+    img.style.display = 'none';
+    states[s] = img;
+    root.appendChild(img);
+  }
+  const labelBox = box(doc, 0, 0, w, h);
+  labelBox.style.pointerEvents = 'none';
+  root.appendChild(labelBox);
+  let text_ = label, over = false, down = false, disabled = false, selected = false;
+  const refresh = () => {
+    const key = disabled ? 'Disabled' : down || selected ? (over ? 'PressedHighlit' : 'Pressed') : over ? 'NormalHighlit' : 'Normal';
+    for (const [s, img] of Object.entries(states)) img.style.display = s === key ? 'block' : 'none';
+    const colorKey = disabled ? 'Disabled' : down || selected ? 'Pressed' : over ? 'Highlit' : 'Normal';
+    labelBox.textContent = '';
+    if (text_) {
+      const t = text(doc, data, fontName, text_, colors[colorKey]);
+      const bf = data.bitmapFont(fontName);
+      if (bf) {
+        const tw = layoutText(bf, text_).width;
+        t.style.left = px(Math.max(0, (w - tw) / 2));
+        t.style.top = px(Math.max(0, (h - bf.h) / 2));
+      } else {
+        t.style.left = '0px';
+        t.style.width = px(w);
+        t.style.textAlign = 'center';
+        t.style.top = px(Math.max(0, (h - 12) / 2));
+      }
+      labelBox.appendChild(t);
+    }
+  };
+  root.addEventListener('pointerenter', () => ((over = true), refresh()));
+  root.addEventListener('pointerleave', () => ((over = false), refresh()));
+  root.addEventListener('pointerdown', () => {
+    if (!disabled) ((down = true), refresh());
+  });
+  root.addEventListener('pointerup', () => {
+    const click = down && over && !disabled;
+    down = false;
+    refresh();
+    if (click && onClick) onClick();
+  });
+  refresh();
+  return {
+    el: root,
+    set(l) {
+      text_ = l;
+      refresh();
+    },
+    // select holds the pressed look, as a chosen tab does.
+    select(on = true) {
+      selected = on;
+      refresh();
+    },
+    disable(on = true) {
+      disabled = on;
+      root.style.cursor = on ? 'default' : 'pointer';
+      refresh();
+    },
+  };
+}
+
+// --- compass ---
+
+// compassOffset is how far to scroll the compass strip, in destination pixels,
+// to show heading deg (clockwise from north) in the middle of a window w wide.
+// The strip is stripW source pixels for a full turn with north at northX, and
+// is drawn scaled by k; it wraps, so the result is taken modulo one turn.
+export function compassOffset(deg, w, stripW, northX, k) {
+  const turn = stripW * k;
+  const x = (northX + (((deg % 360) + 360) % 360) / 360 * stripW) * k;
+  return ((x - w / 2) % turn + turn) % turn;
+}
+
+// compass builds a CompassControlTemplate: the heading strip, scrolled to a
+// heading and wrapping. The strip has north a half-step in from its left
+// edge, so that each of the eight points sits in the middle of its own cell.
+export function compass(doc, data, tplName, w, h) {
+  const tpl = data.tpl('CompassControlTemplate', tplName);
+  const t = tpl && data.texture(str(tpl, 'Texture'));
+  const e = box(doc, 0, 0, w, h);
+  if (!t) return { el: e, set() {} };
+  const k = h / t.h;
+  const northX = t.w / 16; // 32 of 512: the middle of the first of eight cells
+  Object.assign(e.style, {
+    backgroundImage: `url("${t.url}")`,
+    backgroundRepeat: 'repeat-x',
+    backgroundSize: `${px(t.w * k)} ${px(h)}`,
+    imageRendering: 'auto',
+  });
+  const set = (deg) => {
+    e.style.backgroundPosition = `${px(-compassOffset(deg, w, t.w, northX, k))} 0px`;
+  };
+  set(0);
+  return { el: e, set };
+}
+
 // --- windows ---
 
 // placeIn resolves a control's Position against the window size, honouring
@@ -448,12 +596,15 @@ export function buildWindow(doc, data, id, opts = {}) {
   const ctl = {};
   // Controls bound to an adapter, the stock name for a live value: bars take
   // a fraction, labels take text.
-  const bars = new Map(), labels = new Map();
+  const bars = new Map(), labels = new Map(), buttons = new Map();
+  let compasses = [];
   const win = {
     el: root, ctl, width: baseW, height: baseH, resize,
     setBar(name, f) { (bars.get(name) || []).forEach((b) => b.set(f)); },
     setText(name, v, color) { (labels.get(name) || []).forEach((l) => l.set(v, color)); },
     has(name) { return bars.has(name) || labels.has(name); },
+    button(event) { return buttons.get(event); },
+    setHeading(deg) { compasses.forEach((c) => c.set(deg)); },
   };
   const bind = (map, name, item) => {
     if (!name) return;
@@ -470,6 +621,8 @@ export function buildWindow(doc, data, id, opts = {}) {
     for (const k of Object.keys(ctl)) delete ctl[k];
     bars.clear();
     labels.clear();
+    buttons.clear();
+    compasses = [];
     populate();
   }
 
@@ -517,6 +670,29 @@ export function buildWindow(doc, data, id, opts = {}) {
         case 'InvisibleButtonDef':
           el = box(doc, r.x, r.y, r.w, r.h);
           break;
+        case 'HorizontalResizeButtonDef': {
+          const id = str(c, 'ControlId');
+          const ev = str(c, 'OnClickEvent') || str(c, 'onClickEvent');
+          const b = hrButton(doc, data, str(c, 'TemplateName'), str(c, 'Label'), r.w, opts.onClick && (() => opts.onClick(ev || id)));
+          if (opts.disabled && opts.disabled(ev || id)) b.disable();
+          el = b.el;
+          el.style.left = px(r.x);
+          el.style.top = px(r.y);
+          if (ev) buttons.set(ev, b);
+          break;
+        }
+        case 'CompassControlDef': {
+          // The window names a small and a large control at the same place;
+          // only the larger is drawn.
+          const widest = Math.max(...(wt.c || []).filter((x) => x.t === 'CompassControlDef').map((x) => num(x, 'Width')));
+          if (r.w < widest) continue;
+          const cc = compass(doc, data, str(c, 'TemplateName'), r.w, r.h);
+          el = cc.el;
+          el.style.left = px(r.x);
+          el.style.top = px(r.y);
+          compasses.push(cc);
+          break;
+        }
         case 'StatusBarDef': {
           const sb = statusBar(doc, data, str(c, 'TemplateName'), r.w);
           el = sb.el;

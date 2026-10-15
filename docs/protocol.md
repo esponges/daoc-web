@@ -69,6 +69,7 @@ drawn as `data/char/m<N>`) within 14,000 units. `st` is `""`, `fight` or
 | `target` | `id` | select a creature (0 clears); a corpse you may loot opens its window |
 | `attack` | `on` | auto-attack on or off |
 | `style` | `slot` | queue the style on that bar slot for the next swing |
+| `release` | | a dead character stands up at their bind point now, without waiting for the respawn timer (5 s); ignored if alive |
 | `loot` | `corpse`, `index` | take a corpse's item by index, or its money with -1 |
 | `equip` | `from`, `to` | move between pack (0-39) and worn (40-47) slots; `to` -1 destroys, -2 wears it where it belongs |
 | `chat` | `ch`, `text` | `say` (3,000 units) or `all`; a leading `/` is a command (`/who`, `/gm ...`) |

@@ -24,6 +24,13 @@ import { createRemote, eventAnim } from './remote.js';
 import { createUI, conColor } from './ui.js';
 import { loadUI, registerFonts } from './uiwin.js';
 
+// The game's typeface for page text (the zone picker, names over heads), when
+// the interface has been converted; the offline viewer has no stock windows
+// but takes the type all the same.
+fetch('data/ui/atlantis/fonts/myriadpro-regular.ttf', { method: 'HEAD' })
+  .then((r) => { if (r.ok) document.body.classList.add('stock'); })
+  .catch(() => {});
+
 // ?play=ID joins the game server as that character; without it the viewer
 // runs alone, as it always has. In network mode the server decides the zone,
 // where everything stands and every fight; this page predicts the player's
@@ -797,7 +804,10 @@ async function main() {
 
   // --- combat ---
   const logEl = $('log');
+  // With the stock interface, game messages go to its chat window.
+  let chatOut = null;
   const log = (text, kind = 'info') => {
+    if (chatOut) { chatOut(text, kind); return; }
     const line = document.createElement('div');
     line.className = kind;
     line.textContent = text;
@@ -855,10 +865,11 @@ async function main() {
     };
     // The game's own windows when uiconv has been run; the built-in ones if not.
     const stock = await loadUI();
-    if (stock) registerFonts(document, stock);
+    if (stock) { registerFonts(document, stock); document.body.classList.add('stock'); }
     else console.info('stock interface not converted (go run ./cmd/uiconv); using the built-in one');
     ui = createUI(net, { log, stock, getTarget: () => combat.target });
-    log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack.', 'info');
+    if (stock) { chatOut = (t, k) => ui.say(t, k); logEl.style.display = 'none'; }
+    log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack, ` shows developer info.', 'info');
   }
   const ring = combat ? createRing(gl, { program, uniforms }) : null;
 
@@ -929,8 +940,14 @@ async function main() {
   let detailOn = true;
   // Running is the default; R toggles walking.
   let walkMode = false;
+  // The developer panel (zone, grid, triangles, key help) is out of the way
+  // while playing; the backquote key brings it back. The offline viewer, which
+  // is a developer's tool, starts with it up.
+  const devPanel = $('hud');
+  if (welcome) devPanel.style.display = 'none';
   addEventListener('keydown', (e) => {
     if (ui && ui.key(e)) return;
+    if (e.code === 'Backquote' && !e.repeat) devPanel.style.display = devPanel.style.display === 'none' ? '' : 'none';
     keys.add(e.code);
     if (e.code === 'KeyF') wireframe = !wireframe;
     if (e.code === 'KeyG') detailOn = !detailOn;
@@ -1197,6 +1214,7 @@ async function main() {
       handleEvents(net.takeEvents());
       remote.update(dt);
       ui.update();
+      if (view.eye && view.target) ui.setHeading(Math.atan2(view.target[0] - view.eye[0], -(view.target[2] - view.eye[2])) * 180 / Math.PI);
       if (net.me.dead && !player.deathPlayed) { anim.play('death', { hold: true }); player.deathPlayed = true; }
       if (!net.me.dead && player.deathPlayed) { anim.clear(); player.deathPlayed = false; }
     } else {

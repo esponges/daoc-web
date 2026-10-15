@@ -1,5 +1,10 @@
 // Log in, pick or make a character, and go play.
 
+// The game's own typeface, when the interface has been converted.
+fetch('data/ui/atlantis/fonts/myriadpro-regular.ttf', { method: 'HEAD' })
+  .then((r) => { if (r.ok) document.body.classList.add('stock'); })
+  .catch(() => {});
+
 const $ = (id) => document.getElementById(id);
 const show = (id, on) => $(id).classList.toggle('hidden', !on);
 const msg = (t) => { $('msg').textContent = t || ''; };

@@ -330,6 +330,9 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 	if typ == protocol.TPing {
 		z.Do(func() { p.Pong() })
 	}
+	if typ == protocol.TRelease {
+		z.Do(func() { z.ReleasePlayer(p) })
+	}
 }
 
 // StaticDir returns the absolute path of the web directory, for the log.

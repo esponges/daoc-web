@@ -302,6 +302,28 @@ func TestPlayerDiesAndComesBack(t *testing.T) {
 	}
 }
 
+func TestPlayerCanReleaseEarly(t *testing.T) {
+	r := newRig(t, wolf(1, 30100, 30000, 25), wolf(2, 30150, 30060, 25))
+	p := r.player("Doomed", 2, 30000, 30000, false)
+	died := false
+	for i := 0; i < TickRate*60 && !died; i++ {
+		r.z.Tick()
+		died = p.dead
+	}
+	if !died {
+		t.Fatal("two level 25 wolves did not kill a level 2 fighter")
+	}
+	r.z.ReleasePlayer(p)
+	if p.dead || p.hp <= 0 {
+		t.Errorf("release did not stand the player up: dead=%v hp=%v", p.dead, p.hp)
+	}
+	hp := p.hp
+	r.z.ReleasePlayer(p) // a living player is left alone
+	if p.hp != hp || p.dead {
+		t.Errorf("release changed a living player: hp %v -> %v", hp, p.hp)
+	}
+}
+
 func TestWanderingStaysDryAndLocal(t *testing.T) {
 	// A wolf at the edge of the lake, roaming over it.
 	sp := wolf(1, 2600, 2600, 3)

@@ -1357,9 +1357,10 @@ a model with no converted character (`web/data/char/m<N>`), or sits more than
 
 ### The game's own interface
 
-Chat, the summary and experience bars, the style bar and the inventory are
-drawn with the game's own windows, art and fonts, when they have been
-converted:
+The menu bar, compass and clock, chat (with its Main and Chat tabs, which also
+takes the combat and game messages), the summary window, the style bar, the
+inventory, the loot window and the Release window are drawn with the game's
+own windows, art and fonts, when they have been converted:
 
 ```bash
 go run ./cmd/uiconv -skin atlantis    # writes web/data/ui/atlantis/ (not committed)
@@ -1371,7 +1372,9 @@ they use. `uiconv` merges them into one `layout.json`, writes every texture it
 names as PNG, copies the TrueType fonts, parses the bitmap fonts and converts
 the icon sheets and the classic skin's window art. `web/uiwin.js` builds the
 DOM from that; `web/hud.js` and `web/pack.js` are the windows. Without
-`web/data/ui/` the plain built-in panels are used, so nothing depends on it.
+`web/data/ui/` the plain built-in panels are used, so nothing depends on it. The
+developer panel (zone, grid, triangles, key help) is hidden while playing;
+the backquote key shows it.
 
 What the install does and does not hold:
 
@@ -1383,6 +1386,11 @@ What the install does and does not hold:
   bar, style bar and inventory do not: the inventory is drawn over
   `data/skin1/pperdoll.bmp` with slot positions measured from the art, and
   the style bar is built by hand.
+- **The loot window has no layout either.** It is built on the stock frame
+  with the stock button; the Release window, menu bar, compass and clock are
+  built from their layouts. The compass scrolls a 512-pixel strip by the camera's
+  heading, and the clock shows the player's own time, since the viewer has no
+  day and night.
 - **Icons are drawn by kind, not by number.** The icon sheets are 10 by 10
   grids of 32-pixel icons, one file per hundred numbers. The imported
   database's icon numbers come from a later client: only about a tenth of
@@ -1399,6 +1407,8 @@ node web/net.test.mjs            # the browser's movement and prediction against
 node web/collision.test.mjs      # and its collision
 node web/uiwin.test.mjs          # the interface renderer's data handling
 node web/pack.test.mjs           # the inventory window's geometry
+node web/loot.test.mjs           # the loot rows
+node web/chrome.test.mjs         # the clock text
 ```
 
 `web/uidemo.html` draws a handful of the stock windows and every font for a

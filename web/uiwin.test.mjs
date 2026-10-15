@@ -5,7 +5,7 @@
 // is looked at in a browser.
 
 import { readFileSync, existsSync } from 'node:fs';
-import { UIData, nineSlice, layoutText, place, pngPath, buildWindow, child, num, str } from './uiwin.js';
+import { UIData, nineSlice, layoutText, place, pngPath, buildWindow, child, num, str, hrCells, hrButton, compassOffset } from './uiwin.js';
 
 let failed = 0;
 const check = (name, ok, extra = '') => {
@@ -51,6 +51,9 @@ const layout = {
     n('HorizontalResizeImageTemplate', { Name: 'red_full', Height: 6, LeftWidth: 0, RepeatWidth: 100, RightWidth: 0, Texture: [n('TextureName', 'page1'), n('Left', { X: 154, Y: 219 }), n('Repeat', { X: 154, Y: 219 }), n('Right', { X: 154, Y: 219 })] }),
     n('HorizontalResizeImageTemplate', { Name: 'red_back', Height: 6, LeftWidth: 0, RepeatWidth: 100, RightWidth: 0, Texture: [n('TextureName', 'page1'), n('Left', { X: 154, Y: 213 }), n('Repeat', { X: 154, Y: 213 }), n('Right', { X: 154, Y: 213 })] }),
     n('StatusBarTemplate', { Name: 'red_status', ForegroundHResizeTemplate: 'red_full', BackgroundHResizeTemplate: 'red_back', Height: 16, ForegroundOffset: { X: 0, Y: 0 } }),
+    n('HorizontalResizeImageTemplate', { Name: 'hr_n', Height: 16, LeftWidth: 9, RepeatWidth: 10, RightWidth: 9, Texture: [n('TextureName', 'page1'), n('Left', { X: 0, Y: 223 }), n('Repeat', { X: 12, Y: 223 }), n('Right', { X: 51, Y: 223 })] }),
+    n('HorizontalResizeImageTemplate', { Name: 'hr_p', Height: 16, LeftWidth: 9, RepeatWidth: 10, RightWidth: 9, Texture: [n('TextureName', 'page1'), n('Left', { X: 0, Y: 240 }), n('Repeat', { X: 12, Y: 240 }), n('Right', { X: 51, Y: 240 })] }),
+    n('HorizontalResizeButtonTemplate', { Name: 'hrb', Height: 16, Font: [n('Name', 'f'), n('ColorNormal', { R: 192, G: 192, B: 192, A: 255 }), n('ColorPressed', { R: 255, G: 192, B: 0, A: 255 }), n('ColorHighlit', { R: 255, G: 255, B: 255, A: 255 }), n('ColorDisabled', { R: 128, G: 128, B: 128, A: 255 })], Normal: 'hr_n', Pressed: 'hr_p', NormalHighlit: 'hr_n', PressedHighlit: 'hr_p', Disabled: 'undefined' }),
     n('WindowTemplate', [
       n('Name', 'bars'), n('WindowId', 'Bars'), n('Width', 160), n('Height', 90),
       n('StatusBarDef', [n('TemplateName', 'red_status'), n('AdapterName', 'hits'), n('Width', 125), n('Position', { X: 26, Y: 31 })]),
@@ -145,6 +148,30 @@ check('empty text clears', bw.el.children[1].children.length === 0);
 bw.resize(180, 90);
 check('adapters survive a resize', bw.has('hits'));
 bw.setText('nope', 'x');
+
+// Stretchable buttons.
+const hr = hrCells(data.tpl('HorizontalResizeImageTemplate', 'hr_n'), 120);
+check('hr cells: ends and middle', hr.h === 16 && hr.cells.length === 3 && hr.cells[1].dx === 9 && hr.cells[1].dw === 102 && hr.cells[2].dx === 111, JSON.stringify(hr.cells.map((c) => [c.dx, c.dw])));
+check('hr cells: too narrow drops the right end', hrCells(data.tpl('HorizontalResizeImageTemplate', 'hr_n'), 12).cells.length === 1);
+let hrClicks = 0;
+const hb = hrButton(doc, data, 'hrb', 'AB', 120, () => hrClicks++);
+check('hr button size', hb.el.style.width === '120px' && hb.el.style.height === '16px');
+check('hr button draws a label', hb.el.children[5].children.length === 1, String(hb.el.children[5].children.length));
+hb.el.listeners.pointerenter(); hb.el.listeners.pointerdown(); hb.el.listeners.pointerup();
+check('hr button clicks once', hrClicks === 1);
+hb.disable();
+hb.el.listeners.pointerdown(); hb.el.listeners.pointerup();
+check('disabled hr button does not click', hrClicks === 1);
+check('missing state falls back to normal', hb.el.children[4].children.length === 3);
+
+// The compass: north is 32 pixels into a 512-pixel strip, east is 128 further on.
+// At scale 1 and a window 128 wide, heading h puts strip pixel 32 + h * 512/360 in the middle.
+check('compass north centred', compassOffset(0, 128, 512, 32, 1) === ((32 - 64) % 512 + 512) % 512, String(compassOffset(0, 128, 512, 32, 1)));
+check('compass east centred', compassOffset(90, 128, 512, 32, 1) === 160 - 64);
+check('compass wraps a full turn', compassOffset(360, 128, 512, 32, 1) === compassOffset(0, 128, 512, 32, 1));
+check('compass negative heading', compassOffset(-90, 128, 512, 32, 1) === compassOffset(270, 128, 512, 32, 1));
+check('compass scales', compassOffset(90, 128, 512, 32, 2) === 320 - 64);
+check('compass stays in one turn', [0, 45, 135, 200, 359].every((d) => { const o = compassOffset(d, 128, 512, 32, 1); return o >= 0 && o < 512; }));
 
 // Button states.
 let clicks = 0;

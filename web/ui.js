@@ -6,8 +6,10 @@ const SLOT_NAMES = { 40: 'Weapon', 41: 'Shield', 42: 'Torso', 43: 'Legs', 44: 'A
 const PACK = 40;
 const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];
 
-import { createStockChat, createStockSummary, createStockExp, createStockBar } from './hud.js';
+import { createStockChat, createStockSummary, createStockBar, createStockRelease } from './hud.js';
 import { createStockPack } from './pack.js';
+import { createStockLoot } from './loot.js';
+import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -84,18 +86,27 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (m.ch === 'sys') say(m.text, 'sys');
     else say((m.ch === 'all' ? '[shout] ' : '') + m.from + ': ' + m.text, m.ch === 'all' ? 'all' : '');
   };
-  net.on.err = (m) => { say(m.text, 'err'); log?.(m.text, 'info'); };
+  net.on.err = (m) => { say(m.text, 'err'); if (!stock) log?.(m.text, 'info'); };
 
   // --- vitals ---
   // The stock summary window replaces the built-in bars when it is there.
-  let summary = null, expWin = null;
+  let summary = null, menuBar = null, compassWin = null, clockWin = null;
   if (stock) {
     summary = createStockSummary(document, stock);
     Object.assign(summary.el.style, { position: 'fixed', right: '12px', left: 'auto', top: '12px', zIndex: 12, pointerEvents: 'none' });
     root.appendChild(summary.el);
-    expWin = createStockExp(document, stock);
-    Object.assign(expWin.el.style, { position: 'fixed', right: '64px', left: 'auto', top: '112px', zIndex: 12, pointerEvents: 'none' });
-    root.appendChild(expWin.el);
+    // The menu bar across the top carries the experience and the money, so
+    // the separate experience window is not needed.
+    menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); } });
+    Object.assign(menuBar.el.style, { position: 'fixed', left: '50%', top: '0px', marginLeft: '-400px', zIndex: 12 });
+    root.appendChild(menuBar.el);
+    summary.el.style.top = '34px';
+    compassWin = createStockCompass(document, stock);
+    Object.assign(compassWin.el.style, { position: 'fixed', left: '50%', top: '34px', marginLeft: '-64px', zIndex: 12, pointerEvents: 'none' });
+    root.appendChild(compassWin.el);
+    clockWin = createStockClock(document, stock);
+    Object.assign(clockWin.el.style, { position: 'fixed', right: '12px', left: 'auto', top: '132px', zIndex: 12, pointerEvents: 'none' });
+    root.appendChild(clockWin.el);
     for (const id of ['you-box', 'target-box']) {
       const b = document.getElementById(id);
       if (b) b.style.display = 'none';
@@ -199,7 +210,15 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   // --- loot ---
   const lootWin = el('div', 'panel loot');
   root.appendChild(lootWin);
+  // The stock loot window when the interface is there.
+  let stockLoot = null;
+  if (stock) {
+    stockLoot = createStockLoot(document, stock, { onTake: (id, slot) => net.loot(id, slot), formatMoney: money });
+    Object.assign(stockLoot.el.style, { position: 'fixed', left: '50%', top: '180px', marginLeft: '-135px', zIndex: 15 });
+    root.appendChild(stockLoot.el);
+  }
   const renderLoot = (m) => {
+    if (stockLoot) { stockLoot.show(m); return; }
     if (!m || (!m.items?.length && !m.mo)) { lootWin.classList.remove('open'); return; }
     lootWin.replaceChildren(el('h2', '', m.nm));
     if (m.mo) {
@@ -223,13 +242,21 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   // --- death ---
   const dead = el('div', 'death', 'You have died.');
   root.appendChild(dead);
+  // The stock Release window replaces the banner when the interface is there.
+  let release = null;
+  if (stock) {
+    release = createStockRelease(document, stock, { onRelease: () => net.release() });
+    Object.assign(release.el.style, { position: 'fixed', left: '50%', top: '22%', marginLeft: '-142px', zIndex: 20 });
+    root.appendChild(release.el);
+  }
 
   // --- per frame ---
   const fill = (b, f) => { b.firstElementChild.style.width = (100 * Math.max(0, Math.min(1, f))).toFixed(1) + '%'; };
   function update() {
     const me = net.me;
     if (!me) return;
-    if (expWin) expWin.update(me);
+    if (menuBar) menuBar.update(me, net.inv.mo || 0);
+    if (clockWin) clockWin.update();
     if (summary) {
       const t = getTarget ? getTarget() : null;
       summary.update(me, t, t ? (t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColor(t.level, me.level)) : undefined);
@@ -237,7 +264,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     fill(endBar, me.end / me.maxEnd);
     fill(xpBar, me.xpNext ? me.xp / me.xpNext : 0);
     lvl.textContent = 'L' + me.level;
-    dead.classList.toggle('on', me.dead);
+    if (release) release.update(me.dead, performance.now() / 1000);
+    else dead.classList.toggle('on', me.dead);
     if (stockBar) stockBar.update(me);
     bar.querySelectorAll('.style').forEach((b) => {
       const i = Number(b.dataset.slot);
@@ -245,9 +273,13 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       b.classList.toggle('poor', barSlots[i] && me.end < barSlots[i].cost);
     });
     // A corpse window closes when you walk away from it.
-    if (lootWin.classList.contains('open') && net.corpse) {
+    const lootOpen = stockLoot ? stockLoot.isOpen : lootWin.classList.contains('open');
+    if (lootOpen && net.corpse) {
       const v = net.ents.get(net.corpse.id);
-      if (!v || Math.hypot(v.x - me.x, v.y - me.y) > 600) { lootWin.classList.remove('open'); net.corpse = null; }
+      if (!v || Math.hypot(v.x - me.x, v.y - me.y) > 600) {
+        if (stockLoot) stockLoot.hide(); else lootWin.classList.remove('open');
+        net.corpse = null;
+      }
     }
   }
 
@@ -267,5 +299,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   if (net.inv.items.length) renderInv();
   if (net.corpse) renderLoot(net.corpse);
 
-  return { update, key, say, get typing() { return chatApi.typing; }, renderLoot, togglePack };
+  // The compass follows the camera; the viewer gives its heading each frame.
+  const setHeading = (deg) => { if (compassWin) compassWin.setHeading(deg); };
+  return { update, setHeading, key, say, get typing() { return chatApi.typing; }, renderLoot, togglePack };
 }

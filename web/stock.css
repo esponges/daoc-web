@@ -1,0 +1,21 @@
+/* The game's own typeface for page text outside the stock windows: names over
+   heads, the zone picker, the login page. The fonts are converted by
+   `go run ./cmd/uiconv`, so everything here is gated on body.stock, which the
+   scripts set only when they are found. */
+@font-face { font-family: "daoc-stock"; src: url("data/ui/atlantis/fonts/myriadpro-regular.ttf"); }
+@font-face { font-family: "daoc-stock"; font-weight: bold; src: url("data/ui/atlantis/fonts/myriadpro-semibold.ttf"); }
+
+body.stock .label { font: 13px/1.2 "daoc-stock", sans-serif; letter-spacing: .2px; }
+body.stock .label.target { font-weight: bold; }
+
+/* The zone picker, in the dark gold of the stock frames. */
+body.stock #zones select, body.stock #zones button {
+  font: 13px "daoc-stock", sans-serif; color: #e6d9b8; background: rgba(12,10,8,.9);
+  border: 1px solid #7a6a45; border-radius: 2px;
+}
+body.stock #zones button:hover, body.stock #zones select:hover { color: #fff; border-color: #c9ab63; }
+
+body.stock { font-family: "daoc-stock", sans-serif; }
+body.stock main { border-color: #7a6a45; background: rgba(12,10,8,.92); border-radius: 3px; }
+body.stock h1, body.stock h2 { color: #e6c36a; font-weight: bold; }
+body.stock input, body.stock select, body.stock button, body.stock a.btn { font: inherit; border-color: #7a6a45; border-radius: 2px; }
