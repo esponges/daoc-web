@@ -22,6 +22,7 @@ import { NetClient } from './net.js';
 import { loadOutdoorCollision } from './collision.js';
 import { createRemote, eventAnim } from './remote.js';
 import { createUI, conColor } from './ui.js';
+import { loadUI, registerFonts } from './uiwin.js';
 
 // ?play=ID joins the game server as that character; without it the viewer
 // runs alone, as it always has. In network mode the server decides the zone,
@@ -852,7 +853,11 @@ async function main() {
       },
       update() {},
     };
-    ui = createUI(net, { log });
+    // The game's own windows when uiconv has been run; the built-in ones if not.
+    const stock = await loadUI();
+    if (stock) registerFonts(document, stock);
+    else console.info('stock interface not converted (go run ./cmd/uiconv); using the built-in one');
+    ui = createUI(net, { log, stock, getTarget: () => combat.target });
     log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack.', 'info');
   }
   const ring = combat ? createRing(gl, { program, uniforms }) : null;

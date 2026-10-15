@@ -132,7 +132,7 @@ func (p *Player) sendBar(c *Catalog) {
 	b := protocol.Bar{T: protocol.TStyleBar}
 	for i := range p.bar {
 		s := &p.bar[i]
-		b.Slots = append(b.Slots, protocol.BarSlot{Slot: i, ID: s.ID, Name: s.Name, Icon: s.Icon, Cost: s.Endurance,
+		b.Slots = append(b.Slots, protocol.BarSlot{Slot: i, ID: s.ID, Name: s.Name, Icon: s.Icon, Spec: s.Spec, Cost: s.Endurance,
 			Opens: c.openingText(s), Level: s.SpecLevel})
 	}
 	p.send(b)

@@ -122,6 +122,7 @@ at any speed.
 | `census` | reads every asset in the install and reports what parses and converts; see [Verifying](#verifying) |
 | `interiorconv` | one city or dungeon: its pieces placed by its layout, fitted to zone coordinates, with its exits and lights |
 | `worldconv` | runs `zoneconv` and `propconv` on every outdoor zone, and `interiorconv` on every city and dungeon, the census marks convertible, and checks each against it; `-only outdoor` or `-only interiors` for one half |
+| `uiconv` | the game's own interface: window layouts, textures, fonts and icon sheets, for the browser; see [The game's own interface](#the-games-own-interface) |
 | `mpakls` | lists and extracts from MPAK archives |
 | `serve` | static file server for `web/` |
 
@@ -1354,13 +1355,54 @@ start locations and bind points. A spawn is dropped if it is in no zone, uses
 a model with no converted character (`web/data/char/m<N>`), or sits more than
 500 units from the derived ground; the counts are printed.
 
+### The game's own interface
+
+Chat, the summary and experience bars, the style bar and the inventory are
+drawn with the game's own windows, art and fonts, when they have been
+converted:
+
+```bash
+go run ./cmd/uiconv -skin atlantis    # writes web/data/ui/atlantis/ (not committed)
+```
+
+`ui/uimain.xml` in the install lists about eighty window files; each defines
+windows, buttons, frames and text areas with sizes, positions and the textures
+they use. `uiconv` merges them into one `layout.json`, writes every texture it
+names as PNG, copies the TrueType fonts, parses the bitmap fonts and converts
+the icon sheets and the classic skin's window art. `web/uiwin.js` builds the
+DOM from that; `web/hud.js` and `web/pack.js` are the windows. Without
+`web/data/ui/` the plain built-in panels are used, so nothing depends on it.
+
+What the install does and does not hold:
+
+- **Bitmap fonts carry their own metrics.** Under each row of glyphs in a font
+  sheet is a marker row of opaque segments, one per glyph, whose widths are the
+  advances; characters run in Windows-1252 order from `!`. One sheet
+  (`brit9`) breaks the rule and is left out.
+- **Chat, the summary and experience windows have layout files.** The quick
+  bar, style bar and inventory do not: the inventory is drawn over
+  `data/skin1/pperdoll.bmp` with slot positions measured from the art, and
+  the style bar is built by hand.
+- **Icons are drawn by kind, not by number.** The icon sheets are 10 by 10
+  grids of 32-pixel icons, one file per hundred numbers. The imported
+  database's icon numbers come from a later client: only about a tenth of
+  gear fits a sheet here and style numbers fit no single rule. So a style is
+  drawn with a picture of its weapon line and an item with a picture of what
+  it is.
+
 ### Tests
 
 ```bash
 go test ./internal/server/...    # accounts, the protocol, movement, collision, creatures, combat, loot, a real WebSocket session
+go test ./internal/ui            # the interface readers, against the install when it is there
 node web/net.test.mjs            # the browser's movement and prediction against the server's vectors
 node web/collision.test.mjs      # and its collision
+node web/uiwin.test.mjs          # the interface renderer's data handling
+node web/pack.test.mjs           # the inventory window's geometry
 ```
+
+`web/uidemo.html` draws a handful of the stock windows and every font for a
+look at them (`/uidemo.html` on the running server).
 
 ## Known limitations
 

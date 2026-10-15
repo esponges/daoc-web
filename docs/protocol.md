@@ -86,5 +86,12 @@ loot), `chatmsg`, `err`, and `zone`: the character has moved to another zone,
 so the client reloads at `?zone=N&play=<id>` and joins again. Crossing an
 outdoor zone's edge, walking into an exit, and a GM `goto` all do this.
 
+Each slot of `bar` carries `nm`, `cost`, `opens`, `lv`, the imported `icon`
+number and `spec`, the style's weapon line ("Sword", "Hammer", "Axe"...). The
+icon numbers come from a later client than the one a player installs, so the
+web client draws a picture by `spec` and does not look `icon` up. Items in
+`inv` and `corpse` carry `k` (weapon, shield, armour, misc), `w` (the worn slot
+an armour piece belongs in) and `line` (a weapon's line) for the same reason.
+
 Limits: 16 KB a message, 120 messages a second per connection, 200
 characters a chat line, one line a second with a burst of four.

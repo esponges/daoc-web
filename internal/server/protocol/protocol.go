@@ -254,7 +254,9 @@ type InvItem struct {
 	Count  int    `json:"n"`
 	Level  int    `json:"lv,omitempty"`
 	Model  int    `json:"m,omitempty"`
-	Kind   string `json:"k,omitempty"` // weapon, shield, armour, misc
+	Kind   string `json:"k,omitempty"`    // weapon, shield, armour, misc
+	Worn   int    `json:"w,omitempty"`    // the worn slot an armour piece belongs in
+	Line   string `json:"line,omitempty"` // a weapon's line: Sword, Hammer, Axe
 	Detail string `json:"d,omitempty"`
 }
 
@@ -280,6 +282,7 @@ type BarSlot struct {
 	ID     int    `json:"id"`
 	Name   string `json:"nm"`
 	Icon   int    `json:"icon"`
+	Spec   string `json:"spec,omitempty"` // the weapon line: "Sword", "Hammer", "Axe", ...
 	Cost   int    `json:"cost"`
 	Opens  string `json:"opens"` // "anytime", "after block", ...
 	Level  int    `json:"lv"`

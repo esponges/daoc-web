@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Stock UI check</title>
+<style>
+  html, body { margin: 0; background: #34452d; color: #ddd; font: 12px sans-serif; }
+  #stage { position: relative; width: 1100px; height: 760px; }
+  .tag { position: absolute; color: #fff; text-shadow: 0 0 3px #000; }
+</style>
+<div id="stage"></div>
+<script type="module">
+// Draws windows from the converted stock interface so they can be looked at.
+//   run go run ./cmd/uiconv, then open /uidemo.html
+import { loadUI, buildWindow, registerFonts, text } from './uiwin.js';
+
+const stage = document.getElementById('stage');
+const params = new URLSearchParams(location.search);
+const data = await loadUI('data/ui/' + (params.get('skin') || 'atlantis') + '/');
+if (!data) {
+  stage.textContent = 'No converted interface: run go run ./cmd/uiconv';
+} else {
+  registerFonts(document, data);
+  const show = (id, x, y, opts) => {
+    try {
+      const w = buildWindow(document, data, id, opts);
+      w.el.style.left = x + 'px';
+      w.el.style.top = y + 'px';
+      stage.appendChild(w.el);
+      const t = document.createElement('div');
+      t.className = 'tag';
+      t.style.left = x + 'px';
+      t.style.top = (y - 14) + 'px';
+      t.textContent = id;
+      stage.appendChild(t);
+      return w;
+    } catch (e) {
+      console.error(id, e);
+    }
+  };
+  show('Chat', 20, 40, params.get('bg') ? { background: params.get('bg') } : {});
+  show('MiniInfo', 400, 40);
+  show('MiniGroup', 570, 40);
+  show('Command', 720, 40);
+  show('Compass', 900, 40);
+  show('Clock', 900, 160);
+  show('Concentration', 570, 190);
+  show('Interact', 20, 300);
+
+  // Text in each kind of font.
+  const sample = (font, y) => {
+    const t = text(document, data, font, 'Troll Warrior 123 — ' + font, 'rgb(255,255,255)');
+    t.style.left = '420px';
+    t.style.top = y + 'px';
+    stage.appendChild(t);
+  };
+  [['arial9', 400], ['arial11', 420], ['arial14', 440], ['title', 464], ['button_large', 500], ['brit9s', 530], ['chat_small', 560], ['chat_large', 580]].forEach(([f, y]) => sample(f, y));
+}
+</script>

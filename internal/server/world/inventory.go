@@ -96,8 +96,12 @@ func itemView(slot int, it *Item, count int) protocol.InvItem {
 		v.Kind, v.Detail = "shield", fmt.Sprintf("shield, level %d", it.Level)
 	case it.IsWeapon():
 		v.Kind, v.Detail = "weapon", fmt.Sprintf("%.1f dps, %.1fs swing, level %d", it.DPS, it.Speed, it.Level)
+		v.Line = map[int]string{11: "Sword", 12: "Hammer", 13: "Axe"}[it.ObjectType]
 	case it.IsArmour():
 		v.Kind, v.Detail = "armour", fmt.Sprintf("AF %d, level %d", it.AF, it.Level)
+		if s := wornSlot(it); s >= 0 {
+			v.Worn = s
+		}
 	default:
 		v.Kind = "misc"
 		if it.Level > 0 {

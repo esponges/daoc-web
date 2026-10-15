@@ -6,6 +6,9 @@ const SLOT_NAMES = { 40: 'Weapon', 41: 'Shield', 42: 'Torso', 43: 'Legs', 44: 'A
 const PACK = 40;
 const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];
 
+import { createStockChat, createStockSummary, createStockExp, createStockBar } from './hud.js';
+import { createStockPack } from './pack.js';
+
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -30,47 +33,74 @@ export function conColor(mob, me) {
   return '#ff5a5a';
 }
 
-export function createUI(net, { log, onTargetNext } = {}) {
+export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const root = el('div', 'game-ui');
   document.body.appendChild(root);
 
   // --- chat ---
-  const chat = el('div', 'chat');
-  const lines = el('div', 'lines');
-  const input = el('input', 'line');
-  input.type = 'text'; input.maxLength = 200; input.placeholder = 'Enter to talk · ! to shout · /who';
-  input.autocomplete = 'off';
-  chat.append(lines, input);
-  root.appendChild(chat);
-  let typing = false;
-  const say = (text, cls = '') => {
-    const l = el('div', cls, text);
-    lines.appendChild(l);
-    while (lines.childElementCount > 9) lines.firstChild.remove();
+  // Either the stock chat window, when the converted interface is there, or
+  // the plain one below. Both give say / open / close and a typing flag.
+  const sendLine = (t) => {
+    if (t.startsWith('!')) net.chat('all', t.slice(1).trim());
+    else net.chat('say', t);
   };
+  let chatApi;
+  if (stock) {
+    chatApi = createStockChat(document, stock, { onSend: sendLine });
+    Object.assign(chatApi.el.style, { position: 'fixed', left: '12px', top: 'auto', bottom: '150px', zIndex: 12 });
+    root.appendChild(chatApi.el);
+  } else {
+    const chat = el('div', 'chat');
+    const lines = el('div', 'lines');
+    const input = el('input', 'line');
+    input.type = 'text'; input.maxLength = 200; input.placeholder = 'Enter to talk · ! to shout · /who';
+    input.autocomplete = 'off';
+    chat.append(lines, input);
+    root.appendChild(chat);
+    let isTyping = false;
+    const closeChat = () => { isTyping = false; chat.classList.remove('open'); input.blur(); input.value = ''; };
+    input.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        const t = input.value.trim();
+        if (t) sendLine(t);
+        closeChat();
+      } else if (e.key === 'Escape') closeChat();
+    });
+    input.addEventListener('keyup', (e) => e.stopPropagation());
+    chatApi = {
+      say(text, cls = '') {
+        lines.appendChild(el('div', cls, text));
+        while (lines.childElementCount > 9) lines.firstChild.remove();
+      },
+      open(prefill = '') { isTyping = true; chat.classList.add('open'); input.value = prefill; input.focus(); },
+      close: closeChat,
+      get typing() { return isTyping; },
+    };
+  }
+  const say = (text, cls = '') => chatApi.say(text, cls);
+  const openChat = (prefill = '') => chatApi.open(prefill);
   net.on.chat = (m) => {
     if (m.ch === 'sys') say(m.text, 'sys');
     else say((m.ch === 'all' ? '[shout] ' : '') + m.from + ': ' + m.text, m.ch === 'all' ? 'all' : '');
   };
   net.on.err = (m) => { say(m.text, 'err'); log?.(m.text, 'info'); };
-  const openChat = (prefill = '') => {
-    typing = true; chat.classList.add('open'); input.value = prefill; input.focus();
-  };
-  const closeChat = () => { typing = false; chat.classList.remove('open'); input.blur(); input.value = ''; };
-  input.addEventListener('keydown', (e) => {
-    e.stopPropagation();
-    if (e.key === 'Enter') {
-      let t = input.value.trim();
-      if (t) {
-        if (t.startsWith('!')) net.chat('all', t.slice(1).trim());
-        else net.chat('say', t);
-      }
-      closeChat();
-    } else if (e.key === 'Escape') closeChat();
-  });
-  input.addEventListener('keyup', (e) => e.stopPropagation());
 
   // --- vitals ---
+  // The stock summary window replaces the built-in bars when it is there.
+  let summary = null, expWin = null;
+  if (stock) {
+    summary = createStockSummary(document, stock);
+    Object.assign(summary.el.style, { position: 'fixed', right: '12px', left: 'auto', top: '12px', zIndex: 12, pointerEvents: 'none' });
+    root.appendChild(summary.el);
+    expWin = createStockExp(document, stock);
+    Object.assign(expWin.el.style, { position: 'fixed', right: '64px', left: 'auto', top: '112px', zIndex: 12, pointerEvents: 'none' });
+    root.appendChild(expWin.el);
+    for (const id of ['you-box', 'target-box']) {
+      const b = document.getElementById(id);
+      if (b) b.style.display = 'none';
+    }
+  }
   const you = document.getElementById('you-box');
   const endBar = el('div', 'bar thin end'); endBar.appendChild(el('i'));
   const xpBar = el('div', 'bar thin xp'); xpBar.appendChild(el('i'));
@@ -79,10 +109,17 @@ export function createUI(net, { log, onTargetNext } = {}) {
   you.querySelector('.name').prepend(lvl);
 
   // --- style bar ---
+  // The stock bar when the converted interface is there: a row of icons.
+  let stockBar = null;
   const bar = el('div', 'stylebar');
   root.appendChild(bar);
+  if (stock) {
+    stockBar = createStockBar(document, stock, { onUse: (i) => net.style(i), keys: BAR_KEYS.map((k) => k.replace('Digit', '')) });
+    bar.appendChild(stockBar.el);
+  }
   let barSlots = [];
   const renderBar = () => {
+    if (stockBar) { stockBar.set(barSlots); return; }
     bar.replaceChildren();
     barSlots.forEach((s, i) => {
       const b = el('button', 'style');
@@ -102,7 +139,26 @@ export function createUI(net, { log, onTargetNext } = {}) {
   const worn = el('div', 'worn'), bag = el('div', 'bag'), cash = el('div', 'cash');
   pack.append(worn, bag, cash);
   root.appendChild(pack);
+  // The stock paper doll replaces the plain pack when the interface is there.
+  let stockPack = null;
+  if (stock) {
+    stockPack = createStockPack(document, stock, {
+      onMove: (from, to) => net.equip(from, to),
+      onUse: (slot) => {
+        const it = net.inv.items.find((i) => i.slot === slot);
+        if (it && (it.k === 'weapon' || it.k === 'shield' || it.k === 'armour')) net.equip(slot, -2);
+      },
+      onDestroy: (slot) => net.equip(slot, -1),
+      onUnequip: (slot) => {
+        const free = stockPack.freeSlot();
+        if (free >= 0) net.equip(slot, free);
+      },
+    });
+    Object.assign(stockPack.el.style, { position: 'fixed', right: '12px', top: '160px', zIndex: 14 });
+    root.appendChild(stockPack.el);
+  }
   const renderInv = () => {
+    if (stockPack) { stockPack.render(net.inv); return; }
     const bySlot = new Map(net.inv.items.map((i) => [i.slot, i]));
     worn.replaceChildren(); bag.replaceChildren();
     for (const s of Object.keys(SLOT_NAMES).map(Number)) {
@@ -134,7 +190,11 @@ export function createUI(net, { log, onTargetNext } = {}) {
     cash.textContent = 'Money: ' + money(net.inv.mo || 0);
   };
   net.on.inv = renderInv;
-  const togglePack = () => { pack.classList.toggle('open'); renderInv(); };
+  const togglePack = () => {
+    if (stockPack) { stockPack.toggle(); renderInv(); return; }
+    pack.classList.toggle('open');
+    renderInv();
+  };
 
   // --- loot ---
   const lootWin = el('div', 'panel loot');
@@ -169,10 +229,16 @@ export function createUI(net, { log, onTargetNext } = {}) {
   function update() {
     const me = net.me;
     if (!me) return;
+    if (expWin) expWin.update(me);
+    if (summary) {
+      const t = getTarget ? getTarget() : null;
+      summary.update(me, t, t ? (t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColor(t.level, me.level)) : undefined);
+    }
     fill(endBar, me.end / me.maxEnd);
     fill(xpBar, me.xpNext ? me.xp / me.xpNext : 0);
     lvl.textContent = 'L' + me.level;
     dead.classList.toggle('on', me.dead);
+    if (stockBar) stockBar.update(me);
     bar.querySelectorAll('.style').forEach((b) => {
       const i = Number(b.dataset.slot);
       b.classList.toggle('ready', me.avail.includes(i));
@@ -187,7 +253,7 @@ export function createUI(net, { log, onTargetNext } = {}) {
 
   // Keys the UI owns; returns true when it used the event.
   function key(e) {
-    if (typing) return true;
+    if (chatApi.typing) return true;
     if (e.code === 'Enter') { openChat(); e.preventDefault(); return true; }
     if (e.code === 'Slash') { openChat('/'); e.preventDefault(); return true; }
     if (e.code === 'KeyI' && !e.repeat) { togglePack(); return true; }
@@ -201,5 +267,5 @@ export function createUI(net, { log, onTargetNext } = {}) {
   if (net.inv.items.length) renderInv();
   if (net.corpse) renderLoot(net.corpse);
 
-  return { update, key, say, get typing() { return typing; }, renderLoot, togglePack };
+  return { update, key, say, get typing() { return chatApi.typing; }, renderLoot, togglePack };
 }
