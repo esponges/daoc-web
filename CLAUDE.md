@@ -1,1 +1,98 @@
+# daoc-web
 
+A fan project that rebuilds Dark Age of Camelot's Midgard in the browser. It
+started as a set of Go converters that read a local DAoC install and a WebGL2
+viewer for the result, and is now a multiplayer game: a Go server that owns the
+world, the viewer as its client, and the game's own interface drawn from the
+install's UI data. The repo is MIT and contains no game data.
+
+`README.md` is the long reference (file formats worked out from the install,
+how each converter works, the server's rules). Start there for detail; this file
+is only what you need to work here safely.
+
+## Layout
+
+| path | what |
+| --- | --- |
+| `cmd/*` | the tools: `zoneconv`, `propconv`, `charconv`, `animconv`, `interiorconv`, `worldconv` (run them over every zone), `uiconv` (the interface), `dbimport` (the world store), `gameserver`, `serve` (static files), `census`, `charshot`, `nifdump`, `mpakls` |
+| `internal/*` | readers and converters: `mpak`, `nif`, `dds`, `kfa`, `zone`, `scenery`, `interior`, `ui` (interface XML, TGA, BMP, bitmap fonts); `importer` (SQL dump parser); `server/{auth,store,protocol,world,gameserver}` |
+| `web/` | the browser client: `viewer.js` (main), `net.js` (connection and prediction), `ui.js` + `hud.js` + `pack.js` + `loot.js` + `chrome.js` (windows), `uiwin.js` (renders windows from the converted layout), `*.test.mjs` |
+| `docs/protocol.md` | the wire format; messages are JSON, versioned, and only ever added to |
+| `openspec/` | specs (`specs/`) and changes (`changes/`, `changes/archive/`) |
+
+Gitignored and never committed: `web/data/` (everything converted from the
+install, including `web/data/ui/`) and `server/data/` (the community database
+checkout, `world.db`, `players.db`, `session.key`, `server.env`).
+
+## Rules that matter
+
+- **No game data in git.** Art, models and the imported database describe
+  EA-owned content. Convert from your own install into `web/data/`; never
+  commit output or copy it into a spec or test fixture.
+- **The community database is GPL-3.0** (OpenDAoC-Database). It is imported at
+  build time into `server/data/` by our own importer. Do not commit it and do
+  not copy GPL code; the rules in `internal/server/world/rules.go` are our own.
+- **The server decides everything.** The client sends what the player holds
+  down and what they ask for. Movement is fixed 1/60 s steps shared by Go
+  (`world/move.go`) and JS (`web/move.js`), checked against shared vectors.
+- **The built-in UI is the fallback.** Anything built from `web/data/ui/` must
+  fall back to the plain panels when that folder is absent.
+- **Icon numbers in the imported data do not match this install's sheets**, so
+  styles and items are drawn by weapon line and kind. Do not "fix" this by
+  guessing an offset (see `openspec/changes/stock-ui-followups/design.md`).
+
+## Running it
+
+The install is expected at
+`C:\Program Files (x86)\Electronic Arts\Dark Age of Camelot` (`-game` changes it).
+
+```bash
+go run ./cmd/worldconv -only outdoor            # zones (long); also -only interiors
+go run ./cmd/charconv -outfit troll-warrior && go run ./cmd/animconv -char web/data/char/troll-warrior
+go run ./cmd/uiconv -skin atlantis              # the stock interface -> web/data/ui/
+git clone https://github.com/OpenDAoC/OpenDAoC-Database server/data/community
+go run ./cmd/dbimport                           # world population -> server/data/world.db
+DAOC_ADMIN_PASSWORD=choose-one go run ./cmd/gameserver    # http://localhost:8777
+```
+
+The README's Multiplayer section has the full first-run recipe (every creature
+model is converted separately) and the settings table (`DAOC_ADMIN_PASSWORD`,
+Discord login, `DAOC_PUBLIC_URL`, `server/data/server.env`). Log in at
+`/login.html`, make a character, press Play. `/?zone=105` is the offline viewer;
+`?play=<characterId>` is network mode. In play the developer panel is hidden;
+the backquote key shows it.
+
+After changing server code, restart the server: a running `gameserver.exe` is
+the old build.
+
+## Testing
+
+```bash
+go test -short ./...        # -short skips the census over a real install
+for t in web/*.test.mjs; do node $t; done
+openspec validate <change>
+```
+
+Tests that read the install skip when it is absent. For UI work also look at it
+in a browser (`/uidemo.html` draws sample stock windows); passing node tests do
+not show that a window looks right. Check the fallback by temporarily moving
+`web/data/ui/`.
+
+## Working here
+
+- **Specs drive work.** Changes live in `openspec/changes/<name>/` (proposal,
+  specs, design, tasks); `/opsx:propose`, `/opsx:apply` and `/opsx:archive`
+  run them. Archived changes sync into `openspec/specs/`. Open now:
+  `stock-ui-followups`.
+- **Protocol changes are additive.** New messages and fields only; document
+  them in `docs/protocol.md` and add a protocol or server test.
+- **Go** is not on PATH in this environment: `~/goroot-dist/go/bin`.
+- **Shell:** long heredocs and scripts with backslash escapes get mangled here.
+  Write files with the editor tools, and in JS replacement strings avoid `$`
+  patterns (`String.replace` with a function argument is safe).
+- **Browser automation:** a held key cannot be sent with the key action. Move
+  the character by dispatching `keydown` and `keyup` events from page script
+  with a delay between them. Creatures near the Myrkwood spawn can kill a
+  level 1 character in two blows (see `stock-ui-followups`).
+- Commit only when asked; end commit messages with the attribution lines the
+  session gives.
