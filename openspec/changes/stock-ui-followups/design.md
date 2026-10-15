@@ -26,3 +26,16 @@ After `stock-ui` and `stock-ui-rest`, the stock windows cover chat, summary, sty
 
 - Is the dangerous aggro in the data or in the server's reading of it? Settled by task 1.1.
 - Does the server hold the attributes it would need to send? Settled by task 1.1.
+
+## What was seen that led here
+
+Recorded so the work can start from evidence, not memory.
+
+- **Danger at the spawn.** At the Myrkwood Forest spawn (cell about 177, 99) a level 1 Troll Warrior with 175 hit points was killed by creatures labelled `giant bull frog 26` and `hog-nose slither 26`, standing a few steps away beside the lake, with hits of 60 to 98. Level 1 frogs stand among them, so a player cannot tell which a click will pick. The server aggroes any spawn with both `aggro_level` and `aggro_range` above zero; whether those values or the levels are the cause is the spike's question.
+- **Loot.** Seen only with a sample corpse in the live page: the stock frame, icons by kind, the row click and TAKE ALL sending slots `[1]` then `[2, 1, 0, -1]`. A real kill and corpse still has to be watched end to end.
+- **Release.** Seen only in the live page with a stand-in window: the timer bar and text, RELEASE and RELEASE BIND sending the release, CITY and HOUSE greyed, the window hiding on revival. The server side is covered by `TestPlayerCanReleaseEarly`. A real death still has to be watched.
+- **Compass.** It turns clockwise with the camera (right gives E, SE, S, SW, W; left gives NW, N). Its north is the viewer's -y direction by assumption.
+- **Clock.** Local time; the viewer has no day and night.
+- **Menu bar.** Only INV. does anything. JOURNAL, MAP, WARMAP, ATTRIB., SKILLS, SPELLS, STYLES, GROUP and MENU are greyed.
+- **Icons.** `Two Fists` has icon 105 and the first fist in the combat sheets is at 636; `Bloodletter` has 60 and the blood drop is at 505. Of 17,616 weapon and armour rows, 1,522 have a `model` in a range the install has a sheet for.
+- **Driving the browser.** A held movement key cannot be sent through the automation's key action; the page's own key events, dispatched from script with a delay, move the character. The proofs in section 4 need that, and a safe creature.
