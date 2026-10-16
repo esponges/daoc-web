@@ -87,6 +87,40 @@ func (w *World) recalcGear(p *Player) {
 			}
 		}
 	}
+	if gear := gearOf(p.inv, w.Cat.Items); !sameGear(gear, p.gear) {
+		p.gear = gear
+		p.gearRev++
+	}
+}
+
+// gearOf lists what a player wears as the pieces an NPC's equipment lists:
+// [slot, model, colour, extension]. The slot is the item table's own, which is
+// also what the community database uses for an NPC, so the client draws both
+// the same way. Colour is not tracked for items, so it is 0 (untinted).
+func gearOf(inv map[int]*invItem, items map[string]*Item) [][4]int {
+	out := [][4]int{}
+	for s := SlotWeapon; s < SlotCount; s++ {
+		it := inv[s]
+		if it == nil {
+			continue
+		}
+		if x := items[it.ID]; x != nil && x.Model > 0 && wornSlot(x) == s {
+			out = append(out, [4]int{x.ItemType, x.Model, 0, 0})
+		}
+	}
+	return out
+}
+
+func sameGear(a, b [][4]int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func itemView(slot int, it *Item, count int) protocol.InvItem {
@@ -112,7 +146,10 @@ func itemView(slot int, it *Item, count int) protocol.InvItem {
 }
 
 func (p *Player) sendInv(c *Catalog, money int64) {
-	m := protocol.Inv{T: protocol.TInv, Money: money}
+	m := protocol.Inv{T: protocol.TInv, Money: money, Eq: p.gear}
+	if m.Eq == nil {
+		m.Eq = [][4]int{}
+	}
 	for _, slot := range sortedSlots(p.inv) {
 		if it := c.Items[p.inv[slot].ID]; it != nil {
 			m.Items = append(m.Items, itemView(slot, it, p.inv[slot].Count))

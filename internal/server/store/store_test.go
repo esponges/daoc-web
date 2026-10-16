@@ -1,6 +1,9 @@
 package store
 
-import "testing"
+import (
+	"database/sql"
+	"testing"
+)
 
 func open(t *testing.T) *Store {
 	t.Helper()
@@ -106,5 +109,51 @@ func TestItemsAtomic(t *testing.T) {
 	got, _ := s.Character(a.ID, c.ID)
 	if got.Money != 50 {
 		t.Errorf("money = %d, want 50", got.Money)
+	}
+}
+
+func TestGenderDefaultsToMaleAndIsKept(t *testing.T) {
+	s := open(t)
+	a, _ := s.AccountFor("g1", "g#0", false)
+	m := &Character{AccountID: a.ID, Name: "Malefic", Race: 6, Class: 22, Zone: 100}
+	f := &Character{AccountID: a.ID, Name: "Femalia", Race: 6, Gender: 1, Class: 22, Zone: 100}
+	for _, c := range []*Character{m, f} {
+		if err := s.CreateCharacter(c); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, c := range []*Character{m, f} {
+		got, err := s.Character(a.ID, c.ID)
+		if err != nil || got.Gender != c.Gender {
+			t.Errorf("%s: gender %d, want %d (%v)", c.Name, got.Gender, c.Gender, err)
+		}
+	}
+}
+
+func TestOldDatabaseGainsGender(t *testing.T) {
+	path := t.TempDir() + "/old.db"
+	db, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A character table as it was before the gender column.
+	_, err = db.Exec(`CREATE TABLE account(id INTEGER PRIMARY KEY AUTOINCREMENT, discord_id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, admin INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
+CREATE TABLE character(id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER NOT NULL, name TEXT NOT NULL UNIQUE COLLATE NOCASE, race INTEGER NOT NULL, class INTEGER NOT NULL,
+ level INTEGER NOT NULL DEFAULT 1, xp INTEGER NOT NULL DEFAULT 0, zone INTEGER NOT NULL, x REAL NOT NULL, y REAL NOT NULL, z REAL NOT NULL, heading INTEGER NOT NULL DEFAULT 0,
+ hp INTEGER NOT NULL DEFAULT 0, endurance INTEGER NOT NULL DEFAULT 0, money INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
+INSERT INTO account VALUES(1,'old','old',0,1);
+INSERT INTO character(account_id,name,race,class,zone,x,y,z,created) VALUES(1,'Elder',5,22,100,1,2,3,1);`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	cs, err := s.Characters(1)
+	if err != nil || len(cs) != 1 || cs[0].Gender != 0 || cs[0].Name != "Elder" {
+		t.Errorf("migrated characters: %+v, %v", cs, err)
 	}
 }

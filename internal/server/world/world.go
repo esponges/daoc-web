@@ -255,7 +255,7 @@ func (z *Zone) join(p *Player) {
 	z.computeBar(p)
 	z.add(p)
 	p.exitLatched = z.exitAt(p) != nil
-	p.send(protocol.Welcome{T: protocol.TWelcome, V: protocol.Version, You: p.ID, Name: c.Name, Char: p.Arch.Key,
+	p.send(protocol.Welcome{T: protocol.TWelcome, V: protocol.Version, You: p.ID, Name: c.Name, Char: p.Arch.Key, Race: c.Race, Female: c.Gender == 1,
 		Zone: z.ID, X: p.Body.X, Y: p.Body.Y, Z: p.Body.Z, Yaw: p.Body.Yaw, Level: c.Level, Admin: p.Admin})
 	p.sendInv(w.Cat, c.Money)
 	p.sendBar(w.Cat)

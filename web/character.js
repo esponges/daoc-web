@@ -94,6 +94,9 @@ void main() {
 }
 `;
 
+// Armour textures by context, see lookTex in createCharacter.
+const LOOK_TEX = new WeakMap();
+
 export async function createCharacter(gl, base, helpers) {
   const { program, uniforms, loadImage } = helpers;
   const man = await fetch(base + '/char.json').then((r) => {
@@ -150,6 +153,29 @@ export async function createCharacter(gl, base, helpers) {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       texCache.set(name, t);
     }));
+
+  // Armour textures an NPC is dressed in at draw time (ctx.look), shared by
+  // every character on this context and loaded on first use. Until one has
+  // loaded the creature keeps the tier it is wearing by default.
+  const lookTex = (url) => {
+    let cache = LOOK_TEX.get(gl);
+    if (!cache) LOOK_TEX.set(gl, cache = new Map());
+    let e = cache.get(url);
+    if (!e) {
+      e = { t: null };
+      cache.set(url, e);
+      loadImage(url).then((img) => {
+        const t = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        e.t = t;
+      }).catch(() => { e.failed = true; });
+    }
+    return e.t;
+  };
 
   // --- skeleton ---
   const bones = man.bones;
@@ -209,7 +235,23 @@ export async function createCharacter(gl, base, helpers) {
     // reversed; with under a thousand triangles it is cheapest to just not
     // cull rather than track the flip through every transform.
     gl.disable(gl.CULL_FACE);
+    const look = ctx.look;
     for (const s of man.shapes) {
+      // A humanoid carries every armour tier of each slot. Only the default
+      // tier shows, unless the NPC is dressed (ctx.look) and the texture for
+      // the tier it wears has loaded.
+      let dressed = null, tint = null;
+      if (s.slot) {
+        const want = look && look.tiers[s.slot];
+        const tex = want ? lookTex(look.tex[s.slot]) : null;
+        if (want && tex) {
+          if (s.tier !== want) continue;
+          dressed = tex;
+          tint = look.tint[s.slot] || null;
+        } else if (!s.base) {
+          continue;
+        }
+      }
       if (s.bones.length > MAX_BONES) {
         throw new Error('shape ' + s.name + ' needs ' + s.bones.length + ' bones');
       }
@@ -218,8 +260,8 @@ export async function createCharacter(gl, base, helpers) {
         skinBuf.set(tmpA, b * 12);
       }
       gl.uniform4fv(U.uBones, skinBuf.subarray(0, s.bones.length * 12));
-      gl.uniform3fv(U.uDiffuse, s.diffuse);
-      const t = s.texture && texCache.get(s.texture);
+      gl.uniform3fv(U.uDiffuse, tint ? [s.diffuse[0] * tint[0], s.diffuse[1] * tint[1], s.diffuse[2] * tint[2]] : s.diffuse);
+      const t = dressed || (s.texture && texCache.get(s.texture));
       gl.uniform1f(U.uHasTex, t ? 1 : 0);
       if (t) gl.bindTexture(gl.TEXTURE_2D, t);
       gl.drawElements(gl.TRIANGLES, s.count, gl.UNSIGNED_INT, s.first * 4);

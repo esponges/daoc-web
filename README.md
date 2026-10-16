@@ -873,6 +873,55 @@ placement. Both hold: the second to 3.8e-06 across all 49 shapes, the first to
 0.18 units worst case, on a fingertip ten joints from the root where float32
 has accumulated down the longest chain.
 
+### What NPCs wear
+
+The server sends each NPC's worn pieces as `[slot, model, colour, extension]`
+(see `docs/protocol.md`), taken from the community database's `npcequipment`
+table. The database names pieces by number and the install is the only place
+that can draw them, so `charconv -gear` builds `web/data/gear.json` and the
+art it points at from your install and the imported world store. Nothing it
+writes is committed.
+
+**Held items are exact where the numbers line up.** A weapon or shield number
+is looked up in `items.csv`, which gives the model; it is drawn only when the
+kind agrees with the slot (a bow in a hand slot, or a shield in the right
+hand, is skipped). Each model is converted once into `web/data/items/` and
+attached to the creature's hand socket at draw time. Only about one number in
+seven resolves, and some resolve to a plausible weapon of the wrong realm: the
+database's numbers and the install's rows are not aligned for much of the range
+(`openspec/changes/npc-gear-mapping/design.md` has the figures).
+
+**Armour is approximate.** The install's own table from armour number to art
+is not in any archive (also in the design file), so armour is dressed by tier.
+What is exact is the kind of armour each number is: the imported item table
+says model 47 is the legs of Albion plate, and 428 a Hibernian scale hauberk.
+Each number becomes a level from cloth to plate and a realm. A humanoid
+creature is converted with every armour tier of each slot baked into its mesh
+(`charconv` tags each shape with its `slot` and `tier`, and the default tier
+alone sets its bounds); the client shows the tier for the level, in a texture
+set of that realm from `pskins.csv` (extracted to `web/data/armor/`), tinted
+with the piece's colour from `tints.csv`. A realm without a level uses its
+nearest lighter one, so Midgard plate is drawn as chain. Which tier of each
+slot belongs to which level is a table in `web/gear.js`, chosen from the
+troll outfits above; the long body follows the torso piece. Cloaks and helms
+are not drawn. Without `gear.json`, or for a number it cannot classify,
+the creature keeps its plain model.
+
+**Players use the same path.** The install names every player race and gender
+in `monsters.csv` (`Troll Male`, `Kobold Female 1`, ...), so a player's base
+model is found by the race's name, not by an offset; the database's race
+numbers are a fixed list in `cmd/charconv/races.go`. `charconv -races -realm 2`
+writes `web/data/races.json` and lists the rows to convert (each is an ordinary
+`charconv -model N` creature, with its armour tiers baked), and `-gear` also
+converts the held items a Midgard character can get. The server sends a
+player's race, gender (`rc`, `fm`) and worn pieces (`eq`, in the item table's
+slot numbers), and the client dresses that base exactly as it does an NPC. This
+is exact for the race and gender and approximate for armour, as above. Only the
+Midgard races are converted so far; a race without a base, or no `races.json`,
+draws the archetype's baked outfit. Gender is stored (existing characters are
+male) but nothing lets a player choose it yet: the character-creation wizard is
+a follow-up.
+
 ### Character textures
 
 Models carry UVs but no `NiTexturingProperty` — the game assigns skins at

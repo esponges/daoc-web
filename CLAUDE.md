@@ -41,6 +41,24 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
   styles and items are drawn by weapon line and kind. Do not "fix" this by
   guessing an offset (see `openspec/changes/stock-ui-followups/design.md`).
 
+## Where things come from
+
+- **Art, models, zones, sounds, interface layouts:** your own DAoC install
+  (path under "Running it"). The converters read it directly; the file formats
+  were worked out from the install's files and are documented in the README.
+  Nothing converted is committed.
+- **World population and numbers** (spawns, creature templates, levels, loot,
+  items, styles): the [OpenDAoC database](https://github.com/OpenDAoC/OpenDAoC-Database),
+  GPL-3.0, models patch 1.65. Cloned into `server/data/community/` and read by
+  `cmd/dbimport`. The client install has none of this. It describes EA-owned
+  content, so use stays private; re-check the licence and the EA question before
+  hosting publicly. README: "Where the world's content comes from".
+- **Rules and formulas** (hit points, damage, experience, weapon skill): written
+  here, from documented game mechanics. OpenDAoC-Core and DOLSharp (GPL) may be
+  read to understand a mechanic but nothing is copied from them.
+- No other sources are recorded. If you use one (a wiki, a format write-up,
+  a community table), add it here and to the README.
+
 ## Running it
 
 The install is expected at

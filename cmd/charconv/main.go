@@ -32,6 +32,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"daocweb/internal/dds"
@@ -160,6 +161,13 @@ type shapeOut struct {
 	Emissive  [3]float32    `json:"emissive"`
 	Alpha     float32       `json:"alpha"`
 	HasColors bool          `json:"hasColors"`
+	// Slot and Tier mark an armour shape of a humanoid creature: body, lbody,
+	// arms, legs, gloves or boots, and the tier within the slot (1 lightest).
+	// Base is the tier the creature wears unless told otherwise; the others are
+	// baked in so the client can dress an NPC in what the database says it wears.
+	Slot string `json:"slot,omitempty"`
+	Tier int    `json:"tier,omitempty"`
+	Base bool   `json:"base,omitempty"`
 }
 
 type manifest struct {
@@ -197,8 +205,29 @@ func main() {
 	texList := flag.String("tex", "", "per-slot texture overrides, e.g. Body=pltBody01_01_m.dds,Legs=...")
 	listOnly := flag.Bool("list", false, "list available shapes and exit")
 	noTex := flag.Bool("no-tex", false, "skip texture extraction")
+	tiers := flag.Bool("tiers", true, "for a humanoid creature, bake every armour tier of each slot so NPCs can be dressed")
 	model := flag.Int("model", 0, "convert a creature by its monsters.csv model ID instead of an outfit")
+	gear := flag.Bool("gear", false, "convert the held items NPCs carry (from -world) to web/data/items and gear.json, then exit")
+	world := flag.String("world", filepath.Join("server", "data", "world.db"), "with -gear: the world store written by cmd/dbimport")
+	dataDir := flag.String("data", filepath.Join("web", "data"), "with -gear: the converted data directory")
+	doRaces := flag.Bool("races", false, "write races.json for the player races of -realm and list the models to convert, then exit")
+	realm := flag.Int("realm", 2, "with -races: 1 Albion, 2 Midgard, 3 Hibernia, 0 all")
 	flag.Parse()
+
+	if *doRaces {
+		if err := convertRaces(*game, *dataDir, *realm); err != nil {
+			fmt.Fprintln(os.Stderr, "charconv:", err)
+			os.Exit(1)
+		}
+		return
+	}
+	if *gear {
+		if err := convertGear(*game, *world, *dataDir); err != nil {
+			fmt.Fprintln(os.Stderr, "charconv:", err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	fail := func(err error) {
 		fmt.Fprintln(os.Stderr, "charconv:", err)
@@ -255,7 +284,7 @@ func main() {
 	}
 	fmt.Printf("%s: %s\n", *name, o.desc)
 
-	if err := run(*game, *figure, *name, *out, *shapeList, *listOnly, *noTex); err != nil {
+	if err := run(*game, *figure, *name, *out, *shapeList, *listOnly, *noTex, *tiers); err != nil {
 		fail(err)
 	}
 }
@@ -351,7 +380,7 @@ func outfitNames() string {
 	return strings.Join(names, ", ")
 }
 
-func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error {
+func run(game, figure, name, out, shapeList string, listOnly, noTex, tiers bool) error {
 	path := filepath.Join(game, "figures", figure)
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -393,8 +422,18 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 			wanted[strings.ToLower(s)] = true
 		}
 	}
+	worn := map[string]bool{} // shapes worn by default; empty when every shape is
 	if len(wanted) == 0 {
 		wanted = defaultShapes(f)
+		if tiers {
+			for k := range wanted {
+				worn[k] = true
+			}
+			// A humanoid also carries its other armour tiers, switched on per NPC.
+			for _, k := range tierStems(f) {
+				wanted[k] = true
+			}
+		}
 	}
 
 	world := f.WorldTransforms()
@@ -424,6 +463,8 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 			continue
 		}
 		found[stem] = true
+		slot, tier := armourSlot(stem)
+		extra := slot != "" && !worn[stem] && len(worn) > 0 // a tier worn only when dressed
 
 		d, _ := f.Block(s.Data).(*nif.ShapeData)
 		si, _ := f.Block(s.Skin).(*nif.SkinInstance)
@@ -474,9 +515,10 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 			}
 			p := d.Vertices[vi]
 			// Track extents in the posed position so the reported height is
-			// the character's, not the raw buffer's.
+			// the character's, not the raw buffer's. Armour tiers worn only when
+			// dressed would make a plain NPC read taller, so they are left out.
 			wp := world[i].Apply(p)
-			for k := 0; k < 3; k++ {
+			for k := 0; k < 3 && !extra; k++ {
 				if wp[k] < bbMin[k] {
 					bbMin[k] = wp[k]
 				}
@@ -513,7 +555,10 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex bool) error 
 				so.Diffuse, so.Emissive, so.Alpha = m.Diffuse, m.Emissive, m.Alpha
 			}
 		}
-		if tex := textureFor(s.Name); tex != "" {
+		if slot != "" && len(worn) > 0 {
+			so.Slot, so.Tier, so.Base = slot, tier, worn[stem]
+		}
+		if tex := textureFor(s.Name); tex != "" && !extra {
 			so.Texture = strings.TrimSuffix(tex, ".dds") + ".png"
 			texNeed[tex] = true
 		}
@@ -738,6 +783,9 @@ func extractTextures(game, dir string, want map[string]bool) error {
 		g, _ := filepath.Glob(filepath.Join(game, "figures", sub, "*.mpk"))
 		archives = append(archives, g...)
 	}
+	// Player armour skins (pskins.csv) live under items/.
+	g, _ := filepath.Glob(filepath.Join(game, "items", "pskins", "*.mpk"))
+	archives = append(archives, g...)
 	for _, path := range archives {
 		if len(remaining) == 0 {
 			break
@@ -876,4 +924,42 @@ func defaultShapes(f *nif.File) map[string]bool {
 		}
 	}
 	return pick
+}
+
+// armourSlots are the slots whose shapes come in tiers: body and lbody (the
+// torso piece), arms, legs, gloves and boots.
+var armourSlots = map[string]bool{"body": true, "lbody": true, "arms": true, "legs": true, "gloves": true, "boots": true}
+
+// armourSlot splits a shape stem such as "lbody3" into its slot and tier.
+// Shapes that are not a plain slot-and-number ("body1b", "heada1") give "".
+func armourSlot(stem string) (string, int) {
+	slot := strings.TrimRight(stem, "0123456789")
+	rest := stem[len(slot):]
+	if !armourSlots[slot] || rest == "" {
+		return "", 0
+	}
+	n, err := strconv.Atoi(rest)
+	if err != nil {
+		return "", 0
+	}
+	return slot, n
+}
+
+// tierStems lists every slot-and-tier shape of a figure.
+func tierStems(f *nif.File) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, b := range f.Blocks {
+		s, ok := b.(*nif.TriShape)
+		if !ok {
+			continue
+		}
+		stem := shapeStem(s.Name)
+		if slot, _ := armourSlot(stem); slot != "" && !seen[stem] {
+			seen[stem] = true
+			out = append(out, stem)
+		}
+	}
+	sort.Strings(out)
+	return out
 }

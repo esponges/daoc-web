@@ -3,6 +3,7 @@ package world
 import (
 	"encoding/json"
 	"math"
+	"reflect"
 	"testing"
 	"time"
 
@@ -23,10 +24,10 @@ func (flat) Extent() float64 { return 65280 }
 func testCatalog() *Catalog {
 	c := &Catalog{
 		Items: map[string]*Item{
-			"hammer":  {ID: "hammer", Name: "bronze hammer", Level: 2, DPS: 1.8, Speed: 3.1, ObjectType: ObjHammer, ItemType: 10, Realm: 2, Droppable: true, Price: 10},
-			"shield":  {ID: "shield", Name: "round shield", Level: 1, ObjectType: ObjShield, ItemType: 11, Realm: 2, Droppable: true, Price: 10},
+			"hammer":  {ID: "hammer", Name: "bronze hammer", Model: 311, Level: 2, DPS: 1.8, Speed: 3.1, ObjectType: ObjHammer, ItemType: 10, Realm: 2, Droppable: true, Price: 10},
+			"shield":  {ID: "shield", Name: "round shield", Model: 473, Level: 1, ObjectType: ObjShield, ItemType: 11, Realm: 2, Droppable: true, Price: 10},
 			"pelt":    {ID: "pelt", Name: "wolf pelt", Level: 1, ObjectType: 0, ItemType: 40, Droppable: true, Price: 2},
-			"helm":    {ID: "helm", Name: "studded helm", Level: 3, AF: 6, ObjectType: 34, ItemType: 21, Realm: 2, Droppable: true, Price: 5},
+			"helm":    {ID: "helm", Name: "studded helm", Model: 93, Level: 3, AF: 6, ObjectType: 34, ItemType: 21, Realm: 2, Droppable: true, Price: 5},
 			"gsword":  {ID: "gsword", Name: "great sword", Level: 1, DPS: 3, Speed: 4, ObjectType: 11, ItemType: 12, Hand: 2, Realm: 2},
 			"axe":     {ID: "axe", Name: "bronze axe", Level: 1, DPS: 2, Speed: 3, ObjectType: 13, ItemType: 10, Realm: 2, Droppable: true, Price: 5},
 			"hiblade": {ID: "hiblade", Name: "hibernian blade", Level: 1, DPS: 2, Speed: 3, ObjectType: 11, ItemType: 10, Realm: 3},
@@ -754,5 +755,106 @@ func TestNPCGuildIsSentWithTheSnapshot(t *testing.T) {
 	last := sa[len(sa)-1]
 	if len(last.Ents) != 1 || last.Ents[0].Guild != "Smith" {
 		t.Errorf("Alice sees %+v", last.Ents)
+	}
+}
+
+func TestNPCGearIsSentOnceWhileInView(t *testing.T) {
+	geared := wolf(1, 30100, 30000, 3)
+	geared.Equip = "set"
+	unknown := wolf(2, 30200, 30000, 3)
+	unknown.Equip = "nope" // no rows in the catalog
+	bare := wolf(3, 30300, 30000, 3)
+	r := newRig(t, geared, unknown, bare)
+	r.w.Cat.Gear = map[string][][4]int{"set": {{25, 662, 17, 0}, {10, 311, 0, 0}}}
+	// Respawn the zone's NPCs from the new catalog data.
+	r.z = NewZone(r.w, 100, "Test", flat{}, nil, []Spawn{geared, unknown, bare})
+	r.w.zones[100] = r.z
+	a := r.player("Alice", 5, 30000, 30000, true)
+	eqOf := func(ss []protocol.Snap) (first, later int, _ int) {
+		for i, s := range ss {
+			for _, e := range s.Ents {
+				switch {
+				case e.Name == "wolf" && len(e.Equip) > 0 && i == 0:
+					first++
+				case e.Name == "wolf" && len(e.Equip) > 0:
+					later++
+				}
+			}
+		}
+		return
+	}
+	r.ticks(4)
+	first, later, _ := eqOf(snaps(a))
+	if first != 1 || later != 0 {
+		t.Errorf("gear sent %d times in the first snapshot and %d after; want 1 and 0", first, later)
+	}
+	// Out of view and back: it is sent again.
+	a.Body.X, a.Body.Y = 90000, 90000
+	r.ticks(2)
+	snaps(a)
+	a.Body.X, a.Body.Y = 30000, 30000
+	r.ticks(2)
+	first, later, _ = eqOf(snaps(a))
+	if first+later != 1 {
+		t.Errorf("gear sent %d times after coming back into view, want 1", first+later)
+	}
+}
+
+func TestPlayerGearIsSentWhenItChanges(t *testing.T) {
+	r := newRig(t)
+	a := r.player("Alice", 5, 30000, 30000, true) // hammer and shield
+	b := r.player("Bobby", 5, 30500, 30000, false)
+	r.ticks(2)
+	want := [][4]int{{10, 311, 0, 0}, {11, 473, 0, 0}}
+	if !reflect.DeepEqual(a.gear, want) {
+		t.Fatalf("Alice wears %v, want %v", a.gear, want)
+	}
+	count := func(p *Player, id int64) (sent int, last [][4]int) {
+		for _, s := range snaps(p) {
+			for _, e := range s.Ents {
+				if e.ID == id && e.GearSet {
+					sent++
+					last = e.Equip
+				}
+			}
+		}
+		return
+	}
+	// Bobby is sent Alice's gear once as she comes into view, with her race.
+	r.ticks(1)
+	n, got := count(b, a.ID)
+	if n != 1 || !reflect.DeepEqual(got, want) {
+		t.Errorf("Bobby was sent Alice's gear %d times: %v", n, got)
+	}
+	if n, _ := count(b, a.ID); n != 0 {
+		t.Errorf("gear was repeated while nothing changed: %d", n)
+	}
+	// She takes the shield off; Bobby is sent the new set, and Alice's own inventory carries it too.
+	r.z.MoveItem(a, SlotShield, 0)
+	r.ticks(2)
+	n, got = count(b, a.ID)
+	if n != 1 || !reflect.DeepEqual(got, [][4]int{{10, 311, 0, 0}}) {
+		t.Errorf("after unequipping, Bobby was sent %d times: %v", n, got)
+	}
+	// She strips everything: an empty set is still sent, so Bobby does not keep the old look.
+	r.z.MoveItem(a, SlotWeapon, 1)
+	r.ticks(2)
+	n, got = count(b, a.ID)
+	if n != 1 || len(got) != 0 {
+		t.Errorf("after stripping, Bobby was sent %d times: %v", n, got)
+	}
+}
+
+func TestPlayerRaceAndGenderAreSent(t *testing.T) {
+	r := newRig(t)
+	r.player("Alice", 5, 30000, 30000, false)
+	b := r.player("Bobby", 5, 30500, 30000, false)
+	r.player("Cathy", 5, 30700, 30000, false).Char.Gender = 1
+	r.ticks(2)
+	last := snaps(b)
+	for _, e := range last[len(last)-1].Ents {
+		if e.Race != 6 || e.Female != (e.Name == "Cathy") {
+			t.Errorf("%s: race %d female %v", e.Name, e.Race, e.Female)
+		}
 	}
 }

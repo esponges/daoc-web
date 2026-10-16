@@ -27,6 +27,7 @@ type Character struct {
 	AccountID int64
 	Name      string
 	Race      int
+	Gender    int // 0 male, 1 female; saved characters from before this column are male
 	Class     int
 	Level     int
 	XP        int64
@@ -60,7 +61,7 @@ CREATE TABLE IF NOT EXISTS account(
   admin INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS character(
   id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER NOT NULL REFERENCES account(id),
-  name TEXT NOT NULL UNIQUE COLLATE NOCASE, race INTEGER NOT NULL, class INTEGER NOT NULL,
+  name TEXT NOT NULL UNIQUE COLLATE NOCASE, race INTEGER NOT NULL, gender INTEGER NOT NULL DEFAULT 0, class INTEGER NOT NULL,
   level INTEGER NOT NULL DEFAULT 1, xp INTEGER NOT NULL DEFAULT 0, zone INTEGER NOT NULL,
   x REAL NOT NULL, y REAL NOT NULL, z REAL NOT NULL, heading INTEGER NOT NULL DEFAULT 0,
   hp INTEGER NOT NULL DEFAULT 0, endurance INTEGER NOT NULL DEFAULT 0, money INTEGER NOT NULL DEFAULT 0,
@@ -90,6 +91,19 @@ func Open(path string) (*Store, error) {
 	if _, err := db.Exec(schema); err != nil {
 		db.Close()
 		return nil, err
+	}
+	// A database made before the gender column gets it here; every saved
+	// character is male until a creation flow lets a player choose.
+	var hasGender int
+	if err := db.QueryRow(`SELECT count(*) FROM pragma_table_info('character') WHERE name='gender'`).Scan(&hasGender); err != nil {
+		db.Close()
+		return nil, err
+	}
+	if hasGender == 0 {
+		if _, err := db.Exec(`ALTER TABLE character ADD COLUMN gender INTEGER NOT NULL DEFAULT 0`); err != nil {
+			db.Close()
+			return nil, err
+		}
 	}
 	return &Store{db: db}, nil
 }
@@ -153,9 +167,9 @@ func (s *Store) CreateCharacter(c *Character) error {
 	if c.Level < 1 {
 		c.Level = 1
 	}
-	res, err := s.db.Exec(`INSERT INTO character(account_id,name,race,class,level,xp,zone,x,y,z,heading,hp,endurance,money,created)
-		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-		c.AccountID, c.Name, c.Race, c.Class, c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money, time.Now().Unix())
+	res, err := s.db.Exec(`INSERT INTO character(account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money,created)
+		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		c.AccountID, c.Name, c.Race, c.Gender, c.Class, c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money, time.Now().Unix())
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {
 			return ErrNameTaken
@@ -166,11 +180,11 @@ func (s *Store) CreateCharacter(c *Character) error {
 	return nil
 }
 
-const charCols = `id,account_id,name,race,class,level,xp,zone,x,y,z,heading,hp,endurance,money`
+const charCols = `id,account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money`
 
 func scanChar(r interface{ Scan(...any) error }) (*Character, error) {
 	c := &Character{}
-	err := r.Scan(&c.ID, &c.AccountID, &c.Name, &c.Race, &c.Class, &c.Level, &c.XP, &c.Zone,
+	err := r.Scan(&c.ID, &c.AccountID, &c.Name, &c.Race, &c.Gender, &c.Class, &c.Level, &c.XP, &c.Zone,
 		&c.X, &c.Y, &c.Z, &c.Heading, &c.HP, &c.Endurance, &c.Money)
 	return c, err
 }
