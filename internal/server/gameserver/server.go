@@ -324,6 +324,12 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 				z.MoveItem(p, m.From, m.To)
 			}
 		})
+	case *protocol.Interact:
+		z.Do(func() { z.Interact(p, m.ID) })
+	case *protocol.Buy:
+		z.Do(func() { z.Buy(p, m.ID) })
+	case *protocol.Sell:
+		z.Do(func() { z.Sell(p, m.Slot) })
 	case *protocol.GM:
 		z.Do(func() { s.World.GM(p, m.Line) })
 	}

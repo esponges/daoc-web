@@ -82,6 +82,9 @@ export class NetClient {
   release() { this._send({ t: 'release' }); }
   loot(corpse, index) { this._send({ t: 'loot', corpse, index }); }
   equip(from, to) { this._send({ t: 'equip', from, to }); }
+  interact(id) { this._send({ t: 'interact', id }); }
+  buy(id) { this._send({ t: 'buy', id }); }
+  sell(slot) { this._send({ t: 'sell', slot }); }
   chat(ch, text) { this._send({ t: 'chat', ch, text }); }
   gm(line) { this._send({ t: 'gm', line }); }
   ping() { this._send({ t: 'ping' }); }
@@ -99,11 +102,13 @@ export class NetClient {
         }
         this.on.err?.(m);
         break;
-      case 'zone': this.on.zone?.(m); break;
+      case 'zone': this.shop = null; this.on.zone?.(m); break;
       case 'chatmsg': this.on.chat?.(m); break;
-      case 'inv': this.inv = m; this.on.inv?.(m); break;
+      case 'inv': this.inv = m; this.eq = m.eq || []; this.on.inv?.(m); break;
       case 'bar': this.bar = m.slots || []; this.on.bar?.(this.bar); break;
       case 'corpse': this.corpse = m; this.on.corpse?.(m); break;
+      case 'shop': this.shop = m; this.on.shop?.(m); break;
+      case 'shopclose': this.shop = null; this.on.shopclose?.(); break;
       default: break; // an unknown message is ignored
     }
   }
@@ -112,7 +117,7 @@ export class NetClient {
     this.zone = m.zone;
     this.id = m.you;
     this.me = {
-      id: m.you, name: m.name, char: m.char, level: m.level, admin: !!m.admin,
+      id: m.you, name: m.name, char: m.char, race: m.rc || 0, female: !!m.fm, level: m.level, admin: !!m.admin,
       x: m.x, y: m.y, z: m.z, yaw: m.yaw,
       hp: 1, maxHp: 1, end: 100, maxEnd: 100, xp: 0, xpNext: 1, money: 0,
       target: 0, attacking: false, dead: false, fighting: false, avail: [],
@@ -154,8 +159,12 @@ export class NetClient {
         this.ents.set(e.id, r);
       }
       r.k = e.k; r.name = e.nm; r.model = e.m || 0; r.guild = e.gd || ''; r.char = e.ch || ''; r.level = e.lv || 0;
+      r.race = e.rc || 0; r.female = !!e.fm;
+      // Gear is sent once as the entity comes into view (and, for a player, again
+      // whenever it changes, possibly to nothing: gs); kept until it leaves.
+      if (e.eq || e.gs) r.eq = e.eq || [];
       r.speed = e.sp || 0; r.hp = e.hp; r.state = e.st || ''; r.scale = e.sc || 0;
-      r.aggro = !!e.ag; r.loot = !!e.lt; r.friendly = !!e.fr; r.back = !!e.bk; r.side = e.sd || 0;
+      r.aggro = !!e.ag; r.loot = !!e.lt; r.friendly = !!e.fr; r.kind = e.ik || ''; r.back = !!e.bk; r.side = e.sd || 0;
       r.samples.push({ t, x: e.x, y: e.y, z: e.z, yaw: e.h });
       if (r.samples.length > 8) r.samples.shift();
     }

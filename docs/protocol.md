@@ -58,9 +58,11 @@ Twenty a second:
 `you` at that step and replays the rest. `fix` means the prediction was wrong
 enough to snap rather than ease. `ents` are the players (`k:"p"`, with `ch`,
 the character to draw) and creatures (`k:"n"`, with `m`, the model number,
-drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the name when it has one, within 14,000 units. `st` is `""`, `fight` or
+drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the name when it has one, and `eq`, the pieces it wears as `[slot, model, colour, extension]` (slots follow the database: 10 right hand, 11 left hand, 12 two-hand, 13 ranged, 21 helm, 22 gloves, 23 boots, 25 torso, 26 cloak, 27 legs, 28 arms). `eq` is sent once, on the snapshot where the creature enters range, and again if it leaves range and returns; keep it with the entity until the entity drops out of `ents`, within 14,000 units. `st` is `""`, `fight` or
 `dead`. `ev` are the tick's events: `swing`, `hit`, `miss`, `block`, `parry`,
 `evade`, `death`, `xp`, `level`, `loot`, `join`.
+
+Players carry their look too. `welcome` and each player entity have `rc` (the race number, 1 Briton, 2 Avalonian, 3 Highlander, 4 Saracen, 5 Norseman, 6 Troll, 7 Dwarf, 8 Kobold, 9 Celt, 10 Firbolg, 11 Elf, 12 Lurikeen, 13 Inconnu, 14 Valkyn, 15 Sylvan, 16 Half Ogre, 17 Frostalf, 18 Shar) and `fm` (true for a female character; absent means male). A client that has a converted base for that race and gender draws it and falls back to `ch` otherwise. A player entity's `eq` is in the same form as a creature's and is sent when the player comes into view and again whenever their gear changes; `gs:true` marks an `eq` that is present even when empty (the player took everything off), so keep the last one received until the next. Your own worn pieces arrive as `eq` on every `inv` message, which always has it, empty or not. A client that does not know these fields ignores them.
 
 ## Requests
 
@@ -71,6 +73,9 @@ drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the 
 | `style` | `slot` | queue the style on that bar slot for the next swing |
 | `release` | | a dead character stands up at their bind point now, without waiting for the respawn timer (5 s); ignored if alive |
 | `loot` | `corpse`, `index` | take a corpse's item by index, or its money with -1 |
+| `interact` | `id` | ask the creature with that id to do what it does; today only a merchant (`ik:"merchant"`) answers, with `shop`, and only within reach (128 units plus half the creature's reach); otherwise `err` |
+| `buy` | `id` | buy one of the open shop's items by item id; the server checks stock, money, pack space and reach, then resends `inv` |
+| `sell` | `slot` | sell the item in a pack slot (0-39) to the open shop for half its price, at least 1 copper; worn slots and worthless items are refused |
 | `equip` | `from`, `to` | move between pack (0-39) and worn (40-47) slots; `to` -1 destroys, -2 wears it where it belongs |
 | `chat` | `ch`, `text` | `say` (3,000 units) or `all`; a leading `/` is a command (`/who`, `/gm ...`) |
 | `gm` | `line` | an administrator's command: `goto`, `tp`, `level`, `heal`, `give`, `kill`, `where` |
@@ -83,7 +88,7 @@ deals no damage.
 ## Other server messages
 
 `inv` (pack, worn items and money), `bar` (styles), `corpse` (a corpse's
-loot), `chatmsg`, `err`, and `zone`: the character has moved to another zone,
+loot), `shop`, `shopclose`, `chatmsg`, `err`, and `zone`: the character has moved to another zone,
 so the client reloads at `?zone=N&play=<id>` and joins again. Crossing an
 outdoor zone's edge, walking into an exit, and a GM `goto` all do this.
 
@@ -93,6 +98,8 @@ icon numbers come from a later client than the one a player installs, so the
 web client draws a picture by `spec` and does not look `icon` up. Items in
 `inv` and `corpse` carry `k` (weapon, shield, armour, misc), `w` (the worn slot
 an armour piece belongs in) and `line` (a weapon's line) for the same reason.
+
+`shop` is a merchant's stock, sent when `interact` opens it: `npc` (its id), `nm`, and `items`, each an `inv`-style row (`id`, `nm`, `k`, `line`, `w`, `d`, `lv`) with `pr`, the price in copper, and `slot`, its place in the list in the order to show. Buy by `id`, not by `slot`. The shop stays open until `shopclose`, which the server sends when the player walks out of reach, dies or the merchant is gone; a character that changes zone simply starts with none open. A creature entity may carry `ik`, what interacting with it does (`"merchant"`); absent means nothing. Pictures for shop rows are chosen from `k` and `line`, like inventory rows; `m` and the imported icon numbers are not a reliable source.
 
 Limits: 16 KB a message, 120 messages a second per connection, 200
 characters a chat line, one line a second with a burst of four.

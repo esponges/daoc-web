@@ -21,6 +21,7 @@ import { loadInterior } from './interior.js';
 import { NetClient } from './net.js';
 import { loadOutdoorCollision } from './collision.js';
 import { createRemote, eventAnim } from './remote.js';
+import { candidates } from './race.js';
 import { createUI, conColor } from './ui.js';
 import { loadUI, registerFonts } from './uiwin.js';
 
@@ -732,8 +733,26 @@ async function main() {
   const SPAWN = world.spawn;
 
   // --- character ---
-  const char = await createCharacter(gl, welcome ? 'data/char/' + welcome.char.replace(/[^a-zA-Z0-9_-]/g, '') : CHARACTER,
-    { program, uniforms, loadImage });
+  // In play you are drawn with the base for your race and gender, dressed from
+  // what you wear; with no such base converted, with the outfit the server named.
+  let char, dressed = false;
+  if (welcome) {
+    const races = await fetch('data/races.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const dirs = candidates(races, { race: welcome.rc || 0, female: !!welcome.fm, char: welcome.char });
+    for (const dir of dirs) {
+      try {
+        char = await createCharacter(gl, 'data/char/' + dir.replace(/[^a-zA-Z0-9_-]/g, ''), { program, uniforms, loadImage });
+        dressed = dir !== welcome.char;
+        break;
+      } catch (e) {
+        console.warn('character ' + dir + ' not loaded:', e.message);
+      }
+    }
+    if (!char) throw new Error('no character could be loaded for ' + welcome.name);
+  } else {
+    char = await createCharacter(gl, CHARACTER, { program, uniforms, loadImage });
+  }
+  const selfGear = {}; // the gear cache for your own figure, like a remote view's
   if (char.missingJoints.length) {
     console.warn('skeleton is missing expected joints:', char.missingJoints.join(', '));
   }
@@ -826,7 +845,7 @@ async function main() {
   if (net) {
     remote = createRemote(gl, { program, uniforms, loadImage }, { cell });
     npcs = {
-      get npcs() { return remote.pickables; }, get drawn() { return remote.drawn; },
+      get npcs() { return remote.pickables; }, get drawn() { return remote.drawn; }, get gearSkipped() { return remote.gearSkipped; },
       types: remote.types, update() {}, draw() {},
     };
     const me = net.me;
@@ -974,23 +993,25 @@ async function main() {
     }
   });
   addEventListener('keyup', (e) => keys.delete(e.code));
-  // A left click selects whatever NPC is under the cursor. A right-drag
-  // turns the camera and nothing else; in free-fly either button looks
-  // around.
+  // A left click selects whatever NPC is under the cursor. A right click
+  // does too, and then asks it to do what it does (a merchant opens its
+  // shop); a right-drag turns the camera and nothing else. In free-fly either
+  // button looks around.
   let dragging = false;
-  let downAt = null;
+  const downAt = {}; // where each button went down, until it comes up
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('mousedown', (e) => {
     if (e.button === 2 || (e.button === 0 && !followMode)) dragging = true;
-    if (e.button === 0) downAt = [e.clientX, e.clientY];
+    if (e.button === 0 || e.button === 2) downAt[e.button] = [e.clientX, e.clientY];
     e.preventDefault();
   });
   addEventListener('mouseup', (e) => {
     if (e.button === 2 || !followMode) dragging = false;
-    if (e.button !== 0) return;
-    if (!downAt || !combat || !view.eye) return;
-    const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
-    downAt = null;
+    if (e.button !== 0 && e.button !== 2) return;
+    const start = downAt[e.button];
+    downAt[e.button] = null;
+    if (!start || !combat || !view.eye) return;
+    const moved = Math.hypot(e.clientX - start[0], e.clientY - start[1]);
     if (moved > 4) return;
     // A ray from the eye through the clicked pixel, built from the camera's
     // own basis and field of view.
@@ -1016,6 +1037,7 @@ async function main() {
       combat.select(hit);
       log('You target the ' + hit.name + '.', 'info');
     }
+    if (e.button === 2 && hit && hit.kind && net) net.interact(hit.id);
   });
   addEventListener('mousemove', (e) => {
     if (!dragging) return;
@@ -1343,7 +1365,14 @@ async function main() {
       if (grass && grassOn && !shadowPass) grass.draw(ctx);
       // The character goes in before the water so a submerged figure is
       // tinted by the translucent surface rather than drawn over it.
-      char.draw({ ...ctx, model: charModel });
+      const placed = { ...ctx, model: charModel };
+      const eq = dressed && net && remote ? net.eq : null;
+      const look = eq && eq.length ? remote.gear.lookFor(selfGear, eq, char) : null;
+      char.draw(look ? { ...placed, look } : placed);
+      if (eq && eq.length) {
+        // A held piece that cannot be drawn must not cost you your body.
+        try { remote.gear.draw(selfGear, eq, char.skeleton, placed); } catch (e) { net.eq = []; console.warn('held item cannot be drawn:', e.message); }
+      }
       if (npcs) npcs.draw(ctx);
       if (remote) remote.draw(ctx);
       // Particles cast no shadow, and go in last, over everything solid.
@@ -1424,7 +1453,7 @@ async function main() {
     }
     if (npcs) {
       $('i-npc').textContent = npcs.npcs.length + ' placed, ' + npcs.drawn + ' in view, ' +
-        npcs.types.size + ' kinds';
+        npcs.types.size + ' kinds' + (npcs.gearSkipped ? ', ' + npcs.gearSkipped + ' worn pieces not drawn' : '');
     }
 
     // A draw WebGL refuses leaves nothing behind but this, so say so once:

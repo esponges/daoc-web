@@ -9,6 +9,7 @@ const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'D
 import { createStockChat, createStockSummary, createStockBar, createStockRelease } from './hud.js';
 import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
+import { createStockShop } from './shop.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 
 const el = (tag, cls, text) => {
@@ -156,6 +157,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     stockPack = createStockPack(document, stock, {
       onMove: (from, to) => net.equip(from, to),
       onUse: (slot) => {
+        if (shopOpen()) { net.sell(slot); return; }
         const it = net.inv.items.find((i) => i.slot === slot);
         if (it && (it.k === 'weapon' || it.k === 'shield' || it.k === 'armour')) net.equip(slot, -2);
       },
@@ -169,6 +171,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     root.appendChild(stockPack.el);
   }
   const renderInv = () => {
+    refreshShop();
     if (stockPack) { stockPack.render(net.inv); return; }
     const bySlot = new Map(net.inv.items.map((i) => [i.slot, i]));
     worn.replaceChildren(); bag.replaceChildren();
@@ -193,6 +196,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
         c.title = it.nm + (it.d ? ' — ' + it.d : '') + '\nclick: equip · shift-click: destroy';
         c.addEventListener('click', (e) => {
           if (e.shiftKey) { net.equip(i, -1); return; }
+          if (shopOpen()) { net.sell(i); return; }
           if (it.k === 'weapon' || it.k === 'shield' || it.k === 'armour') net.equip(i, -2);
         });
       }
@@ -238,6 +242,51 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     lootWin.classList.add('open');
   };
   net.on.corpse = renderLoot;
+
+  // --- shop ---
+  // A merchant's window: the stock frame when the interface is there, a plain
+  // panel when not. Buying is a click on a row; selling is a click on a pack
+  // item while it is open (see the pack handlers above).
+  const shopPanel = el('div', 'panel shop');
+  root.appendChild(shopPanel);
+  let stockShop = null;
+  if (stock) {
+    stockShop = createStockShop(document, stock, { onBuy: (id) => net.buy(id), onClose: () => hideShop(), formatMoney: money });
+    Object.assign(stockShop.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-150px', zIndex: 15 });
+    root.appendChild(stockShop.el);
+  }
+  const shopOpen = () => (stockShop ? stockShop.isOpen : shopPanel.classList.contains('open'));
+  const hideShop = () => {
+    if (stockShop) stockShop.hide(); else shopPanel.classList.remove('open');
+    net.shop = null;
+  };
+  const renderPlainShop = (m) => {
+    const cash = net.inv.mo || 0;
+    shopPanel.replaceChildren(el('h2', '', m.nm));
+    for (const it of m.items || []) {
+      const r = el('div', 'row', it.nm + (it.d ? ' — ' + it.d : '') + '  ' + money(it.pr || 0));
+      if ((it.pr || 0) > cash) r.style.opacity = '.55';
+      r.addEventListener('click', () => net.buy(it.id));
+      shopPanel.appendChild(r);
+    }
+    const close = el('button', '', 'Close');
+    close.addEventListener('click', hideShop);
+    shopPanel.append(close);
+    shopPanel.classList.add('open');
+  };
+  // Prices go red when the character cannot pay, so a change of money redraws.
+  const refreshShop = () => {
+    if (!net.shop || !shopOpen()) return;
+    if (stockShop) stockShop.setMoney(net.inv.mo || 0); else renderPlainShop(net.shop);
+  };
+  const renderShop = (m) => {
+    if (!m) { hideShop(); return; }
+    if (stockShop) { stockShop.setMoney(net.inv.mo || 0); stockShop.show(m); } else renderPlainShop(m);
+    // Something to sell: bring the pack up beside it.
+    if (stockPack && !stockPack.isOpen) togglePack();
+  };
+  net.on.shop = renderShop;
+  net.on.shopclose = hideShop;
 
   // --- death ---
   const dead = el('div', 'death', 'You have died.');

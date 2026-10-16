@@ -13,6 +13,8 @@
 import { createCharacter, modelMatrix } from './character.js';
 import { Animator } from './animator.js';
 import { bodyRadius } from './npc.js';
+import { createGear } from './gear.js';
+import { loadRaces, candidates } from './race.js';
 
 // Beyond this distance from the camera an entity is neither posed nor drawn.
 const DRAW_DISTANCE = 14000;
@@ -44,9 +46,30 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
   const types = new Map(); // key -> { state, ch, walk, run, steps }
   const views = new Map(); // entity id -> view
   let drawn = 0;
+  const fetchJson = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); });
+  const gear = createGear({
+    loadItem: (name) => createCharacter(gl, 'data/items/' + name.replace(/[^a-zA-Z0-9_.-]/g, ''), helpers),
+    fetchJson,
+  });
+  const races = loadRaces(fetchJson);
 
-  // The directory a character is converted into: creatures by model number.
-  const keyOf = (e) => (e.k === 'p' ? e.char : 'm' + e.model);
+  // The directory a character is converted into: creatures by model number; a
+  // player by the base for their race and gender, else the outfit the server
+  // named. Returns null while the choice cannot be made yet (the races file is
+  // loading, or the best base is), so a player is not drawn in the fallback
+  // for a frame and then swapped.
+  function pick(e) {
+    if (e.k !== 'p') {
+      const key = 'm' + e.model;
+      return { key, t: loadType(key) };
+    }
+    if (races.state === 'loading') return null;
+    for (const key of candidates(races.table, e)) {
+      const t = loadType(key);
+      if (t.state !== 'fail') return { key, t };
+    }
+    return null;
+  }
 
   function loadType(key) {
     let t = types.get(key);
@@ -84,10 +107,16 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       v.fight = e.state === 'fight';
       v.isPlayer = e.k === 'p';
       v.friendly = e.friendly;
+      v.kind = e.kind || '';
       v.guild = e.guild || '';
       if (!v.type || v.type.state !== 'ok') {
-        const t = loadType(keyOf(e));
-        if (t.state === 'ok' && !v.failed) {
+        const choice = pick(e);
+        const t = choice && choice.t;
+        if (t && t.state === 'ok' && !v.failed) {
+          v.key = choice.key;
+          // A race base is bare and is dressed from its equipment; the outfit
+          // fallback has its gear baked in.
+          v.dressed = e.k !== 'p' || choice.key !== e.char;
           v.type = { ch: t.ch, ...t };
           v.anim = new Animator(t.ch, { fade: FADE, carry: LOCOMOTION });
           v.scale = t.ch.scale * (e.scale || 1);
@@ -154,10 +183,17 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       // that kind and carry on.
       try {
         v.anim.pose();
-        v.type.ch.draw({ ...ctx, model: modelMatrix(v.x, v.e.z, v.y, v.yaw, v.scale) });
+        const placed = { ...ctx, model: modelMatrix(v.x, v.e.z, v.y, v.yaw, v.scale) };
+        // A creature or player with armour on is dressed by its tiers; the rest draw as converted.
+        const look = v.dressed && v.e.eq ? gear.lookFor(v, v.e.eq, v.type.ch) : null;
+        v.type.ch.draw(look ? { ...placed, look } : placed);
+        // A held item that cannot be drawn must not cost the creature its body.
+        if (v.dressed && v.e.eq) {
+          try { gear.draw(v, v.e.eq, v.type.ch.skeleton, placed); } catch (e) { v.e.eq = null; console.warn('held item cannot be drawn:', e.message); }
+        }
         drawn++;
       } catch (e) {
-        const key = keyOf(v.e);
+        const key = v.key;
         const t = types.get(key);
         if (t && t.state === 'ok') { t.state = 'fail'; console.warn('character ' + key + ' cannot be drawn:', e.message); }
         v.anim = null; v.type = null;
@@ -166,10 +202,14 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
   }
 
   return {
-    views, sync, events, update, draw,
+    views, sync, events, update, draw, gear, races,
+    // The base a player of this race and gender is drawn with, or null (see race.js).
+    loadType,
     // The creatures a click or Tab can select.
     get pickables() { return [...views.values()].filter((v) => !v.isPlayer && v.anim); },
     get drawn() { return drawn; },
+    // Held pieces the lookup could not draw, for the developer panel.
+    get gearSkipped() { return gear.skipped; },
     get types() { return types; },
   };
 }

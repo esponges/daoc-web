@@ -37,6 +37,10 @@
 .pack .cell.armour { color: #9be39b; }
 .pack .cash { margin-top: 8px; color: #ffe066; }
 .loot { left: 50%; top: 22%; transform: translateX(-50%); min-width: 240px; }
+.shop { left: 16px; top: 12%; width: min(460px, calc(100vw - 390px)); max-height: calc(100vh - 140px); overflow: auto; }
+.shop .row { padding: 4px 6px; cursor: pointer; border-radius: 4px; }
+.shop .row:hover { background: rgba(143,208,255,.15); }
+.shop button { margin-top: 6px; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }
 .loot .row { padding: 4px 6px; cursor: pointer; border-radius: 4px; }
 .loot .row:hover { background: rgba(143,208,255,.15); }
 .loot button { margin-top: 6px; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }

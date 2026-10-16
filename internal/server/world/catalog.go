@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -72,6 +73,7 @@ type Spawn struct {
 	Zone       int
 	Name       string
 	Guild      string
+	Equip      string // equipment template id, "" for none
 	Model      int
 	X, Y, Z    float64
 	Heading    int
@@ -85,6 +87,8 @@ type Spawn struct {
 	AggroRange int
 	Realm      int
 	Flags      int
+	ClassType  string // the community class type, "" when the store predates it
+	ItemsList  string // merchant stock list id, "" for none
 }
 
 // Template is the optional fixed stats of an NPC kind.
@@ -157,7 +161,11 @@ type Catalog struct {
 		Start
 	}
 	Loot     map[string][]LootEntry // loot template -> entries
+	Gear     map[string][][4]int    // equipment template -> [slot, model, colour, extension] per worn piece
+	hasGear  bool                   // spawn.equip exists (a world.db imported before equipment was kept lacks it)
 	MobLoot  map[string][]string    // lower-case mob name -> loot template names
+	Stock    map[string][]string    // merchant list id -> item ids, in page then slot order
+	hasShops bool                   // spawn.classtype and merchant_stock exist (a world.db imported before merchants lacks them)
 	dropOnce sync.Once
 	dropPool map[int][]string
 	db       *sql.DB
@@ -170,7 +178,7 @@ func LoadCatalog(path string) (*Catalog, error) {
 		return nil, err
 	}
 	c := &Catalog{db: db, Items: map[string]*Item{}, Templates: map[int]*Template{}, Zones: map[int]*ZoneInfo{},
-		Loot: map[string][]LootEntry{}, MobLoot: map[string][]string{}}
+		Loot: map[string][]LootEntry{}, MobLoot: map[string][]string{}, Stock: map[string][]string{}}
 	q := func(query string, scan func(*sql.Rows) error) error {
 		rows, err := db.Query(query)
 		if err != nil {
@@ -193,6 +201,22 @@ func LoadCatalog(path string) (*Catalog, error) {
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+	c.Gear = map[string][][4]int{}
+	var gearTables int
+	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE (type='table' AND name='npc_equip') OR (type='table' AND name='spawn' AND sql LIKE '%equip TEXT%')`).Scan(&gearTables)
+	if c.hasGear = gearTables == 2; c.hasGear {
+		if err := q(`SELECT template,slot,model,color,ext FROM npc_equip ORDER BY template,slot`, func(r *sql.Rows) error {
+			var id string
+			var g [4]int
+			if err := r.Scan(&id, &g[0], &g[1], &g[2], &g[3]); err != nil {
+				return err
+			}
+			c.Gear[id] = append(c.Gear[id], g)
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 	}
 	if err := q(`SELECT id,name,level,quality,dps_af,spd_abs,hand,damage_type,object_type,item_type,model,price,realm,droppable FROM item`, func(r *sql.Rows) error {
 		it := &Item{}
@@ -282,12 +306,39 @@ func LoadCatalog(path string) (*Catalog, error) {
 	}); err != nil {
 		return nil, err
 	}
+	var shopParts int
+	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE (type='table' AND name='merchant_stock') OR (type='table' AND name='spawn' AND sql LIKE '%classtype TEXT%')`).Scan(&shopParts)
+	if c.hasShops = shopParts == 2; c.hasShops {
+		if err := q(`SELECT list,item FROM merchant_stock ORDER BY list,page,slot`, func(r *sql.Rows) error {
+			var l, it string
+			if err := r.Scan(&l, &it); err != nil {
+				return err
+			}
+			c.Stock[l] = append(c.Stock[l], it)
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	} else {
+		log.Printf("world store has no merchant data; NPC interaction is off (run cmd/dbimport again)")
+	}
 	return c, nil
 }
 
+// Shops reports whether the store carries merchant data.
+func (c *Catalog) Shops() bool { return c.hasShops }
+
 // SpawnsIn reads a zone's spawns.
 func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
-	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags FROM spawn WHERE zone=?`, zone)
+	equip := "''"
+	if c.hasGear {
+		equip = "COALESCE(equip,'')"
+	}
+	shop := "'',''"
+	if c.hasShops {
+		shop = "COALESCE(classtype,''),COALESCE(items_list,'')"
+	}
+	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,`+equip+`,`+shop+` FROM spawn WHERE zone=?`, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +346,7 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	var out []Spawn
 	for rows.Next() {
 		s := Spawn{}
-		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags); err != nil {
+		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags, &s.Equip, &s.ClassType, &s.ItemsList); err != nil {
 			return nil, err
 		}
 		out = append(out, s)
@@ -363,7 +414,7 @@ func (c *Catalog) LootFor(name string) []LootEntry {
 // fresh checkout can still be walked around.
 func EmptyCatalog(webData string) *Catalog {
 	c := &Catalog{Items: map[string]*Item{}, Templates: map[int]*Template{}, Zones: map[int]*ZoneInfo{},
-		Loot: map[string][]LootEntry{}, MobLoot: map[string][]string{}}
+		Loot: map[string][]LootEntry{}, MobLoot: map[string][]string{}, Stock: map[string][]string{}}
 	b, err := os.ReadFile(filepath.Join(webData, "zones.json"))
 	if err != nil {
 		return c

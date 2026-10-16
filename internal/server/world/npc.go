@@ -27,6 +27,7 @@ type NPC struct {
 	Spawn    Spawn
 	Name     string
 	Model    int
+	Gear     [][4]int // worn pieces, shared with every NPC of the same equipment template
 	Level    int
 	Size     int
 	Scale    float64
@@ -45,6 +46,7 @@ type NPC struct {
 	Block    float64
 	Aggro    float64 // 0 means it only fights back
 	Friendly bool    // guards, villagers, merchants: never attacks, cannot be hurt
+	Kind     string  // what interacting with it does (KindMerchant), "" for nothing
 	Tether   float64
 
 	state     npcState
@@ -90,6 +92,10 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 		rng:      rng,
 	}
 	n.Scale = 1
+	n.Kind = npcKind(sp.ClassType)
+	if sp.Equip != "" {
+		n.Gear = cat.Gear[sp.Equip]
+	}
 	if t := cat.Templates[sp.Template]; t != nil {
 		n.Parry, n.Evade, n.Block = float64(t.Parry)/100, float64(t.Evade)/100, float64(t.Block)/100
 		n.Tether = float64(t.Tether)

@@ -67,6 +67,10 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("\nspawns dropped: %d outside any zone, %d far from the ground\n", rep.DroppedOutside, rep.DroppedGround)
+	if rep.UnknownEquip > 0 {
+		fmt.Printf("%d spawns name an equipment template with no rows; imported without gear\n", rep.UnknownEquip)
+	}
+	fmt.Printf("merchants: %d in the dump, %d kept (the rest lack a zone, ground or model)\n", rep.MerchantsSeen, rep.MerchantsKept)
 	if n := len(rep.DroppedModel); n > 0 {
 		type kv struct{ m, c int }
 		var l []kv

@@ -23,31 +23,36 @@ const StepsPerSecond = 60
 
 // Message types, client to server.
 const (
-	THello   = "hello"  // first message: protocol version and the character to play
-	TInput   = "input"  // a run of fixed movement steps
-	TChat    = "chat"   // say or broadcast
-	TTarget  = "target" // select an entity
-	TAttack  = "attack" // auto-attack on or off
-	TStyle   = "style"  // use a style by its slot on the bar
-	TLoot    = "loot"   // take an item from a corpse
-	TEquip   = "equip"  // move an item between slots
-	TUse     = "use"    // use a zone exit, etc.
-	TGM      = "gm"     // an administrator's command
-	TPing    = "ping"
-	TRelease = "release" // a dead character asks to be stood up now rather than when the timer ends
+	THello    = "hello"  // first message: protocol version and the character to play
+	TInput    = "input"  // a run of fixed movement steps
+	TChat     = "chat"   // say or broadcast
+	TTarget   = "target" // select an entity
+	TAttack   = "attack" // auto-attack on or off
+	TStyle    = "style"  // use a style by its slot on the bar
+	TLoot     = "loot"   // take an item from a corpse
+	TEquip    = "equip"  // move an item between slots
+	TUse      = "use"    // use a zone exit, etc.
+	TGM       = "gm"     // an administrator's command
+	TPing     = "ping"
+	TRelease  = "release"  // a dead character asks to be stood up now rather than when the timer ends
+	TInteract = "interact" // ask an NPC to do what it does (open a merchant's shop)
+	TBuy      = "buy"      // buy an item from the open shop
+	TSell     = "sell"     // sell a pack item to the open shop
 )
 
 // Message types, server to client.
 const (
-	TWelcome  = "welcome"
-	TSnap     = "snap"
-	TChatMsg  = "chatmsg"
-	TErr      = "err"
-	TZone     = "zone" // the character moved zone: reload at the given one
-	TInv      = "inv"  // the character's inventory and equipment
-	TCorpse   = "corpse"
-	TPong     = "pong"
-	TStyleBar = "bar"
+	TWelcome   = "welcome"
+	TSnap      = "snap"
+	TChatMsg   = "chatmsg"
+	TErr       = "err"
+	TZone      = "zone" // the character moved zone: reload at the given one
+	TInv       = "inv"  // the character's inventory and equipment
+	TCorpse    = "corpse"
+	TPong      = "pong"
+	TStyleBar  = "bar"
+	TShop      = "shop"      // a merchant's stock, sent when interaction opens it
+	TShopClose = "shopclose" // the open shop is closed (walked away, died, moved zone)
 )
 
 // Envelope reads just the type of a message.
@@ -123,6 +128,24 @@ type Equip struct {
 	To   int    `json:"to"`
 }
 
+// Interact asks the NPC with this id to do what it does.
+type Interact struct {
+	T  string `json:"t"`
+	ID int64  `json:"id"`
+}
+
+// Buy takes one of the open shop's items, named by its item id.
+type Buy struct {
+	T  string `json:"t"`
+	ID string `json:"id"`
+}
+
+// Sell sells the item in a pack slot to the open shop.
+type Sell struct {
+	T    string `json:"t"`
+	Slot int    `json:"slot"`
+}
+
 // Use asks to use the zone exit the player stands at.
 type Use struct {
 	T string `json:"t"`
@@ -138,44 +161,51 @@ type GM struct {
 
 // Welcome answers a good hello.
 type Welcome struct {
-	T     string  `json:"t"`
-	V     int     `json:"v"`
-	You   int64   `json:"you"` // your entity id
-	Name  string  `json:"name"`
-	Char  string  `json:"char"` // the converted character to draw you with
-	Zone  int     `json:"zone"`
-	X     float64 `json:"x"`
-	Y     float64 `json:"y"`
-	Z     float64 `json:"z"`
-	Yaw   float64 `json:"yaw"`
-	Level int     `json:"level"`
-	Admin bool    `json:"admin,omitempty"`
+	T      string  `json:"t"`
+	V      int     `json:"v"`
+	You    int64   `json:"you"` // your entity id
+	Name   string  `json:"name"`
+	Char   string  `json:"char"`         // the converted character to draw you with
+	Race   int     `json:"rc,omitempty"` // your race number, for the race-and-gender base model
+	Female bool    `json:"fm,omitempty"`
+	Zone   int     `json:"zone"`
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Z      float64 `json:"z"`
+	Yaw    float64 `json:"yaw"`
+	Level  int     `json:"level"`
+	Admin  bool    `json:"admin,omitempty"`
 }
 
 // Entity is one thing in a snapshot.
 type Entity struct {
-	ID       int64   `json:"id"`
-	K        string  `json:"k"`            // "p" player, "n" npc
-	Name     string  `json:"nm"`           // as it is shown
-	Model    int     `json:"m,omitempty"`  // an NPC's model number
-	Guild    string  `json:"gd,omitempty"` // an NPC's guild or description, shown under its name
-	Char     string  `json:"ch,omitempty"` // a player's character
-	Level    int     `json:"lv,omitempty"`
-	X        float64 `json:"x"`
-	Y        float64 `json:"y"`
-	Z        float64 `json:"z"`
-	Yaw      float64 `json:"h"`
-	Speed    float64 `json:"sp,omitempty"` // current ground speed, units a second
-	HP       float64 `json:"hp"`           // 0..1
-	State    string  `json:"st,omitempty"` // "", "fight", "dead"
-	Scale    float64 `json:"sc,omitempty"`
-	Aggro    bool    `json:"ag,omitempty"`
-	Loot     bool    `json:"lt,omitempty"` // a corpse with something to take
-	Armed    bool    `json:"ar,omitempty"`
-	Shld     bool    `json:"sh,omitempty"`
-	Back     bool    `json:"bk,omitempty"`
-	Side     int     `json:"sd,omitempty"`
-	Friendly bool    `json:"fr,omitempty"`
+	ID       int64    `json:"id"`
+	K        string   `json:"k"`            // "p" player, "n" npc
+	Name     string   `json:"nm"`           // as it is shown
+	Model    int      `json:"m,omitempty"`  // an NPC's model number
+	Equip    [][4]int `json:"eq,omitempty"` // an NPC's worn pieces: [slot, model, colour, extension]
+	Guild    string   `json:"gd,omitempty"` // an NPC's guild or description, shown under its name
+	Char     string   `json:"ch,omitempty"` // a player's character
+	Race     int      `json:"rc,omitempty"` // a player's race number
+	Female   bool     `json:"fm,omitempty"`
+	GearSet  bool     `json:"gs,omitempty"` // a player's eq is present even when empty: it went out because it changed
+	Level    int      `json:"lv,omitempty"`
+	X        float64  `json:"x"`
+	Y        float64  `json:"y"`
+	Z        float64  `json:"z"`
+	Yaw      float64  `json:"h"`
+	Speed    float64  `json:"sp,omitempty"` // current ground speed, units a second
+	HP       float64  `json:"hp"`           // 0..1
+	State    string   `json:"st,omitempty"` // "", "fight", "dead"
+	Scale    float64  `json:"sc,omitempty"`
+	Aggro    bool     `json:"ag,omitempty"`
+	Loot     bool     `json:"lt,omitempty"` // a corpse with something to take
+	Armed    bool     `json:"ar,omitempty"`
+	Shld     bool     `json:"sh,omitempty"`
+	Back     bool     `json:"bk,omitempty"`
+	Side     int      `json:"sd,omitempty"`
+	Friendly bool     `json:"fr,omitempty"`
+	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant"; absent for nothing
 }
 
 // Event is something that happened this tick, for the log and the animations.
@@ -260,6 +290,7 @@ type InvItem struct {
 	Worn   int    `json:"w,omitempty"`    // the worn slot an armour piece belongs in
 	Line   string `json:"line,omitempty"` // a weapon's line: Sword, Hammer, Axe
 	Detail string `json:"d,omitempty"`
+	Price  int64  `json:"pr,omitempty"` // in copper, on a shop's items
 }
 
 // Inv is a full inventory.
@@ -267,6 +298,21 @@ type Inv struct {
 	T     string    `json:"t"`
 	Items []InvItem `json:"items"`
 	Money int64     `json:"mo"`
+	Eq    [][4]int  `json:"eq"` // what you wear, as [slot, model, colour, extension], for drawing you
+}
+
+// Shop is a merchant's stock. Each item's Slot is its place in the list, in
+// the order to show; buying names the item by ID.
+type Shop struct {
+	T     string    `json:"t"`
+	NPC   int64     `json:"npc"`
+	Name  string    `json:"nm"`
+	Items []InvItem `json:"items"`
+}
+
+// ShopClose says the open shop is gone.
+type ShopClose struct {
+	T string `json:"t"`
 }
 
 // Corpse lists what a dead NPC dropped, for its killer.
@@ -324,6 +370,12 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Equip{}
 	case TUse:
 		v = &Use{}
+	case TInteract:
+		v = &Interact{}
+	case TBuy:
+		v = &Buy{}
+	case TSell:
+		v = &Sell{}
 	case TGM:
 		v = &GM{}
 	case TPing:

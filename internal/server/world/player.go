@@ -59,13 +59,17 @@ type invItem struct {
 // Player is a connected character in a zone. All fields belong to the zone's
 // goroutine; connections reach them through Zone.Do.
 type Player struct {
-	ID    int64
-	Acct  *store.Account
-	Char  *store.Character
-	Arch  Archetype
-	Zone  *Zone
-	Body  Body
-	Admin bool
+	ID       int64
+	gearSent map[int64]bool // NPCs whose equipment this player has been sent while they stayed in view
+	gear     [][4]int       // what this player wears, as [slot, model, colour, extension]; slot is the item table's, so it reads like an NPC's
+	gearRev  int            // changes whenever gear does, so other players are sent it again
+	gearSeen map[int64]int  // the gearRev of each player this one has been sent, while they stayed in view
+	Acct     *store.Account
+	Char     *store.Character
+	Arch     Archetype
+	Zone     *Zone
+	Body     Body
+	Admin    bool
 
 	out          chan []byte
 	closed       atomic.Bool
@@ -102,6 +106,7 @@ type Player struct {
 	regenAt     float64
 
 	inv         map[int]*invItem
+	shop        int64 // the merchant whose shop is open, 0 for none
 	weapon      *Item
 	shield      *Item
 	noExitUntil float64

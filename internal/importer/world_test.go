@@ -82,3 +82,138 @@ func TestMissingTableReported(t *testing.T) {
 		t.Error("an empty dump directory must be an error")
 	}
 }
+
+// dumpTable writes one table in the community dump's shape: a REPLACE with a
+// column list, then tuples.
+func dumpTable(t *testing.T, dir, table, cols string, rows ...string) {
+	t.Helper()
+	body := "REPLACE INTO `" + table + "` (" + cols + ") VALUES\n"
+	for i, r := range rows {
+		sep := ","
+		if i == len(rows)-1 {
+			sep = ";"
+		}
+		body += "\t(" + r + ")" + sep + "\n"
+	}
+	if err := os.WriteFile(filepath.Join(dir, table+".sql"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestImportLinksNPCEquipment(t *testing.T) {
+	dir := t.TempDir()
+	dumpTable(t, dir, "zones", "`ZoneID`, `RegionID`, `OffsetX`, `OffsetY`, `Width`, `Height`, `Name`, `WaterLevel`, `Realm`",
+		"1, 1, 0, 0, 1, 1, 'Test', 0, 1")
+	dumpTable(t, dir, "npcequipment", "`TemplateID`, `Slot`, `Model`, `Color`, `Effect`, `Extension`, `Emblem`",
+		"'set-a', 25, 662, 17, 0, 0, 0", "'set-a', 10, 311, 0, 0, 0, 0", "'set-b', 27, 47, 0, 0, 0, 0")
+	dumpTable(t, dir, "npctemplate", "`TemplateId`, `Name`, `Model`, `Size`, `Level`, `EquipmentTemplateID`",
+		"7, 'tmpl', '10', '50', '5', 'set-b'")
+	dumpTable(t, dir, "mob", "`Name`, `Region`, `X`, `Y`, `Z`, `Model`, `NPCTemplateID`, `EquipmentTemplateID`",
+		"'own', 1, 100, 100, 0, 10, 0, 'set-a'",
+		"'inherits', 1, 200, 100, 0, 10, 7, ''",
+		"'bare', 1, 300, 100, 0, 10, 0, ''",
+		"'dangling', 1, 400, 100, 0, 10, 0, 'nope'")
+	for _, tb := range []string{"loottemplate", "mobxloottemplate", "itemtemplate", "style", "specialization",
+		"classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint", "merchantitem"} {
+		dumpTable(t, dir, tb, "`Unused`", "0")
+	}
+	out := filepath.Join(t.TempDir(), "world.db")
+	rep, err := Run(Options{Dump: dir, Out: out})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := rep.Tables["npcequipment"]; c != [2]int{3, 3} {
+		t.Errorf("npcequipment read/kept = %v", c)
+	}
+	if rep.UnknownEquip != 1 {
+		t.Errorf("UnknownEquip = %d, want 1", rep.UnknownEquip)
+	}
+	db, err := sql.Open("sqlite", out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	want := map[string]string{"own": "set-a", "inherits": "set-b", "bare": "", "dangling": ""}
+	for name, eq := range want {
+		var got sql.NullString
+		if err := db.QueryRow(`SELECT equip FROM spawn WHERE name=?`, name).Scan(&got); err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if got.String != eq {
+			t.Errorf("%s equip = %q, want %q", name, got.String, eq)
+		}
+	}
+	var n int
+	db.QueryRow(`SELECT count(*) FROM npc_equip WHERE template='set-a'`).Scan(&n)
+	if n != 2 {
+		t.Errorf("set-a has %d rows, want 2", n)
+	}
+}
+
+func TestImportKeepsMerchantsAndStock(t *testing.T) {
+	dir := t.TempDir()
+	dumpTable(t, dir, "zones", "`ZoneID`, `RegionID`, `OffsetX`, `OffsetY`, `Width`, `Height`, `Name`, `WaterLevel`, `Realm`",
+		"1, 1, 0, 0, 1, 1, 'Test', 0, 1")
+	dumpTable(t, dir, "mob", "`Name`, `Region`, `X`, `Y`, `Z`, `Model`, `ClassType`, `ItemsListTemplateID`",
+		"'Smith', 1, 100, 100, 0, 10, 'DOL.GS.GameMerchant', 'L1'",
+		"'Guard', 1, 200, 100, 0, 10, 'DOL.GS.GameGuard', ''",
+		"'Lost', 99, 100, 100, 0, 10, 'DOL.GS.GameMerchant', 'L1'")
+	dumpTable(t, dir, "merchantitem", "`ItemListID`, `ItemTemplateID`, `PageNumber`, `SlotPosition`",
+		"'L1', 'sword', 0, 1", "'L1', 'shield', 1, 0", "'', 'orphan', 0, 0")
+	for _, tb := range []string{"npcequipment", "npctemplate", "loottemplate", "mobxloottemplate", "itemtemplate", "style",
+		"specialization", "classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint"} {
+		dumpTable(t, dir, tb, "`Unused`", "0")
+	}
+	out := filepath.Join(t.TempDir(), "world.db")
+	rep, err := Run(Options{Dump: dir, Out: out})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.MerchantsSeen != 2 || rep.MerchantsKept != 1 {
+		t.Errorf("merchants seen/kept = %d/%d, want 2/1", rep.MerchantsSeen, rep.MerchantsKept)
+	}
+	if c := rep.Tables["merchantitem"]; c != [2]int{3, 2} {
+		t.Errorf("merchantitem read/kept = %v, want [3 2]", c)
+	}
+	db, err := sql.Open("sqlite", out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var ct, list string
+	if err := db.QueryRow(`SELECT classtype, items_list FROM spawn WHERE name='Smith'`).Scan(&ct, &list); err != nil {
+		t.Fatal(err)
+	}
+	if ct != "DOL.GS.GameMerchant" || list != "L1" {
+		t.Errorf("Smith = %q %q", ct, list)
+	}
+	var n int
+	db.QueryRow(`SELECT count(*) FROM merchant_stock WHERE list='L1'`).Scan(&n)
+	if n != 2 {
+		t.Errorf("L1 stock rows = %d, want 2", n)
+	}
+}
+
+func TestMissingMerchantStockIsReported(t *testing.T) {
+	dir := t.TempDir()
+	dumpTable(t, dir, "zones", "`ZoneID`, `RegionID`, `OffsetX`, `OffsetY`, `Width`, `Height`, `Name`, `WaterLevel`, `Realm`",
+		"1, 1, 0, 0, 1, 1, 'Test', 0, 1")
+	dumpTable(t, dir, "merchantitem", "`ItemListID`, `ItemTemplateID`, `PageNumber`, `SlotPosition`", "'', '', 0, 0")
+	for _, tb := range []string{"mob", "npcequipment", "npctemplate", "loottemplate", "mobxloottemplate", "itemtemplate", "style",
+		"specialization", "classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint"} {
+		dumpTable(t, dir, tb, "`Unused`", "0")
+	}
+	rep, err := Run(Options{Dump: dir, Out: filepath.Join(t.TempDir(), "w.db")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, m := range rep.Missing {
+		if m == "merchantitem" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("Missing = %v, want merchantitem in it", rep.Missing)
+	}
+}

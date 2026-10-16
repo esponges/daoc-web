@@ -181,6 +181,7 @@ func (z *Zone) Now() float64 { return z.now }
 func (z *Zone) add(p *Player) {
 	p.Zone = z
 	z.players[p.ID] = p
+	p.shop = 0 // a shop never follows a character into another zone
 }
 
 func (z *Zone) tickPlayer(p *Player) {
@@ -194,6 +195,7 @@ func (z *Zone) tickPlayer(p *Player) {
 		return
 	}
 	p.applyInput(z)
+	z.checkShop(p)
 	z.combatPlayer(p)
 	// Vitals come back out of a fight, faster the quieter it is.
 	if z.now >= p.regenAt {
@@ -242,22 +244,41 @@ func (z *Zone) snapshots() {
 			continue
 		}
 		s := protocol.Snap{T: protocol.TSnap, Tick: z.tick, Ack: p.stepsApplied, You: z.selfOf(p)}
+		seen := map[int64]int{}
 		for _, o := range z.players {
 			if o == p || o.closed.Load() {
 				continue
 			}
 			if math.Hypot(o.Body.X-p.Body.X, o.Body.Y-p.Body.Y) <= InterestRadius {
-				s.Ents = append(s.Ents, z.playerEntity(o))
+				e := z.playerEntity(o)
+				// Like an NPC's, a player's gear goes out as they come into view,
+				// and again whenever it changes (it may change to nothing).
+				seen[o.ID] = o.gearRev + 1
+				if p.gearSeen[o.ID] != o.gearRev+1 {
+					e.Equip, e.GearSet = o.gear, true
+				}
+				s.Ents = append(s.Ents, e)
 			}
 		}
+		p.gearSeen = seen
+		inView := map[int64]bool{}
 		for _, n := range z.npcs {
 			if n.gone {
 				continue
 			}
 			if math.Hypot(n.Body.X-p.Body.X, n.Body.Y-p.Body.Y) <= InterestRadius {
-				s.Ents = append(s.Ents, z.npcEntity(n, p))
+				e := z.npcEntity(n, p)
+				// Gear does not change in play, so it goes out once as the NPC comes into view.
+				if len(n.Gear) > 0 {
+					inView[n.ID] = true
+					if !p.gearSent[n.ID] {
+						e.Equip = n.Gear
+					}
+				}
+				s.Ents = append(s.Ents, e)
 			}
 		}
+		p.gearSent = inView
 		for _, e := range z.ev {
 			if math.Hypot(e.x-p.Body.X, e.y-p.Body.Y) <= InterestRadius {
 				s.Ev = append(s.Ev, e.e)
@@ -298,7 +319,7 @@ func (z *Zone) playerEntity(o *Player) protocol.Entity {
 		st = "fight"
 	}
 	return protocol.Entity{
-		ID: o.ID, K: "p", Name: o.Char.Name, Char: o.Arch.Key, Level: o.Char.Level,
+		ID: o.ID, K: "p", Name: o.Char.Name, Char: o.Arch.Key, Race: o.Char.Race, Female: o.Char.Gender == 1, Level: o.Char.Level,
 		X: o.Body.X, Y: o.Body.Y, Z: o.Body.Z, Yaw: o.Body.Yaw, Speed: o.motion.Speed,
 		HP: math.Max(0, o.hp/float64(o.maxHP())), State: st, Back: o.motion.Back, Side: o.motion.Side,
 	}
@@ -315,7 +336,7 @@ func (z *Zone) npcEntity(n *NPC, to *Player) protocol.Entity {
 	e := protocol.Entity{
 		ID: n.ID, K: "n", Name: n.title(), Guild: strings.TrimSpace(n.Spawn.Guild), Model: n.Model, Level: n.Level,
 		X: n.Body.X, Y: n.Body.Y, Z: n.Body.Z, Yaw: n.Body.Yaw, Speed: n.speedNow,
-		HP: math.Max(0, float64(n.HP)/float64(n.MaxHP)), State: st, Aggro: n.Aggro > 0, Friendly: n.Friendly,
+		HP: math.Max(0, float64(n.HP)/float64(n.MaxHP)), State: st, Aggro: n.Aggro > 0, Friendly: n.Friendly, Kind: n.Kind,
 	}
 	if n.dead() && (len(n.loot) > 0 || n.money > 0) && n.lootOwner == to.ID {
 		e.Loot = true

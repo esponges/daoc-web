@@ -389,6 +389,7 @@ func ifSeen(seen bool, v float64) float64 {
 
 // killPlayer ends a player's life until they return to their bind point.
 func (z *Zone) killPlayer(p *Player) {
+	z.closeShop(p)
 	p.hp = 0
 	p.dead = true
 	p.deadAt = z.now

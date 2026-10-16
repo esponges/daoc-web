@@ -28,8 +28,13 @@ CREATE TABLE spawn(
   id INTEGER PRIMARY KEY AUTOINCREMENT, zone INTEGER, name TEXT, guild TEXT, model INTEGER,
   x REAL, y REAL, z REAL, heading INTEGER, level INTEGER, size INTEGER, speed INTEGER,
   template INTEGER, roam INTEGER, respawn_s INTEGER, aggro_level INTEGER, aggro_range INTEGER,
-  realm INTEGER, flags INTEGER, path TEXT, brain TEXT);
+  realm INTEGER, flags INTEGER, path TEXT, brain TEXT, equip TEXT, classtype TEXT, items_list TEXT);
 CREATE INDEX spawn_zone ON spawn(zone);
+CREATE TABLE merchant_stock(list TEXT, item TEXT, page INTEGER, slot INTEGER);
+CREATE INDEX merchant_stock_list ON merchant_stock(list);
+CREATE TABLE npc_equip(
+  template TEXT, slot INTEGER, model INTEGER, color INTEGER, effect INTEGER, ext INTEGER, emblem INTEGER);
+CREATE INDEX npc_equip_template ON npc_equip(template);
 CREATE TABLE loot(template TEXT, item TEXT, chance INTEGER, count INTEGER);
 CREATE INDEX loot_template ON loot(template);
 CREATE TABLE mob_loot(mob_name TEXT, template TEXT, drop_count INTEGER);
@@ -71,6 +76,9 @@ type Report struct {
 	DroppedModel   map[int]int       // model -> spawns dropped because the client cannot draw it
 	DroppedGround  int               // spawns too far off the terrain
 	DroppedOutside int               // spawns in no zone
+	UnknownEquip   int               // spawns whose equipment template has no rows
+	MerchantsSeen  int               // mobs of the merchant class type in the dump
+	MerchantsKept  int               // of those, the ones that became spawns
 	Missing        []string          // required tables absent or empty
 }
 
@@ -158,11 +166,28 @@ func Run(o Options) (*Report, error) {
 		return zoneRow{}, 0, 0, false
 	}
 
+	// --- equipment ---
+	equipOf := map[string]bool{}
+	if err := read("npcequipment", func(r *Row) (bool, error) {
+		id := r.Str("TemplateID")
+		if id == "" {
+			return false, nil
+		}
+		equipOf[id] = true
+		return true, ins(`INSERT INTO npc_equip VALUES(?,?,?,?,?,?,?)`, id, r.Int("Slot"), r.Int("Model"), r.Int("Color"), r.Int("Effect"), r.Int("Extension"), r.Int("Emblem"))
+	}); err != nil {
+		return nil, err
+	}
+
 	// --- templates ---
+	tmplEquip := map[int]string{} // npc template id -> equipment template id
 	if err := read("npctemplate", func(r *Row) (bool, error) {
 		sl, sh := r.Range("Size")
 		ll, lh := r.Range("Level")
 		ml, _ := r.Range("Model")
+		if e := r.Str("EquipmentTemplateID"); e != "" {
+			tmplEquip[r.Int("TemplateId")] = e
+		}
 		return true, ins(`INSERT OR REPLACE INTO npc_template VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			r.Int("TemplateId"), r.Str("Name"), ml, sl, sh, ll, lh, r.Int("MaxSpeed"),
 			r.Int("AggroLevel"), r.Int("AggroRange"), r.Int("TetherRange"),
@@ -198,6 +223,11 @@ func Run(o Options) (*Report, error) {
 		return float64(h[cy*256+cx]), true
 	}
 	if err := read("mob", func(r *Row) (bool, error) {
+		classType := r.Str("ClassType")
+		merchant := IsMerchantClass(classType)
+		if merchant {
+			rep.MerchantsSeen++
+		}
 		z, lx, ly, ok := zoneAt(r.Int("Region"), r.Float("X"), r.Float("Y"))
 		if !ok {
 			rep.DroppedOutside++
@@ -217,11 +247,33 @@ func Run(o Options) (*Report, error) {
 		} else if o.WebDir != "" && converted != nil && !converted[z.id] {
 			return false, nil // a zone we have not converted has nowhere to put it
 		}
-		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain)
-			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		// A mob's own equipment wins; otherwise its NPC template's.
+		equip := r.Str("EquipmentTemplateID")
+		if equip == "" {
+			equip = tmplEquip[r.Int("NPCTemplateID")]
+		}
+		if equip != "" && !equipOf[equip] {
+			rep.UnknownEquip++
+			equip = ""
+		}
+		if merchant {
+			rep.MerchantsKept++
+		}
+		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list)
+			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			z.id, r.Str("Name"), r.Str("Guild"), model, lx, ly, zz, r.Int("Heading"), r.Int("Level"), r.Int("Size"),
 			r.Int("Speed"), r.Int("NPCTemplateID"), r.Int("RoamingRange"), r.Int("RespawnInterval"),
-			r.Int("AggroLevel"), r.Int("AggroRange"), r.Int("Realm"), r.Int("Flags"), r.Str("PathID"), r.Str("Brain"))
+			r.Int("AggroLevel"), r.Int("AggroRange"), r.Int("Realm"), r.Int("Flags"), r.Str("PathID"), r.Str("Brain"), equip,
+			classType, r.Str("ItemsListTemplateID"))
+	}); err != nil {
+		return nil, err
+	}
+	if err := read("merchantitem", func(r *Row) (bool, error) {
+		list, item := r.Str("ItemListID"), r.Str("ItemTemplateID")
+		if list == "" || item == "" {
+			return false, nil
+		}
+		return true, ins(`INSERT INTO merchant_stock VALUES(?,?,?,?)`, list, item, r.Int("PageNumber"), r.Int("SlotPosition"))
 	}); err != nil {
 		return nil, err
 	}
@@ -307,13 +359,20 @@ func Run(o Options) (*Report, error) {
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-	for _, t := range []string{"zones", "mob", "npctemplate", "style", "itemtemplate", "startuplocation"} {
+	for _, t := range []string{"zones", "mob", "npctemplate", "npcequipment", "style", "itemtemplate", "startuplocation", "merchantitem"} {
 		if c := rep.Tables[t]; c[0] == 0 || c[1] == 0 {
 			rep.Missing = append(rep.Missing, t)
 		}
 	}
 	sort.Strings(rep.Missing)
 	return rep, nil
+}
+
+// IsMerchantClass reports whether a mob's class type is the plain merchant.
+// Subclasses with their own behaviour (smiths, healers, trainers) are left
+// alone until something builds what they do.
+func IsMerchantClass(classType string) bool {
+	return classType == "DOL.GS.GameMerchant"
 }
 
 // convertedZones reads which zone folders exist under web/data. nil means unknown.
