@@ -318,7 +318,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 			z.event(protocol.Event{K: o.Result.String(), From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
 		}
 		p.lastHit, p.lastHitAt, p.lastStyle = false, z.now, 0
-		z.provoke(n, p)
+		z.provoke(n, p, 0)
 		return
 	}
 	if style != nil {
@@ -336,20 +336,20 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 	if n.tagger == 0 {
 		n.tagger = p.ID
 	}
-	z.provoke(n, p)
+	z.provoke(n, p, float64(amount))
 	if n.HP <= 0 {
 		z.killNPC(n)
 	}
 }
 
-// provoke makes a creature fight the one who struck at it.
-func (z *Zone) provoke(n *NPC, p *Player) {
-	if n.dead() {
+// provoke makes a creature hate the one who struck at it by the damage done,
+// and fight them if it was not fighting already.
+func (z *Zone) provoke(n *NPC, by combatant, damage float64) {
+	if n.dead() || n.Friendly || n.state == npcReturn {
 		return
 	}
-	if n.target == nil && n.state != npcReturn {
-		n.engage(p, z)
-	}
+	n.addHate(by, damage)
+	n.engage(by, z)
 }
 
 // attackersOf counts the creatures fighting a player within reach of them.
@@ -363,8 +363,43 @@ func (z *Zone) attackersOf(p *Player) int {
 	return max(1, n)
 }
 
-// npcSwing resolves a creature's blow against a player.
-func (z *Zone) npcSwing(n *NPC, p *Player) {
+// npcSwing resolves a creature's blow against whatever it fights.
+func (z *Zone) npcSwing(n *NPC, c combatant) {
+	switch t := c.(type) {
+	case *Player:
+		z.npcHitsPlayer(n, t)
+	case *NPC:
+		z.npcHitsNPC(n, t)
+	}
+}
+
+// npcHitsNPC resolves one creature's blow against another, which then hates
+// the striker and fights back.
+func (z *Zone) npcHitsNPC(n, t *NPC) {
+	z.event(protocol.Event{K: "swing", From: n.ID, To: t.ID}, n.Body.X, n.Body.Y)
+	sw := rules.Swing{Attacker: &n.cb, Defender: &t.cb, Attackers: 1,
+		InFront: angleOff(t.Body.Yaw, angleTo(t.Body.X, t.Body.Y, n.Body.X, n.Body.Y)) <= frontArc}
+	o := rules.Resolve(sw, z.rng)
+	switch o.Result {
+	case rules.Missed:
+		z.event(protocol.Event{K: "miss", From: n.ID, To: t.ID}, t.Body.X, t.Body.Y)
+		z.provoke(t, n, 0)
+		return
+	case rules.Evaded, rules.Parried, rules.Blocked:
+		z.event(protocol.Event{K: o.Result.String(), From: t.ID, To: n.ID}, t.Body.X, t.Body.Y)
+		z.provoke(t, n, 0)
+		return
+	}
+	z.event(protocol.Event{K: "hit", From: n.ID, To: t.ID, Amount: o.Damage}, t.Body.X, t.Body.Y)
+	t.HP -= o.Damage
+	z.provoke(t, n, float64(o.Damage))
+	if t.HP <= 0 {
+		z.killNPC(t)
+	}
+}
+
+// npcHitsPlayer resolves a creature's blow against a player.
+func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	z.event(protocol.Event{K: "swing", From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
 	p.combatUntil = z.now + CombatLinger
 	sw := rules.Swing{Attacker: &n.cb, Defender: p.combatant(z.W.Cat), Attackers: z.attackersOf(p),
@@ -405,9 +440,7 @@ func (z *Zone) killPlayer(p *Player, by *NPC) {
 	p.prayUntil = 0
 	z.event(protocol.Event{K: "death", To: p.ID}, p.Body.X, p.Body.Y)
 	for _, n := range z.npcs {
-		if n.target == p {
-			n.goHome()
-		}
+		n.forget(p)
 	}
 	z.deathPenalty(p, by)
 }
@@ -443,7 +476,7 @@ func (z *Zone) killNPC(n *NPC) {
 	n.diedAt = z.now
 	rs := float64(n.Spawn.RespawnS)
 	n.respawnAt = z.now + clamp(rs, 25, 120)
-	n.target = nil
+	n.target, n.hate = nil, nil
 	n.speedNow = 0
 	z.event(protocol.Event{K: "death", To: n.ID}, n.Body.X, n.Body.Y)
 

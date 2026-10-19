@@ -60,7 +60,9 @@ type NPC struct {
 	timer     float64
 	tx, ty    float64
 	speedNow  float64
-	target    *Player
+	target    combatant             // who it is fighting: the one it hates most, nil when calm
+	hate      map[int64]*hateEntry  // entity id -> how much it hates them
+	hateOrder int
 	swingAt   float64
 	returning bool
 	hurtBy    map[int64]int // damage dealt by each player, for experience and loot
@@ -155,6 +157,7 @@ func (n *NPC) reset() {
 	n.state = npcIdle
 	n.timer = 1 + n.rng.Float64()*8
 	n.target = nil
+	n.hate = nil
 	n.returning = false
 	n.hurtBy = map[int64]int{}
 	n.tagger = 0
@@ -240,13 +243,13 @@ func (n *NPC) update(z *Zone) {
 		n.wander(z, false)
 		return
 	}
-	// Anything that has hurt it, or an aggressive creature's prey, draws it in.
-	if n.target != nil && (n.target.dead || n.target.closed.Load() || n.target.Zone != z) {
-		n.target = nil
-		if n.state == npcChase {
+	// It fights whoever it hates most; with nobody left to fight, it goes home.
+	if n.state == npcChase {
+		if n.target = n.hated(z); n.target == nil {
 			n.goHome()
 		}
 	}
+	// An aggressive creature notices prey.
 	if n.target == nil && n.Aggro > 0 && n.state != npcReturn {
 		if p := z.nearestPlayer(n.Body.X, n.Body.Y, n.Aggro, func(p *Player) bool {
 			return !p.dead && p.Char.Level-n.Level < 8
@@ -314,19 +317,25 @@ func (n *NPC) wander(z *Zone, regen bool) {
 	}
 }
 
+// goHome gives up the fight: it forgets everyone and walks back.
 func (n *NPC) goHome() {
 	n.state = npcReturn
 	n.returning = true
 	n.target = nil
+	n.hate = nil
 }
 
-// engage starts a fight with a player, and calls its packmates in.
-func (n *NPC) engage(p *Player, z *Zone) {
+// engage starts a fight with a combatant, or adds to one, and calls its
+// packmates in: they take on the same anger.
+func (n *NPC) engage(c combatant, z *Zone) {
 	if n.dead() || n.Friendly {
 		return
 	}
 	first := n.target == nil
-	n.target = p
+	if !n.hates(c) {
+		n.addHate(c, 1)
+	}
+	n.target = n.hated(z)
 	n.state = npcChase
 	if first {
 		n.swingAt = z.now + 0.6
@@ -334,7 +343,8 @@ func (n *NPC) engage(p *Player, z *Zone) {
 		for _, o := range z.npcs {
 			if o != n && !o.dead() && !o.Friendly && o.target == nil && o.state != npcReturn &&
 				o.Name == n.Name && math.Hypot(o.Body.X-n.Body.X, o.Body.Y-n.Body.Y) < 900 {
-				o.target = p
+				o.addHate(c, 1)
+				o.target = c
 				o.state = npcChase
 				o.swingAt = z.now + 0.9
 			}
@@ -344,17 +354,17 @@ func (n *NPC) engage(p *Player, z *Zone) {
 
 // chase closes on the target and strikes when it can.
 func (n *NPC) chase(z *Zone) {
-	p := n.target
-	if math.Hypot(n.Body.X-n.HX, n.Body.Y-n.HY) > n.Tether || math.Hypot(p.Body.X-n.HX, p.Body.Y-n.HY) > n.Tether+1500 {
+	tx, ty := n.target.position()
+	if math.Hypot(n.Body.X-n.HX, n.Body.Y-n.HY) > n.Tether || math.Hypot(tx-n.HX, ty-n.HY) > n.Tether+1500 {
 		n.goHome()
 		return
 	}
-	dx, dy := p.Body.X-n.Body.X, p.Body.Y-n.Body.Y
+	dx, dy := tx-n.Body.X, ty-n.Body.Y
 	d := math.Hypot(dx, dy)
 	reach := n.Reach + 20
 	n.Body.Yaw = turnToward(n.Body.Yaw, math.Atan2(dx, -dy), 6*TickDT)
 	if d > reach {
-		if n.stepToward(z, p.Body.X, p.Body.Y, n.RunSpd) < 0 {
+		if n.stepToward(z, tx, ty, n.RunSpd) < 0 {
 			n.goHome()
 		}
 		return
@@ -362,7 +372,7 @@ func (n *NPC) chase(z *Zone) {
 	n.speedNow = 0
 	if z.now >= n.swingAt {
 		n.swingAt = z.now + n.Swing
-		z.npcSwing(n, p)
+		z.npcSwing(n, n.target)
 	}
 }
 
