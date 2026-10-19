@@ -191,3 +191,19 @@ func TestRuleBookMessagesAreAdditive(t *testing.T) {
 		t.Errorf("healer: %s", b)
 	}
 }
+
+func TestEffectsMessage(t *testing.T) {
+	b, _ := json.Marshal(Effects{T: TEffects, List: []EffectView{{Name: "Shroud of Doubt", Kind: "slow", Icon: 10082, Left: 4.5, Of: 5}}, Speed: 0.5})
+	for _, want := range []string{`"t":"effects"`, `"list":[{"nm":"Shroud of Doubt","k":"slow","ic":10082,"left":4.5,"of":5}]`, `"speed":0.5`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("effects lacks %s: %s", want, b)
+		}
+	}
+	if strings.Contains(string(b), "held") {
+		t.Errorf("held is sent only while held: %s", b)
+	}
+	b, _ = json.Marshal(Event{K: "spell", From: 1, To: 2, Text: "Spirit Bolt", Amount: 24})
+	if string(b) != `{"k":"spell","from":1,"to":2,"n":24,"x":"Spirit Bolt"}` {
+		t.Errorf("spell event: %s", b)
+	}
+}

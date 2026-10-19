@@ -157,6 +157,7 @@ func (z *Zone) Tick() {
 	for _, n := range z.npcs {
 		n.update(z)
 	}
+	z.tickEffects()
 	z.snapshots()
 	for id, p := range z.players {
 		if p.closed.Load() {

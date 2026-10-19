@@ -66,6 +66,9 @@ drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the 
 - `conloss`: constitution lost on release, in `n`;
 - `pray`: a prayer at your gravestone, with `x` set to `started`, `cancelled` or `done` (`n` is the experience returned);
 - `train`: a spec trained, with `x` the spec's name and `n` its new level.
+- `spell`: a spell did damage or healed: `from` the caster, `to` the target, `x` the spell's name, `n` the damage (negative for a heal);
+- `resist`: a hostile spell from `from` did not land on `to`; `x` is its name;
+- `effect`: a lasting spell (damage over time, slow, stun, mesmerize) took hold on `to`; `x` is its name. A `block` event with `x` set is a bolt blocked.
 
 A `level` event's `x` says what the level brought (stats, hit points, specialisation points), and it is also sent for a half-level from 40.
 
@@ -112,6 +115,8 @@ deals no damage.
 - `conlost`, the constitution lost to deaths.
 
 The numbers follow the rule book (`openspec/specs/rules-*`).
+
+`effects` is your own lasting spells, sent only to you whenever they change: `list`, each with `nm` (the spell), `k` (what it does: `dot`, `slow`, `stun`, `mez`, `proc`), `ic` (the imported icon number, which does not match this install's sheets: draw by `k`), `left` and `of` (seconds to run, and in all); `speed`, the share of normal speed you may move at (the strongest slow, 0 while held); and `held`, true while stunned or mesmerized, when you cannot move, swing or use styles. Predicted movement uses `speed` (see Movement). Effects end at death and are not kept over a logout.
 
 `inv` (pack, worn items and money), `bar` (styles), `corpse` (a corpse's
 loot), `shop`, `shopclose`, `chatmsg`, `err`, and `zone`: the character has moved to another zone,

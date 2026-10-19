@@ -333,6 +333,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 	z.event(protocol.Event{K: "hit", From: p.ID, To: n.ID, Amount: amount, Crit: o.Critical > 0, Text: ev.Text}, n.Body.X, n.Body.Y)
 	n.HP -= amount
 	n.hurtBy[p.ID] += amount
+	z.damaged(n)
 	if n.tagger == 0 {
 		n.tagger = p.ID
 	}
@@ -392,6 +393,7 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 	}
 	z.event(protocol.Event{K: "hit", From: n.ID, To: t.ID, Amount: o.Damage}, t.Body.X, t.Body.Y)
 	t.HP -= o.Damage
+	z.damaged(t)
 	z.provoke(t, n, float64(o.Damage))
 	if t.HP <= 0 {
 		z.killNPC(t)
@@ -417,6 +419,7 @@ func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	}
 	z.event(protocol.Event{K: "hit", From: n.ID, To: p.ID, Amount: o.Damage}, p.Body.X, p.Body.Y)
 	p.hp -= float64(o.Damage)
+	z.damaged(p)
 	if p.hp <= 0 {
 		z.killPlayer(p, n)
 	}
@@ -438,6 +441,7 @@ func (z *Zone) killPlayer(p *Player, by *NPC) {
 	p.attacking, p.target, p.pending = false, 0, -1
 	p.queue, p.queuedSteps = nil, 0
 	p.prayUntil = 0
+	z.clearEffects(p)
 	z.event(protocol.Event{K: "death", To: p.ID}, p.Body.X, p.Body.Y)
 	for _, n := range z.npcs {
 		n.forget(p)
@@ -477,6 +481,7 @@ func (z *Zone) killNPC(n *NPC) {
 	rs := float64(n.Spawn.RespawnS)
 	n.respawnAt = z.now + clamp(rs, 25, 120)
 	n.target, n.hate = nil, nil
+	z.clearEffects(n)
 	n.speedNow = 0
 	z.event(protocol.Event{K: "death", To: n.ID}, n.Body.X, n.Body.Y)
 

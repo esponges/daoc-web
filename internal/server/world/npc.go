@@ -63,6 +63,7 @@ type NPC struct {
 	target    combatant            // who it is fighting: the one it hates most, nil when calm
 	hate      map[int64]*hateEntry // entity id -> how much it hates them
 	hateOrder int
+	effects   []*effect // lasting spells on it
 	swingAt   float64
 	returning bool
 	hurtBy    map[int64]int // damage dealt by each player, for experience and loot
@@ -158,6 +159,7 @@ func (n *NPC) reset() {
 	n.timer = 1 + n.rng.Float64()*8
 	n.target = nil
 	n.hate = nil
+	n.effects = nil
 	n.returning = false
 	n.hurtBy = map[int64]int{}
 	n.tagger = 0

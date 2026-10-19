@@ -122,6 +122,7 @@ type Player struct {
 	styleDefence int
 	welcomed     bool   // the welcome has gone out, so the sheet may follow
 	notice       string // a system line to send once welcomed, such as a moved start
+	effects      []*effect // lasting spells on them; not saved, so a logout ends them
 
 	// Death and prayer: where they fell, what the death cost (the release costs
 	// as much again), and a prayer in progress at their gravestone.

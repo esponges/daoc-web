@@ -54,14 +54,23 @@ func (c *Catalog) loadRules(q func(string, func(*sql.Rows) error) error) error {
 	}); err != nil {
 		return err
 	}
-	if err := q(`SELECT id,COALESCE(crush,0),COALESCE(slash,0),COALESCE(thrust,0) FROM race`, func(r *sql.Rows) error {
+	// Resists by the data's damage type numbers: crush, slash and thrust
+	// (1 to 3), then body, cold, energy, heat, matter and spirit (10 to 15).
+	if err := q(`SELECT id,COALESCE(crush,0),COALESCE(slash,0),COALESCE(thrust,0),COALESCE(body,0),COALESCE(cold,0),
+		COALESCE(energy,0),COALESCE(heat,0),COALESCE(matter,0),COALESCE(spirit,0) FROM race`, func(r *sql.Rows) error {
 		var id int
-		var cr, sl, th float64
-		if err := r.Scan(&id, &cr, &sl, &th); err != nil {
+		var v [9]float64
+		if err := r.Scan(&id, &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6], &v[7], &v[8]); err != nil {
 			return err
 		}
-		if cr != 0 || sl != 0 || th != 0 {
-			c.Resists[id] = map[int]float64{rules.DamageCrush: cr, rules.DamageSlash: sl, rules.DamageThrus: th}
+		m := map[int]float64{}
+		for i, t := range []int{rules.DamageCrush, rules.DamageSlash, rules.DamageThrus, 10, 11, 12, 13, 14, 15} {
+			if v[i] != 0 {
+				m[t] = v[i]
+			}
+		}
+		if len(m) > 0 {
+			c.Resists[id] = m
 		}
 		return nil
 	}); err != nil {

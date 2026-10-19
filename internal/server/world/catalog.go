@@ -38,6 +38,8 @@ type Item struct {
 	Bonus      int         // enchantment percent
 	Condition  float64     // 0..1 of its maximum
 	Bonuses    []ItemBonus // stat and skill bonuses
+	ProcSpell  int         // the spell it fires on a landed blow, 0 for none
+	ProcChance int         // percent, 0 for the default
 }
 
 // ItemBonus is one bonus an item gives, by the item table's bonus type numbers.
@@ -193,6 +195,9 @@ type Catalog struct {
 	Grants     map[int][]rules.Grant   // class -> the ability grants of its careers and specs
 	Unsafe     []UnsafeStart           // starts the start rule replaced, from checkStarts
 	StartEquip map[int][]string        // class -> the items it starts with, in the table's order; nil when the store predates the table
+	Spells         map[int]*SpellDef // spell id -> spell, those something in the world casts
+	TemplateSpells map[int][]int     // npc template id -> its spells, in order
+	StyleSpells    []StyleSpell      // spells styles fire when they land
 	replaced   map[int]UnsafeStart     // index in Starts -> its replacement
 	dropOnce   sync.Once
 	dropPool   map[int][]string
@@ -385,6 +390,9 @@ func LoadCatalog(path string) (*Catalog, error) {
 		}
 	} else {
 		log.Printf("world store has no starting equipment; new characters start with nothing (run cmd/dbimport again)")
+	}
+	if err := c.loadSpells(db, q); err != nil {
+		return nil, err
 	}
 	for _, l := range c.checkStarts() {
 		log.Print(l)

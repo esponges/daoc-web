@@ -59,6 +59,7 @@ const (
 	TStats     = "stats"     // the character sheet
 	TTrainer   = "trainer"   // a trainer's offer: the character's specs and their costs
 	THealer    = "healer"    // a healer's offer to restore lost constitution
+	TEffects   = "effects"   // the character's own lasting effects, and the speed they leave
 )
 
 // Envelope reads just the type of a message.
@@ -231,7 +232,7 @@ type Entity struct {
 
 // Event is something that happened this tick, for the log and the animations.
 type Event struct {
-	K      string  `json:"k"` // swing, hit, miss, block, parry, evade, style, death, level, xp, loot
+	K      string  `json:"k"` // swing, hit, miss, block, parry, evade, style, death, level, xp, loot, spell, resist, effect
 	From   int64   `json:"from,omitempty"`
 	To     int64   `json:"to,omitempty"`
 	Amount int     `json:"n,omitempty"`
@@ -471,4 +472,23 @@ func Decode(data []byte) (string, interface{}, error) {
 		return env.T, nil, fmt.Errorf("protocol: bad %s: %w", env.T, err)
 	}
 	return env.T, v, nil
+}
+
+// EffectView is one lasting effect on the character.
+type EffectView struct {
+	Name string  `json:"nm"`
+	Kind string  `json:"k"`    // "dot", "slow", "stun", "mez", "proc": what it does, which picks its icon
+	Icon int     `json:"ic"`   // the spell's icon number in the data; not drawn, as icon numbers do not match this install
+	Left float64 `json:"left"` // seconds to run
+	Of   float64 `json:"of"`   // seconds it lasts in all
+}
+
+// Effects is the character's own lasting effects, sent whenever they change,
+// with the speed factor they leave (1 free, 0 held), which the client's
+// predicted movement applies.
+type Effects struct {
+	T     string       `json:"t"`
+	List  []EffectView `json:"list"`
+	Speed float64      `json:"speed"`
+	Held  bool         `json:"held,omitempty"` // stunned or mesmerized: no moving, swinging or styles
 }
