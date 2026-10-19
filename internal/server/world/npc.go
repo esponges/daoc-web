@@ -60,8 +60,8 @@ type NPC struct {
 	timer     float64
 	tx, ty    float64
 	speedNow  float64
-	target    combatant             // who it is fighting: the one it hates most, nil when calm
-	hate      map[int64]*hateEntry  // entity id -> how much it hates them
+	target    combatant            // who it is fighting: the one it hates most, nil when calm
+	hate      map[int64]*hateEntry // entity id -> how much it hates them
 	hateOrder int
 	swingAt   float64
 	returning bool
