@@ -353,7 +353,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 // provoke makes a creature hate the one who struck at it by the damage done,
 // and fight them if it was not fighting already.
 func (z *Zone) provoke(n *NPC, by combatant, damage float64) {
-	if n.dead() || n.Friendly || n.state == npcReturn {
+	if n.dead() || n.Friendly && !n.Guard || n.state == npcReturn {
 		return
 	}
 	n.addHate(by, damage)
@@ -401,6 +401,7 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 	}
 	z.event(protocol.Event{K: "hit", From: n.ID, To: t.ID, Amount: o.Damage}, t.Body.X, t.Body.Y)
 	t.HP -= o.Damage
+	unsharedDamage(n, t, o.Damage)
 	z.damaged(t)
 	z.provoke(t, n, float64(o.Damage))
 	if t.HP <= 0 {

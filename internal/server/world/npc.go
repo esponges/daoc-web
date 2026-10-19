@@ -47,7 +47,8 @@ type NPC struct {
 	Evade    float64
 	Block    float64
 	Aggro    float64 // 0 means it only fights back
-	Friendly bool    // guards, villagers, merchants: never attacks, cannot be hurt
+	Friendly bool    // guards, villagers, merchants: players cannot attack them, nor they players
+	Guard    bool    // a town guard: fights the creatures that threaten its realm
 	Kind     string  // what interacting with it does (KindMerchant), "" for nothing
 	Teaches  string  // the class a trainer teaches
 	Tether   float64
@@ -72,6 +73,8 @@ type NPC struct {
 	returning  bool
 	hurtBy     map[int64]int // damage dealt by each player, for experience and loot
 	tagger     int64
+	guardRange float64 // how far a guard watches
+	watchAt    float64 // when a calm guard next looks around
 	diedAt     float64
 	respawnAt  float64
 	loot       []lootItem
@@ -103,6 +106,12 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 	}
 	n.Scale = 1
 	n.Kind = npcKind(sp.ClassType)
+	if n.Guard = isGuard(sp.ClassType); n.Guard {
+		n.guardRange = float64(sp.AggroRange)
+		if n.guardRange <= 0 {
+			n.guardRange = GuardRange
+		}
+	}
 	n.Teaches = teaches(sp.ClassType)
 	if sp.Equip != "" {
 		n.Gear = cat.Gear[sp.Equip]
@@ -255,7 +264,7 @@ func (n *NPC) update(z *Zone) {
 		n.speedNow = 0
 		return
 	}
-	if n.Friendly {
+	if n.Friendly && !n.Guard {
 		n.wander(z, false)
 		return
 	}
@@ -265,8 +274,10 @@ func (n *NPC) update(z *Zone) {
 			n.goHome()
 		}
 	}
-	// An aggressive creature notices prey.
-	if n.target == nil && n.Aggro > 0 && n.state != npcReturn {
+	// A guard watches for creatures; an aggressive creature notices prey.
+	if n.Guard && n.target == nil && n.state != npcReturn {
+		n.watch(z)
+	} else if n.target == nil && n.Aggro > 0 && n.state != npcReturn {
 		if p := z.nearestPlayer(n.Body.X, n.Body.Y, n.Aggro, func(p *Player) bool {
 			return !p.dead && p.Char.Level-n.Level < 8
 		}); p != nil {
@@ -345,7 +356,7 @@ func (n *NPC) goHome() {
 // engage starts a fight with a combatant, or adds to one, and calls its
 // packmates in: they take on the same anger.
 func (n *NPC) engage(c combatant, z *Zone) {
-	if n.dead() || n.Friendly {
+	if n.dead() || n.Friendly && !n.Guard {
 		return
 	}
 	first := n.target == nil

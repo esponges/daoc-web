@@ -238,6 +238,7 @@ func (z *Zone) hurt(target, by combatant, amount int) {
 				t.tagger = p.ID
 			}
 		}
+		unsharedDamage(by, t, amount)
 		if by != nil {
 			z.provoke(t, by, float64(amount))
 		}

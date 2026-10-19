@@ -59,8 +59,8 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 ## 8. Tier 2: guards
 
-- [ ] 8.1 Classify `GameGuard` NPCs, and make guards attack aggressive creatures of another realm in range, or those fighting their realm's players, chasing to their leash and returning. Verify with world tests for both `server-npcs` guard scenarios.
-- [ ] 8.2 Count guard damage as an unshared damager in the experience award. Verify with the "A guard does half" scenario as a test.
+- [x] 8.1 Classify `GameGuard` NPCs, and make guards attack aggressive creatures of another realm in range, or those fighting their realm's players, chasing to their leash and returning. Verify with world tests for both `server-npcs` guard scenarios.
+- [x] 8.2 Count guard damage as an unshared damager in the experience award. Verify with the "A guard does half" scenario as a test.
 
 ## 9. Tier 2: groups, group experience and chat
 

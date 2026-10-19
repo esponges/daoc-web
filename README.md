@@ -1380,6 +1380,12 @@ interpolated.
 - **Creatures** are the imported spawns, each placed, levelled and sized by the
   database, wandering within its roam, aggressive where it is, calling its
   packmates, giving up a chase at its tether and walking home to heal.
+  A creature hates by damage and fights whoever it hates most, player or not.
+- **Guards** (`GameGuard` spawns) watch their aggro range, or 750 units when
+  the spawn gives none. They attack an aggressive creature that comes into it,
+  or one fighting a player of their realm who is in it, chase it to their
+  tether and walk back to their post. A guard's damage counts in the kill's
+  experience share, and that share goes to no one.
 - **Combat** follows classic 1.65, as written in the rule book (below) and
   computed in `internal/server/rules`. A swing is settled in this order:
   1. the defender's evade, parry and block, from their abilities, specs and
