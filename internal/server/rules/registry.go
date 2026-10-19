@@ -51,6 +51,7 @@ var Sources = map[string]string{
 	"kb-xpclamp":    "Mythic knowledge base: experience clamp raised to 1.25 times a same-level kill",
 	"silicondragon": "silicondragon.com 'XPs' tables: experience and constitution restore",
 	"mythic-con":    "Mythic's description of con colour bands (level / 10 + 1)",
+	"zam-starts":    "ZAM's starting-zones table (camelot.allakhazam.com/Start_Zones.html)",
 	"opendaoc":      "OpenDAoC-Core, read to understand (GPL; nothing copied)",
 	"data":          "the imported community database",
 	"project":       "this project's choice",

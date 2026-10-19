@@ -191,6 +191,8 @@ type Catalog struct {
 	ClassSpecs map[int][]string        // class -> its spec and career keys
 	SpecNames  map[string]string       // spec key -> name
 	Grants     map[int][]rules.Grant   // class -> the ability grants of its careers and specs
+	Unsafe     []UnsafeStart           // starts the start rule replaced, from checkStarts
+	replaced   map[int]UnsafeStart     // index in Starts -> its replacement
 	dropOnce   sync.Once
 	dropPool   map[int][]string
 	db         *sql.DB
@@ -365,6 +367,9 @@ func LoadCatalog(path string) (*Catalog, error) {
 	if err := c.loadRules(q); err != nil {
 		return nil, err
 	}
+	for _, l := range c.checkStarts() {
+		log.Print(l)
+	}
 	return c, nil
 }
 
@@ -439,9 +444,12 @@ func (c *Catalog) StartFor(realm, race, class int) (Start, bool) {
 			continue
 		}
 		if s.Race == race && s.Class == class {
+			if u, ok := c.replaced[i]; ok {
+				return u.Instead, true
+			}
 			return s.Start, true
 		}
-		if fallback == nil {
+		if _, bad := c.replaced[i]; fallback == nil && !bad {
 			fallback = &s.Start
 		}
 	}

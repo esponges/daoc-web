@@ -394,6 +394,9 @@ func TestCreateCharacterWithBuild(t *testing.T) {
 		if !ch.HasStats || ch.XPScheme != store.XPSchemeRules {
 			t.Errorf("%s: stats %v scheme %d", ch.Name, ch.HasStats, ch.XPScheme)
 		}
+		if b := ch.Bind; b == nil || b.Zone != ch.Zone || b.X != ch.X || b.Y != ch.Y {
+			t.Errorf("%s is bound at %+v, want their start", ch.Name, ch.Bind)
+		}
 	}
 	if _, ok := got["Overspent"]; ok {
 		t.Error("the refused build made a character")

@@ -1417,9 +1417,12 @@ interpolated.
   bind point whole, with creatures sent home. Target your gravestone and
   `/pray` there to win its experience back; a healer restores constitution
   for money.
+- **Binding.** A character is bound at their start, and `/bind` beside a
+  bindstone of their realm binds them there. A character saved before binding
+  is bound at the bindstone nearest to where they first log in.
 
 Keys in network mode: `W/S/A/D/Q/E` and the mouse as before, `Enter` to talk
-(`!` to shout, `/who`, `/pray`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
+(`!` to shout, `/who`, `/pray`, `/bind`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
 usable), `I` the pack, `C` the character sheet (`Shift+C` the free camera), a
 click on a corpse to loot it, a right-click on a merchant, trainer or healer. Administrators: `/gm goto
 103`, `/gm tp x y`, `/gm level n`, `/gm give <item id>`.

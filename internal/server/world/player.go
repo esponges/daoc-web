@@ -120,7 +120,8 @@ type Player struct {
 	sh           sheet
 	statsSent    protocol.Stats
 	styleDefence int
-	welcomed     bool // the welcome has gone out, so the sheet may follow
+	welcomed     bool   // the welcome has gone out, so the sheet may follow
+	notice       string // a system line to send once welcomed, such as a moved start
 
 	// Death and prayer: where they fell, what the death cost (the release costs
 	// as much again), and a prayer in progress at their gravestone.

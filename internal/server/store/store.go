@@ -47,6 +47,14 @@ type Character struct {
 	DeathCount int            // deaths since the last level
 	XPScheme   int            // 0: experience on the old curve, 1: on the rule book's table
 	Grave      *Grave         // where the character's gravestone stands, if anywhere
+	Bind       *Place         // where the character returns on release; nil for one saved before binding, bound on its first join
+}
+
+// Place is a spot in a zone, facing a heading.
+type Place struct {
+	Zone    int
+	X, Y, Z float64
+	Heading int
 }
 
 // Grave is a gravestone: where it is and the experience it holds.
@@ -126,6 +134,7 @@ func Open(path string) (*Store, error) {
 		{"con_lost", "INTEGER NOT NULL DEFAULT 0"}, {"death_count", "INTEGER NOT NULL DEFAULT 0"},
 		{"xp_scheme", "INTEGER NOT NULL DEFAULT 0"},
 		{"grave_zone", "INTEGER"}, {"grave_x", "REAL"}, {"grave_y", "REAL"}, {"grave_z", "REAL"}, {"grave_xp", "INTEGER"},
+		{"bind_zone", "INTEGER"}, {"bind_x", "REAL"}, {"bind_y", "REAL"}, {"bind_z", "REAL"}, {"bind_heading", "INTEGER"},
 	} {
 		var has int
 		if err := db.QueryRow(`SELECT count(*) FROM pragma_table_info('character') WHERE name=?`, col.name).Scan(&has); err != nil {
@@ -211,24 +220,28 @@ func (s *Store) CreateCharacter(c *Character) error {
 		return err
 	}
 	c.ID, _ = res.LastInsertId()
-	if c.HasStats || len(c.Specs) > 0 {
+	if c.HasStats || len(c.Specs) > 0 || c.Bind != nil {
 		return s.Save(c)
 	}
 	return nil
 }
 
 const charCols = `id,account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money,
-  str,con,dex,qui,int,pie,emp,cha,con_lost,death_count,xp_scheme,grave_zone,grave_x,grave_y,grave_z,grave_xp`
+  str,con,dex,qui,int,pie,emp,cha,con_lost,death_count,xp_scheme,grave_zone,grave_x,grave_y,grave_z,grave_xp,
+  bind_zone,bind_x,bind_y,bind_z,bind_heading`
 
 func scanChar(r interface{ Scan(...any) error }) (*Character, error) {
 	c := &Character{}
 	var st [8]sql.NullInt64
 	var gz, gxp sql.NullInt64
 	var gx, gy, gzz sql.NullFloat64
+	var bz, bh sql.NullInt64
+	var bx, by, bzz sql.NullFloat64
 	err := r.Scan(&c.ID, &c.AccountID, &c.Name, &c.Race, &c.Gender, &c.Class, &c.Level, &c.XP, &c.Zone,
 		&c.X, &c.Y, &c.Z, &c.Heading, &c.HP, &c.Endurance, &c.Money,
 		&st[0], &st[1], &st[2], &st[3], &st[4], &st[5], &st[6], &st[7], &c.ConLost, &c.DeathCount, &c.XPScheme,
-		&gz, &gx, &gy, &gzz, &gxp)
+		&gz, &gx, &gy, &gzz, &gxp,
+		&bz, &bx, &by, &bzz, &bh)
 	if err != nil {
 		return c, err
 	}
@@ -238,6 +251,9 @@ func scanChar(r interface{ Scan(...any) error }) (*Character, error) {
 	}
 	if gz.Valid {
 		c.Grave = &Grave{Zone: int(gz.Int64), X: gx.Float64, Y: gy.Float64, Z: gzz.Float64, XP: gxp.Int64}
+	}
+	if bz.Valid {
+		c.Bind = &Place{Zone: int(bz.Int64), X: bx.Float64, Y: by.Float64, Z: bzz.Float64, Heading: int(bh.Int64)}
 	}
 	return c, nil
 }
@@ -403,12 +419,17 @@ func (t *Tx) SaveCharacter(c *Character) error {
 	if g := c.Grave; g != nil {
 		gz, gx, gy, gzz, gxp = g.Zone, g.X, g.Y, g.Z, g.XP
 	}
+	var bz, bx, by, bzz, bh any
+	if b := c.Bind; b != nil {
+		bz, bx, by, bzz, bh = b.Zone, b.X, b.Y, b.Z, b.Heading
+	}
 	_, err := t.tx.Exec(`UPDATE character SET level=?,xp=?,zone=?,x=?,y=?,z=?,heading=?,hp=?,endurance=?,money=?,
 		str=?,con=?,dex=?,qui=?,int=?,pie=?,emp=?,cha=?,con_lost=?,death_count=?,xp_scheme=?,
-		grave_zone=?,grave_x=?,grave_y=?,grave_z=?,grave_xp=? WHERE id=?`,
+		grave_zone=?,grave_x=?,grave_y=?,grave_z=?,grave_xp=?,
+		bind_zone=?,bind_x=?,bind_y=?,bind_z=?,bind_heading=? WHERE id=?`,
 		c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money,
 		st[0], st[1], st[2], st[3], st[4], st[5], st[6], st[7], c.ConLost, c.DeathCount, c.XPScheme,
-		gz, gx, gy, gzz, gxp, c.ID)
+		gz, gx, gy, gzz, gxp, bz, bx, by, bzz, bh, c.ID)
 	if err != nil {
 		return err
 	}

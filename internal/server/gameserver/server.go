@@ -166,6 +166,7 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 		Stats: stats, HasStats: true, XPScheme: store.XPSchemeRules, Specs: map[string]int{}}
 	if st, ok := s.World.Cat.StartFor(arch.Realm, arch.Race, arch.Class); ok {
 		c.Zone, c.X, c.Y, c.Z, c.Heading = st.Zone, st.X, st.Y, st.Z, st.Heading
+		c.Bind = &store.Place{Zone: st.Zone, X: st.X, Y: st.Y, Z: st.Z, Heading: st.Heading}
 	} else {
 		c.Zone = s.World.DefaultZone
 	}

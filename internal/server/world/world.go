@@ -140,6 +140,7 @@ func (w *World) Join(acct *store.Account, charID int64) (*Player, error) {
 		return nil, err
 	}
 	p := newPlayer(acct, ch)
+	w.leaveUnsafeStart(p)
 	w.omu.Lock()
 	if old := w.online[ch.ID]; old != nil && !old.closed.Load() {
 		if !old.disconnected.Load() {
@@ -247,6 +248,7 @@ func (z *Zone) join(p *Player) {
 	}
 	x, y := z.G.Clamp(c.X, c.Y)
 	p.Body = Body{X: x, Y: y, Z: z.G.GroundAt(x, y, c.Z), Yaw: float64(c.Heading) / 1000}
+	z.settleBind(p)
 	if prepareCharacter(c) {
 		if err := w.Store.Save(c); err != nil {
 			w.Log("saving %s after bringing it up to the rule book: %v", c.Name, err)
@@ -269,6 +271,10 @@ func (z *Zone) join(p *Player) {
 	p.sendInv(w.Cat, c.Money)
 	p.sendBar(w.Cat)
 	z.event(protocol.Event{K: "join", To: p.ID, Text: c.Name}, p.Body.X, p.Body.Y)
+	if p.notice != "" {
+		p.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "sys", Text: p.notice})
+		p.notice = ""
+	}
 }
 
 // savePlayer writes a character to the database.
@@ -288,8 +294,12 @@ func (w *World) savePlayer(p *Player) {
 
 // --- places ---
 
-// bindFor is where a dead player returns to.
+// bindFor is where a dead player returns to: their bind point, or for a
+// character not yet bound, the nearest bind point in the zone or their start.
 func (w *World) bindFor(p *Player) (zone int, x, y, z, yaw float64) {
+	if b := p.Char.Bind; b != nil {
+		return b.Zone, b.X, b.Y, b.Z, float64(b.Heading) / 1000
+	}
 	best := math.Inf(1)
 	for _, b := range w.Cat.Binds {
 		if b.Zone != p.Zone.ID || (b.Realm != 0 && b.Realm != p.Arch.Realm) {
@@ -412,6 +422,8 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		w.GM(p, strings.Join(f[1:], " "))
 	case "pray":
 		z.Pray(p)
+	case "bind":
+		z.BindHere(p)
 	default:
 		p.errMsg("chat", "Unknown command /"+f[0]+".")
 	}
