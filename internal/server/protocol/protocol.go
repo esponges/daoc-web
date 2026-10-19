@@ -284,8 +284,9 @@ type Snap struct {
 // ChatMsg is a chat line to show.
 type ChatMsg struct {
 	T    string `json:"t"`
-	Ch   string `json:"ch"`
+	Ch   string `json:"ch"` // say, all, tell, group or sys
 	From string `json:"from"`
+	To   string `json:"to,omitempty"` // on your own tell: whom it went to
 	Text string `json:"text"`
 }
 

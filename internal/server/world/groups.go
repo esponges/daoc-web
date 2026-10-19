@@ -408,3 +408,43 @@ func (w *World) sendMemberLocked(g *group, to *Player) {
 	gs.sent[to.Char.ID] = msg
 	to.send(msg)
 }
+
+// restAfter is a command line with its first n words taken off, spacing
+// inside the rest kept.
+func restAfter(line string, n int) string {
+	s := strings.TrimSpace(line)
+	for i := 0; i < n; i++ {
+		j := strings.IndexAny(s, " \t")
+		if j < 0 {
+			return ""
+		}
+		s = strings.TrimSpace(s[j:])
+	}
+	return s
+}
+
+// tell sends a line to one player of the sender's realm, wherever they are.
+func (w *World) tell(p *Player, name, text string) {
+	to := w.onlineByName(name)
+	if to == nil || to.Arch.Realm != p.Arch.Realm {
+		sys(p, name+" is not in the game.")
+		return
+	}
+	to.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "tell", From: p.Char.Name, Text: text})
+	p.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "tell", To: to.Char.Name, Text: text})
+}
+
+// groupSay sends a line to every member of the sender's group, in any zone.
+func (w *World) groupSay(p *Player, text string) {
+	members := w.groupOf(p.Char.ID)
+	if members == nil {
+		sys(p, "You are not in a group.")
+		return
+	}
+	m := protocol.ChatMsg{T: protocol.TChatMsg, Ch: "group", From: p.Char.Name, Text: text}
+	for _, c := range members {
+		if o := w.onlineChar(c); o != nil {
+			o.send(m)
+		}
+	}
+}

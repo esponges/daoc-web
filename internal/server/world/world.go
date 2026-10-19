@@ -430,6 +430,17 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		z.Pray(p)
 	case "bind":
 		z.BindHere(p)
+	case "send", "tell":
+		if len(f) < 3 {
+			sys(p, "Send to whom? Type /"+f[0]+" <name> <text>.")
+			return
+		}
+		w.tell(p, f[1], restAfter(line, 2))
+	case "g":
+		if len(f) < 2 {
+			return
+		}
+		w.groupSay(p, restAfter(line, 1))
 	case "invite":
 		if len(f) > 1 {
 			w.Invite(p, w.onlineByName(f[1]), f[1])

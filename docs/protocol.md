@@ -101,7 +101,7 @@ Players carry their look too. `welcome` and each player entity have `rc` (the ra
 | `buy` | `id` | buy one of the open shop's items by item id; the server checks stock, money, pack space and reach, then resends `inv` |
 | `sell` | `slot` | sell the item in a pack slot (0-39) to the open shop for half its price, at least 1 copper; worn slots and worthless items are refused |
 | `equip` | `from`, `to` | move between pack (0-39) and worn (40-47) slots; `to` -1 destroys, -2 wears it where it belongs |
-| `chat` | `ch`, `text` | `say` (3,000 units) or `all`; a leading `/` is a command (`/who`, `/pray`, `/bind`, `/gm ...`) |
+| `chat` | `ch`, `text` | `say` (3,000 units) or `all`; a leading `/` is a command (`/who`, `/pray`, `/bind`, `/gm ...`, the group commands, `/send` or `/tell <name> <text>` to one player of your realm in any zone, `/g <text>` to your group in any zone) |
 | `groupop` | `op`, `id`, `name` | group requests: `invite` the player with `id` (in your zone) or `name` (anywhere, any case), `accept` or `decline` your invitation, `leave` the group, or, for the leader, `remove` the member `name`. Refusals come as `sys` chat lines. The same are typed as `/invite [name]` (your target without a name), `/accept`, `/decline`, `/disband` and `/remove <name>` |
 | `gm` | `line` | an administrator's command: `goto`, `tp`, `level`, `heal`, `give`, `kill`, `where` |
 | `ping` | | answered with `pong` |
@@ -141,6 +141,8 @@ an armour piece belongs in) and `line` (a weapon's line) for the same reason.
 `shop` is a merchant's stock, sent when `interact` opens it: `npc` (its id), `nm`, and `items`, each an `inv`-style row (`id`, `nm`, `k`, `line`, `w`, `d`, `lv`) with `pr`, the price in copper, and `slot`, its place in the list in the order to show. Buy by `id`, not by `slot`. The shop stays open until `shopclose`, which the server sends when the player walks out of reach, dies or the merchant is gone; a character that changes zone simply starts with none open. A creature entity may carry `ik`, what interacting with it does (`"merchant"`, `"trainer"`, `"healer"`); absent means nothing.
 
 `trainer` is a trainer's offer: `npc`, `nm`, `pts` (unspent points) and `specs`, rows of `key`, `nm`, `lv`, `cost` (of the next level) and `can` (it can be trained now). `healer` is a healer's offer: `npc`, `nm`, `lost` (constitution lost), `price` (copper per point at your level) and `total`. Pictures for shop rows are chosen from `k` and `line`, like inventory rows; `m` and the imported icon numbers are not a reliable source.
+
+`chatmsg` carries `ch`, the channel: `say`, `all`, `tell`, `group` or `sys` (the server speaking), with `from` and `text`. A tell you sent comes back to you with `to` (whom it went to) and no `from`. A tell to a name not in the game, or of another realm, is answered with a `sys` line "<name> is not in the game." The chat rate limit covers every channel.
 
 `groupinv` is an invitation: `from` (the inviter's name) and `secs`, how long it stands (60). Answer with `groupop` `accept` or `decline`; unanswered it lapses, and the inviter is told it was declined.
 
