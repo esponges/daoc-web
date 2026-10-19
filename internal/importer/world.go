@@ -68,6 +68,7 @@ CREATE TABLE race(id INTEGER PRIMARY KEY, name TEXT,
   body INTEGER, cold INTEGER, crush INTEGER, energy INTEGER, heat INTEGER, matter INTEGER, natural INTEGER,
   slash INTEGER, spirit INTEGER, thrust INTEGER);
 CREATE TABLE spec_ability(spec TEXT, spec_level INTEGER, ability TEXT, ability_level INTEGER, class_id INTEGER);
+CREATE TABLE start_equip(class INTEGER, item TEXT, ord INTEGER);
 `
 
 // Options say where things are and which spawns to keep.
@@ -103,9 +104,10 @@ type tmplValues struct {
 	aggroLevel, aggroRange, speed, flags int
 }
 
-// LevelList reads a template's level column: one level, a list ("13;18;16")
-// or a range ("1-3"), in any mix. Anything unreadable is skipped.
-func LevelList(s string) []int {
+// NumberList reads a list column, such as a template's levels or a class
+// list: one number, a list ("13;18;16") or a range ("1-3"), in any mix.
+// Anything unreadable is skipped.
+func NumberList(s string) []int {
 	var out []int
 	for _, p := range strings.FieldsFunc(s, func(r rune) bool { return r == ';' || r == ',' }) {
 		p = strings.TrimSpace(p)
@@ -271,7 +273,7 @@ func build(o Options) (*Report, error) {
 	if err := read("npctemplate", func(r *Row) (bool, error) {
 		id := r.Int("TemplateId")
 		sl, sh := r.Range("Size")
-		levels := LevelList(r.Str("Level"))
+		levels := NumberList(r.Str("Level"))
 		ll, lh := 0, 0
 		if len(levels) > 0 {
 			ll, lh = slices.Min(levels), slices.Max(levels)
@@ -483,6 +485,26 @@ func build(o Options) (*Report, error) {
 		o.Log("  specxability           absent: no abilities imported")
 	}
 
+	// What each class is given at creation: one row per class the dump's
+	// class list names. A missing table is reported with the required ones.
+	if _, err := os.Stat(filepath.Join(o.Dump, "starterequipment.sql")); err == nil {
+		if err := read("starterequipment", func(r *Row) (bool, error) {
+			item := r.Str("TemplateID")
+			classes := NumberList(r.Str("Class"))
+			if item == "" || len(classes) == 0 {
+				return false, nil
+			}
+			for _, c := range classes {
+				if err := ins(`INSERT INTO start_equip VALUES(?,?,?)`, c, item, r.Int("StarterEquipmentID")); err != nil {
+					return false, err
+				}
+			}
+			return true, nil
+		}); err != nil {
+			return nil, err
+		}
+	}
+
 	// --- travel: exits, starts, bind points ---
 	if err := read("zonepoint", func(r *Row) (bool, error) {
 		sz, slx, sly, sok := zoneAt(r.Int("SourceRegion"), r.Float("SourceX"), r.Float("SourceY"))
@@ -518,7 +540,7 @@ func build(o Options) (*Report, error) {
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-	for _, t := range []string{"zones", "mob", "npctemplate", "npcequipment", "style", "itemtemplate", "startuplocation", "merchantitem"} {
+	for _, t := range []string{"zones", "mob", "npctemplate", "npcequipment", "style", "itemtemplate", "startuplocation", "merchantitem", "starterequipment"} {
 		if c := rep.Tables[t]; c[0] == 0 || c[1] == 0 {
 			rep.Missing = append(rep.Missing, t)
 		}

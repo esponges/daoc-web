@@ -192,6 +192,7 @@ type Catalog struct {
 	SpecNames  map[string]string       // spec key -> name
 	Grants     map[int][]rules.Grant   // class -> the ability grants of its careers and specs
 	Unsafe     []UnsafeStart           // starts the start rule replaced, from checkStarts
+	StartEquip map[int][]string        // class -> the items it starts with, in the table's order; nil when the store predates the table
 	replaced   map[int]UnsafeStart     // index in Starts -> its replacement
 	dropOnce   sync.Once
 	dropPool   map[int][]string
@@ -367,6 +368,24 @@ func LoadCatalog(path string) (*Catalog, error) {
 	if err := c.loadRules(q); err != nil {
 		return nil, err
 	}
+	var hasStartEquip int
+	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND name='start_equip'`).Scan(&hasStartEquip)
+	if hasStartEquip == 1 {
+		c.StartEquip = map[int][]string{}
+		if err := q(`SELECT class,item FROM start_equip ORDER BY class,ord`, func(r *sql.Rows) error {
+			var cl int
+			var it string
+			if err := r.Scan(&cl, &it); err != nil {
+				return err
+			}
+			c.StartEquip[cl] = append(c.StartEquip[cl], it)
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	} else {
+		log.Printf("world store has no starting equipment; new characters start with nothing (run cmd/dbimport again)")
+	}
 	for _, l := range c.checkStarts() {
 		log.Print(l)
 	}
@@ -406,7 +425,7 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags, &s.Equip, &s.ClassType, &s.ItemsList, &s.Race, &levels); err != nil {
 			return nil, err
 		}
-		s.Levels = importer.LevelList(levels)
+		s.Levels = importer.NumberList(levels)
 		out = append(out, s)
 	}
 	return out, rows.Err()

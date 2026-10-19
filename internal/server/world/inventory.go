@@ -290,41 +290,38 @@ func (z *Zone) DropItem(p *Player, slot int) {
 	p.sendInv(z.W.Cat, p.Char.Money)
 }
 
-// GiveStarterKit equips a new Midgard warrior from the item table: the
-// lowest-level hammer, shield and studded armour it has.
-func (w *World) GiveStarterKit(charID int64) error {
-	pick := func(match func(*Item) bool) *Item {
-		var best *Item
-		for _, it := range w.Cat.Items {
-			if !it.Droppable || !match(it) {
+// GiveStarterKit gives a new character what the imported starting-equipment
+// table lists for their class, in the table's order: each item worn in its
+// slot when the slot is still free and the class may use it, otherwise in the
+// pack. An item the item table lacks is skipped and logged; nothing is chosen
+// any other way.
+func (w *World) GiveStarterKit(c *store.Character) error {
+	ids := w.Cat.StartEquip[c.Class]
+	if len(ids) == 0 {
+		w.Log("starting equipment: the table lists nothing for class %d; %s starts with nothing", c.Class, c.Name)
+		return nil
+	}
+	trained := map[string]int{}
+	for _, k := range w.Cat.TrainableSpecs(c.Class) {
+		trained[k] = 1
+	}
+	abilities := rules.Abilities(w.Cat.Grants[c.Class], w.Cat.Careers(c.Class), max(1, c.Level), trained)
+	return w.Store.Tx(func(tx *store.Tx) error {
+		taken := map[int]bool{}
+		pack := 0
+		for _, id := range ids {
+			it := w.Cat.Items[id]
+			if it == nil {
+				w.Log("starting equipment: class %d lists %q, which is not in the item table", c.Class, id)
 				continue
 			}
-			if best == nil || it.Level < best.Level || it.Level == best.Level && it.ID < best.ID {
-				best = it
+			slot := wornSlot(it)
+			if slot < 0 || taken[slot] || it.LevelReq > c.Level || rules.MayUse(abilities, it.ObjectType, it.DamageType) != nil {
+				slot, pack = pack, pack+1
 			}
-		}
-		return best
-	}
-	kit := []struct {
-		slot  int
-		match func(*Item) bool
-	}{
-		{SlotWeapon, func(i *Item) bool {
-			return i.ObjectType == ObjHammer && i.ItemType == 10 && i.DPS > 0 && i.Realm == 2 && i.Hand == 0
-		}},
-		{SlotShield, func(i *Item) bool { return i.ObjectType == ObjShield && i.Realm == 2 && i.Level >= 1 }},
-		{SlotTorso, func(i *Item) bool { return i.ObjectType == 34 && i.ItemType == 25 && i.Realm == 2 && i.Level >= 1 }},
-		{SlotLegs, func(i *Item) bool { return i.ObjectType == 34 && i.ItemType == 27 && i.Realm == 2 && i.Level >= 1 }},
-		{SlotArms, func(i *Item) bool { return i.ObjectType == 34 && i.ItemType == 28 && i.Realm == 2 && i.Level >= 1 }},
-		{SlotFeet, func(i *Item) bool { return i.ObjectType == 34 && i.ItemType == 23 && i.Realm == 2 && i.Level >= 1 }},
-		{SlotHands, func(i *Item) bool { return i.ObjectType == 34 && i.ItemType == 22 && i.Realm == 2 && i.Level >= 1 }},
-	}
-	return w.Store.Tx(func(tx *store.Tx) error {
-		for _, k := range kit {
-			if it := pick(k.match); it != nil {
-				if err := tx.AddItem(charID, it.ID, k.slot, 1); err != nil {
-					return err
-				}
+			taken[slot] = true
+			if err := tx.AddItem(c.ID, id, slot, 1); err != nil {
+				return err
 			}
 		}
 		return nil

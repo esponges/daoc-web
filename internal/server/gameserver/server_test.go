@@ -190,8 +190,9 @@ func TestCreateCharacterAndPlay(t *testing.T) {
 	}
 	var inv protocol.Inv
 	json.Unmarshal(s.until(protocol.TInv, 5*time.Second), &inv)
-	if len(inv.Items) < 2 {
-		t.Errorf("a new warrior should carry a weapon and a shield: %+v", inv.Items)
+	// The kit is the table's for class 22; a store from before the table gives none.
+	if want := len(w.Cat.StartEquip[22]); len(inv.Items) != want {
+		t.Errorf("a new warrior carries %d items, want the %d the starting-equipment table lists: %+v", len(inv.Items), want, inv.Items)
 	}
 	var snap protocol.Snap
 	json.Unmarshal(s.until(protocol.TSnap, 5*time.Second), &snap)

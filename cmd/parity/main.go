@@ -90,6 +90,7 @@ func summary(w io.Writer, rep *Report) {
 	for _, c := range rep.Content {
 		fmt.Fprintf(w, "  %-22s %d, none implemented\n", c.Name, c.Uses)
 	}
+	fmt.Fprintf(w, "  %-22s %d gaps in %d bands\n", "levelling gear", gearGaps(rep.LevellingGear), len(rep.LevellingGear))
 	fmt.Fprintf(w, "  rules: %d documented, %d reference, %d provisional\n",
 		rep.RulesByStatus["documented"], rep.RulesByStatus["reference"], rep.RulesByStatus["provisional"])
 }
@@ -116,6 +117,7 @@ func readme(b *strings.Builder, rep *Report) {
 			fmt.Fprintf(b, "| %s | %d | %s |\n", name, it.Uses, mark)
 		}
 	}
+	gearTable(b, rep.LevellingGear)
 	b.WriteString("\n## Rules\n\n| rule | status |\n| --- | --- |\n")
 	for _, r := range rep.Rules {
 		fmt.Fprintf(b, "| %s | %s |\n", r.ID, r.Status)

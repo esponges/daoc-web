@@ -16,13 +16,13 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 - [x] 2.3 Apply it at catalog load. `StartFor` returns the replacement, and the load report lists each replaced start with its worst creature and its replacement. Verify with a real-zone test (skipped without `world.db`) that the Troll Warrior start in Galplen is kept on a store imported with templates honoured, that a synthetic unsafe start is replaced, and that the `startup` and `spawn` rows are unchanged.
 - [x] 2.4 Add the stored bind point to characters (additive columns), `/bind` at imported bind points, death returning to the bind, and the first-login bind for old characters. Verify with world tests: bind in a town, bind refused in open country, death returns to the bind, and an old character is bound on login.
 - [x] 2.5 Move low-level characters found at an unsafe start, once, with a system line. Verify with a world test for a level 1 character (moved) and a level 12 one (not moved).
-- [ ] 2.6 In the browser, create a Troll Warrior and stand at the start for five minutes unattacked. Look at a level 26 creature from a distance and check it is drawn in purple. Record what was seen in this change folder (no screenshots of game art in git).
+- [x] 2.6 In the browser, create a Troll Warrior and stand at the start for five minutes unattacked. Look at a level 26 creature from a distance and check it is drawn in purple. Record what was seen in this change folder (no screenshots of game art in git).
 
 ## 3. Tier 1: starting equipment and levelling gear
 
-- [ ] 3.1 Import `starterequipment` into `start_equip(class, item, ord)`, one row per listed class, with counts, failing when the table is missing or empty. Verify with an importer test on a synthetic dump with a `35;31;22;` row.
-- [ ] 3.2 Replace `GiveStarterKit` with the table lookup: equip if the slot is free and the class may use the item, otherwise put it in the pack. Missing items are logged, and nothing is chosen any other way. Verify with world tests: the Warrior kit from fixture rows, two weapons for one slot, an unknown item, and an existing character left unchanged.
-- [ ] 3.3 Add the levelling-gear table to `cmd/parity` (Warrior weapons and armour by five-level band, merchants selling each), with gaps marked. Regenerate `docs/parity` and verify the README there shows the table and that the regression test passes.
+- [x] 3.1 Import `starterequipment` into `start_equip(class, item, ord)`, one row per listed class, with counts, failing when the table is missing or empty. Verify with an importer test on a synthetic dump with a `35;31;22;` row.
+- [x] 3.2 Replace `GiveStarterKit` with the table lookup: equip if the slot is free and the class may use the item, otherwise put it in the pack. Missing items are logged, and nothing is chosen any other way. Verify with world tests: the Warrior kit from fixture rows, two weapons for one slot, an unknown item, and an existing character left unchanged.
+- [x] 3.3 Add the levelling-gear table to `cmd/parity` (Warrior weapons and armour by five-level band, merchants selling each), with gaps marked. Regenerate `docs/parity` and verify the README there shows the table and that the regression test passes.
 
 ## 4. Tier 1: switch the live server
 

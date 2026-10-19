@@ -49,6 +49,7 @@ type Report struct {
 	Rules          []RuleRow      `json:"rules"`
 	RulesByStatus  map[string]int `json:"rulesByStatus"`
 	Placements     int            `json:"placements"`
+	LevellingGear  []GearRow      `json:"levellingGear"`
 }
 
 // implementedSpellTypes are the spell types the server can cast. None yet.
@@ -226,6 +227,12 @@ func Run(dump string) (*Report, error) {
 		}
 		rep.Content = append(rep.Content, Item{Name: c.name, Uses: n})
 	}
+
+	gear, err := levellingGear(read)
+	if err != nil {
+		return nil, err
+	}
+	rep.LevellingGear = gear
 
 	for _, r := range rules.Registry() {
 		rep.Rules = append(rep.Rules, RuleRow{ID: r.ID, Status: r.Status.String()})

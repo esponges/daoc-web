@@ -1450,7 +1450,8 @@ spawn model numbers are the client's `monsters.csv` ids.
 `go run ./cmd/dbimport -q "select name, count(*) from spawn where zone=100 group by name"`
 looks at the result. It parses the dump's SQL itself, so no MySQL is needed,
 and keeps spawns (in zone units), NPC templates, loot, items, styles, exits,
-start locations and bind points. A spawn is dropped if it is in no zone, uses
+start locations, bind points and each class's starting equipment (a new
+character is given exactly what that table lists). A spawn is dropped if it is in no zone, uses
 a model with no converted character (`web/data/char/m<N>`), or sits more than
 500 units from the derived ground; the counts are printed.
 
@@ -1523,7 +1524,10 @@ data asks for:
 - the style features;
 - the abilities granted;
 - the creature kinds, by class type;
-- quests, keep doors, keeps, relics and battlegrounds.
+- quests, keep doors, keeps, relics and battlegrounds;
+- the Warrior weapons, shields and armour Midgard merchants sell in each
+  five-level band, with the gaps marked (none above level 30, as the data
+  stands).
 
 For each, it says whether the server implements it, and it counts the rules by
 status. It writes `docs/parity/parity.json` and `docs/parity/README.md`: names

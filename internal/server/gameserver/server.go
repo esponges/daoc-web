@@ -179,7 +179,7 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 		http.Error(w, err.Error(), code)
 		return
 	}
-	if err := s.World.GiveStarterKit(c.ID); err != nil {
+	if err := s.World.GiveStarterKit(c); err != nil {
 		s.Log("starter kit for %s: %v", c.Name, err)
 	}
 	w.WriteHeader(http.StatusCreated)

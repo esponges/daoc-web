@@ -16,7 +16,8 @@ Midgard (regions 100, 101, 151): 29932 placements
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
-  rules: 23 documented, 19 reference, 3 provisional
+  levelling gear         32 gaps in 10 bands
+  rules: 24 documented, 19 reference, 4 provisional
 ```
 
 ## Creature spell types
@@ -286,6 +287,23 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Yar | 1 |  |
 | DOL.GS.ZritZrit | 1 |  |
 
+## Levelling gear
+
+Midgard merchants (placements) selling Warrior gear in each five-level band. **none** marks a gap: a band where a Warrior needs that kind and no merchant sells it. Gaps are reported, not filled.
+
+| band | 1h axe | 1h hammer | 1h sword | 2h axe | 2h hammer | 2h sword | shield | studded | chain |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1-5 | 17 | 9 | 21 | 11 | 11 | 11 | 13 | 26 | 19 |
+| 6-10 | 17 | 9 | 21 | 11 | 11 | 11 | 13 | 26 | 22 |
+| 11-15 | 17 | 9 | 21 | 11 | 11 | 11 | 13 | 26 | 22 |
+| 16-20 | 17 | 9 | 21 | 11 | 11 | 11 | 13 | 26 | 22 |
+| 21-25 | 17 | 9 | 21 | 11 | 11 | 11 | 13 | 22 | 15 |
+| 26-30 | 7 | 7 | 7 | 9 | 9 | 9 | 13 | 5 | 6 |
+| 31-35 | **none** | **none** | **none** | **none** | **none** | **none** | **none** | - | **none** |
+| 36-40 | **none** | **none** | **none** | **none** | **none** | **none** | **none** | - | **none** |
+| 41-45 | **none** | **none** | **none** | **none** | **none** | **none** | **none** | - | **none** |
+| 46-50 | **none** | **none** | **none** | **none** | **none** | **none** | **none** | - | **none** |
+
 ## Rules
 
 | rule | status |
@@ -335,3 +353,5 @@ Midgard (regions 100, 101, 151): 29932 placements
 | spec.migration | documented |
 | spec.points | reference |
 | spec.training | documented |
+| start.town | documented |
+| start.unsafe | provisional |

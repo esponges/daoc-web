@@ -2,9 +2,11 @@ package importer
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"testing"
 )
 
@@ -23,6 +25,7 @@ func minimalDump(t *testing.T) string {
 	dumpTable(t, dir, "itemtemplate", "`Id_nb`, `Name`", "'sword', 'sword'")
 	dumpTable(t, dir, "style", "`ID`, `ClassId`, `Name`", "1, 22, 'Slam'")
 	dumpTable(t, dir, "startuplocation", "`RealmID`, `RaceID`, `ClassID`, `Region`, `XPos`, `YPos`, `ZPos`", "2, 6, 22, 1, 50, 50, 0")
+	dumpTable(t, dir, "starterequipment", "`StarterEquipmentID`, `Class`, `TemplateID`", "1, '22;', 'sword'")
 	for _, tb := range []string{"loottemplate", "mobxloottemplate", "specialization", "classxspecialization", "race", "zonepoint", "bindpoint"} {
 		dumpTable(t, dir, tb, "`Unused`", "0")
 	}
@@ -169,10 +172,50 @@ func TestTemplateReplacesMobValues(t *testing.T) {
 	}
 }
 
-func TestLevelList(t *testing.T) {
+func TestNumberList(t *testing.T) {
 	for in, want := range map[string]string{"1": "1", "13;18;16": "13;18;16", "1-3": "1;2;3", "": "", "x;5": "5", " 7 , 8": "7;8"} {
-		if got := joinLevels(LevelList(in)); got != want {
-			t.Errorf("LevelList(%q) = %q, want %q", in, got, want)
+		if got := joinLevels(NumberList(in)); got != want {
+			t.Errorf("NumberList(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+// Start equipment is stored once per class its row lists, in the dump's order;
+// a dump without the table reports it missing.
+func TestImportStartEquipment(t *testing.T) {
+	dir := minimalDump(t)
+	dumpTable(t, dir, "starterequipment", "`StarterEquipmentID`, `Class`, `TemplateID`",
+		"66, '35;31;22;', 'small_training_shield'", "67, '22;', 'training_axe'", "68, '', 'nobody'")
+	out := filepath.Join(t.TempDir(), "world.db")
+	rep, err := Run(Options{Dump: dir, Out: out})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := rep.Tables["starterequipment"]; c != [2]int{3, 2} || len(rep.Missing) > 0 {
+		t.Errorf("read/kept %v, missing %v", c, rep.Missing)
+	}
+	db, _ := sql.Open("sqlite", out)
+	defer db.Close()
+	var got []string
+	rows, _ := db.Query(`SELECT class, item FROM start_equip ORDER BY class, ord`)
+	for rows.Next() {
+		var c int
+		var it string
+		rows.Scan(&c, &it)
+		got = append(got, fmt.Sprintf("%d %s", c, it))
+	}
+	rows.Close()
+	want := "[22 small_training_shield 22 training_axe 31 small_training_shield 35 small_training_shield]"
+	if fmt.Sprint(got) != want {
+		t.Errorf("start_equip = %v, want %v", got, want)
+	}
+
+	os.Remove(filepath.Join(dir, "starterequipment.sql"))
+	rep, err = Run(Options{Dump: dir, Out: out})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(rep.Missing, "starterequipment") {
+		t.Errorf("missing %v, want starterequipment", rep.Missing)
 	}
 }

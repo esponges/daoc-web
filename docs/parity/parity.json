@@ -1990,12 +1990,122 @@
     {
       "id": "spec.training",
       "status": "documented"
+    },
+    {
+      "id": "start.town",
+      "status": "documented"
+    },
+    {
+      "id": "start.unsafe",
+      "status": "provisional"
     }
   ],
   "rulesByStatus": {
-    "documented": 23,
-    "provisional": 3,
+    "documented": 24,
+    "provisional": 4,
     "reference": 19
   },
-  "placements": 29932
+  "placements": 29932,
+  "levellingGear": [
+    {
+      "band": "1-5",
+      "kinds": {
+        "1h axe": 17,
+        "1h hammer": 9,
+        "1h sword": 21,
+        "2h axe": 11,
+        "2h hammer": 11,
+        "2h sword": 11,
+        "chain": 19,
+        "shield": 13,
+        "studded": 26
+      }
+    },
+    {
+      "band": "6-10",
+      "kinds": {
+        "1h axe": 17,
+        "1h hammer": 9,
+        "1h sword": 21,
+        "2h axe": 11,
+        "2h hammer": 11,
+        "2h sword": 11,
+        "chain": 22,
+        "shield": 13,
+        "studded": 26
+      }
+    },
+    {
+      "band": "11-15",
+      "kinds": {
+        "1h axe": 17,
+        "1h hammer": 9,
+        "1h sword": 21,
+        "2h axe": 11,
+        "2h hammer": 11,
+        "2h sword": 11,
+        "chain": 22,
+        "shield": 13,
+        "studded": 26
+      }
+    },
+    {
+      "band": "16-20",
+      "kinds": {
+        "1h axe": 17,
+        "1h hammer": 9,
+        "1h sword": 21,
+        "2h axe": 11,
+        "2h hammer": 11,
+        "2h sword": 11,
+        "chain": 22,
+        "shield": 13,
+        "studded": 26
+      }
+    },
+    {
+      "band": "21-25",
+      "kinds": {
+        "1h axe": 17,
+        "1h hammer": 9,
+        "1h sword": 21,
+        "2h axe": 11,
+        "2h hammer": 11,
+        "2h sword": 11,
+        "chain": 15,
+        "shield": 13,
+        "studded": 22
+      }
+    },
+    {
+      "band": "26-30",
+      "kinds": {
+        "1h axe": 7,
+        "1h hammer": 7,
+        "1h sword": 7,
+        "2h axe": 9,
+        "2h hammer": 9,
+        "2h sword": 9,
+        "chain": 6,
+        "shield": 13,
+        "studded": 5
+      }
+    },
+    {
+      "band": "31-35",
+      "kinds": {}
+    },
+    {
+      "band": "36-40",
+      "kinds": {}
+    },
+    {
+      "band": "41-45",
+      "kinds": {}
+    },
+    {
+      "band": "46-50",
+      "kinds": {}
+    }
+  ]
 }
