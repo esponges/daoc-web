@@ -65,6 +65,8 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
     clamp;
   - the published experience and constitution-restore tables (silicondragon.com);
   - Mythic's con colour band description;
+  - ZAM's starting-zones table (camelot.allakhazam.com/Start_Zones.html): the
+    start town of each race and class;
   - OpenDAoC-Core, for reference-status rules only.
 
   If you use another source (a wiki, a format write-up, a community table), add
@@ -127,7 +129,8 @@ not show that a window looks right. Check the fallback by temporarily moving
   patterns (`String.replace` with a function argument is safe).
 - **Browser automation:** a held key cannot be sent with the key action. Move
   the character by dispatching `keydown` and `keyup` events from page script
-  with a delay between them. Creatures near the Myrkwood spawn can kill a
-  level 1 character in two blows (see `midgard-playable`).
+  with a delay between them. On a world store imported before templates were
+  honoured, creatures near the Galplen start can kill a level 1 character in
+  two blows (re-import; see `midgard-playable` design 1a).
 - Commit only when asked; end commit messages with the attribution lines the
   session gives.

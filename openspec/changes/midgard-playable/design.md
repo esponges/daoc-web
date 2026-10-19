@@ -42,7 +42,19 @@ See proposal.md for why. The current state that shapes the approach:
 - *Alternative:* the server reloads the world store live. Rejected: every zone, NPC and catalog pointer would need to be rebuilt under load, for no gain over a restart.
 - The switch-over of the user's server is its own task. It asks the user first and copies `players.db` aside before the restart.
 
+### 1a. Templates that replace mob values win (found during 2.1)
+The danger at the Troll start was ours, not the data's. Nearly every mob (91,231 of 97,737) has an NPC template marked `ReplaceMobValues`. OpenDAoC-Core, read to understand how its data is meant to load, sets a mob from its row and then, for such a template, overwrites:
+- the level, picked at random from the template's list each time the creature spawns;
+- the name, aggro level and range, flags, speed and melee type;
+- the model, size, equipment and class type.
+
+Our importer ignored the mark. 8,557 rows (2,640 in Midgard) have a level outside their template's list, and 28,844 a different aggro level. For example, the giant bull frogs and arachite hatchlings 2,500 units from Galplen have rows at levels 25–29 and aggressive, but templates at level 1 and passive.
+
+The importer now applies the template's name, levels, aggro, flags, speed and class type to the spawn, and stores the level list. The server picks a level from the list at each spawn and respawn. Model, size and equipment stay the row's: the client draws only converted models, and a template's model list has entries with a flag bit (`118;32886`) that is not yet understood. That is a later fix if it shows. Template level columns are also lists (`13;18;16`), which `parseRange` read as 0. `importer.LevelList` reads them now.
+
 ### 2. Safe start and the stored bind are decided at catalog load
+**Source (task 2.1):** ZAM's "Starting Zones" table ([camelot.allakhazam.com/Start_Zones.html](https://camelot.allakhazam.com/Start_Zones.html)) gives each Midgard race and base class a start town. It is from the Shrouded Isles and Trials of Atlantis era (Valkyn and Frostalf are listed), which includes 1.65. It agrees with the imported start rows: Troll Vikings in Galplen (Myrkwood Forest), Norse Vikings in Vasudheim (East Svealand), Dwarf Vikings in Mularn, Kobold Vikings in Fort Atla (Gotar). The Troll start is therefore the classic one, and with decision 1a it is safe. The unsafe-start rule stays as a safety net, and it reports any start it replaces.
+
 `Catalog` already loads starts and spawns. After loading, it tests each start against aggressive spawns of level 6 or more within 1,500 units, records the unsafe ones with their worst creature, and maps each to the realm's safe start. `StartFor` returns the replacement. The rule is a registered function (`rules.UnsafeStart`) with a provisional status, so it is counted and tested on synthetic spawns.
 
 Bind becomes four columns on the character (zone, x, y, z, plus yaw). A null bind means a character from before this change: on first login it is set to the nearest bind point, and then the "moved once" check runs. `/bind` uses the imported bind points' radius.
@@ -138,6 +150,7 @@ A Go table maps class type to reason and source, and it starts with the list in 
 ## Open Questions
 
 - **The 1.65 day length and night hours.** Reference until sourced; a single constant.
-- **The 1.65 start towns per race and class.** The rule picks the safe start until a source is found.
+- ~~**The 1.65 start towns per race and class.**~~ Answered by ZAM's table (decision 2): the data's starts agree with it.
+- **Template models.** Whether to take a replacing template's model list, and what the flag bit in `32886` means.
 - **Intercept's duration, Protect's share, and Engage's endurance per block.** Provisional until sourced; numbers only.
 - **The unit of `LifeDrainReturn`.** Settled by checking several drain spells' values in the data.

@@ -121,3 +121,58 @@ func TestImportStagesWhileStoreIsOpen(t *testing.T) {
 		t.Error("the staged store is not a complete import")
 	}
 }
+
+// A template marked ReplaceMobValues overrides the spawn row: its name,
+// levels, aggression and class type win, as the emulator loads them. One
+// without the mark leaves the row alone.
+func TestTemplateReplacesMobValues(t *testing.T) {
+	dir := minimalDump(t)
+	dumpTable(t, dir, "npctemplate", "`TemplateId`, `Name`, `Level`, `AggroLevel`, `AggroRange`, `MaxSpeed`, `ClassType`, `ReplaceMobValues`",
+		"10, 'giant bull frog', '1', 0, 500, 175, 'DOL.GS.GameNPC', 1",
+		"11, 'hatchling', '2;4;3', 30, 400, 0, 'DOL.GS.GameMerchant', 1",
+		"12, 'keeper', '40', 0, 0, 0, 'DOL.GS.GameNPC', 0")
+	dumpTable(t, dir, "mob", "`Name`, `Region`, `X`, `Y`, `Z`, `Model`, `Level`, `AggroLevel`, `AggroRange`, `Speed`, `NPCTemplateID`, `ClassType`",
+		"'giant bull frog', 1, 100, 100, 0, 10, 26, 200, 500, 191, 10, 'DOL.GS.GameNPC'",
+		"'old name', 1, 110, 100, 0, 10, 3, 0, 0, 191, 11, 'DOL.GS.GameNPC'",
+		"'Keeper', 1, 120, 100, 0, 10, 50, 0, 0, 191, 12, 'DOL.GS.GameNPC'")
+	out := filepath.Join(t.TempDir(), "world.db")
+	rep, err := Run(Options{Dump: dir, Out: out})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.Replaced != 2 || rep.LevelReplaced != 1 {
+		t.Errorf("replaced %d, level replaced %d; want 2 and 1", rep.Replaced, rep.LevelReplaced)
+	}
+	db, _ := sql.Open("sqlite", out)
+	defer db.Close()
+	type row struct {
+		name, levels, class string
+		level, aggro, rng   int
+		speed               int
+	}
+	get := func(x float64) row {
+		var r row
+		if err := db.QueryRow(`SELECT name,level,COALESCE(levels,''),aggro_level,aggro_range,speed,classtype FROM spawn WHERE x=?`, x).
+			Scan(&r.name, &r.level, &r.levels, &r.aggro, &r.rng, &r.speed, &r.class); err != nil {
+			t.Fatal(err)
+		}
+		return r
+	}
+	if r := get(100); r.level != 1 || r.levels != "1" || r.aggro != 0 || r.speed != 175 {
+		t.Errorf("frog = %+v, want level 1, passive, speed 175", r)
+	}
+	if r := get(110); r.name != "hatchling" || r.level != 2 || r.levels != "2;4;3" || r.aggro != 30 || r.rng != 400 || r.speed != 191 || r.class != "DOL.GS.GameMerchant" {
+		t.Errorf("hatchling = %+v", r)
+	}
+	if r := get(120); r.name != "Keeper" || r.level != 50 || r.levels != "" {
+		t.Errorf("unmarked template changed the row: %+v", r)
+	}
+}
+
+func TestLevelList(t *testing.T) {
+	for in, want := range map[string]string{"1": "1", "13;18;16": "13;18;16", "1-3": "1;2;3", "": "", "x;5": "5", " 7 , 8": "7;8"} {
+		if got := joinLevels(LevelList(in)); got != want {
+			t.Errorf("LevelList(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

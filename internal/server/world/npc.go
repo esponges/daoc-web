@@ -52,6 +52,10 @@ type NPC struct {
 	Teaches  string  // the class a trainer teaches
 	Tether   float64
 
+	twoHanded  bool
+	damageType int
+	resists    map[int]float64
+
 	state     npcState
 	timer     float64
 	tx, ty    float64
@@ -72,10 +76,7 @@ type NPC struct {
 
 // newNPC builds a creature from its spawn row.
 func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
-	level := sp.Level
-	if level < 1 {
-		level = 1
-	}
+	level := spawnLevel(sp, rng)
 	size := sp.Size
 	if size <= 0 {
 		size = 50
@@ -107,14 +108,13 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 			damageType = t.MeleeType
 		}
 	}
-	twoHanded := false
 	for _, g := range n.Gear {
 		if g[0] == 12 { // the two-handed slot
-			twoHanded = true
+			n.twoHanded = true
 		}
 	}
-	n.cb = rules.Creature(level, n.Evade*100, n.Parry*100, n.Block*100, twoHanded, damageType, cat.Resists[sp.Race])
-	n.Swing = rules.CreatureSwing(&n.cb)
+	n.damageType, n.resists = damageType, cat.Resists[sp.Race]
+	n.setLevel(level)
 	if n.Tether < 800 || n.Tether > 6000 {
 		n.Tether = 2500
 	}
@@ -124,9 +124,27 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 	if n.Roam > 1500 {
 		n.Roam = 1500
 	}
-	n.MaxHP = rules.CreatureHP(level)
 	n.reset()
 	return n
+}
+
+// setLevel gives the creature a level and the swing, defences and health
+// that go with it.
+func (n *NPC) setLevel(level int) {
+	n.Level = level
+	n.cb = rules.Creature(level, n.Evade*100, n.Parry*100, n.Block*100, n.twoHanded, n.damageType, n.resists)
+	n.Swing = rules.CreatureSwing(&n.cb)
+	n.MaxHP = rules.CreatureHP(level)
+}
+
+// spawnLevel is the level a creature comes back at: one of its template's
+// levels, picked afresh each spawn, or its own row's level.
+func spawnLevel(sp Spawn, rng *rand.Rand) int {
+	level := sp.Level
+	if len(sp.Levels) > 0 {
+		level = sp.Levels[rng.Intn(len(sp.Levels))]
+	}
+	return max(level, 1)
 }
 
 // reset puts the creature at home, whole and calm.
@@ -211,6 +229,9 @@ func (n *NPC) update(z *Zone) {
 			n.loot, n.money = nil, 0
 		}
 		if z.now >= n.respawnAt {
+			if len(n.Spawn.Levels) > 1 {
+				n.setLevel(spawnLevel(n.Spawn, n.rng))
+			}
 			n.reset()
 		}
 		return

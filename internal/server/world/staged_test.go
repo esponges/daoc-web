@@ -3,6 +3,7 @@ package world
 import (
 	"bytes"
 	"database/sql"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
@@ -85,5 +86,28 @@ func TestSwapStaged(t *testing.T) {
 				t.Error("players.db was touched")
 			}
 		})
+	}
+}
+
+// A creature whose template lists several levels comes back at one of them
+// each time it spawns; one with no list keeps its row's level.
+func TestSpawnLevelFromTemplateList(t *testing.T) {
+	rng := rand.New(rand.NewSource(1))
+	seen := map[int]bool{}
+	for i := 0; i < 200; i++ {
+		l := spawnLevel(Spawn{Level: 13, Levels: []int{13, 18, 16}}, rng)
+		if l != 13 && l != 18 && l != 16 {
+			t.Fatalf("level %d is not in the list", l)
+		}
+		seen[l] = true
+	}
+	if len(seen) != 3 {
+		t.Errorf("levels seen %v, want all three", seen)
+	}
+	if l := spawnLevel(Spawn{Level: 26}, rng); l != 26 {
+		t.Errorf("no list: level %d, want 26", l)
+	}
+	if l := spawnLevel(Spawn{Level: 0, Levels: []int{0}}, rng); l != 1 {
+		t.Errorf("level 0 spawns at %d, want 1", l)
 	}
 }

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	_ "modernc.org/sqlite"
@@ -23,12 +25,14 @@ CREATE TABLE zone(
 CREATE TABLE npc_template(
   id INTEGER PRIMARY KEY, name TEXT, model INTEGER, size_lo INTEGER, size_hi INTEGER,
   level_lo INTEGER, level_hi INTEGER, speed INTEGER, aggro_level INTEGER, aggro_range INTEGER,
-  tether INTEGER, parry INTEGER, evade INTEGER, block INTEGER, melee_type INTEGER);
+  tether INTEGER, parry INTEGER, evade INTEGER, block INTEGER, melee_type INTEGER,
+  levels TEXT, replace_values INTEGER);
 CREATE TABLE spawn(
   id INTEGER PRIMARY KEY AUTOINCREMENT, zone INTEGER, name TEXT, guild TEXT, model INTEGER,
   x REAL, y REAL, z REAL, heading INTEGER, level INTEGER, size INTEGER, speed INTEGER,
   template INTEGER, roam INTEGER, respawn_s INTEGER, aggro_level INTEGER, aggro_range INTEGER,
-  realm INTEGER, flags INTEGER, path TEXT, brain TEXT, equip TEXT, classtype TEXT, items_list TEXT, race INTEGER);
+  realm INTEGER, flags INTEGER, path TEXT, brain TEXT, equip TEXT, classtype TEXT, items_list TEXT, race INTEGER,
+  levels TEXT);
 CREATE INDEX spawn_zone ON spawn(zone);
 CREATE TABLE merchant_stock(list TEXT, item TEXT, page INTEGER, slot INTEGER);
 CREATE INDEX merchant_stock_list ON merchant_stock(list);
@@ -87,6 +91,47 @@ type Report struct {
 	MerchantsKept  int               // of those, the ones that became spawns
 	Missing        []string          // required tables absent or empty
 	Staged         string            // where the store was left when Out was in use, else ""
+	Replaced       int               // spawns whose template replaces the row's values
+	LevelReplaced  int               // of those, the ones whose own level is not in the template's list
+}
+
+// tmplValues are what a template marked ReplaceMobValues puts in place of a
+// spawn row's own values.
+type tmplValues struct {
+	name, classType                      string
+	levels                               []int
+	aggroLevel, aggroRange, speed, flags int
+}
+
+// LevelList reads a template's level column: one level, a list ("13;18;16")
+// or a range ("1-3"), in any mix. Anything unreadable is skipped.
+func LevelList(s string) []int {
+	var out []int
+	for _, p := range strings.FieldsFunc(s, func(r rune) bool { return r == ';' || r == ',' }) {
+		p = strings.TrimSpace(p)
+		if a, b, ok := strings.Cut(p, "-"); ok && a != "" {
+			lo, e1 := strconv.Atoi(strings.TrimSpace(a))
+			hi, e2 := strconv.Atoi(strings.TrimSpace(b))
+			if e1 == nil && e2 == nil && lo <= hi && hi-lo < 100 {
+				for l := lo; l <= hi; l++ {
+					out = append(out, l)
+				}
+			}
+			continue
+		}
+		if v, err := strconv.Atoi(p); err == nil {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+func joinLevels(l []int) string {
+	s := make([]string, len(l))
+	for i, v := range l {
+		s[i] = strconv.Itoa(v)
+	}
+	return strings.Join(s, ";")
 }
 
 type zoneRow struct {
@@ -222,17 +267,31 @@ func build(o Options) (*Report, error) {
 
 	// --- templates ---
 	tmplEquip := map[int]string{} // npc template id -> equipment template id
+	replaces := map[int]tmplValues{}
 	if err := read("npctemplate", func(r *Row) (bool, error) {
+		id := r.Int("TemplateId")
 		sl, sh := r.Range("Size")
-		ll, lh := r.Range("Level")
+		levels := LevelList(r.Str("Level"))
+		ll, lh := 0, 0
+		if len(levels) > 0 {
+			ll, lh = slices.Min(levels), slices.Max(levels)
+		}
 		ml, _ := r.Range("Model")
 		if e := r.Str("EquipmentTemplateID"); e != "" {
-			tmplEquip[r.Int("TemplateId")] = e
+			tmplEquip[id] = e
 		}
-		return true, ins(`INSERT OR REPLACE INTO npc_template VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-			r.Int("TemplateId"), r.Str("Name"), ml, sl, sh, ll, lh, r.Int("MaxSpeed"),
+		replace := r.Int("ReplaceMobValues") != 0
+		if replace {
+			replaces[id] = tmplValues{name: r.Str("Name"), levels: levels, aggroLevel: r.Int("AggroLevel"), aggroRange: r.Int("AggroRange"),
+				speed: r.Int("MaxSpeed"), flags: r.Int("Flags"), classType: r.Str("ClassType")}
+		} else {
+			delete(replaces, id)
+		}
+		return true, ins(`INSERT OR REPLACE INTO npc_template VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+			id, r.Str("Name"), ml, sl, sh, ll, lh, r.Int("MaxSpeed"),
 			r.Int("AggroLevel"), r.Int("AggroRange"), r.Int("TetherRange"),
-			r.Int("ParryChance"), r.Int("EvadeChance"), r.Int("BlockChance"), r.Int("MeleeDamageType"))
+			r.Int("ParryChance"), r.Int("EvadeChance"), r.Int("BlockChance"), r.Int("MeleeDamageType"),
+			joinLevels(levels), replace)
 	}); err != nil {
 		return nil, err
 	}
@@ -265,6 +324,31 @@ func build(o Options) (*Report, error) {
 	}
 	if err := read("mob", func(r *Row) (bool, error) {
 		classType := r.Str("ClassType")
+		name, level, levels := r.Str("Name"), r.Int("Level"), ""
+		aggroLevel, aggroRange, speed, flags := r.Int("AggroLevel"), r.Int("AggroRange"), r.Int("Speed"), r.Int("Flags")
+		replaced, outside := false, false
+		// A template marked to replace mob values overrides the row, as the
+		// emulator this data is kept for loads it: the level is then picked
+		// from the template's list each time the creature spawns.
+		if t, ok := replaces[r.Int("NPCTemplateID")]; ok {
+			replaced = true
+			if t.name != "" {
+				name = t.name
+			}
+			if len(t.levels) > 0 {
+				if !slices.Contains(t.levels, level) {
+					outside = true
+				}
+				level, levels = slices.Min(t.levels), joinLevels(t.levels)
+			}
+			aggroLevel, aggroRange, flags = t.aggroLevel, t.aggroRange, t.flags
+			if t.speed > 0 {
+				speed = t.speed
+			}
+			if t.classType != "" && t.classType != "DOL.GS.GameNPC" {
+				classType = t.classType
+			}
+		}
 		merchant := IsMerchantClass(classType)
 		if merchant {
 			rep.MerchantsSeen++
@@ -300,12 +384,18 @@ func build(o Options) (*Report, error) {
 		if merchant {
 			rep.MerchantsKept++
 		}
-		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list,race)
-			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-			z.id, r.Str("Name"), r.Str("Guild"), model, lx, ly, zz, r.Int("Heading"), r.Int("Level"), r.Int("Size"),
-			r.Int("Speed"), r.Int("NPCTemplateID"), r.Int("RoamingRange"), r.Int("RespawnInterval"),
-			r.Int("AggroLevel"), r.Int("AggroRange"), r.Int("Realm"), r.Int("Flags"), r.Str("PathID"), r.Str("Brain"), equip,
-			classType, r.Str("ItemsListTemplateID"), r.Int("Race"))
+		if replaced {
+			rep.Replaced++
+		}
+		if outside {
+			rep.LevelReplaced++
+		}
+		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list,race,levels)
+			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+			z.id, name, r.Str("Guild"), model, lx, ly, zz, r.Int("Heading"), level, r.Int("Size"),
+			speed, r.Int("NPCTemplateID"), r.Int("RoamingRange"), r.Int("RespawnInterval"),
+			aggroLevel, aggroRange, r.Int("Realm"), flags, r.Str("PathID"), r.Str("Brain"), equip,
+			classType, r.Str("ItemsListTemplateID"), r.Int("Race"), levels)
 	}); err != nil {
 		return nil, err
 	}

@@ -17,6 +17,21 @@ When `world.db` is held by a running server, the importer SHALL write the new st
 - **WHEN** `world.db.next` is truncated
 - **THEN** the server starts on the old `world.db`, leaves the staged file, and logs why it was refused
 
+### Requirement: A template that replaces mob values wins
+When a spawn's template is marked `ReplaceMobValues`, the importer SHALL take the spawn's name, aggro level and range, flags, speed (when set) and class type (when not the plain NPC) from the template, and keep the template's level list. The server SHALL pick one of those levels each time the creature spawns. Model, size and equipment stay the spawn's. The import SHALL print how many spawns were replaced. Status: reference (OpenDAoC-Core loads its data this way).
+
+#### Scenario: A row the template corrects
+- **WHEN** a spawn row says level 26 and aggressive, and its marked template says level `1` and aggro 0
+- **THEN** the stored spawn is level 1 and passive, and is counted as having a level outside the template's
+
+#### Scenario: A level list
+- **WHEN** a marked template's level is `2;4;3`
+- **THEN** the spawn keeps that list, and each time it spawns its level is one of 2, 3 and 4
+
+#### Scenario: An unmarked template
+- **WHEN** a spawn's template is not marked
+- **THEN** the spawn's own name, level and aggression are kept
+
 ### Requirement: Spells and their links are imported
 The importer SHALL store the spells that any kept NPC template, style or item names, with their type, target, range, cast time, recast delay, damage, damage type, value, duration, frequency, life-drain return, sub-spell and uninterruptible flag. It SHALL also store each template's spell list, the style-spell table, and each item's proc spell and proc chance. It SHALL print read and kept counts for each.
 

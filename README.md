@@ -1314,9 +1314,10 @@ list comes from an import that keeps them all (`-all-models`, into a scratch
 server still starts, with every converted zone empty. A few models do not
 convert (skeletons, composites) and their creatures are left out.
 
-Log in at `/login.html`, make a character (a Troll Warrior starts in Myrkwood
-Forest, a Norse Warrior in Svealand, as the data says) and press Play. Two
-browsers, two characters: each sees the other walk, fight and talk.
+Log in at `/login.html`, make a character (a Troll Warrior starts in Galplen
+in Myrkwood Forest, a Norse Warrior in Vasudheim in East Svealand, as the data
+and ZAM's starting-zones table agree) and press Play. Two browsers, two
+characters: each sees the other walk, fight and talk.
 
 **Settings** come from flags, the environment, or `server/data/server.env`
 (`KEY=VALUE` lines; the directory is gitignored). The server refuses to start
@@ -1450,6 +1451,15 @@ start locations and bind points. A spawn is dropped if it is in no zone, uses
 a model with no converted character (`web/data/char/m<N>`), or sits more than
 500 units from the derived ground; the counts are printed.
 
+Almost every spawn names an NPC template marked `ReplaceMobValues`, and the
+emulator the data is kept for lets such a template overwrite the spawn row.
+The importer does the same: the spawn takes the template's name, aggression,
+flags, speed, class type and level list, and the server picks one of those
+levels each time the creature spawns. Model, size and equipment stay the
+row's. Ignoring the mark left thousands of creatures at the wrong level, such
+as level 26 aggressive frogs beside the Galplen start that the template makes
+level 1 and passive.
+
 ### The rule book
 
 The aim is classic 1.65 Midgard as a public server played it. Each mechanic the
@@ -1493,6 +1503,9 @@ Sources the rules come from:
   (silicondragon.com's "XPs" page, now only in archives).
 - Mythic's description of con colour bands ("level divided by ten plus one"),
   reposted in a group experience explainer.
+- ZAM's [starting-zones table](https://camelot.allakhazam.com/Start_Zones.html)
+  (Shrouded Isles and Trials of Atlantis era): the town each Midgard race and
+  base class starts in. The imported start rows agree with it.
 - [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
   understand rules that no public page gives a number for. Nothing is copied
   from it.

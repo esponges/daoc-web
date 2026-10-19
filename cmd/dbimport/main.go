@@ -70,6 +70,7 @@ func main() {
 	if rep.UnknownEquip > 0 {
 		fmt.Printf("%d spawns name an equipment template with no rows; imported without gear\n", rep.UnknownEquip)
 	}
+	fmt.Printf("%d spawns take their values from a template that replaces them; %d of those had a level outside the template's\n", rep.Replaced, rep.LevelReplaced)
 	fmt.Printf("merchants: %d in the dump, %d kept (the rest lack a zone, ground or model)\n", rep.MerchantsSeen, rep.MerchantsKept)
 	if n := len(rep.DroppedModel); n > 0 {
 		type kv struct{ m, c int }

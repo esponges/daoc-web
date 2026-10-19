@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"daocweb/internal/importer"
 	"daocweb/internal/server/rules"
 
 	_ "modernc.org/sqlite"
@@ -105,6 +106,7 @@ type Spawn struct {
 	ClassType  string // the community class type, "" when the store predates it
 	ItemsList  string // merchant stock list id, "" for none
 	Race       int    // the race table row its resists come from, 0 for none
+	Levels     []int  // the levels it may spawn at, from a template that replaces the row; nil uses Level
 }
 
 // Template is the optional fixed stats of an NPC kind.
@@ -184,6 +186,7 @@ type Catalog struct {
 	Stock      map[string][]string     // merchant list id -> item ids, in page then slot order
 	hasShops   bool                    // spawn.classtype and merchant_stock exist (a world.db imported before merchants lacks them)
 	hasRules   bool                    // item bonuses, races and abilities exist (a world.db imported before the rule book lacks them)
+	hasLevels  bool                    // spawn.levels exists (a world.db imported before templates were honoured lacks it)
 	Resists    map[int]map[int]float64 // race -> damage type -> percent
 	ClassSpecs map[int][]string        // class -> its spec and career keys
 	SpecNames  map[string]string       // spec key -> name
@@ -243,6 +246,9 @@ func LoadCatalog(path string) (*Catalog, error) {
 	var ruleParts int
 	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND (name IN ('item_bonus','spec_ability') OR (name='item' AND sql LIKE '%max_condition%') OR (name='spawn' AND sql LIKE '%race INTEGER%'))`).Scan(&ruleParts)
 	c.hasRules = ruleParts == 4
+	var levelCols int
+	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND name='spawn' AND sql LIKE '%levels TEXT%'`).Scan(&levelCols)
+	c.hasLevels = levelCols == 1
 	itemCols := "0,100,1"
 	if c.hasRules {
 		itemCols = "COALESCE(bonus,0),COALESCE(condition,0),COALESCE(max_condition,0)"
@@ -379,7 +385,11 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	if c.hasRules {
 		race = "COALESCE(race,0)"
 	}
-	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,`+equip+`,`+shop+`,`+race+` FROM spawn WHERE zone=?`, zone)
+	levels := "''"
+	if c.hasLevels {
+		levels = "COALESCE(levels,'')"
+	}
+	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,`+equip+`,`+shop+`,`+race+`,`+levels+` FROM spawn WHERE zone=?`, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -387,9 +397,11 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	var out []Spawn
 	for rows.Next() {
 		s := Spawn{}
-		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags, &s.Equip, &s.ClassType, &s.ItemsList, &s.Race); err != nil {
+		var levels string
+		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags, &s.Equip, &s.ClassType, &s.ItemsList, &s.Race, &levels); err != nil {
 			return nil, err
 		}
+		s.Levels = importer.LevelList(levels)
 		out = append(out, s)
 	}
 	return out, rows.Err()
