@@ -12,6 +12,7 @@ import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
+import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -85,8 +86,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const say = (text, cls = '') => chatApi.say(text, cls);
   const openChat = (prefill = '') => chatApi.open(prefill);
   net.on.chat = (m) => {
-    if (m.ch === 'sys') say(m.text, 'sys');
-    else say((m.ch === 'all' ? '[shout] ' : '') + m.from + ': ' + m.text, m.ch === 'all' ? 'all' : '');
+    const l = chatLine(m);
+    say(l.text, l.kind);
   };
   net.on.err = (m) => { say(m.text, 'err'); if (!stock) log?.(m.text, 'info'); };
 
@@ -99,7 +100,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     root.appendChild(summary.el);
     // The menu bar across the top carries the experience and the money, so
     // the separate experience window is not needed.
-    menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); } });
+    menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); } });
     Object.assign(menuBar.el.style, { position: 'fixed', left: '50%', top: '0px', marginLeft: '-400px', zIndex: 12 });
     root.appendChild(menuBar.el);
     summary.el.style.top = '34px';
@@ -344,6 +345,37 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   };
   net.on.healer = renderHealer;
 
+  // --- group ---
+  // The stock group window and invitation when the interface is there, plain
+  // panels when not. INVITE asks for the targeted player, or opens the chat
+  // with /invite to type a name.
+  const groupHandlers = {
+    onInvite: () => {
+      const t = getTarget ? getTarget() : null;
+      if (t && t.isPlayer) net.groupOp('invite', { id: t.id });
+      else openChat('/invite ');
+    },
+    onDisband: () => net.groupOp('leave'),
+  };
+  const groupWin = stock ? createStockGroup(document, stock, groupHandlers) : createPlainGroup(document, groupHandlers);
+  if (stock) Object.assign(groupWin.el.style, { position: 'fixed', left: '12px', top: '80px', zIndex: 14 });
+  root.appendChild(groupWin.el);
+  const invite = createInvitePrompt(document, stock, {
+    onAccept: () => net.groupOp('accept'),
+    onDecline: () => net.groupOp('decline'),
+  });
+  if (stock) Object.assign(invite.el.style, { position: 'fixed', left: '50%', top: '30%', marginLeft: '-130px', zIndex: 18 });
+  root.appendChild(invite.el);
+  let grouped = false;
+  net.on.group = (members) => {
+    groupWin.update(members);
+    // Joining a group brings its window up; leaving one puts it away.
+    if (!!members.length !== grouped) groupWin.toggle(members.length > 0);
+    grouped = members.length > 0;
+  };
+  net.on.groupinv = (m) => invite.show(m.from, m.secs);
+  const toggleGroup = () => { groupWin.update(net.group); groupWin.toggle(); };
+
   // --- death ---
   const dead = el('div', 'death', 'You have died.');
   root.appendChild(dead);
@@ -408,5 +440,5 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
 
   // The compass follows the camera; the viewer gives its heading each frame.
   const setHeading = (deg) => { if (compassWin) compassWin.setHeading(deg); };
-  return { update, setHeading, key, say, get typing() { return chatApi.typing; }, renderLoot, togglePack, toggleSheet };
+  return { update, setHeading, key, say, get typing() { return chatApi.typing; }, renderLoot, togglePack, toggleSheet, toggleGroup };
 }

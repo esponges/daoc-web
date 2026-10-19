@@ -57,3 +57,13 @@ The scratch server (port 8788, a store imported with spells) and a Troll Warrior
 - **Found and fixed: arachites were invisible.** The client refused to draw models with more than 52 bones on a shape. 16 converted creature models need more (the arachites' m404–m407 need 58–64, the largest 77), so those creatures fought and cast unseen and could not be targeted. The limit is now 80 bones, which still fits the 256 vertex uniform vectors every WebGL2 device has. After a reload the arachite priests and weblashers draw, and Tab targets them.
 - A character raised to level 30 or 50 still carries the level 1 kit, so it hits for 6–10 and takes 56–85 a blow from level 15–16 creatures. That is the gear, not the rules.
 - Line of sight is not checked for spells (README, Known limitations).
+
+## 9.5 Groups and chat, in the browser (2026-10-19)
+
+Two clients on the scratch server, Partyleader and Groupmate, both Troll Warriors.
+
+- **Stock interface.** Partyleader clicked Groupmate ("You target Groupmate.", the summary showing the name), opened GROUP on the menu bar and pressed INVITE. Groupmate saw the invitation on the stock dialog frame and pressed ACCEPT; "You have joined Partyleader's group." and the stock group window opened on both, listing "*Partyleader" and "Groupmate" with class, level and full bars. With Groupmate fighting svartalfs in Myrkwood, Partyleader's bar for them read 29%, then empty (dead), then full after the release. Groupmate's window showed Partyleader as "in Myrkwood Forest", 6,000 units being exceeded.
+- `/g pull now` showed as `[Group] Partyleader: "pull now"` in teal on both, and alone on the Group tab. A tell showed as `You send, "meet at the bridge" to Groupmate.` and `Partyleader sends, "meet at the bridge"` in pink; `/tell Nobody hello` gave "Nobody is not in the game." `/disband` from Groupmate gave "You leave the group." and "Groupmate has left the group. Your group has disbanded.", and both windows closed. DECLINE gave the inviter "Groupmate declines your invitation."
+- **Without `web/data/ui/`.** `/invite groupmate` brought up the plain prompt, Accept opened the plain group panel on both ("★ Partyleader 1 Warrior", "Groupmate 20 Warrior", red health bars), and `/g`, a tell and `/disband` read and coloured the same in the plain chat.
+- **`new_group` is not an invitation.** The layout's `new_group` window holds eight health bars bound to `group_health0`–`7`, a compact group list. The invitation is drawn on the stock `dlg_sm_title_noresize` frame with `button_large` ACCEPT and DECLINE; the `groups` spec now says so.
+- FIND, SET LFG, BENEFITS, ASSIST, FOLLOW, STICK, FACE, CGF, OPTIONS and the window's own WARMAP and MAP buttons are greyed: nothing is behind them.

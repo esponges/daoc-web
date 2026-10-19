@@ -55,7 +55,7 @@ Each member SHALL receive, for every other member, their name, level, class, hea
 - **THEN** they stay in the group, and the others see them as out of range with the zone named
 
 ### Requirement: The group window
-The client SHALL show the group in the stock group window (`StatsGroup`, and `MiniGroup` when minimised), with an invitation dialog from `new_group`. Without converted UI data it SHALL show a plain group panel with the same information.
+The client SHALL show the group in the stock group window (`StatsGroup`, and `MiniGroup` when minimised), with the invitation drawn on the stock dialog frame with stock buttons. (`new_group`, first named for the invitation, is a compact list of members' health bars, not a dialog.) Without converted UI data it SHALL show a plain group panel with the same information.
 
 #### Scenario: Stock window
 - **WHEN** a player in a group presses GROUP on the menu bar

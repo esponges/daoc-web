@@ -49,6 +49,7 @@ export class NetClient {
     this.sent = 0;             // steps sent so far
     this.history = [];         // steps sent and not yet acknowledged: { seq, k }
     this.effects = { list: [], at: 0 }; // our lasting spells, as last sent, and when
+    this.group = []; // our group, leader first, as last sent; empty when not grouped
     this.slow = 0;             // the share of speed they take away; 1 is held
     this.pendingRuns = [];     // runs not yet sent
     this.pendingSteps = 0;
@@ -90,6 +91,8 @@ export class NetClient {
   train(spec, n = 1) { this._send({ t: 'train', spec, n }); }
   restore(npc) { this._send({ t: 'restore', npc }); }
   pray() { this._send({ t: 'pray' }); }
+  // groupOp asks for a group change: invite (by id or name), accept, decline, leave, remove (by name).
+  groupOp(op, { id = 0, name = '' } = {}) { this._send({ t: 'groupop', op, ...(id ? { id } : {}), ...(name ? { name } : {}) }); }
   chat(ch, text) { this._send({ t: 'chat', ch, text }); }
   gm(line) { this._send({ t: 'gm', line }); }
   ping() { this._send({ t: 'ping' }); }
@@ -117,6 +120,8 @@ export class NetClient {
       case 'stats': this.stats = m; this.on.stats?.(m); break;
       case 'trainer': this.trainer = m; this.on.trainer?.(m); break;
       case 'healer': this.healer = m; this.on.healer?.(m); break;
+      case 'group': this.group = m.members || []; this.on.group?.(this.group); break;
+      case 'groupinv': this.on.groupinv?.(m); break;
       case 'effects':
         // Our lasting spells, and the speed they leave: prediction steps at
         // that factor from now on, as the server does.

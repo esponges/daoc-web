@@ -4,13 +4,13 @@
 import { buildWindow } from './uiwin.js';
 import { coins } from './pack.js';
 
-// What the menu bar's buttons do. Only the inventory has a window to open;
-// the rest are drawn greyed.
-const MENU_EVENTS = { ToggleStatsInventory: 'inventory' };
+// What the menu bar's buttons do. The inventory and the group have windows
+// to open; the rest are drawn greyed.
+const MENU_EVENTS = { ToggleStatsInventory: 'inventory', ToggleStatsGroup: 'group' };
 
 // createStockMenuBar builds the stock menu bar: the experience bubbles and
 // bar, the money, and the row of window buttons.
-//   onAction(name)  a button that has a window was pressed ("inventory")
+//   onAction(name)  a button that has a window was pressed ("inventory", "group")
 // update(me, money) takes the server's vitals (xp, xpNext) and the money in copper.
 export function createStockMenuBar(doc, data, { onAction } = {}) {
   const win = buildWindow(doc, data, 'menu_bar', {

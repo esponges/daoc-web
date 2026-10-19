@@ -329,30 +329,60 @@ export function registerFonts(doc, data) {
 // button builds a ButtonTemplate: a sprite with normal, highlit, pressed and
 // disabled looks that follows the pointer. It reports a click when released
 // over itself.
-export function button(doc, data, tplName, x, y, onClick) {
+export function button(doc, data, tplName, x, y, onClick, label = '') {
   const tpl = data.tpl('ButtonTemplate', tplName);
   const size = (tpl && pt(tpl, 'Size')) || { x: 0, y: 0 };
   const e = box(doc, x, y, size.x, size.y);
   e.style.cursor = 'pointer';
   const tn = tpl && child(tpl, 'Texture');
+  // A labelled button writes its label in the template's font and state colours.
+  const font = tpl && child(tpl, 'Font');
+  const fontName = font ? str(font, 'Name') : 'arial9';
+  const colors = {
+    Normal: rgba(child(font, 'ColorNormal')) || 'rgb(192,192,192)',
+    Pressed: rgba(child(font, 'ColorPressed')) || 'rgb(255,192,0)',
+    Highlit: rgba(child(font, 'ColorHighlit')) || 'rgb(255,255,255)',
+    Disabled: rgba(child(font, 'ColorDisabled')) || 'rgb(128,128,128)',
+  };
+  const labelBox = box(doc, 0, 0, size.x, size.y);
+  labelBox.style.pointerEvents = 'none';
+  let over = false, down = false, disabled = false;
   const look = (state) => {
     const p = tn && (pt(tn, state) || pt(tn, 'Normal'));
-    if (!p) return;
-    paint(e, data, { tex: str(tn, 'TextureName'), sx: p.x, sy: p.y, sw: size.x, sh: size.y, dw: size.x, dh: size.y });
+    if (p) paint(e, data, { tex: str(tn, 'TextureName'), sx: p.x, sy: p.y, sw: size.x, sh: size.y, dw: size.x, dh: size.y });
+    if (!label) return;
+    labelBox.textContent = '';
+    const t = text(doc, data, fontName, label, colors[disabled ? 'Disabled' : down ? 'Pressed' : over ? 'Highlit' : 'Normal']);
+    const bf = data.bitmapFont(fontName);
+    if (bf) {
+      t.style.left = px(Math.max(0, (size.x - layoutText(bf, label).width) / 2));
+      t.style.top = px(Math.max(0, (size.y - bf.h) / 2));
+    } else {
+      Object.assign(t.style, { left: '0px', width: px(size.x), textAlign: 'center' });
+    }
+    labelBox.appendChild(t);
   };
-  let over = false, down = false;
-  const refresh = () => look(down ? (over ? 'PressedHighlit' : 'Pressed') : over ? 'NormalHighlit' : 'Normal');
+  if (label) e.appendChild(labelBox);
+  const refresh = () => look(disabled ? 'Normal' : down ? (over ? 'PressedHighlit' : 'Pressed') : over ? 'NormalHighlit' : 'Normal');
   e.addEventListener('pointerenter', () => ((over = true), refresh()));
   e.addEventListener('pointerleave', () => ((over = false), refresh()));
-  e.addEventListener('pointerdown', () => ((down = true), refresh()));
+  e.addEventListener('pointerdown', () => {
+    if (!disabled) ((down = true), refresh());
+  });
   e.addEventListener('pointerup', () => {
-    const click = down && over;
+    const click = down && over && !disabled;
     down = false;
     refresh();
     if (click && onClick) onClick();
   });
   refresh();
   e.look = look;
+  // disable greys a labelled button and stops its clicks.
+  e.disable = (on = true) => {
+    disabled = on;
+    e.style.cursor = on ? 'default' : 'pointer';
+    refresh();
+  };
   return e;
 }
 
@@ -597,10 +627,13 @@ export function buildWindow(doc, data, id, opts = {}) {
   // Controls bound to an adapter, the stock name for a live value: bars take
   // a fraction, labels take text.
   const bars = new Map(), labels = new Map(), buttons = new Map();
+  // Every bar in layout order: some windows (the group's) leave them unnamed.
+  let barList = [];
   let compasses = [];
   const win = {
     el: root, ctl, width: baseW, height: baseH, resize,
     setBar(name, f) { (bars.get(name) || []).forEach((b) => b.set(f)); },
+    setBarAt(i, f) { if (barList[i]) barList[i].set(f); },
     setText(name, v, color) { (labels.get(name) || []).forEach((l) => l.set(v, color)); },
     has(name) { return bars.has(name) || labels.has(name); },
     button(event) { return buttons.get(event); },
@@ -622,6 +655,7 @@ export function buildWindow(doc, data, id, opts = {}) {
     bars.clear();
     labels.clear();
     buttons.clear();
+    barList = [];
     compasses = [];
     populate();
   }
@@ -652,9 +686,16 @@ export function buildWindow(doc, data, id, opts = {}) {
           el.dataset.linePadding = num(c, 'LinePadding');
           break;
         }
-        case 'ButtonDef':
-          el = button(doc, data, str(c, 'TemplateName'), r.x, r.y, opts.onClick && (() => opts.onClick(str(c, 'ControlId'))));
+        case 'ButtonDef': {
+          const id = str(c, 'ControlId');
+          const ev = str(c, 'OnClickEvent') || str(c, 'onClickEvent');
+          // Labels are drawn only for windows that ask (opts.labels): older
+          // windows' buttons carry theirs in the art.
+          const label = opts.labels ? str(c, 'Label') : '';
+          el = button(doc, data, str(c, 'TemplateName'), r.x, r.y, opts.onClick && (() => opts.onClick(id, ev)), label);
+          if (opts.disabled && label && opts.disabled(ev || id, id)) el.disable();
           break;
+        }
         case 'ImageAreaDef':
           el = sprite(doc, data, str(c, 'TemplateName') || str(c, 'ImageAreaTemplateName'), r.x, r.y);
           break;
@@ -699,6 +740,7 @@ export function buildWindow(doc, data, id, opts = {}) {
           el.style.left = px(r.x);
           el.style.top = px(r.y);
           bind(bars, str(c, 'AdapterName'), sb);
+          barList.push(sb);
           break;
         }
         default:

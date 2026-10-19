@@ -12,10 +12,13 @@ const LINE_COLOR = {
   info: '#cfd8e3', hit: '#ffd76a', 'hit-in': '#ff8a7a', miss: '#9aa8b6', 'miss-in': '#9aa8b6',
   kill: '#8fe39a', death: '#ff5a5a', block: '#8fc7ff', xp: '#c9a6ff', level: '#ffe066',
   spell: '#c9a8ff', 'spell-in': '#ff9ad0', heal: '#8fe39a',
+  // Tells and the group channel.
+  tell: '#ff8cff', group: '#7fe0e0',
 };
 // Lines people write; everything else is a game message. The Chat tab shows
-// only the first kind, Main shows both.
-const SPEECH_KINDS = new Set(['', 'all']);
+// only the first kind, Main shows both, and Group only the group channel.
+const SPEECH_KINDS = new Set(['', 'all', 'tell', 'group']);
+const TAB_KINDS = { main: null, chat: SPEECH_KINDS, group: new Set(['group']) };
 
 // createStockChat builds the stock chat window: lines in its text area and an
 // entry bar that shows while typing. size is the window's width and height.
@@ -110,7 +113,7 @@ export function createStockChat(doc, data, { onSend, onToggle, width = 400, heig
   // Every line is kept; the tab picks which are shown.
   const buffer = [];
   let tab = 'main';
-  const shown = (e) => tab === 'main' || SPEECH_KINDS.has(e.kind);
+  const shown = (e) => !TAB_KINDS[tab] || TAB_KINDS[tab].has(e.kind);
   const lineEl = (e) => {
     const l = doc.createElement('div');
     l.textContent = e.text;
@@ -132,7 +135,7 @@ export function createStockChat(doc, data, { onSend, onToggle, width = 400, heig
 
   // Tabs along the top, drawn with the stock tab button.
   const tabButtons = [];
-  [['main', 'Main'], ['chat', 'Chat']].forEach(([id, label], i) => {
+  [['main', 'Main'], ['chat', 'Chat'], ['group', 'Group']].forEach(([id, label], i) => {
     const b = hrButton(doc, data, 'tab_button', label, 44, () => {
       tab = id;
       tabButtons.forEach((t) => t.select(t === b));

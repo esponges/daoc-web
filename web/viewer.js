@@ -1059,6 +1059,10 @@ async function main() {
       const corpses = remote.pickables.filter((v) => v.dead).map((v) => Object.create(v, { dead: { value: false } }));
       const c = pickNPC(corpses, view.eye, dir, groundAt);
       if (c) { net.target(c.id); return; }
+      // Another player can be clicked to target them, to invite them.
+      const others = [...remote.views.values()].filter((v) => v.isPlayer && v.anim && !v.dead);
+      const o = pickNPC(others, view.eye, dir, groundAt);
+      if (o) { net.target(o.id); log('You target ' + o.name + '.', 'info'); return; }
     }
     if (hit && hit !== combat.target) {
       combat.select(hit);

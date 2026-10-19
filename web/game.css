@@ -6,6 +6,8 @@
 .game-ui .chat .lines .sys { color: #9fd0ff; }
 .game-ui .chat .lines .all { color: #ffd76a; }
 .game-ui .chat .lines .err { color: #ff9a8a; }
+.game-ui .chat .lines .tell { color: #ff8cff; }
+.game-ui .chat .lines .group { color: #7fe0e0; }
 .game-ui .chat .line { display: none; width: 100%; margin-top: 4px; font: inherit; color: #fff;
   background: rgba(8,14,22,.85); border: 1px solid rgba(120,170,220,.5); border-radius: 5px; padding: 4px 7px; }
 .game-ui .chat.open .line { display: block; }
@@ -57,6 +59,12 @@
 .trainer .row small { color: #6f8ba6; }
 .healer { left: 50%; top: 24%; transform: translateX(-50%); width: 300px; }
 .sheet button, .trainer button, .healer button { margin: 6px 6px 0 0; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }
+.group { left: 16px; top: 34%; width: 260px; }
+.group .member { margin-bottom: 5px; }
+.group .member.off { color: #6f8ba6; }
+.group .bar i { background: #e05252; }
+.invite { left: 50%; top: 30%; transform: translateX(-50%); width: 260px; z-index: 18; }
+.group button, .invite button { margin: 6px 6px 0 0; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }
 .label.grave { pointer-events: auto; cursor: pointer; color: #d8d0c0; }
 .death { position: fixed; inset: 0; z-index: 13; display: none; place-content: center; text-align: center; font-size: 28px; color: #ff6a6a;
   background: rgba(40,0,0,.35); text-shadow: 0 2px 6px #000; pointer-events: none; }

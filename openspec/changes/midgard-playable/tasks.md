@@ -68,7 +68,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 - [x] 9.2 Send each member the group state once a second (name, level, class, health, endurance, zone, in range), to members only. Verify with a protocol test and a world test that a non-member receives none of it.
 - [x] 9.3 Write the group experience rules (one damager, split by level among members in range, per-member cap, grey by the highest member in range) and register them as provisional. Verify with each new `rules-experience` scenario as a table test and a world test of a group kill.
 - [x] 9.4 Add `/send`, `/tell` and `/g`, with channels on chat lines, the rate limit, and "not in the game". Verify with world tests for each `chat-channels` scenario.
-- [ ] 9.5 Build the group window from `StatsGroup`/`MiniGroup`, the invitation from `new_group`, and the chat channel colours and Group tab, with plain fallbacks. Verify with node tests of the group view, and in the browser with two clients: invite, accept, see health drop, `/g`, a tell, leave. Repeat with `web/data/ui/` moved aside.
+- [x] 9.5 Build the group window from `StatsGroup`/`MiniGroup`, the invitation from `new_group`, and the chat channel colours and Group tab, with plain fallbacks. Verify with node tests of the group view, and in the browser with two clients: invite, accept, see health drop, `/g`, a tell, leave. Repeat with `web/data/ui/` moved aside.
 
 ## 10. Tier 2: Warrior abilities
 

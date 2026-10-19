@@ -1429,9 +1429,19 @@ interpolated.
 - **Binding.** A character is bound at their start, and `/bind` beside a
   bindstone of their realm binds them there. A character saved before binding
   is bound at the bindstone nearest to where they first log in.
+- **Groups and chat.** Up to eight players of one realm group: invite a
+  targeted player (click them) or `/invite <name>`, and the invited one
+  accepts or declines (an invitation lapses in 60 seconds). The leader alone
+  invites and `/remove`s; `/disband` leaves; when the leader leaves, the
+  first to join leads. A member stays grouped across zones, and leaves on
+  logging out. Members see each other's health, endurance and zone in the
+  stock group window (GROUP on the menu bar; MINI for the small one), or a
+  plain panel without the converted interface. `/send` or `/tell <name>`
+  reaches one player in any zone, `/g` the group; tells are pink and group
+  lines teal, and the chat window's Group tab shows only the group.
 
 Keys in network mode: `W/S/A/D/Q/E` and the mouse as before, `Enter` to talk
-(`!` to shout, `/who`, `/pray`, `/bind`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
+(`!` to shout, `/who`, `/pray`, `/bind`, `/invite`, `/disband`, `/tell`, `/g`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
 usable), `I` the pack, `C` the character sheet (`Shift+C` the free camera), a
 click on a corpse to loot it, a right-click on a merchant, trainer or healer. Administrators: `/gm goto
 103`, `/gm tp x y`, `/gm level n`, `/gm give <item id>`.
