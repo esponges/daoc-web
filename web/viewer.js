@@ -24,6 +24,7 @@ import { createRemote, eventAnim } from './remote.js';
 import { candidates } from './race.js';
 import { createUI, conColor } from './ui.js';
 import { eventLine, conColour } from './sheet.js';
+import { effectRows, effectChangeLines, spellLine } from './effects.js';
 import { loadUI, registerFonts } from './uiwin.js';
 
 // The game's typeface for page text (the zone picker, names over heads), when
@@ -890,6 +891,31 @@ async function main() {
     ui = createUI(net, { log, stock, getTarget: () => combat.target });
     if (stock) { chatOut = (t, k) => ui.say(t, k); logEl.style.display = 'none'; }
     log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack, ` shows developer info.', 'info');
+    // Lasting spells: a row of badges by kind under the vitals, counting down,
+    // and a line when a hold or slow begins or ends.
+    const fxEl = document.createElement('div');
+    fxEl.id = 'effects';
+    document.body.appendChild(fxEl);
+    let lastFx = { list: [] };
+    const drawFx = () => {
+      fxEl.replaceChildren(...effectRows(net.effects, net.now()).map((r) => {
+        const b = document.createElement('div');
+        b.className = 'fx';
+        b.title = r.title;
+        b.style.background = r.colour;
+        b.textContent = r.label;
+        const t = document.createElement('span');
+        t.textContent = r.text;
+        b.append(t);
+        return b;
+      }));
+    };
+    net.on.effects = (fx) => {
+      for (const l of effectChangeLines(lastFx, fx)) log(l.text, l.cls);
+      lastFx = fx;
+      drawFx();
+    };
+    setInterval(drawFx, 250);
   }
   const ring = combat ? createRing(gl, { program, uniforms }) : null;
 
@@ -1135,6 +1161,11 @@ async function main() {
         case 'xp': if (toMe) log('You gain ' + ev.n + ' experience points.', 'xp'); break;
         case 'level': if (toMe) log(ev.x, 'level'); break;
         case 'loot': if (toMe) log(ev.x === 'money' ? 'You pick up ' + money(ev.n) + '.' : 'You pick up ' + ev.x + '.', 'loot'); break;
+        case 'spell': case 'resist': case 'effect': {
+          const l = spellLine(ev, me.id, the);
+          if (l) log(l.text, l.cls);
+          break;
+        }
         default: {
           const l = toMe ? eventLine(ev) : null;
           if (l) log(l.text, l.cls);

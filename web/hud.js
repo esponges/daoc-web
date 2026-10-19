@@ -11,6 +11,7 @@ const LINE_COLOR = {
   // Game messages, as the combat log used to colour them.
   info: '#cfd8e3', hit: '#ffd76a', 'hit-in': '#ff8a7a', miss: '#9aa8b6', 'miss-in': '#9aa8b6',
   kill: '#8fe39a', death: '#ff5a5a', block: '#8fc7ff', xp: '#c9a6ff', level: '#ffe066',
+  spell: '#c9a8ff', 'spell-in': '#ff9ad0', heal: '#8fe39a',
 };
 // Lines people write; everything else is a game message. The Chat tab shows
 // only the first kind, Main shows both.

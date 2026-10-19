@@ -54,6 +54,22 @@
   #log .kill { color: #8fe39a; }
   #log .death { color: #ff5a5a; font-weight: bold; }
   #log .block { color: #8fc7ff; }
+  #log .spell { color: #c9a8ff; }
+  #log .spell-in { color: #ff9ad0; }
+  #log .heal { color: #8fe39a; }
+  /* Lasting spells on you: a badge by kind, with its time left. */
+  #effects {
+    position: fixed; top: 150px; right: 12px; z-index: 12; display: flex; flex-wrap: wrap; gap: 4px;
+    max-width: 200px; justify-content: flex-end; pointer-events: auto;
+  }
+  #effects .fx {
+    width: 30px; height: 30px; border-radius: 5px; border: 1px solid rgba(0,0,0,.6);
+    font: bold 14px/22px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: #fff; text-align: center; text-shadow: 0 1px 2px #000; position: relative;
+  }
+  #effects .fx span {
+    position: absolute; left: 0; right: 0; bottom: -1px; font: 9px/10px ui-monospace, monospace; font-weight: normal;
+  }
   @media (max-width: 760px) {
     #fight { flex-direction: column; gap: 6px; bottom: 10px; }
     #log { bottom: 140px; }
