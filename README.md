@@ -889,7 +889,7 @@ hand, is skipped). Each model is converted once into `web/data/items/` and
 attached to the creature's hand socket at draw time. Only about one number in
 seven resolves, and some resolve to a plausible weapon of the wrong realm: the
 database's numbers and the install's rows are not aligned for much of the range
-(`openspec/changes/npc-gear-mapping/design.md` has the figures).
+(`openspec/changes/archive/2026-10-19-npc-gear-mapping/design.md` has the figures).
 
 **Armour is approximate.** The install's own table from armour number to art
 is not in any archive (also in the design file), so armour is dressed by tier.

@@ -28,3 +28,7 @@ Tasks 4.1 to 4.4 (the lookup, reading `eq`, drawing gear, the skipped count) mov
 - [x] 5.1 `go test -short ./...` and all `web/*.test.mjs` pass
 - [ ] 5.2 Look at guards, a smith and a monster in the browser; check with the `web/data/` lookup moved away that NPCs still draw plain
 - [x] 5.3 Update README (where equipment comes from, what resolves) and CLAUDE.md sources if a new source is used (README done in npc-gear-mapping; no new source needed)
+
+## Closed
+
+Archived on 2026-10-19 with the unchecked tasks above moved to `midgard-playable` (section "Carried over").

@@ -1,3 +1,5 @@
+> **Closed 2026-10-19 without being started.** All of its work moved to `midgard-playable`: the safe start (as `starting-zone-safety`), the character windows, the real loot and release checks, the compass, the clock (now the server's game clock) and the icon search. Its specs were not synced; `midgard-playable` carries them. The evidence in design.md stays here for reference.
+
 ## Why
 
 `stock-ui` and `stock-ui-rest` put the game's own windows on screen, but they left things out: the menu bar's buttons are greyed because the windows behind them were never built, two flows (a real kill's loot, a real death's release) were exercised only with sample data, the pictures on styles and items are generic, the compass orientation and the clock are unchecked or stand-ins, and a new character walking out of the Myrkwood spawn meets level-26 creatures that kill it in two blows. This change collects those.

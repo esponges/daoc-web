@@ -12,7 +12,7 @@ import (
 )
 
 // The install does not say which art the database's armour numbers mean (see
-// openspec/changes/npc-gear-mapping/design.md), so armour is dressed by tier.
+// openspec/changes/archive/2026-10-19-npc-gear-mapping/design.md), so armour is dressed by tier.
 // What is exact is the kind of armour each number is: the imported item table
 // says model 47 is the legs of Albion plate. A piece therefore becomes a level,
 // 0 cloth to 4 plate, and a realm, and the client dresses the NPC's matching

@@ -1,3 +1,5 @@
+> **Closed 2026-10-19, not built as proposed.** Superseded by `jordheim-and-midgard-dungeons`, which converted Jordheim and the Midgard dungeons; other realms' cities are out of the Midgard focus. No specs were synced from this proposal.
+
 # Proposal
 
 ## Why

@@ -1,3 +1,5 @@
+> **Closed 2026-10-19, not built as proposed.** Superseded by `rules-parity-warrior`, which gave the Warrior its styles, defences, endurance and the 1.65 rules from the imported data and the rule book instead of an authored ruleset. No specs were synced from this proposal.
+
 # Proposal
 
 ## Why

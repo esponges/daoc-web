@@ -39,7 +39,7 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
   fall back to the plain panels when that folder is absent.
 - **Icon numbers in the imported data do not match this install's sheets**, so
   styles and items are drawn by weapon line and kind. Do not "fix" this by
-  guessing an offset (see `openspec/changes/stock-ui-followups/design.md`).
+  guessing an offset (see `openspec/changes/archive/2026-10-19-stock-ui-followups/design.md`).
 
 ## Where things come from
 
@@ -112,7 +112,7 @@ not show that a window looks right. Check the fallback by temporarily moving
 - **Specs drive work.** Changes live in `openspec/changes/<name>/` (proposal,
   specs, design, tasks); `/opsx:propose`, `/opsx:apply` and `/opsx:archive`
   run them. Archived changes sync into `openspec/specs/`. Open now:
-  `stock-ui-followups`, `midgard-playable`.
+  `midgard-playable`.
 - **Game rules have a rule book.** Every mechanic the server decides has a
   `rules-<mechanic>` spec giving the formula in our words, its sources, a status
   (documented, reference or provisional) and worked examples. Each numbered
@@ -128,6 +128,6 @@ not show that a window looks right. Check the fallback by temporarily moving
 - **Browser automation:** a held key cannot be sent with the key action. Move
   the character by dispatching `keydown` and `keyup` events from page script
   with a delay between them. Creatures near the Myrkwood spawn can kill a
-  level 1 character in two blows (see `stock-ui-followups`).
+  level 1 character in two blows (see `midgard-playable`).
 - Commit only when asked; end commit messages with the attribution lines the
   session gives.

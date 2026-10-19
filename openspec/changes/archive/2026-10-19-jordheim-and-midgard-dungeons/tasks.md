@@ -39,3 +39,7 @@
 
 - Commit and push only when the user asks. After the push, verify that `git ls-tree -r --name-only origin/main | grep -ci "web/data"` returns 0.
 - Archive with `/opsx:archive jordheim-and-midgard-dungeons` once reviewed.
+
+## Closed
+
+Archived on 2026-10-19 with the unchecked tasks above moved to `midgard-playable` (section "Carried over").
