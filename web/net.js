@@ -85,6 +85,9 @@ export class NetClient {
   interact(id) { this._send({ t: 'interact', id }); }
   buy(id) { this._send({ t: 'buy', id }); }
   sell(slot) { this._send({ t: 'sell', slot }); }
+  train(spec, n = 1) { this._send({ t: 'train', spec, n }); }
+  restore(npc) { this._send({ t: 'restore', npc }); }
+  pray() { this._send({ t: 'pray' }); }
   chat(ch, text) { this._send({ t: 'chat', ch, text }); }
   gm(line) { this._send({ t: 'gm', line }); }
   ping() { this._send({ t: 'ping' }); }
@@ -109,6 +112,9 @@ export class NetClient {
       case 'corpse': this.corpse = m; this.on.corpse?.(m); break;
       case 'shop': this.shop = m; this.on.shop?.(m); break;
       case 'shopclose': this.shop = null; this.on.shopclose?.(); break;
+      case 'stats': this.stats = m; this.on.stats?.(m); break;
+      case 'trainer': this.trainer = m; this.on.trainer?.(m); break;
+      case 'healer': this.healer = m; this.on.healer?.(m); break;
       default: break; // an unknown message is ignored
     }
   }
@@ -165,6 +171,7 @@ export class NetClient {
       if (e.eq || e.gs) r.eq = e.eq || [];
       r.speed = e.sp || 0; r.hp = e.hp; r.state = e.st || ''; r.scale = e.sc || 0;
       r.aggro = !!e.ag; r.loot = !!e.lt; r.friendly = !!e.fr; r.kind = e.ik || ''; r.back = !!e.bk; r.side = e.sd || 0;
+      r.con = e.cc; r.own = !!e.own; // a creature's con colour to you; your own gravestone
       r.samples.push({ t, x: e.x, y: e.y, z: e.z, yaw: e.h });
       if (r.samples.length > 8) r.samples.shift();
     }

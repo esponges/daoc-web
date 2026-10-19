@@ -53,11 +53,22 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
   `cmd/dbimport`. The client install has none of this. It describes EA-owned
   content, so use stays private; re-check the licence and the EA question before
   hosting publicly. README: "Where the world's content comes from".
-- **Rules and formulas** (hit points, damage, experience, weapon skill): written
-  here, from documented game mechanics. OpenDAoC-Core and DOLSharp (GPL) may be
-  read to understand a mechanic but nothing is copied from them.
-- No other sources are recorded. If you use one (a wiki, a format write-up,
-  a community table), add it here and to the README.
+- **Rules and formulas** (hit points, damage, experience, weapon skill): the
+  target is classic 1.65. They are written here in `internal/server/rules`,
+  from the rule book (README: "The rule book"). OpenDAoC-Core and DOLSharp
+  (GPL) may be read to understand a mechanic, but nothing is copied from them.
+- **Sources adopted for the rules:**
+  - disorder.dk's 1.65 mechanics pages: hit, evade, parry, block, stats and caps,
+    hit point cap, AF cap, swing speed, hit location, skill cap, melee damage;
+  - the Camelot Herald wiki: melee damage, weapon skill, styles;
+  - Mythic's Grab Bag answers, and the knowledge-base note on the 1.25 experience
+    clamp;
+  - the published experience and constitution-restore tables (silicondragon.com);
+  - Mythic's con colour band description;
+  - OpenDAoC-Core, for reference-status rules only.
+
+  If you use another source (a wiki, a format write-up, a community table), add
+  it here and to the README.
 
 ## Running it
 
@@ -101,7 +112,13 @@ not show that a window looks right. Check the fallback by temporarily moving
 - **Specs drive work.** Changes live in `openspec/changes/<name>/` (proposal,
   specs, design, tasks); `/opsx:propose`, `/opsx:apply` and `/opsx:archive`
   run them. Archived changes sync into `openspec/specs/`. Open now:
-  `stock-ui-followups`.
+  `stock-ui-followups`, `midgard-playable`.
+- **Game rules have a rule book.** Every mechanic the server decides has a
+  `rules-<mechanic>` spec giving the formula in our words, its sources, a status
+  (documented, reference or provisional) and worked examples. Each numbered
+  scenario is a table test in `internal/server/rules`, and the rule is
+  registered there so `cmd/parity` counts it. A change that adds or alters a
+  rule updates its spec, test and registry entry together.
 - **Protocol changes are additive.** New messages and fields only; document
   them in `docs/protocol.md` and add a protocol or server test.
 - **Go** is not on PATH in this environment: `~/goroot-dist/go/bin`.

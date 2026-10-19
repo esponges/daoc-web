@@ -298,7 +298,7 @@ func TestShopClosesWhenThePlayerWalksOffOrDies(t *testing.T) {
 	p.Body.X = 30100
 	r.z.Interact(p, merchantID)
 	sent(p)
-	r.z.killPlayer(p)
+	r.z.killPlayer(p, nil)
 	if p.shop != 0 {
 		t.Error("dying must close the shop")
 	}

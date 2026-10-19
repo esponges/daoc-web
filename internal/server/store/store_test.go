@@ -157,3 +157,56 @@ INSERT INTO character(account_id,name,race,class,zone,x,y,z,created) VALUES(1,'E
 		t.Errorf("migrated characters: %+v, %v", cs, err)
 	}
 }
+
+// A database from before the rule book opens with the new columns, its
+// characters without stats and on the old experience curve, and the rule
+// book's state round-trips once saved.
+func TestRuleBookStateRoundTrips(t *testing.T) {
+	path := t.TempDir() + "/old.db"
+	db, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = db.Exec(`CREATE TABLE account(id INTEGER PRIMARY KEY AUTOINCREMENT, discord_id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, admin INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
+CREATE TABLE character(id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER NOT NULL, name TEXT NOT NULL UNIQUE COLLATE NOCASE, race INTEGER NOT NULL, gender INTEGER NOT NULL DEFAULT 0, class INTEGER NOT NULL,
+ level INTEGER NOT NULL DEFAULT 1, xp INTEGER NOT NULL DEFAULT 0, zone INTEGER NOT NULL, x REAL NOT NULL, y REAL NOT NULL, z REAL NOT NULL, heading INTEGER NOT NULL DEFAULT 0,
+ hp INTEGER NOT NULL DEFAULT 0, endurance INTEGER NOT NULL DEFAULT 0, money INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
+INSERT INTO account VALUES(1,'old','old',0,1);
+INSERT INTO character(account_id,name,race,class,level,xp,zone,x,y,z,created) VALUES(1,'Elder',6,22,10,4000,100,1,2,3,1);`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	c, err := s.Character(1, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.HasStats || c.XPScheme != 0 || c.Grave != nil || len(c.Specs) != 0 {
+		t.Fatalf("old character %+v", c)
+	}
+	c.Stats, c.HasStats = [8]int{110, 80, 45, 35, 60, 60, 60, 60}, true
+	c.Specs = map[string]int{"Sword": 8, "Parry": 1}
+	c.ConLost, c.DeathCount, c.XPScheme = 3, 2, XPSchemeRules
+	c.Grave = &Grave{Zone: 100, X: 10, Y: 20, Z: 30, XP: 3328}
+	if err := s.Save(c); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.Character(1, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.HasStats || got.Stats != c.Stats || got.Specs["Sword"] != 8 || len(got.Specs) != 1 ||
+		got.ConLost != 3 || got.DeathCount != 2 || got.XPScheme != 1 || got.Grave == nil || *got.Grave != *c.Grave {
+		t.Errorf("round trip %+v (grave %+v)", got, got.Grave)
+	}
+	got.Grave = nil
+	s.Save(got)
+	if again, _ := s.Character(1, 1); again.Grave != nil {
+		t.Error("a cleared grave came back")
+	}
+}

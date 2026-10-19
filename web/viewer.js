@@ -23,6 +23,7 @@ import { loadOutdoorCollision } from './collision.js';
 import { createRemote, eventAnim } from './remote.js';
 import { candidates } from './race.js';
 import { createUI, conColor } from './ui.js';
+import { eventLine, conColour } from './sheet.js';
 import { loadUI, registerFonts } from './uiwin.js';
 
 // The game's typeface for page text (the zone picker, names over heads), when
@@ -1134,7 +1135,10 @@ async function main() {
         case 'xp': if (toMe) log('You gain ' + ev.n + ' experience points.', 'xp'); break;
         case 'level': if (toMe) log(ev.x, 'level'); break;
         case 'loot': if (toMe) log(ev.x === 'money' ? 'You pick up ' + money(ev.n) + '.' : 'You pick up ' + ev.x + '.', 'loot'); break;
-        default: break;
+        default: {
+          const l = toMe ? eventLine(ev) : null;
+          if (l) log(l.text, l.cls);
+        }
       }
     }
   }
@@ -1142,14 +1146,17 @@ async function main() {
   function updateLabels(vp) {
     if (!remote) return;
     const me = net.me, tgt = combat.target;
+    const near = (v) => Math.hypot(v.x - player.x, v.y - player.y) < 3500;
     const list = [...remote.views.values()]
-      .filter((v) => v.anim && Math.hypot(v.x - player.x, v.y - player.y) < 3500)
+      .filter((v) => v.anim && near(v))
       .sort((a, b) => Math.hypot(a.x - player.x, a.y - player.y) - Math.hypot(b.x - player.x, b.y - player.y))
       .slice(0, 24);
+    // Gravestones always get a label, however crowded the town: it is all they have.
+    for (const v of remote.views.values()) if (v.grave && near(v)) list.push(v);
     list.forEach((v, i) => {
       let el = labelEls[i];
       if (!el) { el = document.createElement('div'); el.className = 'label'; document.body.appendChild(el); labelEls[i] = el; }
-      const x = v.x, y = v.e.z + v.type.ch.height * v.scale + 28, z = v.y;
+      const x = v.x, y = v.e.z + (v.grave ? 60 : v.type.ch.height * v.scale + 28), z = v.y;
       const cx = vp[0] * x + vp[4] * y + vp[8] * z + vp[12];
       const cy = vp[1] * x + vp[5] * y + vp[9] * z + vp[13];
       const cw = vp[3] * x + vp[7] * y + vp[11] * z + vp[15];
@@ -1159,7 +1166,10 @@ async function main() {
       el.style.top = ((1 - (cy / cw * 0.5 + 0.5)) * innerHeight).toFixed(0) + 'px';
       el.textContent = v.name + (v.level && !v.friendly ? '  ' + v.level : '') + (v.dead ? ' (dead)' : '');
       if (v.guild && !v.dead) { const g = document.createElement('div'); g.className = 'guild'; g.textContent = '<' + v.guild + '>'; el.append(g); }
-      el.style.color = v.isPlayer ? '#9fe3ff' : v.friendly ? '#c8d0da' : conColor(v.level, me.level);
+      el.style.color = v.isPlayer ? '#9fe3ff' : v.friendly ? '#c8d0da' : conColour(v.e.con) || conColor(v.level, me.level);
+      // A gravestone is only a label: click it to target it, then /pray.
+      el.classList.toggle('grave', !!v.grave);
+      if (v.grave) { el.textContent = '+ ' + v.name + (v.e.own ? ' (yours: /pray)' : ''); el.onclick = () => net.target(v.id); } else el.onclick = null;
       el.classList.toggle('target', v === tgt);
     });
     for (let i = list.length; i < labelEls.length; i++) labelEls[i].style.display = 'none';

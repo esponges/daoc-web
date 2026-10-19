@@ -22,6 +22,8 @@ func TestRoundTrip(t *testing.T) {
 		&Interact{T: TInteract, ID: 900},
 		&Buy{T: TBuy, ID: "bronze_hammer"},
 		&Sell{T: TSell, Slot: 4},
+		&Train{T: TTrain, Spec: "Hammer", N: 2},
+		&Restore{T: TRestore, NPC: 31},
 	}
 	for _, c := range cases {
 		b, err := json.Marshal(c)
@@ -162,5 +164,30 @@ func TestShopMessagesAndInteractionKindAreAdditive(t *testing.T) {
 	}
 	if err := json.Unmarshal(b, &old); err != nil || old.Name != "Smith" {
 		t.Errorf("old client: %+v, %v", old, err)
+	}
+}
+
+func TestRuleBookMessagesAreAdditive(t *testing.T) {
+	if typ, v, err := Decode([]byte(`{"t":"pray"}`)); typ != TPray || v != nil || err != nil {
+		t.Errorf("pray decodes as %q %v %v", typ, v, err)
+	}
+	con := -3
+	b, _ := json.Marshal(Entity{ID: 1, K: "n", Con: &con})
+	if !strings.Contains(string(b), `"cc":-3`) {
+		t.Errorf("con colour missing: %s", b)
+	}
+	b, _ = json.Marshal(Entity{ID: 2, K: "n"})
+	if strings.Contains(string(b), "cc") || strings.Contains(string(b), "own") {
+		t.Errorf("an older client's entity grew fields: %s", b)
+	}
+	b, _ = json.Marshal(Stats{T: TStats, Class: "Warrior", Specs: []SpecRow{{Key: "Sword", Name: "Sword", Level: 3}}, Abilities: []Ability{{Name: "Evade", Level: 1, On: true}}})
+	for _, want := range []string{`"t":"stats"`, `"cls":"Warrior"`, `"specs":[{"key":"Sword"`, `"ab":[{"nm":"Evade","lv":1,"on":true}]`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("stats lacks %s: %s", want, b)
+		}
+	}
+	b, _ = json.Marshal(Healer{T: THealer, NPC: 3, Lost: 2, Price: 352, Total: 704})
+	if !strings.Contains(string(b), `"total":704`) {
+		t.Errorf("healer: %s", b)
 	}
 }

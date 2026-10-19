@@ -104,6 +104,7 @@ type Player struct {
 	lastHit     bool
 	lastHitAt   float64
 	regenAt     float64
+	healAt      float64
 
 	inv         map[int]*invItem
 	shop        int64 // the merchant whose shop is open, 0 for none
@@ -111,15 +112,31 @@ type Player struct {
 	shield      *Item
 	noExitUntil float64
 	exitLatched bool
-	armour      int
 	bar         []StyleDef
-	saveAt      float64
-	invSent     bool
-	chatTokens  float64
-	chatAt      float64
+
+	// The rules: the sheet derived from class, level, specs and gear, the last
+	// one sent, and the defence bonus of the player's last styled hit, which
+	// holds until their next swing.
+	sh           sheet
+	statsSent    protocol.Stats
+	styleDefence int
+	welcomed     bool // the welcome has gone out, so the sheet may follow
+
+	// Death and prayer: where they fell, what the death cost (the release costs
+	// as much again), and a prayer in progress at their gravestone.
+	deathAt       [3]float64
+	lastLoss      int64
+	creatureDeath bool
+	prayUntil     float64
+	prayFrom      [2]float64
+	prayCombat    float64
+	saveAt        float64
+	invSent       bool
+	chatTokens    float64
+	chatAt        float64
 }
 
-func (p *Player) maxHP() int { return playerMaxHP(p.Char.Level) }
+func (p *Player) maxHP() int { return max(1, p.sh.maxHP) }
 
 // send queues a message for the client; a client too slow to keep up loses
 // frames rather than stalling the zone.

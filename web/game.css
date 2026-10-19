@@ -44,6 +44,20 @@
 .loot .row { padding: 4px 6px; cursor: pointer; border-radius: 4px; }
 .loot .row:hover { background: rgba(143,208,255,.15); }
 .loot button { margin-top: 6px; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }
+.sheet { left: 16px; top: 10%; width: 300px; max-height: calc(100vh - 140px); overflow: auto; }
+.sheet .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; margin-bottom: 6px; }
+.sheet .stat { display: flex; justify-content: space-between; }
+.sheet .stat b { color: #ffe066; }
+.sheet h3, .trainer h3 { margin: 8px 0 3px; font-size: 12px; color: #8fd0ff; }
+.sheet .line.off, .trainer .row.off { color: #6f8ba6; }
+.trainer { left: 50%; top: 14%; transform: translateX(-50%); width: 280px; }
+.trainer .row { display: flex; justify-content: space-between; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+.trainer .row:hover { background: rgba(143,208,255,.15); }
+.trainer .row.off { cursor: default; }
+.trainer .row small { color: #6f8ba6; }
+.healer { left: 50%; top: 24%; transform: translateX(-50%); width: 300px; }
+.sheet button, .trainer button, .healer button { margin: 6px 6px 0 0; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }
+.label.grave { pointer-events: auto; cursor: pointer; color: #d8d0c0; }
 .death { position: fixed; inset: 0; z-index: 13; display: none; place-content: center; text-align: center; font-size: 28px; color: #ff6a6a;
   background: rgba(40,0,0,.35); text-shadow: 0 2px 6px #000; pointer-events: none; }
 .death.on { display: grid; }

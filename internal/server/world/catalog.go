@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 
+	"daocweb/internal/server/rules"
+
 	_ "modernc.org/sqlite"
 )
 
@@ -30,6 +32,16 @@ type Item struct {
 	Price      int64
 	Realm      int
 	Droppable  bool
+	LevelReq   int
+	Absorb     int         // armour absorption percent
+	Bonus      int         // enchantment percent
+	Condition  float64     // 0..1 of its maximum
+	Bonuses    []ItemBonus // stat and skill bonuses
+}
+
+// ItemBonus is one bonus an item gives, by the item table's bonus type numbers.
+type ItemBonus struct {
+	Type, Amount int
 }
 
 // Object types the rules care about, as the item table numbers them.
@@ -40,6 +52,9 @@ const (
 
 // IsWeapon reports whether the item is something held to fight with.
 func (i *Item) IsWeapon() bool { return i.ItemType == 10 || i.ItemType == 11 || i.ItemType == 12 }
+
+// TwoHanded is a weapon held in both hands.
+func (i *Item) TwoHanded() bool { return i.IsWeapon() && (i.Hand == 1 || i.ItemType == 12) }
 
 // IsShield is a shield.
 func (i *Item) IsShield() bool { return i.ObjectType == ObjShield }
@@ -89,18 +104,20 @@ type Spawn struct {
 	Flags      int
 	ClassType  string // the community class type, "" when the store predates it
 	ItemsList  string // merchant stock list id, "" for none
+	Race       int    // the race table row its resists come from, 0 for none
 }
 
 // Template is the optional fixed stats of an NPC kind.
 type Template struct {
-	ID      int
-	Name    string
-	Parry   int
-	Evade   int
-	Block   int
-	Tether  int
-	LevelLo int
-	LevelHi int
+	ID        int
+	Name      string
+	Parry     int
+	Evade     int
+	Block     int
+	Tether    int
+	LevelLo   int
+	LevelHi   int
+	MeleeType int // damage type of its blows: 1 crush, 2 slash, 3 thrust
 }
 
 // LootEntry is one row of a loot table.
@@ -160,15 +177,20 @@ type Catalog struct {
 		Realm, Race, Class int
 		Start
 	}
-	Loot     map[string][]LootEntry // loot template -> entries
-	Gear     map[string][][4]int    // equipment template -> [slot, model, colour, extension] per worn piece
-	hasGear  bool                   // spawn.equip exists (a world.db imported before equipment was kept lacks it)
-	MobLoot  map[string][]string    // lower-case mob name -> loot template names
-	Stock    map[string][]string    // merchant list id -> item ids, in page then slot order
-	hasShops bool                   // spawn.classtype and merchant_stock exist (a world.db imported before merchants lacks them)
-	dropOnce sync.Once
-	dropPool map[int][]string
-	db       *sql.DB
+	Loot       map[string][]LootEntry  // loot template -> entries
+	Gear       map[string][][4]int     // equipment template -> [slot, model, colour, extension] per worn piece
+	hasGear    bool                    // spawn.equip exists (a world.db imported before equipment was kept lacks it)
+	MobLoot    map[string][]string     // lower-case mob name -> loot template names
+	Stock      map[string][]string     // merchant list id -> item ids, in page then slot order
+	hasShops   bool                    // spawn.classtype and merchant_stock exist (a world.db imported before merchants lacks them)
+	hasRules   bool                    // item bonuses, races and abilities exist (a world.db imported before the rule book lacks them)
+	Resists    map[int]map[int]float64 // race -> damage type -> percent
+	ClassSpecs map[int][]string        // class -> its spec and career keys
+	SpecNames  map[string]string       // spec key -> name
+	Grants     map[int][]rules.Grant   // class -> the ability grants of its careers and specs
+	dropOnce   sync.Once
+	dropPool   map[int][]string
+	db         *sql.DB
 }
 
 // LoadCatalog reads world.db.
@@ -218,14 +240,26 @@ func LoadCatalog(path string) (*Catalog, error) {
 			return nil, err
 		}
 	}
-	if err := q(`SELECT id,name,level,quality,dps_af,spd_abs,hand,damage_type,object_type,item_type,model,price,realm,droppable FROM item`, func(r *sql.Rows) error {
+	var ruleParts int
+	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND (name IN ('item_bonus','spec_ability') OR (name='item' AND sql LIKE '%max_condition%') OR (name='spawn' AND sql LIKE '%race INTEGER%'))`).Scan(&ruleParts)
+	c.hasRules = ruleParts == 4
+	itemCols := "0,100,1"
+	if c.hasRules {
+		itemCols = "COALESCE(bonus,0),COALESCE(condition,0),COALESCE(max_condition,0)"
+	}
+	if err := q(`SELECT id,name,level,quality,dps_af,spd_abs,hand,damage_type,object_type,item_type,model,price,realm,droppable,COALESCE(level_req,0),`+itemCols+` FROM item`, func(r *sql.Rows) error {
 		it := &Item{}
 		var dps, spd int
 		var drop int
-		if err := r.Scan(&it.ID, &it.Name, &it.Level, &it.Quality, &dps, &spd, &it.Hand, &it.DamageType, &it.ObjectType, &it.ItemType, &it.Model, &it.Price, &it.Realm, &drop); err != nil {
+		var cond, maxCond int
+		if err := r.Scan(&it.ID, &it.Name, &it.Level, &it.Quality, &dps, &spd, &it.Hand, &it.DamageType, &it.ObjectType, &it.ItemType, &it.Model, &it.Price, &it.Realm, &drop, &it.LevelReq, &it.Bonus, &cond, &maxCond); err != nil {
 			return err
 		}
-		it.DPS, it.Speed, it.AF = float64(dps)/10, float64(spd)/10, dps
+		it.DPS, it.Speed, it.AF, it.Absorb = float64(dps)/10, float64(spd)/10, dps, spd
+		it.Condition = 1
+		if maxCond > 0 && cond > 0 && cond < maxCond {
+			it.Condition = float64(cond) / float64(maxCond)
+		}
 		it.Droppable = drop != 0
 		c.Items[it.ID] = it
 		return nil
@@ -242,9 +276,9 @@ func LoadCatalog(path string) (*Catalog, error) {
 	}); err != nil {
 		return nil, err
 	}
-	if err := q(`SELECT id,name,parry,evade,block,tether,level_lo,level_hi FROM npc_template`, func(r *sql.Rows) error {
+	if err := q(`SELECT id,name,parry,evade,block,tether,level_lo,level_hi,COALESCE(melee_type,0) FROM npc_template`, func(r *sql.Rows) error {
 		t := &Template{}
-		if err := r.Scan(&t.ID, &t.Name, &t.Parry, &t.Evade, &t.Block, &t.Tether, &t.LevelLo, &t.LevelHi); err != nil {
+		if err := r.Scan(&t.ID, &t.Name, &t.Parry, &t.Evade, &t.Block, &t.Tether, &t.LevelLo, &t.LevelHi, &t.MeleeType); err != nil {
 			return err
 		}
 		c.Templates[t.ID] = t
@@ -322,6 +356,9 @@ func LoadCatalog(path string) (*Catalog, error) {
 	} else {
 		log.Printf("world store has no merchant data; NPC interaction is off (run cmd/dbimport again)")
 	}
+	if err := c.loadRules(q); err != nil {
+		return nil, err
+	}
 	return c, nil
 }
 
@@ -338,7 +375,11 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	if c.hasShops {
 		shop = "COALESCE(classtype,''),COALESCE(items_list,'')"
 	}
-	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,`+equip+`,`+shop+` FROM spawn WHERE zone=?`, zone)
+	race := "0"
+	if c.hasRules {
+		race = "COALESCE(race,0)"
+	}
+	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,`+equip+`,`+shop+`,`+race+` FROM spawn WHERE zone=?`, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +387,7 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	var out []Spawn
 	for rows.Next() {
 		s := Spawn{}
-		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags, &s.Equip, &s.ClassType, &s.ItemsList); err != nil {
+		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags, &s.Equip, &s.ClassType, &s.ItemsList, &s.Race); err != nil {
 			return nil, err
 		}
 		out = append(out, s)

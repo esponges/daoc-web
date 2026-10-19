@@ -37,7 +37,27 @@ type Character struct {
 	HP        int
 	Endurance int
 	Money     int64
+
+	// The rule book's state. Stats are the base chosen at creation (race plus
+	// build); HasStats is false for a character saved before stats existed.
+	Stats      [8]int
+	HasStats   bool
+	Specs      map[string]int // trained spec levels; a missing spec is level 1
+	ConLost    int            // constitution lost to deaths and not yet restored
+	DeathCount int            // deaths since the last level
+	XPScheme   int            // 0: experience on the old curve, 1: on the rule book's table
+	Grave      *Grave         // where the character's gravestone stands, if anywhere
 }
+
+// Grave is a gravestone: where it is and the experience it holds.
+type Grave struct {
+	Zone    int
+	X, Y, Z float64
+	XP      int64
+}
+
+// XPSchemeRules marks experience counted on the rule book's table.
+const XPSchemeRules = 1
 
 // Item is one stack in a character's inventory or worn on it.
 type Item struct {
@@ -67,6 +87,9 @@ CREATE TABLE IF NOT EXISTS character(
   hp INTEGER NOT NULL DEFAULT 0, endurance INTEGER NOT NULL DEFAULT 0, money INTEGER NOT NULL DEFAULT 0,
   created INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS character_account ON character(account_id);
+CREATE TABLE IF NOT EXISTS char_spec(
+  char_id INTEGER NOT NULL REFERENCES character(id) ON DELETE CASCADE, spec TEXT NOT NULL, level INTEGER NOT NULL,
+  PRIMARY KEY(char_id, spec));
 CREATE TABLE IF NOT EXISTS item(
   id INTEGER PRIMARY KEY AUTOINCREMENT, char_id INTEGER NOT NULL REFERENCES character(id) ON DELETE CASCADE,
   item_id TEXT NOT NULL, slot INTEGER NOT NULL, count INTEGER NOT NULL DEFAULT 1, created INTEGER NOT NULL,
@@ -92,17 +115,28 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
-	// A database made before the gender column gets it here; every saved
-	// character is male until a creation flow lets a player choose.
-	var hasGender int
-	if err := db.QueryRow(`SELECT count(*) FROM pragma_table_info('character') WHERE name='gender'`).Scan(&hasGender); err != nil {
-		db.Close()
-		return nil, err
-	}
-	if hasGender == 0 {
-		if _, err := db.Exec(`ALTER TABLE character ADD COLUMN gender INTEGER NOT NULL DEFAULT 0`); err != nil {
+	// A database made before a column gets it here. Every saved character is
+	// male until a creation flow lets a player choose; one saved before the
+	// rule book has no stats (NULL) and experience on the old curve (scheme 0),
+	// which the world converts on its first join.
+	for _, col := range []struct{ name, def string }{
+		{"gender", "INTEGER NOT NULL DEFAULT 0"},
+		{"str", "INTEGER"}, {"con", "INTEGER"}, {"dex", "INTEGER"}, {"qui", "INTEGER"},
+		{"int", "INTEGER"}, {"pie", "INTEGER"}, {"emp", "INTEGER"}, {"cha", "INTEGER"},
+		{"con_lost", "INTEGER NOT NULL DEFAULT 0"}, {"death_count", "INTEGER NOT NULL DEFAULT 0"},
+		{"xp_scheme", "INTEGER NOT NULL DEFAULT 0"},
+		{"grave_zone", "INTEGER"}, {"grave_x", "REAL"}, {"grave_y", "REAL"}, {"grave_z", "REAL"}, {"grave_xp", "INTEGER"},
+	} {
+		var has int
+		if err := db.QueryRow(`SELECT count(*) FROM pragma_table_info('character') WHERE name=?`, col.name).Scan(&has); err != nil {
 			db.Close()
 			return nil, err
+		}
+		if has == 0 {
+			if _, err := db.Exec(`ALTER TABLE character ADD COLUMN ` + col.name + ` ` + col.def); err != nil {
+				db.Close()
+				return nil, err
+			}
 		}
 	}
 	return &Store{db: db}, nil
@@ -167,9 +201,9 @@ func (s *Store) CreateCharacter(c *Character) error {
 	if c.Level < 1 {
 		c.Level = 1
 	}
-	res, err := s.db.Exec(`INSERT INTO character(account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money,created)
-		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-		c.AccountID, c.Name, c.Race, c.Gender, c.Class, c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money, time.Now().Unix())
+	res, err := s.db.Exec(`INSERT INTO character(account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money,created,xp_scheme)
+		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		c.AccountID, c.Name, c.Race, c.Gender, c.Class, c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money, time.Now().Unix(), c.XPScheme)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {
 			return ErrNameTaken
@@ -177,16 +211,54 @@ func (s *Store) CreateCharacter(c *Character) error {
 		return err
 	}
 	c.ID, _ = res.LastInsertId()
+	if c.HasStats || len(c.Specs) > 0 {
+		return s.Save(c)
+	}
 	return nil
 }
 
-const charCols = `id,account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money`
+const charCols = `id,account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money,
+  str,con,dex,qui,int,pie,emp,cha,con_lost,death_count,xp_scheme,grave_zone,grave_x,grave_y,grave_z,grave_xp`
 
 func scanChar(r interface{ Scan(...any) error }) (*Character, error) {
 	c := &Character{}
+	var st [8]sql.NullInt64
+	var gz, gxp sql.NullInt64
+	var gx, gy, gzz sql.NullFloat64
 	err := r.Scan(&c.ID, &c.AccountID, &c.Name, &c.Race, &c.Gender, &c.Class, &c.Level, &c.XP, &c.Zone,
-		&c.X, &c.Y, &c.Z, &c.Heading, &c.HP, &c.Endurance, &c.Money)
-	return c, err
+		&c.X, &c.Y, &c.Z, &c.Heading, &c.HP, &c.Endurance, &c.Money,
+		&st[0], &st[1], &st[2], &st[3], &st[4], &st[5], &st[6], &st[7], &c.ConLost, &c.DeathCount, &c.XPScheme,
+		&gz, &gx, &gy, &gzz, &gxp)
+	if err != nil {
+		return c, err
+	}
+	c.HasStats = st[0].Valid
+	for i := range st {
+		c.Stats[i] = int(st[i].Int64)
+	}
+	if gz.Valid {
+		c.Grave = &Grave{Zone: int(gz.Int64), X: gx.Float64, Y: gy.Float64, Z: gzz.Float64, XP: gxp.Int64}
+	}
+	return c, nil
+}
+
+// loadSpecs fills in a character's trained specs.
+func (s *Store) loadSpecs(c *Character) error {
+	rows, err := s.db.Query(`SELECT spec,level FROM char_spec WHERE char_id=?`, c.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	c.Specs = map[string]int{}
+	for rows.Next() {
+		var sp string
+		var lv int
+		if err := rows.Scan(&sp, &lv); err != nil {
+			return err
+		}
+		c.Specs[sp] = lv
+	}
+	return rows.Err()
 }
 
 // Characters lists an account's characters, oldest first.
@@ -213,14 +285,15 @@ func (s *Store) Character(accountID, id int64) (*Character, error) {
 	if err == sql.ErrNoRows || err == nil && c.AccountID != accountID {
 		return nil, ErrNotYours
 	}
-	return c, err
+	if err != nil {
+		return nil, err
+	}
+	return c, s.loadSpecs(c)
 }
 
 // Save writes a character's state back.
 func (s *Store) Save(c *Character) error {
-	_, err := s.db.Exec(`UPDATE character SET level=?,xp=?,zone=?,x=?,y=?,z=?,heading=?,hp=?,endurance=?,money=? WHERE id=?`,
-		c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money, c.ID)
-	return err
+	return s.Tx(func(t *Tx) error { return t.SaveCharacter(c) })
 }
 
 // DeleteCharacter removes a character the account owns, and its items.
@@ -320,9 +393,36 @@ func (t *Tx) RemoveItem(charID int64, slot int) error {
 
 // SaveCharacter writes a character inside the transaction.
 func (t *Tx) SaveCharacter(c *Character) error {
-	_, err := t.tx.Exec(`UPDATE character SET level=?,xp=?,zone=?,x=?,y=?,z=?,heading=?,hp=?,endurance=?,money=? WHERE id=?`,
-		c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money, c.ID)
-	return err
+	var st [8]any
+	for i := range st {
+		if c.HasStats {
+			st[i] = c.Stats[i]
+		}
+	}
+	var gz, gx, gy, gzz, gxp any
+	if g := c.Grave; g != nil {
+		gz, gx, gy, gzz, gxp = g.Zone, g.X, g.Y, g.Z, g.XP
+	}
+	_, err := t.tx.Exec(`UPDATE character SET level=?,xp=?,zone=?,x=?,y=?,z=?,heading=?,hp=?,endurance=?,money=?,
+		str=?,con=?,dex=?,qui=?,int=?,pie=?,emp=?,cha=?,con_lost=?,death_count=?,xp_scheme=?,
+		grave_zone=?,grave_x=?,grave_y=?,grave_z=?,grave_xp=? WHERE id=?`,
+		c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money,
+		st[0], st[1], st[2], st[3], st[4], st[5], st[6], st[7], c.ConLost, c.DeathCount, c.XPScheme,
+		gz, gx, gy, gzz, gxp, c.ID)
+	if err != nil {
+		return err
+	}
+	if _, err := t.tx.Exec(`DELETE FROM char_spec WHERE char_id=?`, c.ID); err != nil {
+		return err
+	}
+	for sp, lv := range c.Specs {
+		if lv > 1 {
+			if _, err := t.tx.Exec(`INSERT INTO char_spec VALUES(?,?,?)`, c.ID, sp, lv); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // SwapItems exchanges the items in two slots.
@@ -334,4 +434,29 @@ func (t *Tx) SwapItems(charID int64, a, b int) error {
 		}
 	}
 	return nil
+}
+
+// GraveRow is a character's gravestone, as a zone loads it.
+type GraveRow struct {
+	CharID int64
+	Name   string
+	Grave
+}
+
+// GravesIn lists the gravestones standing in a zone.
+func (s *Store) GravesIn(zone int) ([]GraveRow, error) {
+	rows, err := s.db.Query(`SELECT id,name,grave_x,grave_y,grave_z,grave_xp FROM character WHERE grave_zone=?`, zone)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []GraveRow
+	for rows.Next() {
+		g := GraveRow{Grave: Grave{Zone: zone}}
+		if err := rows.Scan(&g.CharID, &g.Name, &g.X, &g.Y, &g.Z, &g.XP); err != nil {
+			return nil, err
+		}
+		out = append(out, g)
+	}
+	return out, rows.Err()
 }

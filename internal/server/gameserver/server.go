@@ -134,8 +134,9 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 		return
 	}
 	var body struct {
-		Name string `json:"name"`
-		Arch string `json:"arch"`
+		Name  string  `json:"name"`
+		Arch  string  `json:"arch"`
+		Build *[8]int `json:"build"` // how far each stat is raised; absent for the class default
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -156,13 +157,19 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 		http.Error(w, "you have the most characters allowed", http.StatusConflict)
 		return
 	}
-	c := &store.Character{AccountID: sess.AccountID, Name: body.Name, Race: arch.Race, Class: arch.Class, Level: 1}
+	stats, err := world.CreationStats(arch.Race, arch.Class, body.Build)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	c := &store.Character{AccountID: sess.AccountID, Name: body.Name, Race: arch.Race, Class: arch.Class, Level: 1,
+		Stats: stats, HasStats: true, XPScheme: store.XPSchemeRules, Specs: map[string]int{}}
 	if st, ok := s.World.Cat.StartFor(arch.Realm, arch.Race, arch.Class); ok {
 		c.Zone, c.X, c.Y, c.Z, c.Heading = st.Zone, st.X, st.Y, st.Z, st.Heading
 	} else {
 		c.Zone = s.World.DefaultZone
 	}
-	c.HP = world.StartHP()
+	c.HP = world.StartHP(c.Class, c.Stats)
 	if err := s.Store.CreateCharacter(c); err != nil {
 		code := http.StatusBadRequest
 		if errors.Is(err, store.ErrNameTaken) {
@@ -332,9 +339,16 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { z.Sell(p, m.Slot) })
 	case *protocol.GM:
 		z.Do(func() { s.World.GM(p, m.Line) })
+	case *protocol.Train:
+		z.Do(func() { z.Train(p, m.Spec, m.N) })
+	case *protocol.Restore:
+		z.Do(func() { z.Restore(p, m.NPC) })
 	}
 	if typ == protocol.TPing {
 		z.Do(func() { p.Pong() })
+	}
+	if typ == protocol.TPray {
+		z.Do(func() { z.Pray(p) })
 	}
 	if typ == protocol.TRelease {
 		z.Do(func() { z.ReleasePlayer(p) })

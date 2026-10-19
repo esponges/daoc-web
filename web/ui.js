@@ -11,6 +11,7 @@ import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
+import { sheetView, trainerView, healerText, conColour } from './sheet.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -288,6 +289,61 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   net.on.shop = renderShop;
   net.on.shopclose = hideShop;
 
+  // --- character sheet, trainer, healer ---
+  // Plain panels; stock windows for them can come later and fall back to these.
+  const sheetPanel = el('div', 'panel sheet');
+  const trainPanel = el('div', 'panel trainer');
+  const healPanel = el('div', 'panel healer');
+  root.append(sheetPanel, trainPanel, healPanel);
+  const closeButton = (panel) => {
+    const b = el('button', '', 'Close');
+    b.addEventListener('click', () => panel.classList.remove('open'));
+    return b;
+  };
+  const renderSheet = () => {
+    const v = sheetView(net.stats);
+    if (!v) return;
+    sheetPanel.replaceChildren(el('h2', '', v.title));
+    const grid = el('div', 'stats');
+    for (const s of v.stats) {
+      const r = el('div', 'stat');
+      r.append(el('span', '', s.name), el('b', '', String(s.value)));
+      if (s.diff) r.title = 'base ' + s.base + (s.diff > 0 ? ', +' : ', ') + s.diff + ' from levels, items and deaths';
+      grid.appendChild(r);
+    }
+    sheetPanel.append(grid);
+    for (const l of v.lines) sheetPanel.append(el('div', 'line', l));
+    sheetPanel.append(el('h3', '', 'Specializations (' + v.points + ' points to spend)'));
+    for (const s of v.specs) sheetPanel.append(el('div', 'line', s.text));
+    sheetPanel.append(el('h3', '', 'Abilities'));
+    for (const a of v.abilities) sheetPanel.append(el('div', 'line' + (a.on ? '' : ' off'), a.text + (a.on ? '' : ' (not yet in this game)')));
+    sheetPanel.append(closeButton(sheetPanel));
+  };
+  net.on.stats = () => { if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
+  const toggleSheet = () => { sheetPanel.classList.toggle('open'); renderSheet(); };
+  const renderTrainer = (m) => {
+    const v = trainerView(m);
+    trainPanel.replaceChildren(el('h2', '', v.title), el('div', 'line', v.points + ' specialization points to spend'));
+    for (const r of v.rows) {
+      const row = el('div', 'row' + (r.can ? '' : ' off'));
+      row.append(el('span', '', r.text), el('small', '', r.cost + ' pts'));
+      row.title = r.hint;
+      if (r.can) row.addEventListener('click', () => net.train(r.key, 1));
+      trainPanel.appendChild(row);
+    }
+    trainPanel.append(closeButton(trainPanel));
+    trainPanel.classList.add('open');
+  };
+  net.on.trainer = renderTrainer;
+  const renderHealer = (m) => {
+    healPanel.replaceChildren(el('h2', '', m.nm), el('div', 'line', healerText(m, money)));
+    const ok = el('button', '', 'Accept');
+    ok.addEventListener('click', () => { net.restore(m.npc); healPanel.classList.remove('open'); });
+    healPanel.append(ok, closeButton(healPanel));
+    healPanel.classList.add('open');
+  };
+  net.on.healer = renderHealer;
+
   // --- death ---
   const dead = el('div', 'death', 'You have died.');
   root.appendChild(dead);
@@ -308,7 +364,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (clockWin) clockWin.update();
     if (summary) {
       const t = getTarget ? getTarget() : null;
-      summary.update(me, t, t ? (t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColor(t.level, me.level)) : undefined);
+      summary.update(me, t, t ? (t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColour(t.e?.con) || conColor(t.level, me.level)) : undefined);
     }
     fill(endBar, me.end / me.maxEnd);
     fill(xpBar, me.xpNext ? me.xp / me.xpNext : 0);
@@ -338,6 +394,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'Enter') { openChat(); e.preventDefault(); return true; }
     if (e.code === 'Slash') { openChat('/'); e.preventDefault(); return true; }
     if (e.code === 'KeyI' && !e.repeat) { togglePack(); return true; }
+    if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera
     const i = BAR_KEYS.indexOf(e.code);
     if (i >= 0 && !e.repeat) { net.style(i); return true; }
     return false;
@@ -347,8 +404,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   if (net.bar.length) net.on.bar(net.bar);
   if (net.inv.items.length) renderInv();
   if (net.corpse) renderLoot(net.corpse);
+  if (net.stats) net.on.stats(net.stats);
 
   // The compass follows the camera; the viewer gives its heading each frame.
   const setHeading = (deg) => { if (compassWin) compassWin.setHeading(deg); };
-  return { update, setHeading, key, say, get typing() { return chatApi.typing; }, renderLoot, togglePack };
+  return { update, setHeading, key, say, get typing() { return chatApi.typing; }, renderLoot, togglePack, toggleSheet };
 }

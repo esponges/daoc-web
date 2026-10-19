@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"daocweb/internal/server/protocol"
+	"daocweb/internal/server/rules"
 	"daocweb/internal/server/store"
 )
 
@@ -21,16 +22,31 @@ func (flat) Clamp(x, y float64) (float64, float64) {
 }
 func (flat) Extent() float64 { return 65280 }
 
+// grant is one row of the ability tables.
+func grant(source string, level int, ability string, abilityLevel int) rules.Grant {
+	return rules.Grant{Source: source, Level: level, Ability: ability, AbilityLevel: abilityLevel}
+}
+
 func testCatalog() *Catalog {
 	c := &Catalog{
 		Items: map[string]*Item{
-			"hammer":  {ID: "hammer", Name: "bronze hammer", Model: 311, Level: 2, DPS: 1.8, Speed: 3.1, ObjectType: ObjHammer, ItemType: 10, Realm: 2, Droppable: true, Price: 10},
-			"shield":  {ID: "shield", Name: "round shield", Model: 473, Level: 1, ObjectType: ObjShield, ItemType: 11, Realm: 2, Droppable: true, Price: 10},
-			"pelt":    {ID: "pelt", Name: "wolf pelt", Level: 1, ObjectType: 0, ItemType: 40, Droppable: true, Price: 2},
-			"helm":    {ID: "helm", Name: "studded helm", Model: 93, Level: 3, AF: 6, ObjectType: 34, ItemType: 21, Realm: 2, Droppable: true, Price: 5},
-			"gsword":  {ID: "gsword", Name: "great sword", Level: 1, DPS: 3, Speed: 4, ObjectType: 11, ItemType: 12, Hand: 2, Realm: 2},
-			"axe":     {ID: "axe", Name: "bronze axe", Level: 1, DPS: 2, Speed: 3, ObjectType: 13, ItemType: 10, Realm: 2, Droppable: true, Price: 5},
-			"hiblade": {ID: "hiblade", Name: "hibernian blade", Level: 1, DPS: 2, Speed: 3, ObjectType: 11, ItemType: 10, Realm: 3},
+			"hammer":   {ID: "hammer", Name: "bronze hammer", Model: 311, Level: 2, DPS: 1.8, Speed: 3.1, ObjectType: ObjHammer, ItemType: 10, Realm: 2, Droppable: true, Price: 10},
+			"shield":   {ID: "shield", Name: "round shield", Model: 473, Level: 1, ObjectType: ObjShield, ItemType: 11, Realm: 2, Droppable: true, Price: 10},
+			"pelt":     {ID: "pelt", Name: "wolf pelt", Level: 1, ObjectType: 0, ItemType: 40, Droppable: true, Price: 2},
+			"helm":     {ID: "helm", Name: "studded helm", Model: 93, Level: 3, AF: 6, ObjectType: 34, ItemType: 21, Realm: 2, Droppable: true, Price: 5},
+			"gsword":   {ID: "gsword", Name: "great sword", Level: 1, DPS: 3, Speed: 4, ObjectType: 11, ItemType: 12, Hand: 1, Realm: 2},
+			"hauberk":  {ID: "hauberk", Name: "chain hauberk", Level: 8, AF: 16, Absorb: 27, ObjectType: 35, ItemType: 25, Realm: 2},
+			"bighelm":  {ID: "bighelm", Name: "great helm", Level: 20, AF: 30, ObjectType: 34, ItemType: 21, Realm: 2, LevelReq: 20},
+			"hsword":   {ID: "hsword", Name: "heavy sword", Level: 20, DPS: 7, Speed: 3, ObjectType: 11, ItemType: 10, Realm: 2},
+			"strhelm":  {ID: "strhelm", Name: "helm of might", Level: 3, AF: 6, ObjectType: 34, ItemType: 21, Realm: 2, Bonuses: []ItemBonus{{1, 4}}},
+			"axe":      {ID: "axe", Name: "bronze axe", Level: 1, DPS: 2, Speed: 3, ObjectType: 13, ItemType: 10, Realm: 2, Droppable: true, Price: 5},
+			"vest":     {ID: "vest", Name: "studded vest", Level: 1, AF: 6, Absorb: 19, ObjectType: 34, ItemType: 25, Realm: 2},
+			"leggings": {ID: "leggings", Name: "studded leggings", Level: 1, AF: 6, Absorb: 19, ObjectType: 34, ItemType: 27, Realm: 2},
+			"sleeves":  {ID: "sleeves", Name: "studded sleeves", Level: 1, AF: 6, Absorb: 19, ObjectType: 34, ItemType: 28, Realm: 2},
+			"boots":    {ID: "boots", Name: "studded boots", Level: 1, AF: 6, Absorb: 19, ObjectType: 34, ItemType: 23, Realm: 2},
+			"gloves":   {ID: "gloves", Name: "studded gloves", Level: 1, AF: 6, Absorb: 19, ObjectType: 34, ItemType: 22, Realm: 2},
+			"cap":      {ID: "cap", Name: "studded cap", Level: 1, AF: 6, Absorb: 19, ObjectType: 34, ItemType: 21, Realm: 2},
+			"hiblade":  {ID: "hiblade", Name: "hibernian blade", Level: 1, DPS: 2, Speed: 3, ObjectType: 11, ItemType: 10, Realm: 3},
 		},
 		Styles: []StyleDef{
 			{ID: 161, Class: 22, Name: "Thor's Anvil", Spec: "Hammer", SpecLevel: 2, Endurance: 15, WeaponReq: ObjHammer, GrowthRate: 0.037},
@@ -42,10 +58,18 @@ func testCatalog() *Catalog {
 			{ID: 221, Class: 22, Name: "Numb", Spec: "Shields", SpecLevel: 3, Endurance: 15, WeaponReq: ObjShield},
 			{ID: 900, Class: 22, Name: "High Level", Spec: "Hammer", SpecLevel: 40, Endurance: 5, WeaponReq: ObjHammer},
 		},
-		Templates: map[int]*Template{},
-		Zones:     map[int]*ZoneInfo{100: {ID: 100, Name: "Test", Converted: true, Realm: 2}},
-		Loot:      map[string][]LootEntry{"wolf": {{Item: "pelt", Chance: 100, Count: 1}}},
-		MobLoot:   map[string][]string{"wolf": {"wolf"}},
+		Templates:  map[int]*Template{},
+		ClassSpecs: map[int][]string{22: {"VikingCareer", "WarriorCareer", "Axe", "Hammer", "Sword", "Parry", "Shields"}},
+		Grants: map[int][]rules.Grant{22: {
+			grant("VikingCareer", 1, rules.AbMidArmor, 3), grant("VikingCareer", 1, rules.AbShield, 1),
+			grant("VikingCareer", 1, "Weaponry: Swords", 0), grant("VikingCareer", 1, "Weaponry: Hammers", 0), grant("VikingCareer", 1, "Weaponry: Axes", 0),
+			grant("WarriorCareer", 5, rules.AbShield, 2), grant("WarriorCareer", 10, rules.AbMidArmor, 4), grant("WarriorCareer", 10, rules.AbShield, 3),
+			grant("WarriorCareer", 15, rules.AbEvade, 1), grant("WarriorCareer", 7, "Protect", 1),
+		}},
+		Resists: map[int]map[int]float64{},
+		Zones:   map[int]*ZoneInfo{100: {ID: 100, Name: "Test", Converted: true, Realm: 2}},
+		Loot:    map[string][]LootEntry{"wolf": {{Item: "pelt", Chance: 100, Count: 1}}},
+		MobLoot: map[string][]string{"wolf": {"wolf"}},
 	}
 	return c
 }
@@ -76,7 +100,7 @@ func (r *rig) player(name string, level int, x, y float64, equip bool) *Player {
 	if err != nil {
 		r.t.Fatal(err)
 	}
-	ch := &store.Character{AccountID: a.ID, Name: name, Race: 6, Class: 22, Level: level, XP: xpToReach(level), Zone: 100, X: x, Y: y, HP: playerMaxHP(level)}
+	ch := &store.Character{AccountID: a.ID, Name: name, Race: 6, Class: 22, Level: level, XP: rules.XPToReach(level), Zone: 100, X: x, Y: y, XPScheme: store.XPSchemeRules}
 	if err := r.st.CreateCharacter(ch); err != nil {
 		r.t.Fatal(err)
 	}
@@ -84,6 +108,9 @@ func (r *rig) player(name string, level int, x, y float64, equip bool) *Player {
 		r.st.Tx(func(tx *store.Tx) error {
 			tx.AddItem(ch.ID, "hammer", SlotWeapon, 1)
 			tx.AddItem(ch.ID, "shield", SlotShield, 1)
+			for slot, id := range map[int]string{SlotTorso: "vest", SlotLegs: "leggings", SlotArms: "sleeves", SlotFeet: "boots", SlotHands: "gloves", SlotHead: "cap"} {
+				tx.AddItem(ch.ID, id, slot, 1)
+			}
 			return nil
 		})
 	}
@@ -357,6 +384,7 @@ func TestWanderingStaysDryAndLocal(t *testing.T) {
 func TestStyleOpenings(t *testing.T) {
 	r := newRig(t, wolf(1, 30100, 30000, 3))
 	p := r.player("Stylist", 5, 30000, 30000, true)
+	r.train(p, map[string]int{"Hammer": 5, "Shields": 3})
 	n := r.z.byID[1]
 	n.Roam, n.Aggro = 0, 0
 	p.Body.Yaw = math.Pi / 2
@@ -428,6 +456,7 @@ func TestStyleOpenings(t *testing.T) {
 func TestStyleIsSpentOnSwing(t *testing.T) {
 	r := newRig(t, wolf(1, 30100, 30000, 1))
 	p := r.player("Swinger", 5, 30000, 30000, true)
+	r.train(p, map[string]int{"Hammer": 5})
 	n := r.z.byID[1]
 	n.Roam, n.Aggro, n.MaxHP, n.HP = 0, 0, 100000, 100000
 	p.Body.Yaw = math.Pi / 2
@@ -452,56 +481,44 @@ func TestStyleIsSpentOnSwing(t *testing.T) {
 		t.Fatal("style never used")
 	}
 	if p.end > end0-5 {
-		t.Errorf("endurance %v -> %v; a 15-cost style should have been paid", end0, p.end)
+		t.Errorf("endurance %v -> %v; a 15-cost style (12 with a 3.1 s hammer) should have been paid", end0, p.end)
 	}
 }
 
-func TestLevelUpUnlocksStyles(t *testing.T) {
+func TestLevelUpGrantsStatsAndPoints(t *testing.T) {
 	r := newRig(t)
-	p := r.player("Climber", 1, 30000, 30000, true)
-	before := len(p.bar)
-	r.z.award(p, xpToReach(6)-p.Char.XP)
+	p := r.player("Climber", 5, 30000, 30000, true)
+	str, pts := p.sh.stats[rules.STR], p.sh.unspent
+	r.z.award(p, rules.XPToReach(6)-p.Char.XP)
 	if p.Char.Level != 6 {
 		t.Fatalf("level = %d", p.Char.Level)
 	}
-	if len(p.bar) <= before {
-		t.Errorf("bar went from %d to %d styles at level 6", before, len(p.bar))
+	if p.sh.stats[rules.STR] != str+1 || p.sh.unspent != pts+12 {
+		t.Errorf("level 6: strength %d -> %d, points %d -> %d; want +1 and +12", str, p.sh.stats[rules.STR], pts, p.sh.unspent)
 	}
 	if p.hp != float64(p.maxHP()) {
 		t.Error("a level up should heal")
 	}
-	// Saved.
 	got, _ := r.st.Character(p.Acct.ID, p.Char.ID)
 	if got.Level != 6 {
 		t.Errorf("saved level %d", got.Level)
 	}
 }
 
-func TestExperienceCurve(t *testing.T) {
-	if killXP(5, 5) <= killXP(5, 10) {
-		t.Error("a grey kill should pay less")
+// train sets a player's specs as if trained, and rebuilds what depends on them.
+func (r *rig) train(p *Player, specs map[string]int) {
+	for k, v := range specs {
+		p.Char.Specs[k] = v
 	}
-	if killXP(1, 30) != 0 {
-		t.Error("a very grey kill should pay nothing")
-	}
-	if killXP(8, 5) <= killXP(5, 5) {
-		t.Error("a red kill should pay more")
-	}
-	// About eight even-level kills to the next level.
-	perLevel := float64(xpToReach(11)-xpToReach(10)) / float64(killXP(10, 10))
-	if perLevel < 5 || perLevel > 12 {
-		t.Errorf("%.1f kills a level at 10", perLevel)
-	}
-	if npcMaxHP(10) <= npcMaxHP(5) {
-		t.Error("tougher mobs should have more hit points")
-	}
+	r.w.recalc(p)
+	r.z.buildBar(p)
 }
 
 func TestEquipRules(t *testing.T) {
 	r := newRig(t)
 	p := r.player("Dresser", 1, 30000, 30000, false)
 	r.st.Tx(func(tx *store.Tx) error {
-		for i, id := range []string{"hammer", "gsword", "hiblade", "helm", "pelt"} {
+		for i, id := range []string{"hammer", "gsword", "hiblade", "helm", "pelt", "shield", "hauberk", "bighelm", "hsword"} {
 			tx.AddItem(p.Char.ID, id, i, 1)
 		}
 		return nil
@@ -513,28 +530,91 @@ func TestEquipRules(t *testing.T) {
 		t.Error("the hammer did not equip")
 	}
 	try(1, SlotShield) // a sword into the shield slot: no
-	try(1, SlotWeapon) // a two-hander: a warrior here refuses
 	try(2, SlotWeapon) // Hibernian: no
 	if p.weapon.ID != "hammer" {
 		t.Errorf("weapon is %s after illegal swaps", p.weapon.ID)
 	}
-	try(3, SlotHead) // a level-3 helm at level 1: allowed within two levels
-	if p.armour != 6 {
-		t.Errorf("armour = %d", p.armour)
-	}
+	try(3, SlotHead) // a level-3 helm with no level requirement: allowed
 	try(4, SlotHead) // a pelt on the head: no, and it must not displace the helm
 	if p.inv[SlotHead] == nil || p.inv[SlotHead].ID != "helm" {
 		t.Error("the helm was displaced by a pelt")
 	}
+	try(7, SlotHead) // level requirement 20: no
+	if p.inv[SlotHead].ID != "helm" {
+		t.Error("a level 20 helm went on a level 1 head")
+	}
+	try(6, SlotTorso) // chain at level 1: no
+	if p.inv[SlotTorso] != nil {
+		t.Error("chain went on a level 1 Warrior")
+	}
+	// A high-level weapon with no requirement goes on, but hits only as hard as the level allows.
+	try(8, SlotWeapon)
+	if p.weapon == nil || p.weapon.ID != "hsword" {
+		t.Fatal("the heavy sword did not equip")
+	}
+	if base, _ := rules.BaseDamage(p.combatant(r.w.Cat)); base > rules.DPSCap(1)*3*1.04 {
+		t.Errorf("base damage %.2f is over the level 1 DPS cap", base)
+	}
+	// A great sword with a shield worn: the shield goes to the pack.
+	try(5, SlotShield)
+	if p.shield == nil {
+		t.Fatal("the shield did not equip")
+	}
+	try(1, SlotWeapon)
+	if p.weapon == nil || p.weapon.ID != "gsword" || p.shield != nil || p.inv[SlotShield] != nil {
+		t.Errorf("two-hander: weapon %v, shield %v", p.weapon, p.shield)
+	}
+	inPack := false
+	for s := 0; s < PackSize; s++ {
+		inPack = inPack || p.inv[s] != nil && p.inv[s].ID == "shield"
+	}
+	if !inPack {
+		t.Error("the shield is not in the pack")
+	}
+	// And no shield beside it.
+	for s := 0; s < PackSize; s++ {
+		if p.inv[s] != nil && p.inv[s].ID == "shield" {
+			try(s, SlotShield)
+		}
+	}
+	if p.shield != nil {
+		t.Error("a shield went on beside a two-handed sword")
+	}
 	// Persisted.
-	r2 := newRigOn(t, r)
-	items, _ := r2.st.Items(p.Char.ID)
+	items, _ := r.st.Items(p.Char.ID)
 	slots := map[int]string{}
 	for _, it := range items {
 		slots[it.Slot] = it.ItemID
 	}
-	if slots[SlotWeapon] != "hammer" || slots[SlotHead] != "helm" {
+	if slots[SlotWeapon] != "gsword" || slots[SlotHead] != "helm" || slots[SlotShield] != "" {
 		t.Errorf("saved slots: %v", slots)
+	}
+}
+
+func TestChainAtTen(t *testing.T) {
+	r := newRig(t)
+	p := r.player("Hauberk", 10, 30000, 30000, false)
+	r.st.Tx(func(tx *store.Tx) error { return tx.AddItem(p.Char.ID, "hauberk", 0, 1) })
+	r.w.loadInventory(p)
+	r.z.MoveItem(p, 0, SlotTorso)
+	if p.inv[SlotTorso] == nil {
+		t.Error("a level 10 Warrior could not wear chain")
+	}
+}
+
+func TestStrengthItemRaisesTheSheet(t *testing.T) {
+	r := newRig(t)
+	p := r.player("Mighty", 5, 30000, 30000, true)
+	r.st.Tx(func(tx *store.Tx) error { return tx.AddItem(p.Char.ID, "strhelm", 0, 1) })
+	r.w.loadInventory(p)
+	str, ws := p.sh.stats[rules.STR], rules.WeaponSkill(p.combatant(r.w.Cat))
+	snaps(p)
+	r.z.MoveItem(p, 0, SlotHead)
+	if p.sh.stats[rules.STR] != str+4 || rules.WeaponSkill(p.combatant(r.w.Cat)) <= ws {
+		t.Errorf("strength %d -> %d", str, p.sh.stats[rules.STR])
+	}
+	if p.statsSent.Stats[rules.STR] != str+4 {
+		t.Error("the sheet sent does not show the new strength")
 	}
 }
 
@@ -705,7 +785,7 @@ func TestReachAndDefences(t *testing.T) {
 	if n.HP != n.MaxHP {
 		t.Errorf("a wolf 1000 units away took damage (%d/%d)", n.HP, n.MaxHP)
 	}
-	// Defence rates over many blows land near the configured chances.
+	// Defence rates over many blows land near the rules' chances.
 	r2 := newRig(t, wolf(2, 30100, 30000, 5))
 	p2 := r2.player("Shielded", 20, 30000, 30000, true)
 	w2 := r2.z.byID[2]
@@ -722,9 +802,11 @@ func TestReachAndDefences(t *testing.T) {
 			counts[e.e.K]++
 		}
 	}
-	block := float64(counts["block"]) / 4000
-	if want := playerBlock(20, true); math.Abs(block-want*npcHitChance(5, 20)) > 0.05 {
-		t.Errorf("block rate %.3f, want about %.3f", block, want*npcHitChance(5, 20))
+	cb := p2.combatant(r2.w.Cat)
+	e, pa, b := rules.EvadeChance(cb, true, 1), rules.ParryChance(cb, true, 1, false), rules.BlockChance(cb, true)
+	want := (1 - e) * (1 - pa) * b
+	if block := float64(counts["block"]) / 4000; math.Abs(block-want) > 0.02 {
+		t.Errorf("block rate %.3f, want about %.3f", block, want)
 	}
 	if counts["parry"] == 0 || counts["evade"] == 0 || counts["hit"] == 0 || counts["miss"] == 0 {
 		t.Errorf("outcomes: %v", counts)

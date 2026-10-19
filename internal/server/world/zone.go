@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"daocweb/internal/server/protocol"
+	"daocweb/internal/server/rules"
 )
 
 // Zone is one running place. A single goroutine owns everything in it, so
@@ -30,6 +31,7 @@ type Zone struct {
 	rng     *rand.Rand
 	exits   []Exit
 	emptyAt float64
+	graves  map[int64]*grave // by owner character id
 
 	stop    chan struct{}
 	done    chan struct{}
@@ -55,6 +57,7 @@ func NewZone(w *World, id int, name string, g Ground, mv Mover, spawns []Spawn) 
 		z.npcs = append(z.npcs, n)
 		z.byID[n.ID] = n
 	}
+	z.loadGraves()
 	if w.Cat != nil {
 		for _, e := range w.Cat.Exits {
 			if e.SrcZone == id {
@@ -195,20 +198,25 @@ func (z *Zone) tickPlayer(p *Player) {
 		return
 	}
 	p.applyInput(z)
+	z.updatePrayer(p)
 	z.checkShop(p)
 	z.combatPlayer(p)
-	// Vitals come back out of a fight, faster the quieter it is.
+	// Vitals come back: endurance every second, health every few seconds and
+	// only out of a fight.
 	if z.now >= p.regenAt {
 		p.regenAt = z.now + 1
 		fighting := z.now < p.combatUntil
-		if !fighting && p.hp < float64(p.maxHP()) {
-			p.hp = math.Min(float64(p.maxHP()), p.hp+float64(p.maxHP())*0.03)
-		}
-		gain := 6.0
+		gain := float64(rules.EnduranceRegenOut)
 		if fighting {
-			gain = 2
+			gain = rules.EnduranceRegenIn
 		}
-		p.end = math.Min(float64(playerMaxEnd()), p.end+gain)
+		p.end = math.Min(float64(rules.MaxEndurance), p.end+gain)
+	}
+	if z.now >= p.healAt {
+		p.healAt = z.now + rules.HealthRegenPeriod
+		if p.hp < float64(p.maxHP()) {
+			p.hp = math.Min(float64(p.maxHP()), p.hp+float64(rules.HealthRegen(p.Char.Level, z.now < p.combatUntil)))
+		}
 	}
 	// A character whose connection closed in a fight lingers, then goes.
 	if p.graceEnd > 0 && z.now >= p.graceEnd && z.now >= p.combatUntil {
@@ -279,6 +287,11 @@ func (z *Zone) snapshots() {
 			}
 		}
 		p.gearSent = inView
+		for _, g := range z.graves {
+			if math.Hypot(g.x-p.Body.X, g.y-p.Body.Y) <= InterestRadius {
+				s.Ents = append(s.Ents, graveEntity(g, p))
+			}
+		}
 		for _, e := range z.ev {
 			if math.Hypot(e.x-p.Body.X, e.y-p.Body.Y) <= InterestRadius {
 				s.Ev = append(s.Ev, e.e)
@@ -291,11 +304,11 @@ func (z *Zone) snapshots() {
 
 func (z *Zone) selfOf(p *Player) protocol.Self {
 	c := p.Char
-	next := xpToReach(c.Level + 1)
+	next, cur := rules.XPToReach(c.Level+1), rules.XPToReach(c.Level)
 	s := protocol.Self{
 		X: p.Body.X, Y: p.Body.Y, Z: p.Body.Z, Yaw: p.Body.Yaw,
-		HP: int(math.Ceil(p.hp)), MaxHP: p.maxHP(), End: int(p.end), MaxEnd: playerMaxEnd(),
-		Level: c.Level, XP: c.XP - xpToReach(c.Level), XPNext: next - xpToReach(c.Level), Money: c.Money,
+		HP: int(math.Ceil(p.hp)), MaxHP: p.maxHP(), End: int(p.end), MaxEnd: rules.MaxEndurance,
+		Level: c.Level, XP: c.XP - cur, XPNext: next - cur, Money: c.Money,
 		Target: p.target, Attacking: p.attacking, Dead: p.dead, Correct: p.correct,
 		Back: p.motion.Back, Side: p.motion.Side, Speed: p.motion.Speed,
 		Fighting: z.now < p.combatUntil,
@@ -340,6 +353,10 @@ func (z *Zone) npcEntity(n *NPC, to *Player) protocol.Entity {
 	}
 	if n.dead() && (len(n.loot) > 0 || n.money > 0) && n.lootOwner == to.ID {
 		e.Loot = true
+	}
+	if !n.Friendly {
+		con := rules.Con(to.Char.Level, n.Level)
+		e.Con = &con
 	}
 	return e
 }

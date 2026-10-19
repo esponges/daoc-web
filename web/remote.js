@@ -59,6 +59,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
   // loading, or the best base is), so a player is not drawn in the fallback
   // for a frame and then swapped.
   function pick(e) {
+    if (e.k === 'g') return null; // a gravestone has no model; the viewer labels it
     if (e.k !== 'p') {
       const key = 'm' + e.model;
       return { key, t: loadType(key) };
@@ -106,6 +107,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       v.dead = e.state === 'dead';
       v.fight = e.state === 'fight';
       v.isPlayer = e.k === 'p';
+      v.grave = e.k === 'g';
       v.friendly = e.friendly;
       v.kind = e.kind || '';
       v.guild = e.guild || '';

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"daocweb/internal/server/protocol"
+	"daocweb/internal/server/rules"
 	"daocweb/internal/server/store"
 )
 
@@ -246,17 +247,25 @@ func (z *Zone) join(p *Player) {
 	}
 	x, y := z.G.Clamp(c.X, c.Y)
 	p.Body = Body{X: x, Y: y, Z: z.G.GroundAt(x, y, c.Z), Yaw: float64(c.Heading) / 1000}
-	if c.HP <= 0 {
-		c.HP = playerMaxHP(c.Level)
+	if prepareCharacter(c) {
+		if err := w.Store.Save(c); err != nil {
+			w.Log("saving %s after bringing it up to the rule book: %v", c.Name, err)
+		}
 	}
-	p.hp = math.Min(float64(c.HP), float64(playerMaxHP(c.Level)))
-	p.end = float64(playerMaxEnd())
-	w.loadInventory(p)
+	p.end = float64(rules.MaxEndurance)
+	w.loadInventory(p) // computes the sheet, and so the hit points
+	if c.HP <= 0 {
+		c.HP = p.maxHP()
+	}
+	p.hp = math.Min(float64(c.HP), float64(p.maxHP()))
 	z.computeBar(p)
 	z.add(p)
 	p.exitLatched = z.exitAt(p) != nil
 	p.send(protocol.Welcome{T: protocol.TWelcome, V: protocol.Version, You: p.ID, Name: c.Name, Char: p.Arch.Key, Race: c.Race, Female: c.Gender == 1,
 		Zone: z.ID, X: p.Body.X, Y: p.Body.Y, Z: p.Body.Z, Yaw: p.Body.Yaw, Level: c.Level, Admin: p.Admin})
+	p.welcomed = true
+	p.statsSent = p.statsMsg(w.Cat)
+	p.send(p.statsSent)
 	p.sendInv(w.Cat, c.Money)
 	p.sendBar(w.Cat)
 	z.event(protocol.Event{K: "join", To: p.ID, Text: c.Name}, p.Body.X, p.Body.Y)
@@ -401,6 +410,8 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		p.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "sys", From: "", Text: fmt.Sprintf("In %s: %s", z.Name, strings.Join(names, ", "))})
 	case "gm":
 		w.GM(p, strings.Join(f[1:], " "))
+	case "pray":
+		z.Pray(p)
 	default:
 		p.errMsg("chat", "Unknown command /"+f[0]+".")
 	}
@@ -464,12 +475,13 @@ func (w *World) GM(p *Player, line string) {
 			return
 		}
 		p.Char.Level = int(v)
-		p.Char.XP = xpToReach(int(v))
+		p.Char.XP = rules.XPToReach(int(v))
+		w.recalc(p)
 		p.hp = float64(p.maxHP())
 		z.buildBar(p)
 		w.savePlayer(p)
 	case "heal":
-		p.hp, p.end = float64(p.maxHP()), float64(playerMaxEnd())
+		p.hp, p.end = float64(p.maxHP()), float64(rules.MaxEndurance)
 	case "give":
 		if len(f) < 2 {
 			say("give <item id> [count]")
@@ -495,8 +507,29 @@ func (w *World) GM(p *Player, line string) {
 	}
 }
 
-// StartHP is a new level-1 character's hit points.
-func StartHP() int { return playerMaxHP(1) }
+// CreationStats checks a creation build (how far each stat is raised, in the
+// order strength, constitution, dexterity, quickness, intelligence, piety,
+// empathy, charisma) and returns the character's base stats. A nil build is
+// the class's default.
+func CreationStats(race, class int, build *[8]int) ([8]int, error) {
+	cl, ok := rules.Classes[class]
+	r, rok := rules.Races[race]
+	if !ok || !rok {
+		return [8]int{}, rules.ErrUnknown
+	}
+	b := rules.DefaultBuild(cl)
+	if build != nil {
+		b = rules.Stats(*build)
+	}
+	st, err := rules.Create(r, cl, b)
+	return [8]int(st), err
+}
+
+// StartHP is a new level-1 character's hit points, from their class and
+// constitution.
+func StartHP(class int, stats [8]int) int {
+	return rules.MaxHP(classOf(class), 1, stats[rules.CON], 0)
+}
 
 // RequestStyle, TakeLoot and Pong are the entry points the connection uses.
 func (z *Zone) RequestStyle(p *Player, slot int)      { z.requestStyle(p, slot) }

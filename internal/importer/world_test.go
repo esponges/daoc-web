@@ -217,3 +217,62 @@ func TestMissingMerchantStockIsReported(t *testing.T) {
 		t.Errorf("Missing = %v, want merchantitem in it", rep.Missing)
 	}
 }
+
+func TestImportBonusesRacesAndAbilities(t *testing.T) {
+	dir := t.TempDir()
+	dumpTable(t, dir, "zones", "`ZoneID`, `RegionID`, `OffsetX`, `OffsetY`, `Width`, `Height`, `Name`, `WaterLevel`, `Realm`",
+		"1, 1, 0, 0, 1, 1, 'Test', 0, 1")
+	dumpTable(t, dir, "mob", "`Name`, `Region`, `X`, `Y`, `Z`, `Model`, `Race`, `ClassType`",
+		"'wolf', 1, 100, 100, 0, 10, 2000, 'DOL.GS.GameNPC'",
+		"'Asmund', 1, 200, 100, 0, 10, 0, 'DOL.GS.Trainer.WarriorTrainer'")
+	dumpTable(t, dir, "itemtemplate", "`Id_nb`, `Name`, `Bonus`, `Condition`, `MaxCondition`, `Durability`, `Bonus1`, `Bonus1Type`, `Bonus2`, `Bonus2Type`, `Bonus3`, `Bonus3Type`",
+		"'helm', 'helm', 5, 45000, 50000, 50000, 4, 1, 0, 2, 3, 52")
+	dumpTable(t, dir, "race", "`ID`, `Name`, `ResistCrush`, `ResistSlash`, `ResistThrust`",
+		"2000, 'Animal', 0, 5, -15")
+	dumpTable(t, dir, "specxability", "`Spec`, `SpecLevel`, `AbilityKey`, `AbilityLevel`, `ClassId`",
+		"'WarriorCareer', 10, 'MidArmor', 4, 0", "'Shields', 5, 'Guard', 1, 0", "'', 1, 'Nothing', 1, 0")
+	for _, tb := range []string{"npcequipment", "npctemplate", "loottemplate", "mobxloottemplate", "style", "specialization",
+		"classxspecialization", "zonepoint", "startuplocation", "bindpoint", "merchantitem"} {
+		dumpTable(t, dir, tb, "`Unused`", "0")
+	}
+	out := filepath.Join(t.TempDir(), "world.db")
+	rep, err := Run(Options{Dump: dir, Out: out})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := rep.Tables["specxability"]; c != [2]int{3, 2} {
+		t.Errorf("specxability read/kept = %v, want [3 2]", c)
+	}
+	db, err := sql.Open("sqlite", out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var bonus, cond, maxc int
+	if err := db.QueryRow(`SELECT bonus, condition, max_condition FROM item WHERE id='helm'`).Scan(&bonus, &cond, &maxc); err != nil {
+		t.Fatal(err)
+	}
+	if bonus != 5 || cond != 45000 || maxc != 50000 {
+		t.Errorf("helm bonus/condition = %d %d/%d", bonus, cond, maxc)
+	}
+	var n int
+	db.QueryRow(`SELECT count(*) FROM item_bonus WHERE item='helm'`).Scan(&n)
+	if n != 2 {
+		t.Errorf("helm has %d bonuses, want 2 (strength and sword; the empty one is dropped)", n)
+	}
+	var race, thrust int
+	db.QueryRow(`SELECT race FROM spawn WHERE name='wolf'`).Scan(&race)
+	db.QueryRow(`SELECT thrust FROM race WHERE id=2000`).Scan(&thrust)
+	if race != 2000 || thrust != -15 {
+		t.Errorf("wolf race %d, animal thrust %d", race, thrust)
+	}
+}
+
+func TestClassKinds(t *testing.T) {
+	if TrainerClass("DOL.GS.Trainer.WarriorTrainer") != "Warrior" || TrainerClass("DOL.GS.GameNPC") != "" {
+		t.Error("trainer class types")
+	}
+	if !IsHealerClass("DOL.GS.GameHealer") || IsHealerClass("DOL.GS.GameMerchant") {
+		t.Error("healer class type")
+	}
+}

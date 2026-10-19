@@ -364,3 +364,44 @@ func TestDiscordLoginToPlay(t *testing.T) {
 		t.Errorf("a Discord player used a GM command: %+v", e)
 	}
 }
+
+// Creation takes an optional stat build, checked by the rules: 30 points
+// exactly, nothing lowered. Without one the class default is used.
+func TestCreateCharacterWithBuild(t *testing.T) {
+	ts, c, w := testServer(t)
+	login(t, ts, c)
+	type body struct {
+		Name  string  `json:"name"`
+		Arch  string  `json:"arch"`
+		Build *[8]int `json:"build,omitempty"`
+	}
+	if r := post(t, c, ts.URL+"/api/characters", body{"Overspent", "troll-warrior", &[8]int{11, 10, 10}}); r.StatusCode != 400 {
+		t.Errorf("a 31-point build: %d, want 400", r.StatusCode)
+	}
+	if r := post(t, c, ts.URL+"/api/characters", body{"Strongarm", "troll-warrior", &[8]int{15, 5, 0, 5}}); r.StatusCode != 201 {
+		t.Errorf("a valid build: %d, want 201", r.StatusCode)
+	}
+	if r := post(t, c, ts.URL+"/api/characters", body{Name: "Plain", Arch: "troll-warrior"}); r.StatusCode != 201 {
+		t.Errorf("no build: %d, want 201", r.StatusCode)
+	}
+	list, err := w.Store.Characters(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string][8]int{}
+	for _, ch := range list {
+		got[ch.Name] = ch.Stats
+		if !ch.HasStats || ch.XPScheme != store.XPSchemeRules {
+			t.Errorf("%s: stats %v scheme %d", ch.Name, ch.HasStats, ch.XPScheme)
+		}
+	}
+	if _, ok := got["Overspent"]; ok {
+		t.Error("the refused build made a character")
+	}
+	if got["Strongarm"] != [8]int{115, 75, 35, 40, 60, 60, 60, 60} {
+		t.Errorf("Strongarm %v", got["Strongarm"])
+	}
+	if got["Plain"] != [8]int{110, 80, 45, 35, 60, 60, 60, 60} {
+		t.Errorf("Plain %v", got["Plain"])
+	}
+}

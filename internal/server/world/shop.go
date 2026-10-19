@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 
+	"daocweb/internal/importer"
 	"daocweb/internal/server/protocol"
 	"daocweb/internal/server/store"
 )
@@ -24,11 +25,16 @@ const (
 )
 
 // npcKind says what a spawn of this class type does when interacted with.
-// Subclasses with their own behaviour (smiths, healers, trainers) are left
-// out until something builds what they do.
+// Subclasses with their own behaviour (smiths, stable masters) are left out
+// until something builds what they do.
 func npcKind(classType string) string {
-	if classType == "DOL.GS.GameMerchant" {
+	switch {
+	case importer.IsMerchantClass(classType):
 		return KindMerchant
+	case importer.IsHealerClass(classType):
+		return KindHealer
+	case teaches(classType) != "":
+		return KindTrainer
 	}
 	return ""
 }
@@ -58,6 +64,10 @@ func (z *Zone) Interact(p *Player, id int64) {
 	switch n.Kind {
 	case KindMerchant:
 		z.openShop(p, n)
+	case KindTrainer:
+		z.openTrainer(p, n)
+	case KindHealer:
+		z.openHealer(p, n)
 	}
 }
 

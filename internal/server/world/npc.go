@@ -4,6 +4,8 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+
+	"daocweb/internal/server/rules"
 )
 
 type npcState int
@@ -38,8 +40,8 @@ type NPC struct {
 	RunSpd   float64
 	HP       int
 	MaxHP    int
-	Damage   float64
 	Swing    float64
+	cb       rules.Combatant // its side of a swing, under the creature rules
 	Reach    float64
 	Parry    float64
 	Evade    float64
@@ -47,6 +49,7 @@ type NPC struct {
 	Aggro    float64 // 0 means it only fights back
 	Friendly bool    // guards, villagers, merchants: never attacks, cannot be hurt
 	Kind     string  // what interacting with it does (KindMerchant), "" for nothing
+	Teaches  string  // the class a trainer teaches
 	Tether   float64
 
 	state     npcState
@@ -85,7 +88,6 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 		ID: sp.ID, Spawn: sp, Name: sp.Name, Model: sp.Model, Level: level, Size: size,
 		HX: sp.X, HY: sp.Y, Roam: float64(sp.Roam),
 		RunSpd: speed, Walk: math.Max(40, speed*0.45),
-		Damage: npcDamage(level), Swing: npcSwing(size),
 		Reach:    90 + float64(size)*0.9,
 		Friendly: sp.Realm != 0,
 		hurtBy:   map[int64]int{},
@@ -93,13 +95,26 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 	}
 	n.Scale = 1
 	n.Kind = npcKind(sp.ClassType)
+	n.Teaches = teaches(sp.ClassType)
 	if sp.Equip != "" {
 		n.Gear = cat.Gear[sp.Equip]
 	}
+	damageType := rules.DamageCrush
 	if t := cat.Templates[sp.Template]; t != nil {
 		n.Parry, n.Evade, n.Block = float64(t.Parry)/100, float64(t.Evade)/100, float64(t.Block)/100
 		n.Tether = float64(t.Tether)
+		if t.MeleeType >= rules.DamageCrush && t.MeleeType <= rules.DamageThrus {
+			damageType = t.MeleeType
+		}
 	}
+	twoHanded := false
+	for _, g := range n.Gear {
+		if g[0] == 12 { // the two-handed slot
+			twoHanded = true
+		}
+	}
+	n.cb = rules.Creature(level, n.Evade*100, n.Parry*100, n.Block*100, twoHanded, damageType, cat.Resists[sp.Race])
+	n.Swing = rules.CreatureSwing(&n.cb)
 	if n.Tether < 800 || n.Tether > 6000 {
 		n.Tether = 2500
 	}
@@ -109,7 +124,7 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 	if n.Roam > 1500 {
 		n.Roam = 1500
 	}
-	n.MaxHP = npcMaxHP(level)
+	n.MaxHP = rules.CreatureHP(level)
 	n.reset()
 	return n
 }

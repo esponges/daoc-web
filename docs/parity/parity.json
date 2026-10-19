@@ -1,0 +1,2001 @@
+{
+  "regions": [
+    100,
+    101,
+    151
+  ],
+  "creatureSpellTypes": [
+    {
+      "name": "DirectDamage",
+      "uses": 744,
+      "implemented": false
+    },
+    {
+      "name": "SpeedDecrease",
+      "uses": 372,
+      "implemented": false
+    },
+    {
+      "name": "OffensiveProc",
+      "uses": 334,
+      "implemented": false
+    },
+    {
+      "name": "DamageOverTime",
+      "uses": 307,
+      "implemented": false
+    },
+    {
+      "name": "Mesmerize",
+      "uses": 300,
+      "implemented": false
+    },
+    {
+      "name": "BaseArmorFactorBuff",
+      "uses": 155,
+      "implemented": false
+    },
+    {
+      "name": "Bolt",
+      "uses": 133,
+      "implemented": false
+    },
+    {
+      "name": "Heal",
+      "uses": 46,
+      "implemented": false
+    },
+    {
+      "name": "StrengthConstitutionBuff",
+      "uses": 44,
+      "implemented": false
+    },
+    {
+      "name": "StrengthBuff",
+      "uses": 38,
+      "implemented": false
+    },
+    {
+      "name": "Lifedrain",
+      "uses": 37,
+      "implemented": false
+    },
+    {
+      "name": "Stun",
+      "uses": 37,
+      "implemented": false
+    },
+    {
+      "name": "StrengthDebuff",
+      "uses": 21,
+      "implemented": false
+    },
+    {
+      "name": "DexterityDebuff",
+      "uses": 11,
+      "implemented": false
+    },
+    {
+      "name": "DirectDamageNoVariance",
+      "uses": 6,
+      "implemented": false
+    }
+  ],
+  "classSpellTypes": [
+    {
+      "name": "DirectDamage",
+      "uses": 100,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Shaman",
+        "Skald",
+        "Spiritmaster",
+        "Thane"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Heal",
+      "uses": 75,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DamageOverTime",
+      "uses": 56,
+      "classes": [
+        "Bonedancer",
+        "Shadowblade",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DamageAdd",
+      "uses": 46,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Mystic",
+        "Runemaster",
+        "Seer",
+        "Shaman",
+        "Skald",
+        "Spiritmaster",
+        "Thane"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Mesmerize",
+      "uses": 44,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Mystic",
+        "Runemaster",
+        "Shadowblade",
+        "Skald",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SpeedDecrease",
+      "uses": 40,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Mystic",
+        "Runemaster",
+        "Shadowblade",
+        "Shaman",
+        "Skald",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "StrengthConstitutionBuff",
+      "uses": 40,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Hunter",
+        "Mystic",
+        "Runemaster",
+        "Seer",
+        "Shaman",
+        "Spiritmaster",
+        "Thane"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SummonMinion",
+      "uses": 36,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DexterityQuicknessBuff",
+      "uses": 30,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Hunter",
+        "Seer",
+        "Shaman",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Bolt",
+      "uses": 29,
+      "classes": [
+        "Runemaster",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "BaseArmorFactorBuff",
+      "uses": 26,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Hunter",
+        "Mystic",
+        "Runemaster",
+        "Seer",
+        "Shaman",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DamageShield",
+      "uses": 26,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DamageSpeedDecrease",
+      "uses": 24,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Lifedrain",
+      "uses": 21,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SpeedEnhancement",
+      "uses": 20,
+      "classes": [
+        "Healer",
+        "Hunter",
+        "Runemaster",
+        "Seer",
+        "Shaman",
+        "Skald"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "CombatSpeedBuff",
+      "uses": 16,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "CombatSpeedDebuff",
+      "uses": 16,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Mystic",
+        "Runemaster",
+        "Shadowblade",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "HealthRegenBuff",
+      "uses": 16,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Skald"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DirectDamageWithDebuff",
+      "uses": 15,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Stun",
+      "uses": 14,
+      "classes": [
+        "Healer"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Disease",
+      "uses": 13,
+      "classes": [
+        "Shadowblade",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "OffensiveProc",
+      "uses": 13,
+      "classes": [
+        "Shadowblade",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "StrengthConstitutionDebuff",
+      "uses": 12,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Shadowblade",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "StrengthDebuff",
+      "uses": 12,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Shadowblade",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Charm",
+      "uses": 10,
+      "classes": [
+        "Hunter"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Bladeturn",
+      "uses": 8,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DexterityDebuff",
+      "uses": 8,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "StrengthBuff",
+      "uses": 8,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "UnbreakableSpeedDecrease",
+      "uses": 8,
+      "classes": [
+        "Shadowblade"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Confusion",
+      "uses": 7,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "ConstitutionBuff",
+      "uses": 7,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DexterityQuicknessDebuff",
+      "uses": 7,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "LifeTransfer",
+      "uses": 7,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "AblativeArmor",
+      "uses": 6,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "BodyResistDebuff",
+      "uses": 6,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "DexterityBuff",
+      "uses": 6,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Resurrect",
+      "uses": 6,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SavageCrushResistanceBuff",
+      "uses": 6,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SavageDPSBuff",
+      "uses": 6,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SavageEvadeBuff",
+      "uses": 6,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SavageParryBuff",
+      "uses": 6,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SavageSlashResistanceBuff",
+      "uses": 6,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SavageThrustResistanceBuff",
+      "uses": 6,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Amnesia",
+      "uses": 5,
+      "classes": [
+        "Healer"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "ArmorAbsorptionBuff",
+      "uses": 5,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "BodyResistBuff",
+      "uses": 5,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Skald"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "ColdResistBuff",
+      "uses": 5,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Skald"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "EnduranceRegenBuff",
+      "uses": 5,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "EnergyResistBuff",
+      "uses": 5,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Skald"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "HeatResistBuff",
+      "uses": 5,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Skald"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "MatterResistBuff",
+      "uses": 5,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Skald"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Nearsight",
+      "uses": 5,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "PowerRegenBuff",
+      "uses": 5,
+      "classes": [
+        "Healer"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SavageCombatSpeedBuff",
+      "uses": 5,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SpiritResistBuff",
+      "uses": 5,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman",
+        "Skald"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SummonHunterPet",
+      "uses": 5,
+      "classes": [
+        "Hunter"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SummonSpiritFighter",
+      "uses": 5,
+      "classes": [
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "AcuityBuff",
+      "uses": 4,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "CureNearsightCustom",
+      "uses": 4,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SummonCommander",
+      "uses": 4,
+      "classes": [
+        "Bonedancer"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Taunt",
+      "uses": 4,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "ColdResistDebuff",
+      "uses": 3,
+      "classes": [
+        "Runemaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "EnergyResistDebuff",
+      "uses": 3,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "HeatResistDebuff",
+      "uses": 3,
+      "classes": [
+        "Runemaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "MatterResistDebuff",
+      "uses": 3,
+      "classes": [
+        "Runemaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SavageEnduranceHeal",
+      "uses": 3,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SpiritResistDebuff",
+      "uses": 3,
+      "classes": [
+        "Bonedancer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "SpreadHeal",
+      "uses": 3,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "CureDisease",
+      "uses": 2,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "CureMezz",
+      "uses": 2,
+      "classes": [
+        "Bonedancer",
+        "Healer",
+        "Mystic",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "CurePoison",
+      "uses": 2,
+      "classes": [
+        "Healer",
+        "Seer",
+        "Shaman"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "FatigueConsumptionDebuff",
+      "uses": 2,
+      "classes": [
+        "Shadowblade"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "MesmerizeDurationBuff",
+      "uses": 2,
+      "classes": [
+        "Spiritmaster"
+      ],
+      "implemented": false
+    }
+  ],
+  "styleFeatures": [
+    {
+      "name": "growth damage",
+      "uses": 341,
+      "implemented": true
+    },
+    {
+      "name": "to-hit bonus",
+      "uses": 280,
+      "implemented": true
+    },
+    {
+      "name": "defence bonus",
+      "uses": 132,
+      "implemented": true
+    },
+    {
+      "name": "chain: after a style",
+      "uses": 130,
+      "implemented": true
+    },
+    {
+      "name": "opening: anytime",
+      "uses": 102,
+      "implemented": true
+    },
+    {
+      "name": "opening: from behind",
+      "uses": 28,
+      "implemented": true
+    },
+    {
+      "name": "opening: after a block",
+      "uses": 26,
+      "implemented": true
+    },
+    {
+      "name": "opening: after a parry",
+      "uses": 26,
+      "implemented": true
+    },
+    {
+      "name": "opening: from the side",
+      "uses": 25,
+      "implemented": true
+    },
+    {
+      "name": "opening: after an evade",
+      "uses": 18,
+      "implemented": true
+    },
+    {
+      "name": "opening: from the front",
+      "uses": 7,
+      "implemented": true
+    },
+    {
+      "name": "proc spell",
+      "uses": 5,
+      "implemented": false
+    },
+    {
+      "name": "stealth opener",
+      "uses": 3,
+      "implemented": false
+    },
+    {
+      "name": "opening: after result 3",
+      "uses": 1,
+      "implemented": false
+    }
+  ],
+  "abilities": [
+    {
+      "name": "Evade",
+      "uses": 17,
+      "classes": [
+        "Berserker",
+        "Hunter",
+        "Midgard Rogue",
+        "Savage",
+        "Shadowblade",
+        "Skald",
+        "Warrior"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "MidArmor",
+      "uses": 10,
+      "classes": [
+        "Berserker",
+        "Bonedancer",
+        "Healer",
+        "Hunter",
+        "Midgard Rogue",
+        "Mystic",
+        "Runemaster",
+        "Savage",
+        "Seer",
+        "Shadowblade",
+        "Shaman",
+        "Skald",
+        "Spiritmaster",
+        "Thane",
+        "Viking",
+        "Warrior"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Critical Shot",
+      "uses": 9,
+      "classes": [
+        "Hunter"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Protect",
+      "uses": 8,
+      "classes": [
+        "Berserker",
+        "Skald",
+        "Thane",
+        "Warrior"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Shield",
+      "uses": 8,
+      "classes": [
+        "Berserker",
+        "Healer",
+        "Savage",
+        "Seer",
+        "Shadowblade",
+        "Shaman",
+        "Skald",
+        "Thane",
+        "Viking",
+        "Warrior"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Safe Fall",
+      "uses": 5,
+      "classes": [
+        "Shadowblade"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Berserk",
+      "uses": 4,
+      "classes": [
+        "Berserker"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Guard",
+      "uses": 4,
+      "classes": [
+        "Thane",
+        "Warrior"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Weaponry: Staves",
+      "uses": 4,
+      "classes": [
+        "Berserker",
+        "Bonedancer",
+        "Healer",
+        "Hunter",
+        "Midgard Rogue",
+        "Mystic",
+        "Runemaster",
+        "Savage",
+        "Seer",
+        "Shadowblade",
+        "Shaman",
+        "Skald",
+        "Spiritmaster",
+        "Thane",
+        "Viking",
+        "Warrior"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Penetrating Arrow",
+      "uses": 3,
+      "classes": [
+        "Hunter"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Weaponry: Thrown",
+      "uses": 3,
+      "classes": [
+        "Berserker",
+        "Shadowblade",
+        "Warrior"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Charge",
+      "uses": 2,
+      "classes": [
+        "Berserker",
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Intercept",
+      "uses": 2,
+      "classes": [
+        "Thane",
+        "Warrior"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Rapid Fire",
+      "uses": 2,
+      "classes": [
+        "Hunter"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Weaponry: Axes",
+      "uses": 2,
+      "classes": [
+        "Berserker",
+        "Savage",
+        "Shadowblade",
+        "Skald",
+        "Thane",
+        "Viking",
+        "Warrior"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Weaponry: Hammers",
+      "uses": 2,
+      "classes": [
+        "Berserker",
+        "Healer",
+        "Savage",
+        "Seer",
+        "Shaman",
+        "Skald",
+        "Thane",
+        "Viking",
+        "Warrior"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Weaponry: Swords",
+      "uses": 2,
+      "classes": [
+        "Berserker",
+        "Hunter",
+        "Midgard Rogue",
+        "Savage",
+        "Shadowblade",
+        "Skald",
+        "Thane",
+        "Viking",
+        "Warrior"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Call of a thousand storms",
+      "uses": 1,
+      "classes": [
+        "Thane"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Camouflage",
+      "uses": 1,
+      "classes": [
+        "Hunter"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Climb Walls",
+      "uses": 1,
+      "classes": [
+        "Shadowblade"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Danger Sense",
+      "uses": 1,
+      "classes": [
+        "Shadowblade"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Detect Hidden",
+      "uses": 1,
+      "classes": [
+        "Shadowblade"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Distraction",
+      "uses": 1,
+      "classes": [
+        "Shadowblade"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Engage",
+      "uses": 1,
+      "classes": [
+        "Thane",
+        "Warrior"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Enhanced Evade",
+      "uses": 1,
+      "classes": [
+        "Berserker",
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "QuickCast",
+      "uses": 1,
+      "classes": [
+        "Bonedancer",
+        "Runemaster",
+        "Spiritmaster"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Weaponry: Composite Bows",
+      "uses": 1,
+      "classes": [
+        "Hunter"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Weaponry: Hand to Hand",
+      "uses": 1,
+      "classes": [
+        "Savage"
+      ],
+      "implemented": false
+    },
+    {
+      "name": "Weaponry: Left Axes",
+      "uses": 1,
+      "classes": [
+        "Shadowblade"
+      ],
+      "implemented": true
+    },
+    {
+      "name": "Weaponry: Spears",
+      "uses": 1,
+      "classes": [
+        "Hunter"
+      ],
+      "implemented": true
+    }
+  ],
+  "creatureKinds": [
+    {
+      "name": "DOL.GS.GameNPC",
+      "uses": 28412,
+      "implemented": true
+    },
+    {
+      "name": "DOL.GS.GameMerchant",
+      "uses": 324,
+      "implemented": true
+    },
+    {
+      "name": "DOL.GS.GameGuard",
+      "uses": 197,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Scripts.Myling",
+      "uses": 194,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Keeps.GuardFighter",
+      "uses": 139,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.NightSpawn",
+      "uses": 71,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Scripts.ShiveringPresence",
+      "uses": 51,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Keeps.GuardArcher",
+      "uses": 49,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.GameHastener",
+      "uses": 27,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Keeps.GuardCommander",
+      "uses": 26,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Blacksmith",
+      "uses": 23,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.GameStableMaster",
+      "uses": 23,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.QueenMajorAdd",
+      "uses": 22,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.GameHealer",
+      "uses": 18,
+      "implemented": true
+    },
+    {
+      "name": "DOL.GS.Scripts.OFAssistant",
+      "uses": 18,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Scripts.LiveTeleporter",
+      "uses": 15,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Enchanter",
+      "uses": 14,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.StripeAdd",
+      "uses": 13,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.ZritZritAdd",
+      "uses": 13,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Keeps.FrontierHastener",
+      "uses": 11,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.GameVaultKeeper",
+      "uses": 9,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.OonaUndeadSoldier",
+      "uses": 9,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Keeps.GuardStaticArcher",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.RainbowSpriteWhite",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.BerserkerTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.BonedancerTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.HealerTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.HunterTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.RunemasterTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.ShadowbladeTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.ShamanTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.SkaldTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.SpiritmasterTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.ThaneTrainer",
+      "uses": 8,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.WarriorTrainer",
+      "uses": 8,
+      "implemented": true
+    },
+    {
+      "name": "DOL.GS.Keeps.GuardCorpseSummoner",
+      "uses": 7,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Keeps.GuardLord",
+      "uses": 7,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.RainbowSpriteBlue",
+      "uses": 7,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.RainbowSpriteTan",
+      "uses": 7,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.SavageTrainer",
+      "uses": 7,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.RainbowSpriteGreen",
+      "uses": 6,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Recharger",
+      "uses": 5,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.SeerTrainer",
+      "uses": 5,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.VikingTrainer",
+      "uses": 5,
+      "implemented": true
+    },
+    {
+      "name": "DOL.GS.DPSDummy",
+      "uses": 4,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.MysticTrainer",
+      "uses": 4,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.GameBountyMerchant",
+      "uses": 3,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.MidgardSITeleporter",
+      "uses": 3,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Scripts.OFTeleporter",
+      "uses": 3,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.SnarlsAdd",
+      "uses": 3,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.RogueTrainer",
+      "uses": 3,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.AlchemistsMaster",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.ArmorCraftingMaster",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.EmblemNPC",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.FletchingMaster",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.GuildRegistrar",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.HitbackDummy",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Keeps.GuardMerchant",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Loken",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Scripts.OFMerchantHome",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Scripts.Recharger",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.TailoringMaster",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WeaponCraftingMaster",
+      "uses": 2,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.AccountVaultKeeper",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Alina",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Basilius",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Boligar",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.ChiefTarek",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Cronk",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Dalgo",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.DaySpawn",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.EffectNPC",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.GiantLemer",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.GlacierGiant",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Goretooth",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.HealDummy",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Hugi",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.MidGjalpinulva",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Mortufoghus",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.NameRegistrar",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Njessi",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Oona",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.QueenMajor",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.RaumarikRevenant",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.RoyalTreasuryClerk",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Runil",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.ScoutArgyle",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Scripts.AtlasTrainer",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Scripts.InlandTeleporter",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Shredclaw",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.SimpleTeleporter",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Snarls",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.SpellCraftingMaster",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Steinolf",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Stripe",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Trainer.MidgardRogueTrainer",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Ulfketill",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Valmak",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Vasrem",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterArachite",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterCrab",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterIce",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterJotun",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterLich",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterOgre",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterRaumarik",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterScorp",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.WrethOfWinterSpider",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.Yar",
+      "uses": 1,
+      "implemented": false
+    },
+    {
+      "name": "DOL.GS.ZritZrit",
+      "uses": 1,
+      "implemented": false
+    }
+  ],
+  "content": [
+    {
+      "name": "quests",
+      "uses": 81,
+      "implemented": false
+    },
+    {
+      "name": "keep doors",
+      "uses": 432,
+      "implemented": false
+    },
+    {
+      "name": "keeps",
+      "uses": 79,
+      "implemented": false
+    },
+    {
+      "name": "relics",
+      "uses": 6,
+      "implemented": false
+    },
+    {
+      "name": "battlegrounds",
+      "uses": 5,
+      "implemented": false
+    }
+  ],
+  "rules": [
+    {
+      "id": "character.class",
+      "status": "reference"
+    },
+    {
+      "id": "character.creation",
+      "status": "documented"
+    },
+    {
+      "id": "character.endurance",
+      "status": "provisional"
+    },
+    {
+      "id": "character.health-regen",
+      "status": "provisional"
+    },
+    {
+      "id": "character.hit-points",
+      "status": "reference"
+    },
+    {
+      "id": "character.item-stats",
+      "status": "documented"
+    },
+    {
+      "id": "character.level-stats",
+      "status": "documented"
+    },
+    {
+      "id": "character.race-stats",
+      "status": "documented"
+    },
+    {
+      "id": "creature.armour",
+      "status": "reference"
+    },
+    {
+      "id": "creature.blows",
+      "status": "reference"
+    },
+    {
+      "id": "creature.defences",
+      "status": "documented"
+    },
+    {
+      "id": "creature.hit-points",
+      "status": "reference"
+    },
+    {
+      "id": "creature.resists",
+      "status": "documented"
+    },
+    {
+      "id": "creature.stats",
+      "status": "reference"
+    },
+    {
+      "id": "creature.swing",
+      "status": "reference"
+    },
+    {
+      "id": "death.constitution",
+      "status": "reference"
+    },
+    {
+      "id": "death.healer",
+      "status": "documented"
+    },
+    {
+      "id": "death.loss",
+      "status": "reference"
+    },
+    {
+      "id": "death.pray",
+      "status": "reference"
+    },
+    {
+      "id": "death.release",
+      "status": "reference"
+    },
+    {
+      "id": "death.return",
+      "status": "reference"
+    },
+    {
+      "id": "experience.con",
+      "status": "documented"
+    },
+    {
+      "id": "experience.creature-value",
+      "status": "documented"
+    },
+    {
+      "id": "experience.kill",
+      "status": "documented"
+    },
+    {
+      "id": "experience.table",
+      "status": "documented"
+    },
+    {
+      "id": "loot.money",
+      "status": "provisional"
+    },
+    {
+      "id": "melee.armour",
+      "status": "documented"
+    },
+    {
+      "id": "melee.base-damage",
+      "status": "documented"
+    },
+    {
+      "id": "melee.block",
+      "status": "documented"
+    },
+    {
+      "id": "melee.critical",
+      "status": "reference"
+    },
+    {
+      "id": "melee.evade",
+      "status": "documented"
+    },
+    {
+      "id": "melee.location",
+      "status": "reference"
+    },
+    {
+      "id": "melee.miss",
+      "status": "documented"
+    },
+    {
+      "id": "melee.miss-bonuses",
+      "status": "reference"
+    },
+    {
+      "id": "melee.order",
+      "status": "reference"
+    },
+    {
+      "id": "melee.parry",
+      "status": "documented"
+    },
+    {
+      "id": "melee.style-cost",
+      "status": "reference"
+    },
+    {
+      "id": "melee.style-damage",
+      "status": "documented"
+    },
+    {
+      "id": "melee.swing-speed",
+      "status": "documented"
+    },
+    {
+      "id": "melee.weapon-skill",
+      "status": "reference"
+    },
+    {
+      "id": "spec.abilities",
+      "status": "documented"
+    },
+    {
+      "id": "spec.items",
+      "status": "documented"
+    },
+    {
+      "id": "spec.migration",
+      "status": "documented"
+    },
+    {
+      "id": "spec.points",
+      "status": "reference"
+    },
+    {
+      "id": "spec.training",
+      "status": "documented"
+    }
+  ],
+  "rulesByStatus": {
+    "documented": 23,
+    "provisional": 3,
+    "reference": 19
+  },
+  "placements": 29932
+}

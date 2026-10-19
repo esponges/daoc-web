@@ -6,11 +6,25 @@ TBD - created by archiving change merchants. Update Purpose after archive.
 ## Requirements
 
 ### Requirement: The server knows what kind of NPC it is
-The server SHALL classify each NPC by the class type imported with its spawn. A class type of `GameMerchant` SHALL make the NPC a merchant; any other class type SHALL make it a kind with no interaction, and an NPC spawned from a world store that lacks class types SHALL have no interaction.
+The server SHALL classify each NPC by the class type imported with its spawn:
+- `GameMerchant` makes it a merchant;
+- `GameHealer` makes it a healer;
+- a class type naming a class trainer (for example `DOL.GS.Trainer.WarriorTrainer`) makes it a trainer for that class;
+- any other class type makes it a kind with no interaction.
+
+An NPC spawned from a world store that lacks class types SHALL have no interaction.
 
 #### Scenario: A merchant spawn
 - **WHEN** a spawn imported with class type `GameMerchant` is loaded into a zone
 - **THEN** its NPC is a merchant and its entity carries an interaction kind of `merchant`
+
+#### Scenario: A trainer spawn
+- **WHEN** a spawn imported with class type `DOL.GS.Trainer.WarriorTrainer` is loaded
+- **THEN** its NPC is a Warrior trainer and its entity carries an interaction kind of `trainer`
+
+#### Scenario: A healer spawn
+- **WHEN** a spawn imported with class type `DOL.GS.GameHealer` is loaded
+- **THEN** its entity carries an interaction kind of `healer`
 
 #### Scenario: A plain creature or a guard
 - **WHEN** a spawn has any other class type
@@ -21,11 +35,15 @@ The server SHALL classify each NPC by the class type imported with its spawn. A 
 - **THEN** the server starts, no NPC is interactable, and the log says the store should be re-imported
 
 ### Requirement: Interaction is requested by NPC and decided by the server
-A client SHALL ask to interact by sending `interact` with an NPC's id. The server SHALL accept the request only when the NPC is in the player's zone, is alive, has an interaction kind, and is within interact range of the player, and SHALL otherwise answer with an error the player can read.
+A client SHALL ask to interact by sending `interact` with an NPC's id. The server SHALL accept the request only when the NPC is in the player's zone, is alive, has an interaction kind, and is within interact range of the player. It SHALL otherwise answer with an error the player can read. A merchant SHALL answer with its shop, a trainer with the player's training state, and a healer with its offer.
 
 #### Scenario: In reach
 - **WHEN** a living player stands within interact range of a merchant and sends `interact`
 - **THEN** the server answers with that merchant's `shop` message
+
+#### Scenario: A trainer in reach
+- **WHEN** a Warrior interacts with a Warrior trainer in reach
+- **THEN** the server answers with a `trainer` message listing their specs, levels, next costs and unspent points
 
 #### Scenario: Too far away
 - **WHEN** the player is beyond interact range

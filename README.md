@@ -1352,29 +1352,48 @@ interpolated.
 - **Creatures** are the imported spawns, each placed, levelled and sized by the
   database, wandering within its roam, aggressive where it is, calling its
   packmates, giving up a chase at its tether and walking home to heal.
-- **Combat.** Auto-attack with a swing timer from the weapon, a to-hit roll
-  by level, and block, parry and evade from a creature's template or the
-  player's level, block and parry only from the front. A Warrior's styles come
-  from the style table, for the lines of the weapon held: anytime styles,
-  openings after a parry, block or evade, positional ones from the side or
-  behind, and chains (Crushing Blow, then Slam). They cost endurance, which
-  regenerates. The hit points, damage, experience and level numbers are
-  this project's own (`internal/server/world/rules.go`), chosen so that a
-  level-1 fight is a few swings; the style requirements, endurance costs,
-  weapons and creature levels are the imported data's.
-- **Progression.** Kills give experience scaled by the level difference and
-  split by damage dealt, and levels (to 50) give hit points and unlock styles.
-  Dead creatures drop money and loot from their loot tables (or, failing a
-  table, now and then something of their level), for their killer for thirty
-  seconds, taken into a pack of forty. Items go on and off in the pack panel
-  (`I`); a Warrior may wear chain and lighter and carry hammer, axe, sword and
-  shield. Every item change is saved in one transaction with the character.
-- **Death.** You come back at your bind point, or the start, five seconds
-  later, with creatures sent home.
+- **Combat** follows classic 1.65, as written in the rule book (below) and
+  computed in `internal/server/rules`. A swing is settled in this order:
+  1. the defender's evade, parry and block, from their abilities, specs and
+     dexterity (or a creature's template), and only from the front;
+  2. an 18% miss chance moved by the level difference and style bonuses;
+  3. if it hits, a hit location, then damage: weapon skill against the armour
+     worn there, with variance from the spec, a damage cap, critical hits and
+     the creature's race resists.
+
+  A Warrior's styles come from the style table for the weapon held, unlocked
+  by trained spec. There are anytime styles, openings after a parry, block or
+  evade, positional ones from the side or behind, and chains (Crushing Blow,
+  then Slam). Each adds growth damage and costs endurance by weapon speed,
+  and half if the swing fails. Creatures' hit points, blows and armour come
+  from their level.
+- **Progression.**
+  - Characters have the eight stats of their race plus a 30-point build, and
+    gain stats from level 6.
+  - Kills give the published experience values, shared by damage and capped at
+    1.25 × a same-level kill; grey kills give nothing.
+  - Levels (to 50) give stats, hit points and specialisation points, spent at a
+    trainer of your class (or the Viking trainer).
+  - Dead creatures drop money and loot from their loot tables (or, failing a
+    table, now and then something of their level). Only their killer can take
+    it for thirty seconds, into a pack of forty.
+  - Items go on and off in the pack panel (`I`). Their stat bonuses count up to
+    the item caps.
+  - What a Warrior may use comes from the class's abilities by level: studded
+    armour until level 10 and chain after, larger shields with level, and one-
+    or two-handed swords, axes and hammers.
+  - Every item change is saved in one transaction with the character.
+- **Death.** From level 6, a death to a creature costs experience at once.
+  Releasing (by choice or after five seconds) costs as much again, into a
+  gravestone where you fell, and costs constitution. You come back at your
+  bind point whole, with creatures sent home. Target your gravestone and
+  `/pray` there to win its experience back; a healer restores constitution
+  for money.
 
 Keys in network mode: `W/S/A/D/Q/E` and the mouse as before, `Enter` to talk
-(`!` to shout, `/who`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
-usable), `I` the pack, a click on a corpse to loot it. Administrators: `/gm goto
+(`!` to shout, `/who`, `/pray`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
+usable), `I` the pack, `C` the character sheet (`Shift+C` the free camera), a
+click on a corpse to loot it, a right-click on a merchant, trainer or healer. Administrators: `/gm goto
 103`, `/gm tp x y`, `/gm level n`, `/gm give <item id>`.
 
 ### Where the world's content comes from
@@ -1403,6 +1422,78 @@ and keeps spawns (in zone units), NPC templates, loot, items, styles, exits,
 start locations and bind points. A spawn is dropped if it is in no zone, uses
 a model with no converted character (`web/data/char/m<N>`), or sits more than
 500 units from the derived ground; the counts are printed.
+
+### The rule book
+
+The aim is classic 1.65 Midgard as a public server played it. Each mechanic the
+server implements has its own capability spec under `openspec/specs/rules-*/`,
+for example `rules-melee` or `rules-death`. A spec says what the rule decides,
+what goes in, the formula in this project's words, its caps, and worked
+examples with concrete numbers. Those examples are the tests: each one is a
+table test in `internal/server/rules`, named after it. Each rule carries a
+status:
+
+- **documented**: a public source states it;
+- **reference**: no public page gives the number, so it matches how the classic
+  reference server (OpenDAoC) behaves, which was read only to understand it;
+- **provisional**: neither exists, so the value is this project's choice, and
+  the spec says so.
+
+The registry in `internal/server/rules` lists every rule with its status and
+sources, and the parity census (below) counts them. No code from a GPL server
+is copied into the repository, its specs or its tests.
+
+Sources the rules come from:
+
+- [disorder.dk](https://disorder.dk/daoc/), the 1.65 mechanics pages:
+  - [chance to hit](https://disorder.dk/daoc/chance-to-hit/)
+  - [evade](https://disorder.dk/daoc/evade/)
+  - [parry](https://disorder.dk/daoc/parry/)
+  - [blocking](https://disorder.dk/daoc/blocking/)
+  - [stats](https://disorder.dk/daoc/stats/) and [stat caps](https://disorder.dk/daoc/stats-cap/)
+  - [hit point cap](https://disorder.dk/daoc/hit-point-cap/)
+  - [armour factor cap](https://disorder.dk/daoc/armor-factor-cap/)
+  - [swing speed](https://disorder.dk/daoc/melee-swing-speed-cap/)
+  - [hit location](https://disorder.dk/daoc/armor-hit-chance-and-location/)
+  - [skill cap](https://disorder.dk/daoc/skill-cap/)
+  - [melee damage](https://disorder.dk/daoc/melee-damage-calculation/)
+- The [Camelot Herald wiki](https://camelotherald.fandom.com/): melee damage,
+  weapon skill, styles.
+- Mythic's Friday Grab Bag answers on parry, block and evade, as quoted on
+  those pages, and the knowledge-base note that raised the experience clamp to
+  1.25 times a same-level kill.
+- The published experience and constitution-restore tables
+  (silicondragon.com's "XPs" page, now only in archives).
+- Mythic's description of con colour bands ("level divided by ten plus one"),
+  reposted in a group experience explainer.
+- [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
+  understand rules that no public page gives a number for. Nothing is copied
+  from it.
+
+### Parity census
+
+How far is the server from classic Midgard? `go run ./cmd/parity` reads the
+community database and lists, for Midgard (regions 100, 101 and 151), what the
+data asks for:
+
+- the spell types creatures and classes use;
+- the style features;
+- the abilities granted;
+- the creature kinds, by class type;
+- quests, keep doors, keeps, relics and battlegrounds.
+
+For each, it says whether the server implements it, and it counts the rules by
+status. It writes `docs/parity/parity.json` and `docs/parity/README.md`: names
+and counts only, so they are committed like the asset census.
+`go test ./cmd/parity` (not `-short`, with the dump checked out) fails if
+anything that was implemented no longer is, or if a rule's status weakens. At
+the first baseline:
+
+- no creature or class spell types are implemented (0 of 15 and 0 of 73);
+- 11 of 14 style features;
+- 11 of 30 abilities;
+- 5 of 110 creature kinds, which covers 28,767 of Midgard's 29,932 placements;
+- 23 documented rules, 19 reference and 3 provisional.
 
 ### The game's own interface
 

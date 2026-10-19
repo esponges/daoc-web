@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"daocweb/internal/server/protocol"
+	"daocweb/internal/server/rules"
 	"daocweb/internal/server/store"
 )
 
@@ -36,27 +37,17 @@ func wornSlot(it *Item) int {
 	return -1
 }
 
-// A warrior's weapons and armour. The class tables name what each class may
-// use, but the emulator keeps those in code, so this is ours.
-func canUse(class int, it *Item, level int) error {
-	if it.Level > level+2 && level < MaxLevel {
-		return fmt.Errorf("you must be level %d to use %s", it.Level-2, it.Name)
+// canUse says whether a player may equip an item: their class's abilities at
+// their level decide the weapon families, armour weight and shield size; the
+// item must be Midgard's or no realm's and not ask for a higher level.
+func canUse(p *Player, it *Item) error {
+	if it.LevelReq > p.Char.Level {
+		return fmt.Errorf("you must be level %d to use %s", it.LevelReq, it.Name)
 	}
 	if it.Realm != 0 && it.Realm != 2 {
 		return errors.New("that is not Midgard's")
 	}
-	switch {
-	case it.ObjectType == ObjShield:
-		return nil
-	case it.ObjectType >= 11 && it.ObjectType <= 13: // sword, hammer, axe
-		if it.Hand == 2 {
-			return errors.New("a warrior here fights one-handed")
-		}
-		return nil
-	case it.ObjectType >= 32 && it.ObjectType <= 35: // cloth, leather, studded, chain
-		return nil
-	}
-	return errors.New("you cannot use that")
+	return rules.MayUse(p.sh.abilities, it.ObjectType, it.DamageType)
 }
 
 func (w *World) loadInventory(p *Player) {
@@ -68,24 +59,17 @@ func (w *World) loadInventory(p *Player) {
 	for _, it := range items {
 		p.inv[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count}
 	}
-	w.recalcGear(p)
+	w.recalc(p)
 }
 
 // recalcGear derives what a player holds and wears from their inventory.
 func (w *World) recalcGear(p *Player) {
-	p.weapon, p.shield, p.armour = nil, nil, 0
+	p.weapon, p.shield = nil, nil
 	if it := p.inv[SlotWeapon]; it != nil {
 		p.weapon = w.Cat.Items[it.ID]
 	}
 	if it := p.inv[SlotShield]; it != nil {
 		p.shield = w.Cat.Items[it.ID]
-	}
-	for s := SlotTorso; s < SlotCount; s++ {
-		if it := p.inv[s]; it != nil {
-			if x := w.Cat.Items[it.ID]; x != nil {
-				p.armour += x.AF
-			}
-		}
 	}
 	if gear := gearOf(p.inv, w.Cat.Items); !sameGear(gear, p.gear) {
 		p.gear = gear
@@ -222,7 +206,7 @@ func (z *Zone) MoveItem(p *Player, from, to int) {
 		if wornSlot(x) != slot {
 			return errors.New("that does not go there")
 		}
-		return canUse(p.Char.Class, x, p.Char.Level)
+		return canUse(p, x)
 	}
 	dst := p.inv[to]
 	if err := check(src, to); err != nil {
@@ -233,15 +217,51 @@ func (z *Zone) MoveItem(p *Player, from, to int) {
 		p.errMsg("equip", err.Error())
 		return
 	}
+	// Two hands hold one weapon: a two-handed weapon sends the shield to the
+	// pack, and a shield cannot go on beside one.
+	shieldOff := -1
+	if to == SlotWeapon && p.inv[SlotShield] != nil {
+		if x := w.Cat.Items[src.ID]; x != nil && x.TwoHanded() {
+			shieldOff = SlotShield
+		}
+	}
+	if to == SlotShield && p.weapon != nil && p.weapon.TwoHanded() {
+		p.errMsg("equip", "You cannot use a shield with a two-handed weapon.")
+		return
+	}
+	freeSlot := -1
 	err := w.Store.Tx(func(tx *store.Tx) error {
+		if shieldOff >= 0 {
+			slot, err := tx.FreeSlot(p.Char.ID, PackSize)
+			if err != nil {
+				return err
+			}
+			if slot < 0 {
+				return errPackFull
+			}
+			if err := tx.MoveItem(p.Char.ID, SlotShield, slot); err != nil {
+				return err
+			}
+			freeSlot = slot
+		}
 		if dst != nil {
 			return tx.SwapItems(p.Char.ID, from, to)
 		}
 		return tx.MoveItem(p.Char.ID, from, to)
 	})
+	if errors.Is(err, errPackFull) {
+		p.errMsg("equip", "Your pack has no room for your shield.")
+		return
+	}
 	if err != nil {
 		p.errMsg("equip", "Could not move that.")
 		return
+	}
+	if freeSlot >= 0 {
+		sh := p.inv[SlotShield]
+		delete(p.inv, SlotShield)
+		p.inv[freeSlot] = sh
+		sh.Slot = freeSlot
 	}
 	if dst != nil {
 		p.inv[from], p.inv[to] = dst, src
@@ -251,7 +271,7 @@ func (z *Zone) MoveItem(p *Player, from, to int) {
 		p.inv[to] = src
 		src.Slot = to
 	}
-	w.recalcGear(p)
+	w.recalc(p)
 	z.buildBar(p)
 	p.sendInv(w.Cat, p.Char.Money)
 }
@@ -265,7 +285,7 @@ func (z *Zone) DropItem(p *Player, slot int) {
 		return
 	}
 	delete(p.inv, slot)
-	z.W.recalcGear(p)
+	z.W.recalc(p)
 	z.buildBar(p)
 	p.sendInv(z.W.Cat, p.Char.Money)
 }

@@ -28,7 +28,7 @@ CREATE TABLE spawn(
   id INTEGER PRIMARY KEY AUTOINCREMENT, zone INTEGER, name TEXT, guild TEXT, model INTEGER,
   x REAL, y REAL, z REAL, heading INTEGER, level INTEGER, size INTEGER, speed INTEGER,
   template INTEGER, roam INTEGER, respawn_s INTEGER, aggro_level INTEGER, aggro_range INTEGER,
-  realm INTEGER, flags INTEGER, path TEXT, brain TEXT, equip TEXT, classtype TEXT, items_list TEXT);
+  realm INTEGER, flags INTEGER, path TEXT, brain TEXT, equip TEXT, classtype TEXT, items_list TEXT, race INTEGER);
 CREATE INDEX spawn_zone ON spawn(zone);
 CREATE TABLE merchant_stock(list TEXT, item TEXT, page INTEGER, slot INTEGER);
 CREATE INDEX merchant_stock_list ON merchant_stock(list);
@@ -42,7 +42,10 @@ CREATE INDEX mob_loot_name ON mob_loot(mob_name);
 CREATE TABLE item(
   id TEXT PRIMARY KEY, name TEXT, level INTEGER, quality INTEGER, dps_af INTEGER, spd_abs INTEGER,
   hand INTEGER, damage_type INTEGER, object_type INTEGER, item_type INTEGER, model INTEGER,
-  weight INTEGER, price INTEGER, realm INTEGER, allowed_classes TEXT, droppable INTEGER, level_req INTEGER);
+  weight INTEGER, price INTEGER, realm INTEGER, allowed_classes TEXT, droppable INTEGER, level_req INTEGER,
+  bonus INTEGER, condition INTEGER, max_condition INTEGER, durability INTEGER);
+CREATE TABLE item_bonus(item TEXT, type INTEGER, amount INTEGER);
+CREATE INDEX item_bonus_item ON item_bonus(item);
 CREATE TABLE style(
   id INTEGER, class_id INTEGER, name TEXT, spec TEXT, spec_level INTEGER, icon INTEGER,
   endurance INTEGER, opening_type INTEGER, opening_value INTEGER, result_req INTEGER,
@@ -57,7 +60,10 @@ CREATE TABLE zonepoint(
 CREATE TABLE startup(realm INTEGER, race INTEGER, class INTEGER, zone INTEGER, region INTEGER,
   x REAL, y REAL, z REAL, heading INTEGER);
 CREATE TABLE bindpoint(zone INTEGER, region INTEGER, x REAL, y REAL, z REAL, radius INTEGER, realm INTEGER);
-CREATE TABLE race(id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE race(id INTEGER PRIMARY KEY, name TEXT,
+  body INTEGER, cold INTEGER, crush INTEGER, energy INTEGER, heat INTEGER, matter INTEGER, natural INTEGER,
+  slash INTEGER, spirit INTEGER, thrust INTEGER);
+CREATE TABLE spec_ability(spec TEXT, spec_level INTEGER, ability TEXT, ability_level INTEGER, class_id INTEGER);
 `
 
 // Options say where things are and which spawns to keep.
@@ -259,12 +265,12 @@ func Run(o Options) (*Report, error) {
 		if merchant {
 			rep.MerchantsKept++
 		}
-		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list)
-			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list,race)
+			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			z.id, r.Str("Name"), r.Str("Guild"), model, lx, ly, zz, r.Int("Heading"), r.Int("Level"), r.Int("Size"),
 			r.Int("Speed"), r.Int("NPCTemplateID"), r.Int("RoamingRange"), r.Int("RespawnInterval"),
 			r.Int("AggroLevel"), r.Int("AggroRange"), r.Int("Realm"), r.Int("Flags"), r.Str("PathID"), r.Str("Brain"), equip,
-			classType, r.Str("ItemsListTemplateID"))
+			classType, r.Str("ItemsListTemplateID"), r.Int("Race"))
 	}); err != nil {
 		return nil, err
 	}
@@ -290,10 +296,20 @@ func Run(o Options) (*Report, error) {
 		return nil, err
 	}
 	if err := read("itemtemplate", func(r *Row) (bool, error) {
-		return true, ins(`INSERT OR REPLACE INTO item VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		id := r.Str("Id_nb")
+		for i := 1; i <= 10; i++ {
+			ty, amt := r.Int(fmt.Sprintf("Bonus%dType", i)), r.Int(fmt.Sprintf("Bonus%d", i))
+			if ty != 0 && amt != 0 {
+				if err := ins(`INSERT INTO item_bonus VALUES(?,?,?)`, id, ty, amt); err != nil {
+					return false, err
+				}
+			}
+		}
+		return true, ins(`INSERT OR REPLACE INTO item VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			r.Str("Id_nb"), r.Str("Name"), r.Int("Level"), r.Int("Quality"), r.Int("DPS_AF"), r.Int("SPD_ABS"),
 			r.Int("Hand"), r.Int("Type_Damage"), r.Int("Object_Type"), r.Int("Item_Type"), r.Int("Model"),
-			r.Int("Weight"), r.Int("Price"), r.Int("Realm"), r.Str("AllowedClasses"), r.Int("CanDropAsLoot"), r.Int("LevelRequirement"))
+			r.Int("Weight"), r.Int("Price"), r.Int("Realm"), r.Str("AllowedClasses"), r.Int("CanDropAsLoot"), r.Int("LevelRequirement"),
+			r.Int("Bonus"), r.Int("Condition"), r.Int("MaxCondition"), r.Int("Durability"))
 	}); err != nil {
 		return nil, err
 	}
@@ -319,9 +335,27 @@ func Run(o Options) (*Report, error) {
 		return nil, err
 	}
 	if err := read("race", func(r *Row) (bool, error) {
-		return true, ins(`INSERT OR REPLACE INTO race VALUES(?,?)`, r.Int("ID"), r.Str("Name"))
+		return true, ins(`INSERT OR REPLACE INTO race VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, r.Int("ID"), r.Str("Name"),
+			r.Int("ResistBody"), r.Int("ResistCold"), r.Int("ResistCrush"), r.Int("ResistEnergy"), r.Int("ResistHeat"),
+			r.Int("ResistMatter"), r.Int("ResistNatural"), r.Int("ResistSlash"), r.Int("ResistSpirit"), r.Int("ResistThrust"))
 	}); err != nil {
 		return nil, err
+	}
+
+	// Which abilities each career and spec grants, by level. Older dumps may
+	// lack the table; the server then knows no abilities and says so.
+	if _, err := os.Stat(filepath.Join(o.Dump, "specxability.sql")); err == nil {
+		if err := read("specxability", func(r *Row) (bool, error) {
+			if r.Str("Spec") == "" || r.Str("AbilityKey") == "" {
+				return false, nil
+			}
+			return true, ins(`INSERT INTO spec_ability VALUES(?,?,?,?,?)`, r.Str("Spec"), r.Int("SpecLevel"), r.Str("AbilityKey"),
+				r.Int("AbilityLevel"), r.Int("ClassId"))
+		}); err != nil {
+			return nil, err
+		}
+	} else {
+		o.Log("  specxability           absent: no abilities imported")
 	}
 
 	// --- travel: exits, starts, bind points ---
@@ -373,6 +407,22 @@ func Run(o Options) (*Report, error) {
 // alone until something builds what they do.
 func IsMerchantClass(classType string) bool {
 	return classType == "DOL.GS.GameMerchant"
+}
+
+// IsHealerClass reports whether a mob's class type is a healer, who restores
+// constitution lost to deaths.
+func IsHealerClass(classType string) bool {
+	return classType == "DOL.GS.GameHealer"
+}
+
+// TrainerClass is the class name a trainer's class type teaches, such as
+// "Warrior" for DOL.GS.Trainer.WarriorTrainer, or "" for anything else.
+func TrainerClass(classType string) string {
+	const pre, suf = "DOL.GS.Trainer.", "Trainer"
+	if !strings.HasPrefix(classType, pre) || !strings.HasSuffix(classType, suf) {
+		return ""
+	}
+	return strings.TrimSuffix(strings.TrimPrefix(classType, pre), suf)
 }
 
 // convertedZones reads which zone folders exist under web/data. nil means unknown.

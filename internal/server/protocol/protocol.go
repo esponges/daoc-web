@@ -38,6 +38,9 @@ const (
 	TInteract = "interact" // ask an NPC to do what it does (open a merchant's shop)
 	TBuy      = "buy"      // buy an item from the open shop
 	TSell     = "sell"     // sell a pack item to the open shop
+	TTrain    = "train"    // raise a spec at the trainer
+	TRestore  = "restore"  // pay a healer to restore lost constitution
+	TPray     = "pray"     // pray at the targeted gravestone
 )
 
 // Message types, server to client.
@@ -53,6 +56,9 @@ const (
 	TStyleBar  = "bar"
 	TShop      = "shop"      // a merchant's stock, sent when interaction opens it
 	TShopClose = "shopclose" // the open shop is closed (walked away, died, moved zone)
+	TStats     = "stats"     // the character sheet
+	TTrainer   = "trainer"   // a trainer's offer: the character's specs and their costs
+	THealer    = "healer"    // a healer's offer to restore lost constitution
 )
 
 // Envelope reads just the type of a message.
@@ -146,6 +152,19 @@ type Sell struct {
 	Slot int    `json:"slot"`
 }
 
+// Train raises a spec by N levels (1 when absent) at the trainer in reach.
+type Train struct {
+	T    string `json:"t"`
+	Spec string `json:"spec"`
+	N    int    `json:"n,omitempty"`
+}
+
+// Restore asks the healer with this id to restore lost constitution.
+type Restore struct {
+	T   string `json:"t"`
+	NPC int64  `json:"npc"`
+}
+
 // Use asks to use the zone exit the player stands at.
 type Use struct {
 	T string `json:"t"`
@@ -205,7 +224,9 @@ type Entity struct {
 	Back     bool     `json:"bk,omitempty"`
 	Side     int      `json:"sd,omitempty"`
 	Friendly bool     `json:"fr,omitempty"`
-	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant"; absent for nothing
+	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant", "trainer", "healer"; absent for nothing
+	Con      *int     `json:"cc,omitempty"` // a creature's con colour to you, -3 grey to 3 purple
+	Own      bool     `json:"own,omitempty"`
 }
 
 // Event is something that happened this tick, for the log and the animations.
@@ -337,6 +358,61 @@ type BarSlot struct {
 	Locked bool   `json:"locked,omitempty"`
 }
 
+// SpecRow is one spec on the character sheet or a trainer's list.
+type SpecRow struct {
+	Key   string `json:"key"`
+	Name  string `json:"nm"`
+	Level int    `json:"lv"`
+	Bonus int    `json:"bonus,omitempty"` // from items, as combat counts it
+	Cost  int    `json:"cost,omitempty"`  // of the next level, on a trainer's list
+	Can   bool   `json:"can,omitempty"`   // the next level can be trained now
+}
+
+// Ability is one ability a character knows; On is false for one the server
+// does not implement yet.
+type Ability struct {
+	Name  string `json:"nm"`
+	Level int    `json:"lv"`
+	On    bool   `json:"on,omitempty"`
+}
+
+// Stats is the character sheet, sent to its owner only.
+type Stats struct {
+	T         string    `json:"t"`
+	Class     string    `json:"cls"`
+	Level     int       `json:"lv"`
+	Half      bool      `json:"half,omitempty"` // past the midpoint of the level, from 40
+	Base      [8]int    `json:"base"`           // strength, constitution, dexterity, quickness, intelligence, piety, empathy, charisma
+	Stats     [8]int    `json:"stats"`          // with level gains, capped items and constitution lost
+	MaxHP     int       `json:"mhp"`
+	MaxEnd    int       `json:"mend"`
+	Specs     []SpecRow `json:"specs"`
+	Unspent   int       `json:"pts"`
+	Abilities []Ability `json:"ab"`
+	WS        int       `json:"ws"` // weapon skill of the held weapon, as shown
+	AF        int       `json:"af"` // armour factor, averaged over the body
+	ConLost   int       `json:"conlost,omitempty"`
+}
+
+// Trainer is a trainer's offer.
+type Trainer struct {
+	T       string    `json:"t"`
+	NPC     int64     `json:"npc"`
+	Name    string    `json:"nm"`
+	Specs   []SpecRow `json:"specs"`
+	Unspent int       `json:"pts"`
+}
+
+// Healer is a healer's offer to restore lost constitution.
+type Healer struct {
+	T     string `json:"t"`
+	NPC   int64  `json:"npc"`
+	Name  string `json:"nm"`
+	Lost  int    `json:"lost"`
+	Price int64  `json:"price"` // per point, in copper
+	Total int64  `json:"total"`
+}
+
 // Bar is the style hotbar.
 type Bar struct {
 	T     string    `json:"t"`
@@ -378,6 +454,12 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Sell{}
 	case TGM:
 		v = &GM{}
+	case TTrain:
+		v = &Train{}
+	case TRestore:
+		v = &Restore{}
+	case TPray:
+		return TPray, nil, nil
 	case TPing:
 		return TPing, nil, nil
 	case TRelease:

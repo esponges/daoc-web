@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"daocweb/internal/server/protocol"
+	"daocweb/internal/server/rules"
 	"daocweb/internal/server/store"
 )
 
@@ -28,18 +29,27 @@ const (
 )
 
 func (p *Player) hasWeapon() bool { return p.weapon != nil }
-func (p *Player) swingSpeed() float64 {
+
+// swingTime is how long a player's swing takes: the weapon's speed, quicker
+// with quickness.
+func (p *Player) swingTime() float64 {
+	speed := unarmed.Speed
+	if p.weapon != nil && p.weapon.Speed > 0 {
+		speed = p.weapon.Speed
+	}
+	return rules.SwingTime(speed, p.sh.stats[rules.QUI])
+}
+
+// weaponSpeed is the held weapon's speed, for style costs.
+func (p *Player) weaponSpeed() float64 {
 	if p.weapon != nil && p.weapon.Speed > 0 {
 		return p.weapon.Speed
 	}
-	return unarmedSp
+	return unarmed.Speed
 }
-func (p *Player) weaponDPS() float64 {
-	if p.weapon != nil && p.weapon.DPS > 0 {
-		return p.weapon.DPS
-	}
-	return 1.2
-}
+
+// styleCost is a style's endurance with the weapon held.
+func (p *Player) styleCost(s *StyleDef) int { return rules.StyleCost(p.weaponSpeed(), s.Endurance) }
 
 // posOf is where the attacker stands relative to a defender's facing.
 func posOf(defender Body, ax, ay float64) int {
@@ -106,7 +116,7 @@ func (z *Zone) computeBar(p *Player) {
 		return
 	}
 	for _, s := range z.W.Cat.StylesFor(p.Char.Class) {
-		if s.SpecLevel > p.Char.Level+1 {
+		if s.SpecLevel > p.specLevel(s.Spec) {
 			continue
 		}
 		switch {
@@ -132,7 +142,7 @@ func (p *Player) sendBar(c *Catalog) {
 	b := protocol.Bar{T: protocol.TStyleBar}
 	for i := range p.bar {
 		s := &p.bar[i]
-		b.Slots = append(b.Slots, protocol.BarSlot{Slot: i, ID: s.ID, Name: s.Name, Icon: s.Icon, Spec: s.Spec, Cost: s.Endurance,
+		b.Slots = append(b.Slots, protocol.BarSlot{Slot: i, ID: s.ID, Name: s.Name, Icon: s.Icon, Spec: s.Spec, Cost: p.styleCost(s),
 			Opens: c.openingText(s), Level: s.SpecLevel})
 	}
 	p.send(b)
@@ -140,7 +150,7 @@ func (p *Player) sendBar(c *Catalog) {
 
 // styleReady says whether a style can be used on the current target now.
 func (z *Zone) styleReady(p *Player, s *StyleDef) (bool, string) {
-	if p.end < float64(s.Endurance) {
+	if p.end < float64(p.styleCost(s)) {
 		return false, "not enough endurance"
 	}
 	switch s.OpenType {
@@ -209,6 +219,12 @@ func (z *Zone) SetTarget(p *Player, id int64) {
 		p.target, p.attacking, p.pending = 0, false, -1
 		return
 	}
+	if id >= GraveIDBase {
+		if g := z.graves[id-GraveIDBase]; g != nil {
+			p.target, p.attacking, p.pending = id, false, -1
+		}
+		return
+	}
 	n := z.byID[id]
 	if n == nil || n.gone {
 		return
@@ -264,22 +280,21 @@ func (z *Zone) combatPlayer(p *Player) {
 	if z.now < p.swingAt {
 		return
 	}
-	p.swingAt = z.now + p.swingSpeed()
+	p.swingAt = z.now + p.swingTime()
 	z.playerSwing(p, n)
 }
 
 func (z *Zone) playerSwing(p *Player, n *NPC) {
-	c := p.Char
 	var style *StyleDef
 	if p.pending >= 0 && p.pending < len(p.bar) {
 		def := p.bar[p.pending]
 		if ok, _ := z.styleReady(p, &def); ok {
 			style = &def
-			p.end -= float64(def.Endurance)
 		}
 	}
 	p.pending = -1
 	p.combatUntil = z.now + CombatLinger
+	p.styleDefence = 0 // a style's defence bonus lasts until the next swing
 	ev := protocol.Event{K: "swing", From: p.ID, To: n.ID}
 	if style != nil {
 		ev.Style = style.Anim
@@ -287,45 +302,35 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 	}
 	z.event(ev, p.Body.X, p.Body.Y)
 
-	bonus := 0
+	sw := rules.Swing{Attacker: p.combatant(z.W.Cat), Defender: &n.cb, Attackers: 1,
+		InFront: angleOff(n.Body.Yaw, angleTo(n.Body.X, n.Body.Y, p.Body.X, p.Body.Y)) <= frontArc}
 	if style != nil {
-		bonus = style.BonusToHit
+		sw.Style = &rules.Style{GrowthRate: style.GrowthRate, Spec: p.combatSpec(style.Spec), BonusToHit: style.BonusToHit, Location: rules.LocNone}
 	}
-	if z.rng.Float64() >= playerHitChance(c.Level, n.Level, bonus) {
-		z.event(protocol.Event{K: "miss", From: p.ID, To: n.ID}, n.Body.X, n.Body.Y)
+	o := rules.Resolve(sw, z.rng)
+	if o.Result != rules.Hit {
+		if style != nil {
+			p.end = math.Max(0, p.end-float64(rules.FailedStyleCost(p.weaponSpeed(), style.Endurance)))
+		}
+		if o.Result == rules.Missed {
+			z.event(protocol.Event{K: "miss", From: p.ID, To: n.ID}, n.Body.X, n.Body.Y)
+		} else {
+			z.event(protocol.Event{K: o.Result.String(), From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
+		}
 		p.lastHit, p.lastHitAt, p.lastStyle = false, z.now, 0
 		z.provoke(n, p)
 		return
 	}
-	// The creature's defences. Block and parry only cover what it can see.
-	seen := angleOff(n.Body.Yaw, angleTo(n.Body.X, n.Body.Y, p.Body.X, p.Body.Y)) <= frontArc*1.3
-	for _, d := range []struct {
-		kind   string
-		chance float64
-		ok     bool
-	}{{"evade", n.Evade, true}, {"parry", n.Parry, seen}, {"block", n.Block, seen}} {
-		if d.ok && d.chance > 0 && z.rng.Float64() < d.chance {
-			z.event(protocol.Event{K: d.kind, From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
-			p.lastHit, p.lastHitAt, p.lastStyle = false, z.now, 0
-			z.provoke(n, p)
-			return
-		}
-	}
-	dmg := weaponDamage(p.weaponDPS(), p.swingSpeed(), c.Level) * (0.75 + 0.5*z.rng.Float64())
-	crit := false
 	if style != nil {
-		dmg = dmg*(1+style.GrowthRate*1.4) + style.GrowthOff
+		p.end = math.Max(0, p.end-float64(p.styleCost(style)))
 		p.lastStyle, p.lastStyleAt = style.ID, z.now
+		p.styleDefence = style.BonusToDef
 	} else {
 		p.lastStyle = 0
-		if z.rng.Float64() < 0.06 {
-			dmg *= 1.5
-			crit = true
-		}
 	}
-	amount := int(math.Max(1, math.Round(dmg)))
+	amount := o.Damage
 	p.lastHit, p.lastHitAt = true, z.now
-	z.event(protocol.Event{K: "hit", From: p.ID, To: n.ID, Amount: amount, Crit: crit, Text: ev.Text}, n.Body.X, n.Body.Y)
+	z.event(protocol.Event{K: "hit", From: p.ID, To: n.ID, Amount: amount, Crit: o.Critical > 0, Text: ev.Text}, n.Body.X, n.Body.Y)
 	n.HP -= amount
 	n.hurtBy[p.ID] += amount
 	if n.tagger == 0 {
@@ -347,36 +352,38 @@ func (z *Zone) provoke(n *NPC, p *Player) {
 	}
 }
 
+// attackersOf counts the creatures fighting a player within reach of them.
+func (z *Zone) attackersOf(p *Player) int {
+	n := 0
+	for _, c := range z.npcs {
+		if c.target == p && !c.dead() && math.Hypot(c.Body.X-p.Body.X, c.Body.Y-p.Body.Y) <= c.Reach+60 {
+			n++
+		}
+	}
+	return max(1, n)
+}
+
 // npcSwing resolves a creature's blow against a player.
 func (z *Zone) npcSwing(n *NPC, p *Player) {
 	z.event(protocol.Event{K: "swing", From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
 	p.combatUntil = z.now + CombatLinger
-	if z.rng.Float64() >= npcHitChance(n.Level, p.Char.Level) {
+	sw := rules.Swing{Attacker: &n.cb, Defender: p.combatant(z.W.Cat), Attackers: z.attackersOf(p),
+		InFront: angleOff(p.Body.Yaw, angleTo(p.Body.X, p.Body.Y, n.Body.X, n.Body.Y)) <= frontArc}
+	o := rules.Resolve(sw, z.rng)
+	switch o.Result {
+	case rules.Missed:
 		z.event(protocol.Event{K: "miss", From: n.ID, To: p.ID}, p.Body.X, p.Body.Y)
 		return
+	case rules.Evaded, rules.Parried, rules.Blocked:
+		kind := o.Result.String()
+		z.event(protocol.Event{K: kind, From: p.ID, To: n.ID}, p.Body.X, p.Body.Y)
+		p.lastDef = defence{kind: kind, at: z.now}
+		return
 	}
-	seen := angleOff(p.Body.Yaw, angleTo(p.Body.X, p.Body.Y, n.Body.X, n.Body.Y)) <= frontArc*1.3
-	lv := p.Char.Level
-	for _, d := range []struct {
-		kind   string
-		chance float64
-	}{
-		{"evade", playerEvade(lv)},
-		{"parry", ifSeen(seen, playerParry(lv, p.hasWeapon()))},
-		{"block", ifSeen(seen, playerBlock(lv, p.shield != nil))},
-	} {
-		if d.chance > 0 && z.rng.Float64() < d.chance {
-			z.event(protocol.Event{K: d.kind, From: p.ID, To: n.ID}, p.Body.X, p.Body.Y)
-			p.lastDef = defence{kind: d.kind, at: z.now}
-			return
-		}
-	}
-	dmg := n.Damage * (0.75 + 0.5*z.rng.Float64()) * (1 - armourReduction(p.armour, n.Level))
-	amount := int(math.Max(1, math.Round(dmg)))
-	z.event(protocol.Event{K: "hit", From: n.ID, To: p.ID, Amount: amount}, p.Body.X, p.Body.Y)
-	p.hp -= float64(amount)
+	z.event(protocol.Event{K: "hit", From: n.ID, To: p.ID, Amount: o.Damage}, p.Body.X, p.Body.Y)
+	p.hp -= float64(o.Damage)
 	if p.hp <= 0 {
-		z.killPlayer(p)
+		z.killPlayer(p, n)
 	}
 }
 
@@ -388,19 +395,21 @@ func ifSeen(seen bool, v float64) float64 {
 }
 
 // killPlayer ends a player's life until they return to their bind point.
-func (z *Zone) killPlayer(p *Player) {
+func (z *Zone) killPlayer(p *Player, by *NPC) {
 	z.closeShop(p)
 	p.hp = 0
 	p.dead = true
 	p.deadAt = z.now
 	p.attacking, p.target, p.pending = false, 0, -1
 	p.queue, p.queuedSteps = nil, 0
+	p.prayUntil = 0
 	z.event(protocol.Event{K: "death", To: p.ID}, p.Body.X, p.Body.Y)
 	for _, n := range z.npcs {
 		if n.target == p {
 			n.goHome()
 		}
 	}
+	z.deathPenalty(p, by)
 }
 
 // ReleasePlayer stands a dead player up now, at their bind point, without
@@ -413,11 +422,13 @@ func (z *Zone) ReleasePlayer(p *Player) {
 
 // respawnPlayer stands a dead player up at their bind point.
 func (z *Zone) respawnPlayer(p *Player) {
+	z.releasePenalty(p)
 	bz, x, y, zz, yaw := z.W.bindFor(p)
 	p.dead = false
-	p.hp = float64(p.maxHP()) * 0.6
-	p.end = float64(playerMaxEnd())
+	p.hp = float64(p.maxHP())
+	p.end = float64(rules.MaxEndurance)
 	p.combatUntil = 0
+	z.W.savePlayer(p)
 	if bz != z.ID {
 		z.W.moveToZone(z, p, bz, x, y, zz)
 		return
@@ -440,6 +451,13 @@ func (z *Zone) killNPC(n *NPC) {
 	for _, d := range n.hurtBy {
 		total += d
 	}
+	// A creature grey to anyone who fought it is worth nothing to anyone.
+	grey := false
+	for id := range n.hurtBy {
+		if p := z.players[id]; p != nil && rules.Grey(p.Char.Level, n.Level) {
+			grey = true
+		}
+	}
 	var top *Player
 	best := 0
 	for _, id := range sortedIDs(n.hurtBy) {
@@ -451,7 +469,7 @@ func (z *Zone) killNPC(n *NPC) {
 		if n.hurtBy[id] > best {
 			top, best = p, n.hurtBy[id]
 		}
-		if xp := int64(math.Round(float64(killXP(n.Level, p.Char.Level)) * share)); xp > 0 {
+		if xp := rules.KillXP(n.Level, p.Char.Level, share); xp > 0 && !grey {
 			z.award(p, xp)
 		}
 		if p.target == n.ID {
@@ -465,7 +483,7 @@ func (z *Zone) killNPC(n *NPC) {
 	}
 	if top != nil {
 		n.lootOwner = top.ID
-		n.money = int64(float64(killMoney(n.Level)) * (0.7 + 0.6*z.rng.Float64()))
+		n.money = int64(float64(rules.KillMoney(n.Level)) * (0.7 + 0.6*z.rng.Float64()))
 		n.loot = z.rollLoot(n)
 		if len(n.loot) > 0 || n.money > 0 {
 			z.sendCorpse(top, n)
@@ -476,16 +494,52 @@ func (z *Zone) killNPC(n *NPC) {
 // award gives experience and raises the level when it is earned.
 func (z *Zone) award(p *Player, xp int64) {
 	c := p.Char
+	if c.Level >= MaxLevel {
+		return
+	}
+	wasHalf := p.sh.half
 	c.XP += xp
 	z.event(protocol.Event{K: "xp", To: p.ID, Amount: int(xp)}, p.Body.X, p.Body.Y)
-	for c.Level < MaxLevel && c.XP >= xpToReach(c.Level+1) {
-		c.Level++
-		p.hp = float64(p.maxHP())
-		p.end = float64(playerMaxEnd())
-		z.event(protocol.Event{K: "level", To: p.ID, Amount: c.Level, Text: fmt.Sprintf("You have reached level %d!", c.Level)}, p.Body.X, p.Body.Y)
-		z.buildBar(p)
+	levelled := false
+	for c.Level < MaxLevel && c.XP >= rules.XPToReach(c.Level+1) {
+		z.levelUp(p)
+		levelled = true
+	}
+	if c.Level >= MaxLevel {
+		c.XP = rules.XPToReach(MaxLevel)
+	}
+	z.W.recalc(p)
+	if !levelled && !wasHalf && p.sh.half {
+		pts := rules.SpecPoints(p.sh.class, c.Level, true) - rules.SpecPoints(p.sh.class, c.Level, false)
+		z.event(protocol.Event{K: "level", To: p.ID, Amount: c.Level,
+			Text: fmt.Sprintf("You have reached level %d.5! You gain %d specialization points.", c.Level, pts)}, p.Body.X, p.Body.Y)
 	}
 	z.W.savePlayer(p)
+}
+
+// levelUp raises a character one level and announces what it brought.
+func (z *Zone) levelUp(p *Player) {
+	c := p.Char
+	before, hpBefore, ptsBefore := p.sh.stats, p.sh.maxHP, p.sh.unspent
+	c.Level++
+	c.DeathCount = 0
+	z.W.recalc(p)
+	p.hp = float64(p.maxHP())
+	p.end = float64(rules.MaxEndurance)
+	text := fmt.Sprintf("You have reached level %d!", c.Level)
+	for st := rules.Stat(0); st < rules.NumStats; st++ {
+		if d := p.sh.stats[st] - before[st]; d > 0 {
+			text += fmt.Sprintf(" Your %s rises by %d.", st, d)
+		}
+	}
+	if d := p.sh.maxHP - hpBefore; d > 0 {
+		text += fmt.Sprintf(" You gain %d hit points.", d)
+	}
+	if d := p.sh.unspent - ptsBefore; d > 0 {
+		text += fmt.Sprintf(" You gain %d specialization points.", d)
+	}
+	z.event(protocol.Event{K: "level", To: p.ID, Amount: c.Level, Text: text}, p.Body.X, p.Body.Y)
+	z.buildBar(p)
 }
 
 // rollLoot decides what a dead creature dropped.
