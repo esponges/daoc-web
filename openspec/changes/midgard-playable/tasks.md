@@ -47,7 +47,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 - [x] 6.3 Write `rules/spells.go`: the hit chance, resist and cap, variance, bolt block, damage-over-time ticks, slow factor, mesmerize, stun, drain and heal, each registered with its status. Verify with every `rules-spell-effects` scenario as a table test.
 - [x] 6.4 Add effects to combatants, ticked by the zone: start, tick, refresh on recast, end, broken by damage (mesmerize), removed on death and on logout. Send a player their own effects. Verify with world tests: five damage-over-time ticks, a refreshed recast, and a mesmerize broken by damage.
 - [x] 6.5 Add the speed factor to `world.Step` and `web/move.js`, regenerate the shared vectors, and send the owner their factor. Stun and mesmerize set it to 0 and block actions. Verify that both movement test suites agree to zero difference with factors 1, 0.6 and 0.
-- [ ] 6.6 Show effects on the client: icons by effect kind (not by the imported icon number), countdowns, "you are stunned" and similar lines, with a plain fallback. Verify with a node test of the effect view, and in the browser with a slow from a creature.
+- [x] 6.6 Show effects on the client: icons by effect kind (not by the imported icon number), countdowns, "you are stunned" and similar lines, with a plain fallback. Verify with a node test of the effect view, and in the browser with a slow from a creature.
 
 ## 7. Tier 2: creature casting and procs
 
@@ -55,7 +55,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 - [x] 7.2 Run casting in the NPC combat step, with `cast` events to nearby clients, and the chat line and cast animation on the client, with no bar for another's cast. Verify with world tests (cast then melee, out of range, interrupted, uninterruptible, healing a packmate) and a protocol test of the event.
 - [x] 7.3 Apply style spells, weapon procs and creature offensive procs on landed blows. Verify with each new `rules-melee` scenario, plus a world test where Slam stuns.
 - [x] 7.4 Update `cmd/parity` so the implemented creature spell types are counted. Regenerate the baseline, and verify that at least DirectDamage, SpeedDecrease, OffensiveProc, DamageOverTime, Mesmerize, Bolt, Heal, Lifedrain, Stun and DirectDamageNoVariance show as implemented.
-- [ ] 7.5 In the browser, fight a Midgard caster creature: see the cast line, take a spell, interrupt one, and be slowed. Record what was seen, and add the line-of-sight limitation to the README.
+- [x] 7.5 In the browser, fight a Midgard caster creature: see the cast line, take a spell, interrupt one, and be slowed. Record what was seen, and add the line-of-sight limitation to the README.
 
 ## 8. Tier 2: guards
 

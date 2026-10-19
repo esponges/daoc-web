@@ -1649,11 +1649,15 @@ look at them (`/uidemo.html` on the running server).
 - **Population and numbers are a community database's, not the live game's.**
   Spawns, levels, loot tables and styles are the OpenDAoC database's, which
   models patch 1.65; the hit points, damage, experience and weapon-skill
-  numbers are this project's. There are no spells, group play, merchants,
-  trainers, quests, crafting, realm-versus-realm or housing, and only the
-  Warrior's styles. A creature type with no converted character, or whose
-  model cannot be drawn, is left out. The style effects beyond damage (stuns,
-  taunts, defence bonuses) are not applied, and style icons are not converted.
+  numbers are this project's. Creatures cast their spells, and styles and
+  weapons fire their procs, but players cast nothing; there are no trainers,
+  quests, crafting, realm-versus-realm or housing, and only the Warrior's
+  styles. A creature type with no converted character is left out. Style
+  effects beyond damage and their spells (taunts, defence bonuses) are not
+  applied, and style icons are not converted.
+- **Spells ignore line of sight.** There is no world line-of-sight model, so a
+  creature casts at anything within its spell's range: through a dungeon wall,
+  or over a hill. Melee needs the creature to reach you; a spell does not.
 - **Every worn weapon draws as the outfit's.** Troll Warriors always show their
   hammer and shield; the pack changes the numbers, not the picture.
 - **1 of 633 figures does not parse** — see [Parsing the rest of

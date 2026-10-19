@@ -18,7 +18,10 @@
 import { Skeleton, xform, Clip } from './skeleton.js';
 import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight } from './lighting.js';
 
-const MAX_BONES = 52; // the largest bone count on any one shape, with headroom
+// The largest bone count on any one shape (77, a creature), with headroom. At
+// three vectors a bone plus the matrices, 80 stays within the 256 vertex
+// uniform vectors every WebGL2 device has.
+const MAX_BONES = 80;
 
 const CHAR_VS = `#version 300 es
 precision highp float;

@@ -47,3 +47,13 @@ The fight above is the rule book working as written, and the rule stands:
 - **The source:** a Camelot Herald wiki Combat page, as a search result summarised it (the page itself returns HTTP 402 here), says the ideal low-level melee target is one level below you and a yellow creature can be a tough fight.
 
 On these numbers, losing to an orange creature at level 1 is the classic warning colour doing its job. Two pieces are recorded as rule-book scenarios ("A yellow creature at level 1", "An orange creature at level 1"). Whether 1.65 live was gentler at levels 1–2 than this would need a combat log from the time. None was found, so it stays reference.
+
+## 6.6 and 7.5 Casters, in the browser (2026-10-19)
+
+The scratch server (port 8788, a store imported with spells) and a Troll Warrior raised with `/gm level` in the classic kit.
+
+- **Arachite priests** (level 15, Myrkwood Forest): on approach the log read "The arachite priest begins casting a spell!", then "You are slowed!" and "The arachite priest's Grinding Force hits you for 12 damage!" every few seconds. Two badges appeared under the vitals: a red **D** counting down from 15s (the damage over time) and a blue **S** from 1:03 (Constrict Spirit). When the slow ended the log said "You can move at full speed again." and the badge went.
+- **Svartalf sorcerers** (level 15): Dissolving Cloud and Lesser Devolution hit for 27, one Clutching Vines was resisted ("You resist the effect of the svartalf sorcerer's Clutching Vines!"), and in melee "The svartalf sorcerer's spell is interrupted!" appeared as a blow landed on one mid-cast. Once its lasting spells are on the target, a sorcerer melees until they wear off, as the casting rule says.
+- **Found and fixed: arachites were invisible.** The client refused to draw models with more than 52 bones on a shape. 16 converted creature models need more (the arachites' m404–m407 need 58–64, the largest 77), so those creatures fought and cast unseen and could not be targeted. The limit is now 80 bones, which still fits the 256 vertex uniform vectors every WebGL2 device has. After a reload the arachite priests and weblashers draw, and Tab targets them.
+- A character raised to level 30 or 50 still carries the level 1 kit, so it hits for 6–10 and takes 56–85 a blow from level 15–16 creatures. That is the gear, not the rules.
+- Line of sight is not checked for spells (README, Known limitations).
