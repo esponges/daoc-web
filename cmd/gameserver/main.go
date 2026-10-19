@@ -50,6 +50,11 @@ func main() {
 	}
 	defer st.Close()
 
+	if swapped, err := world.SwapStaged(worldDB); err != nil {
+		log.Printf("%v; starting on the current store", err)
+	} else if swapped {
+		log.Printf("swapped in the staged world store; the previous one is %s.prev", worldDB)
+	}
 	var cat *world.Catalog
 	if _, err := os.Stat(worldDB); err == nil {
 		cat, err = world.LoadCatalog(worldDB)

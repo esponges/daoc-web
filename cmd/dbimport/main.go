@@ -90,6 +90,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "required tables missing or empty: %v\n", rep.Missing)
 		os.Exit(1)
 	}
+	if rep.Staged != "" {
+		fmt.Printf("%s is in use (a running server?): wrote %s instead.\n"+
+			"The server swaps it in when it next starts, keeping the old store as %s.prev.\n", *out, rep.Staged, *out)
+		return
+	}
 	fmt.Println("wrote", *out)
 }
 

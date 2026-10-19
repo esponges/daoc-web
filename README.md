@@ -1333,6 +1333,33 @@ with no way to log in.
 Players, characters and inventories live in `server/data/players.db`, a SQLite
 file separate from the imported world so re-importing never touches them.
 
+**Re-importing while the server runs.** A running server holds `world.db`
+open, and on Windows the file cannot then be replaced. `dbimport` builds the
+new store beside it and, when the old one is in use, leaves it as
+`world.db.next` and says so. The server swaps it in when it next starts: it
+checks the staged store opens, has the world's tables and has spawns, renames
+`world.db` to `world.db.prev` and moves the new one into place. A staged store
+that fails the check is left where it is and the reason is logged. A failed
+import leaves `world.db` as it was.
+
+```bash
+go run ./cmd/dbimport                  # with the server running: writes world.db.next
+# stop the server (Ctrl-C), which folds players.db-wal into players.db; then back it up
+cp server/data/players.db server/data/players-$(date +%F).db
+DAOC_ADMIN_PASSWORD=choose-one go run ./cmd/gameserver   # the log says it swapped
+```
+
+`players.db` is in WAL mode, so while the server runs recent saves are in
+`players.db-wal`: back it up after stopping the server, not before.
+
+To roll back, stop the server, put the previous store and the backup back,
+and start the previous build:
+
+```bash
+mv server/data/world.db.prev server/data/world.db
+cp server/data/players-YYYY-MM-DD.db server/data/players.db
+```
+
 ### What the server decides
 
 Everything. The client sends what the player holds down and what they ask for;

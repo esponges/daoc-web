@@ -86,6 +86,7 @@ type Report struct {
 	MerchantsSeen  int               // mobs of the merchant class type in the dump
 	MerchantsKept  int               // of those, the ones that became spawns
 	Missing        []string          // required tables absent or empty
+	Staged         string            // where the store was left when Out was in use, else ""
 }
 
 type zoneRow struct {
@@ -93,8 +94,42 @@ type zoneRow struct {
 	name                     string
 }
 
-// Run imports the dump into a fresh world store.
+// Run imports the dump into a fresh world store. It builds the store beside
+// Out and then moves it into place; when Out is held open (a running server
+// on Windows), the new store is left at Out+".next" instead, for the server
+// to swap in when it next starts. A failed import leaves Out as it was.
 func Run(o Options) (*Report, error) {
+	final := o.Out
+	o.Out = final + ".tmp"
+	rep, err := build(o)
+	if err != nil {
+		os.Remove(o.Out)
+		return nil, err
+	}
+	if rep.Staged, err = place(o.Out, final); err != nil {
+		os.Remove(o.Out)
+		return nil, err
+	}
+	return rep, nil
+}
+
+// place moves a finished store to path, or to path+".next" when path cannot
+// be replaced, and returns the staged path in that case. A stale staged store
+// is removed once path itself is current, so a restart cannot swap it back in.
+func place(tmp, path string) (string, error) {
+	next := path + ".next"
+	if err := os.Rename(tmp, path); err == nil {
+		os.Remove(next)
+		return "", nil
+	}
+	os.Remove(next)
+	if err := os.Rename(tmp, next); err != nil {
+		return "", err
+	}
+	return next, nil
+}
+
+func build(o Options) (*Report, error) {
 	if o.Log == nil {
 		o.Log = func(string, ...any) {}
 	}

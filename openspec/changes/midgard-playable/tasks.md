@@ -4,9 +4,9 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 ## 1. Tier 1: staged re-import and the live switch-over
 
-- [ ] 1.1 Make `dbimport` write `world.db.next` when `world.db` cannot be replaced, and print that a restart will use it. Verify with an importer test that holds `world.db` open and checks that the staged file is written and the exit code is zero.
-- [ ] 1.2 At server start, check `world.db.next` (it opens, has the required tables, has spawns), then rotate `world.db` to `world.db.prev` and the staged file into place. A failing staged file is left alone and the reason logged. Verify with server tests for a valid staged store, a truncated one and none, and check that `players.db` is untouched in each.
-- [ ] 1.3 Document the staged import and the rollback in the README's Multiplayer section. Verify the documented commands run as written on a scratch copy of `server/data/`.
+- [x] 1.1 Make `dbimport` write `world.db.next` when `world.db` cannot be replaced, and print that a restart will use it. Verify with an importer test that holds `world.db` open and checks that the staged file is written and the exit code is zero.
+- [x] 1.2 At server start, check `world.db.next` (it opens, has the required tables, has spawns), then rotate `world.db` to `world.db.prev` and the staged file into place. A failing staged file is left alone and the reason logged. Verify with server tests for a valid staged store, a truncated one and none, and check that `players.db` is untouched in each.
+- [x] 1.3 Document the staged import and the rollback in the README's Multiplayer section. Verify the documented commands run as written on a scratch copy of `server/data/`.
 
 ## 2. Tier 1: safe start and bind points
 
