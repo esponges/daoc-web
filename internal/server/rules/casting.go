@@ -79,7 +79,9 @@ func ProcChance(itemChance int) float64 {
 
 // StyleSpellApplies says whether a style-spell row applies to an attacker:
 // a row for every class (0) or for theirs.
-func StyleSpellApplies(rowClass, attackerClass int) bool { return rowClass == 0 || rowClass == attackerClass }
+func StyleSpellApplies(rowClass, attackerClass int) bool {
+	return rowClass == 0 || rowClass == attackerClass
+}
 
 func init() {
 	register(
