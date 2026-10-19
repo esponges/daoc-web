@@ -1,6 +1,6 @@
 // node web/effects.test.mjs
 import assert from 'node:assert/strict';
-import { effectRows, effectChangeLines, spellLine, clock, EFFECT_KINDS } from './effects.js';
+import { effectRows, effectChangeLines, spellLine, castLine, clock, EFFECT_KINDS } from './effects.js';
 
 // Rows: drawn by kind, counting down from when the message arrived.
 const fx = { at: 10, list: [{ nm: 'Shroud of Doubt', k: 'slow', ic: 10082, left: 5, of: 5 }, { nm: 'Mind Agony', k: 'dot', ic: 4427, left: 70, of: 70 }] };
@@ -33,3 +33,9 @@ assert.equal(spellLine({ k: 'resist', from: 5, to: 7, x: 'Shroud of Doubt' }, 7,
 assert.equal(spellLine({ k: 'spell', from: 5, to: 5, x: 'Mend', n: -36 }, 7, the), null, 'a creature healing itself is not the player\'s business');
 assert.equal(spellLine({ k: 'spell', from: 5, to: 6, x: 'Spirit Bolt', n: 24 }, 7, the), null);
 console.log('ok: spell, resist and effect lines');
+
+// Cast lines.
+assert.equal(castLine({ k: 'cast', from: 5, to: 7, x: 'Spirit Bolt', dur: 3 }, the).text, 'The shaman begins casting a spell!');
+assert.equal(castLine({ k: 'interrupt', from: 5, x: 'Spirit Bolt' }, the).text, "The shaman's spell is interrupted!");
+assert.equal(castLine({ k: 'castfail', from: 5 }, the), null);
+console.log('ok: cast lines, with no bar');

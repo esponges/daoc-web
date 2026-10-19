@@ -36,6 +36,14 @@ export function eventAnim(anim, ev, moving, rng = Math.random) {
     case 'block': case 'parry':
       anim.play('block', { upper: true });
       break;
+    case 'cast':
+      // A creature casting holds its cast pose until the spell lands, is
+      // interrupted or fails. Figures converted before the cast clip have none.
+      anim.play('cast', { hold: true, upper: moving });
+      break;
+    case 'spell': case 'interrupt': case 'castfail':
+      if (anim.act === 'cast') anim.clear();
+      break;
     case 'evade':
       break;
     default: break;

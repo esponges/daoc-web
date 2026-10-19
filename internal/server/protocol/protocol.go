@@ -240,6 +240,7 @@ type Event struct {
 	Style  int     `json:"s,omitempty"`
 	Crit   bool    `json:"c,omitempty"`
 	At     float64 `json:"at,omitempty"`
+	Dur    float64 `json:"dur,omitempty"` // a cast's time, in seconds
 }
 
 // Self is the part of a snapshot only the player gets.

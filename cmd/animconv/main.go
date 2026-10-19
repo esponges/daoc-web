@@ -147,6 +147,8 @@ var tableRoles = []tableRole{
 	{"attack3", "att low", true},
 	// Only for a figure with a shield on its arm; see shieldOnly.
 	{"block", "block h", true},
+	// Held while a creature casts; the server says when it ends.
+	{"cast", "cast mid", false},
 }
 
 // unarmedAttacks replace the three attacks for an empty-handed player-race

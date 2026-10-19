@@ -51,8 +51,8 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 ## 7. Tier 2: creature casting and procs
 
-- [ ] 7.1 Write the casting decision (heal below 75%, then a ready hostile spell in range, else melee), the cast state, the failure and interrupt rules, and the 2-second retry. Register them and verify with each `rules-creature-casting` scenario as a table test.
-- [ ] 7.2 Run casting in the NPC combat step, with `cast` events to nearby clients, and the chat line and cast animation on the client, with no bar for another's cast. Verify with world tests (cast then melee, out of range, interrupted, uninterruptible, healing a packmate) and a protocol test of the event.
+- [x] 7.1 Write the casting decision (heal below 75%, then a ready hostile spell in range, else melee), the cast state, the failure and interrupt rules, and the 2-second retry. Register them and verify with each `rules-creature-casting` scenario as a table test.
+- [x] 7.2 Run casting in the NPC combat step, with `cast` events to nearby clients, and the chat line and cast animation on the client, with no bar for another's cast. Verify with world tests (cast then melee, out of range, interrupted, uninterruptible, healing a packmate) and a protocol test of the event.
 - [ ] 7.3 Apply style spells, weapon procs and creature offensive procs on landed blows. Verify with each new `rules-melee` scenario, plus a world test where Slam stuns.
 - [ ] 7.4 Update `cmd/parity` so the implemented creature spell types are counted. Regenerate the baseline, and verify that at least DirectDamage, SpeedDecrease, OffensiveProc, DamageOverTime, Mesmerize, Bolt, Heal, Lifedrain, Stun and DirectDamageNoVariance show as implemented.
 - [ ] 7.5 In the browser, fight a Midgard caster creature: see the cast line, take a spell, interrupt one, and be slowed. Record what was seen, and add the line-of-sight limitation to the README.

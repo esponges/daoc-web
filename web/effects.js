@@ -66,3 +66,14 @@ export function spellLine(ev, me, the) {
   }
   return null;
 }
+
+// castLine is the log line for a creature beginning or losing a cast near
+// the player; as on 1.65 there is no cast bar for another's cast.
+export function castLine(ev, the) {
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  switch (ev.k) {
+    case 'cast': return { text: cap(the(ev.from)) + ' begins casting a spell!', cls: 'spell-in' };
+    case 'interrupt': return { text: cap(the(ev.from)) + "'s spell is interrupted!", cls: 'spell' };
+  }
+  return null;
+}

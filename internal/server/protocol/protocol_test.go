@@ -207,3 +207,14 @@ func TestEffectsMessage(t *testing.T) {
 		t.Errorf("spell event: %s", b)
 	}
 }
+
+func TestCastEvent(t *testing.T) {
+	b, _ := json.Marshal(Event{K: "cast", From: 5, To: 7, Text: "Simple Runebolt", Dur: 2.5})
+	if string(b) != `{"k":"cast","from":5,"to":7,"x":"Simple Runebolt","dur":2.5}` {
+		t.Errorf("cast event: %s", b)
+	}
+	b, _ = json.Marshal(Event{K: "hit", From: 1, To: 2, Amount: 3})
+	if strings.Contains(string(b), "dur") {
+		t.Errorf("dur appears on other events: %s", b)
+	}
+}

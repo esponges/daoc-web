@@ -289,6 +289,7 @@ func (z *Zone) combatPlayer(p *Player) {
 }
 
 func (z *Zone) playerSwing(p *Player, n *NPC) {
+	z.interruptCasting(n) // any attack, hit or not
 	var style *StyleDef
 	if p.pending >= 0 && p.pending < len(p.bar) {
 		def := p.bar[p.pending]
@@ -381,6 +382,7 @@ func (z *Zone) npcSwing(n *NPC, c combatant) {
 // npcHitsNPC resolves one creature's blow against another, which then hates
 // the striker and fights back.
 func (z *Zone) npcHitsNPC(n, t *NPC) {
+	z.interruptCasting(t)
 	z.event(protocol.Event{K: "swing", From: n.ID, To: t.ID}, n.Body.X, n.Body.Y)
 	sw := rules.Swing{Attacker: &n.cb, Defender: &t.cb, Attackers: 1,
 		InFront: angleOff(t.Body.Yaw, angleTo(t.Body.X, t.Body.Y, n.Body.X, n.Body.Y)) <= frontArc}
@@ -401,6 +403,9 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 	z.provoke(t, n, float64(o.Damage))
 	if t.HP <= 0 {
 		z.killNPC(t)
+	}
+	if !t.dead() {
+		z.creatureProcs(n, t)
 	}
 }
 
@@ -426,6 +431,9 @@ func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	z.damaged(p)
 	if p.hp <= 0 {
 		z.killPlayer(p, n)
+	}
+	if !p.dead {
+		z.creatureProcs(n, p)
 	}
 }
 

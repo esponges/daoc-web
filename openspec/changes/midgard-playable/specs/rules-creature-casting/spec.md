@@ -14,7 +14,7 @@ A creature SHALL know the spells its template lists that are of a type the serve
 - **THEN** it can cast the direct-damage spell and never casts the buff
 
 ### Requirement: A creature in combat casts when a spell is ready
-At each of its combat decisions, a creature with a ready hostile spell whose range reaches its target SHALL cast it instead of swinging. A spell is ready when its recast delay has passed since its last cast. If none is ready, it SHALL swing or close in as before. Status: provisional.
+At each combat decision, a creature with a ready hostile spell whose range reaches its target SHALL cast it instead of swinging. A spell is ready when its recast delay has passed since its last cast. A lasting effect already on the target is not cast again. If none is ready, it SHALL swing or close in as before. Status: provisional.
 
 #### Scenario: Cast, then melee
 - **WHEN** a creature with one direct-damage spell (recast 30 s) aggroes a player 1,000 units away and the spell's range is 1,500
@@ -23,6 +23,10 @@ At each of its combat decisions, a creature with a ready hostile spell whose ran
 #### Scenario: Out of range
 - **WHEN** the target is beyond every ready spell's range
 - **THEN** the creature closes in and does not cast until a spell reaches
+
+#### Scenario: A slow already on the target
+- **WHEN** a creature's only spell is a slow with no recast delay, and its target is already slowed by it
+- **THEN** the creature swings instead of casting it again
 
 ### Requirement: Creatures heal when hurt
 A creature with a heal SHALL cast it on itself, or on a hurt creature of its faction within the heal's range, when that creature is below 75% health and the heal is ready. A heal SHALL take priority over a hostile spell. Status: provisional.
@@ -35,7 +39,7 @@ A creature with a heal SHALL cast it on itself, or on a hurt creature of its fac
 A spell with a cast time SHALL take effect when its `CastTime` has passed. The caster SHALL stand still and face its target while casting. If the target is out of range or dead when the time ends, the spell SHALL fail and be ready again after 2 seconds. A cast time of 0 SHALL be instant. Status: reference, and provisional for the 2 seconds.
 
 #### Scenario: A 3-second cast
-- **WHEN** a creature begins a spell with CastTime 3000
+- **WHEN** a creature begins a spell with CastTime 3 (the data gives seconds)
 - **THEN** it stands still for 3 seconds and the spell takes effect then
 
 #### Scenario: The target ran away

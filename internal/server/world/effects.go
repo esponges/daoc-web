@@ -118,13 +118,19 @@ func (z *Zone) spellResist(c combatant, damageType int) float64 {
 // roll, then its damage, heal or lasting effect, then any sub-spell. It
 // returns whether it landed.
 func (z *Zone) castSpell(caster, target combatant, sp *SpellDef) bool {
+	return z.castSpellAs(caster, target, sp, levelOf(caster), true)
+}
+
+// castSpellAs is castSpell with the hit rolled as a caster of a given level
+// (a weapon proc rolls as its item), or not rolled at all (a style's spell).
+func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, roll bool) bool {
 	if !target.fightable(z) {
 		return false
 	}
 	cx, cy := caster.position()
 	tx, ty := target.position()
-	if sp.Hostile() {
-		if z.rng.Float64() >= rules.SpellHitChance(levelOf(caster), levelOf(target)) {
+	if sp.Hostile() && roll {
+		if z.rng.Float64() >= rules.SpellHitChance(level, levelOf(target)) {
 			z.event(protocol.Event{K: "resist", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
 			return false
 		}
@@ -155,7 +161,7 @@ func (z *Zone) castSpell(caster, target combatant, sp *SpellDef) bool {
 		}
 	}
 	if sub := z.W.Cat.Spells[sp.SubSpell]; sub != nil && sub.ID != sp.ID && target.fightable(z) {
-		z.castSpell(caster, target, sub)
+		z.castSpellAs(caster, target, sub, level, false)
 	}
 	return true
 }
@@ -195,6 +201,7 @@ func (z *Zone) stopActing(c combatant) {
 		t.queue, t.queuedSteps = nil, 0
 	case *NPC:
 		t.speedNow = 0
+		z.cancelCasting(t)
 	}
 }
 

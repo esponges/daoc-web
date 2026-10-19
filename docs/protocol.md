@@ -74,6 +74,8 @@ drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the 
 - `spell`: a spell did damage or healed: `from` the caster, `to` the target, `x` the spell's name, `n` the damage (negative for a heal);
 - `resist`: a hostile spell from `from` did not land on `to`; `x` is its name;
 - `effect`: a lasting spell (damage over time, slow, stun, mesmerize) took hold on `to`; `x` is its name. A `block` event with `x` set is a bolt blocked.
+- `cast`: a creature began casting: `from` the caster, `to` its target, `x` the spell, `dur` the cast time in seconds. As on a 1.65 server, a client shows the line and the caster's cast animation, not a cast bar;
+- `interrupt`: the caster `from` was interrupted (`x` the spell), and `castfail`: its spell failed because the target left its range or died.
 
 A `level` event's `x` says what the level brought (stats, hit points, specialisation points), and it is also sent for a half-level from 40.
 

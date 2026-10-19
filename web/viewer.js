@@ -24,7 +24,7 @@ import { createRemote, eventAnim } from './remote.js';
 import { candidates } from './race.js';
 import { createUI, conColor } from './ui.js';
 import { eventLine, conColour } from './sheet.js';
-import { effectRows, effectChangeLines, spellLine } from './effects.js';
+import { effectRows, effectChangeLines, spellLine, castLine } from './effects.js';
 import { loadUI, registerFonts } from './uiwin.js';
 
 // The game's typeface for page text (the zone picker, names over heads), when
@@ -1164,6 +1164,14 @@ async function main() {
         case 'spell': case 'resist': case 'effect': {
           const l = spellLine(ev, me.id, the);
           if (l) log(l.text, l.cls);
+          break;
+        }
+        case 'cast': case 'interrupt': {
+          const v = remote.views.get(ev.from);
+          if (ev.to === me.id || (v && Math.hypot(v.x - player.x, v.y - player.y) < 2500)) {
+            const l = castLine(ev, the);
+            if (l) log(l.text, l.cls);
+          }
           break;
         }
         default: {

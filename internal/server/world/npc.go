@@ -56,25 +56,29 @@ type NPC struct {
 	damageType int
 	resists    map[int]float64
 
-	state     npcState
-	timer     float64
-	tx, ty    float64
-	speedNow  float64
-	target    combatant            // who it is fighting: the one it hates most, nil when calm
-	hate      map[int64]*hateEntry // entity id -> how much it hates them
-	hateOrder int
-	effects   []*effect // lasting spells on it
-	swingAt   float64
-	returning bool
-	hurtBy    map[int64]int // damage dealt by each player, for experience and loot
-	tagger    int64
-	diedAt    float64
-	respawnAt float64
-	loot      []lootItem
-	money     int64
-	lootOwner int64
-	gone      bool
-	rng       *rand.Rand
+	state      npcState
+	timer      float64
+	tx, ty     float64
+	speedNow   float64
+	target     combatant            // who it is fighting: the one it hates most, nil when calm
+	hate       map[int64]*hateEntry // entity id -> how much it hates them
+	hateOrder  int
+	effects    []*effect       // lasting spells on it
+	spells     []*SpellDef     // what it casts
+	procs      []*SpellDef     // offensive procs it carries from spawn
+	spellReady map[int]float64 // spell id -> when it may be cast again
+	casting    *castState      // the spell it is casting, nil when none
+	swingAt    float64
+	returning  bool
+	hurtBy     map[int64]int // damage dealt by each player, for experience and loot
+	tagger     int64
+	diedAt     float64
+	respawnAt  float64
+	loot       []lootItem
+	money      int64
+	lootOwner  int64
+	gone       bool
+	rng        *rand.Rand
 }
 
 // newNPC builds a creature from its spawn row.
@@ -117,6 +121,7 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 		}
 	}
 	n.damageType, n.resists = damageType, cat.Resists[sp.Race]
+	n.learnSpells(cat)
 	n.setLevel(level)
 	if n.Tether < 800 || n.Tether > 6000 {
 		n.Tether = 2500
@@ -160,6 +165,8 @@ func (n *NPC) reset() {
 	n.target = nil
 	n.hate = nil
 	n.effects = nil
+	n.casting = nil
+	n.spellReady = map[int]float64{}
 	n.returning = false
 	n.hurtBy = map[int64]int{}
 	n.tagger = 0
@@ -332,6 +339,7 @@ func (n *NPC) goHome() {
 	n.returning = true
 	n.target = nil
 	n.hate = nil
+	n.casting = nil
 }
 
 // engage starts a fight with a combatant, or adds to one, and calls its
@@ -361,11 +369,18 @@ func (n *NPC) engage(c combatant, z *Zone) {
 	}
 }
 
-// chase closes on the target and strikes when it can.
+// chase casts, closes on the target and strikes when it can.
 func (n *NPC) chase(z *Zone) {
 	tx, ty := n.target.position()
 	if math.Hypot(n.Body.X-n.HX, n.Body.Y-n.HY) > n.Tether || math.Hypot(tx-n.HX, ty-n.HY) > n.Tether+1500 {
 		n.goHome()
+		return
+	}
+	if n.casting != nil {
+		z.continueCasting(n)
+		return
+	}
+	if z.startCasting(n) {
 		return
 	}
 	dx, dy := tx-n.Body.X, ty-n.Body.Y
