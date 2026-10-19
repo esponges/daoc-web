@@ -40,6 +40,8 @@ type World struct {
 
 	dropMu sync.Mutex
 	drops  map[int][]string
+
+	groups *groups
 }
 
 // ErrOnline is returned when a character is already playing.
@@ -53,7 +55,7 @@ func New(c Config) *World {
 	if c.DefaultZone == 0 {
 		c.DefaultZone = 100
 	}
-	return &World{Config: c, zones: map[int]*Zone{}, online: map[int64]*Player{}, drops: map[int][]string{}}
+	return &World{Config: c, zones: map[int]*Zone{}, online: map[int64]*Player{}, drops: map[int][]string{}, groups: newGroups()}
 }
 
 // Zone returns the running zone, starting it if needed.
@@ -200,6 +202,9 @@ func (w *World) forget(p *Player) {
 // Leave is called when a connection closes.
 func (w *World) Leave(p *Player) {
 	p.disconnected.Store(true)
+	if !p.zoning.Load() {
+		w.logoutGroup(p.Char.ID)
+	}
 	z := p.Zone
 	if z == nil {
 		w.forget(p)
@@ -341,6 +346,7 @@ func (w *World) moveToZone(z *Zone, p *Player, dst int, x, y, zz float64) {
 		w.Log("saving %s: %v", c.Name, err)
 	}
 	p.send(protocol.ZoneChange{T: protocol.TZone, Zone: dst, X: x, Y: y})
+	p.zoning.Store(true)
 	p.closed.Store(true)
 	w.forget(p)
 }
@@ -424,6 +430,24 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		z.Pray(p)
 	case "bind":
 		z.BindHere(p)
+	case "invite":
+		if len(f) > 1 {
+			w.Invite(p, w.onlineByName(f[1]), f[1])
+		} else {
+			w.GroupOp(p, &protocol.GroupOp{Op: protocol.GroupInvite, ID: p.target})
+		}
+	case "accept":
+		w.AcceptInvite(p)
+	case "decline":
+		w.DeclineInvite(p)
+	case "disband", "leave":
+		w.LeaveGroup(p.Char.ID)
+	case "remove":
+		if len(f) < 2 {
+			sys(p, "Remove whom? Type /remove <name>.")
+			return
+		}
+		w.RemoveMember(p, f[1])
 	default:
 		p.errMsg("chat", "Unknown command /"+f[0]+".")
 	}

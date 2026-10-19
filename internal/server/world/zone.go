@@ -158,6 +158,9 @@ func (z *Zone) Tick() {
 		n.update(z)
 	}
 	z.tickEffects()
+	if z.tick%TickRate == 0 {
+		z.groupTick()
+	}
 	z.snapshots()
 	for id, p := range z.players {
 		if p.closed.Load() {

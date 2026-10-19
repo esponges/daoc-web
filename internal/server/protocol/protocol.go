@@ -41,6 +41,7 @@ const (
 	TTrain    = "train"    // raise a spec at the trainer
 	TRestore  = "restore"  // pay a healer to restore lost constitution
 	TPray     = "pray"     // pray at the targeted gravestone
+	TGroupOp  = "groupop"  // invite, accept, decline, leave or remove from a group
 )
 
 // Message types, server to client.
@@ -60,6 +61,8 @@ const (
 	TTrainer   = "trainer"   // a trainer's offer: the character's specs and their costs
 	THealer    = "healer"    // a healer's offer to restore lost constitution
 	TEffects   = "effects"   // the character's own lasting effects, and the speed they leave
+	TGroup     = "group"     // the character's group: its members and how they fare
+	TGroupInv  = "groupinv"  // an invitation to join a group
 )
 
 // Envelope reads just the type of a message.
@@ -460,6 +463,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Train{}
 	case TRestore:
 		v = &Restore{}
+	case TGroupOp:
+		v = &GroupOp{}
 	case TPray:
 		return TPray, nil, nil
 	case TPing:
@@ -492,4 +497,51 @@ type Effects struct {
 	List  []EffectView `json:"list"`
 	Speed float64      `json:"speed"`
 	Held  bool         `json:"held,omitempty"` // stunned or mesmerized: no moving, swinging or styles
+}
+
+// Group operations a client may ask for.
+const (
+	GroupInvite  = "invite"  // invite the player with id ID, or else named Name
+	GroupAccept  = "accept"  // accept the pending invitation
+	GroupDecline = "decline" // decline it
+	GroupLeave   = "leave"   // leave the group (/disband)
+	GroupRemove  = "remove"  // the leader removes the member named Name
+)
+
+// GroupOp asks for something to be done about groups.
+type GroupOp struct {
+	T    string `json:"t"`
+	Op   string `json:"op"`
+	ID   int64  `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+// GroupInv tells a player they are invited to a group, by whom, and how long
+// the invitation stands, in seconds.
+type GroupInv struct {
+	T    string  `json:"t"`
+	From string  `json:"from"`
+	Secs float64 `json:"secs"`
+}
+
+// GroupMember is what a member sees of another (or of themselves): the
+// leader comes first, then the members in the order they joined.
+type GroupMember struct {
+	Name    string `json:"name"`
+	Level   int    `json:"level"`
+	Class   string `json:"class"`
+	HP      int    `json:"hp"`  // percent
+	End     int    `json:"end"` // percent
+	Zone    int    `json:"zone"`
+	ZoneN   string `json:"zoneName,omitempty"`
+	InRange bool   `json:"inRange"` // in the same zone, within 6,000 units
+	Dead    bool   `json:"dead,omitempty"`
+	Gone    bool   `json:"gone,omitempty"` // not in the game right now
+	You     bool   `json:"you,omitempty"`
+}
+
+// Group is a player's group as it stands; an empty list means no group.
+type Group struct {
+	T       string        `json:"t"`
+	Members []GroupMember `json:"members"`
 }

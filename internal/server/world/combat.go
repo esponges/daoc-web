@@ -229,6 +229,11 @@ func (z *Zone) SetTarget(p *Player, id int64) {
 		}
 		return
 	}
+	// Another player can be targeted, to invite them; not to fight.
+	if o := z.players[id]; o != nil && o != p {
+		p.target, p.attacking, p.pending = id, false, -1
+		return
+	}
 	n := z.byID[id]
 	if n == nil || n.gone {
 		return

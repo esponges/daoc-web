@@ -218,3 +218,22 @@ func TestCastEvent(t *testing.T) {
 		t.Errorf("dur appears on other events: %s", b)
 	}
 }
+
+func TestGroupMessages(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"groupop","op":"invite","name":"Sigrid"}`))
+	if err != nil || typ != TGroupOp {
+		t.Fatalf("groupop: %v %v", typ, err)
+	}
+	if op := v.(*GroupOp); op.Op != GroupInvite || op.Name != "Sigrid" || op.ID != 0 {
+		t.Errorf("groupop decoded as %+v", op)
+	}
+	b, _ := json.Marshal(Group{T: TGroup, Members: []GroupMember{{Name: "Ragnar", Level: 10, Class: "Warrior", HP: 80, End: 100, Zone: 100, ZoneN: "Vale of Mularn", InRange: true, You: true}}})
+	want := `{"t":"group","members":[{"name":"Ragnar","level":10,"class":"Warrior","hp":80,"end":100,"zone":100,"zoneName":"Vale of Mularn","inRange":true,"you":true}]}`
+	if string(b) != want {
+		t.Errorf("group: %s", b)
+	}
+	b, _ = json.Marshal(GroupInv{T: TGroupInv, From: "Ragnar", Secs: 60})
+	if string(b) != `{"t":"groupinv","from":"Ragnar","secs":60}` {
+		t.Errorf("groupinv: %s", b)
+	}
+}

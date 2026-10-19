@@ -74,6 +74,7 @@ type Player struct {
 	out          chan []byte
 	closed       atomic.Bool
 	disconnected atomic.Bool
+	zoning       atomic.Bool // closed to load another zone, not logging out
 	// graceEnd is when a disconnected character in a fight leaves the world.
 	graceEnd float64
 

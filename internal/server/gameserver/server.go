@@ -344,6 +344,8 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { z.Train(p, m.Spec, m.N) })
 	case *protocol.Restore:
 		z.Do(func() { z.Restore(p, m.NPC) })
+	case *protocol.GroupOp:
+		z.Do(func() { s.World.GroupOp(p, m) })
 	}
 	if typ == protocol.TPing {
 		z.Do(func() { p.Pong() })
