@@ -1245,7 +1245,7 @@
     {
       "name": "DOL.GS.GameGuard",
       "uses": 197,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Scripts.Myling",
@@ -1924,6 +1924,18 @@
       "status": "documented"
     },
     {
+      "id": "experience.group-grey",
+      "status": "provisional"
+    },
+    {
+      "id": "experience.group-share",
+      "status": "provisional"
+    },
+    {
+      "id": "experience.group-split",
+      "status": "provisional"
+    },
+    {
       "id": "experience.kill",
       "status": "documented"
     },
@@ -2074,7 +2086,7 @@
   ],
   "rulesByStatus": {
     "documented": 24,
-    "provisional": 7,
+    "provisional": 10,
     "reference": 34
   },
   "placements": 29932,

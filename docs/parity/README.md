@@ -10,14 +10,14 @@ Midgard (regions 100, 101, 151): 29932 placements
   Class spell types        0 of  73 implemented (0 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
   Abilities               11 of  30 implemented (51 of 100 grants)
-  Creature kinds           5 of 110 implemented (28767 of 29932 placements)
+  Creature kinds           6 of 110 implemented (28964 of 29932 placements)
   quests                 81, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         32 gaps in 10 bands
-  rules: 24 documented, 34 reference, 7 provisional
+  rules: 24 documented, 34 reference, 10 provisional
 ```
 
 ## Creature spell types
@@ -178,7 +178,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | --- | --- | --- |
 | DOL.GS.GameNPC | 28412 | yes |
 | DOL.GS.GameMerchant | 324 | yes |
-| DOL.GS.GameGuard | 197 |  |
+| DOL.GS.GameGuard | 197 | yes |
 | DOL.GS.Scripts.Myling | 194 |  |
 | DOL.GS.Keeps.GuardFighter | 139 |  |
 | DOL.GS.NightSpawn | 71 |  |
@@ -336,6 +336,9 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | death.return | reference |
 | experience.con | documented |
 | experience.creature-value | documented |
+| experience.group-grey | provisional |
+| experience.group-share | provisional |
+| experience.group-split | provisional |
 | experience.kill | documented |
 | experience.table | documented |
 | loot.money | provisional |

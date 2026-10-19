@@ -304,10 +304,10 @@ var styleFeatureImplemented = map[string]bool{
 }
 
 // kindImplemented says whether the server gives a creature class type its
-// behaviour: plain creatures, merchants, healers, and trainers of the classes
-// it covers.
+// behaviour: plain creatures, town guards, merchants, healers, and trainers of
+// the classes it covers.
 func kindImplemented(classType string) bool {
-	if classType == "DOL.GS.GameNPC" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) {
+	if classType == "DOL.GS.GameNPC" || classType == "DOL.GS.GameGuard" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) {
 		return true
 	}
 	t := importer.TrainerClass(classType)

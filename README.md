@@ -1405,7 +1405,10 @@ interpolated.
   - Characters have the eight stats of their race plus a 30-point build, and
     gain stats from level 6.
   - Kills give the published experience values, shared by damage and capped at
-    1.25 × a same-level kill; grey kills give nothing.
+    1.25 × a same-level kill; grey kills give nothing. A group's damage counts
+    as one damager, and its award is split by level among the members alive
+    and within 6,000 units, each part capped the same way; the kill is grey
+    to the group if it is grey to its highest member in range (provisional).
   - Levels (to 50) give stats, hit points and specialisation points, spent at a
     trainer of your class (or the Viking trainer).
   - Dead creatures drop money and loot from their loot tables (or, failing a

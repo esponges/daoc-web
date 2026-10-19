@@ -296,3 +296,26 @@ func TestGroupStateGoesToMembersOnly(t *testing.T) {
 		t.Errorf("Sigrid in another zone shows as %+v", m)
 	}
 }
+
+// A group kill: the group's damage counts as one damager, the two members in
+// range split it by level, a member 9,000 units away gets nothing, and a solo
+// player keeps their own share.
+func TestGroupKillSharesExperience(t *testing.T) {
+	g := newGrouped(t)
+	a, b := g.join("Ragnar", 30000), g.join("Sigrid", 30100)
+	far := g.join("Bjorn", 39000)
+	solo := g.join("Loner", 30200)
+	g.form(a, b, far)
+	g.z.npcs = append(g.z.npcs, newNPC(wolf(7, 30050, 30050, 10), g.w.Cat, g.z.rng))
+	n := g.z.npcs[len(g.z.npcs)-1]
+	g.z.byID[n.ID] = n
+	n.Aggro = 0
+	before := map[*Player]int64{a: a.Char.XP, b: b.Char.XP, far: far.Char.XP, solo: solo.Char.XP}
+	n.hurtBy[a.ID], n.hurtBy[b.ID], n.hurtBy[solo.ID] = 50, 25, 25
+	g.z.killNPC(n)
+	gain := func(p *Player) int64 { return p.Char.XP - before[p] }
+	if gain(a) != 1920 || gain(b) != 1920 || gain(far) != 0 || gain(solo) != 1280 {
+		t.Errorf("gains: Ragnar %d, Sigrid %d, far Bjorn %d, solo %d; want 1,920, 1,920, 0 and 1,280",
+			gain(a), gain(b), gain(far), gain(solo))
+	}
+}

@@ -518,20 +518,46 @@ func (z *Zone) killNPC(n *NPC) {
 	}
 	var top *Player
 	best := 0
+	// A group's members count as one damager; the group's share is split
+	// among those in range by the group rule.
+	groupDamage := map[int64]int{} // by leader
+	groupMembers := map[int64][]int64{}
 	for _, id := range sortedIDs(n.hurtBy) {
 		p := z.players[id]
 		if p == nil || p.closed.Load() {
 			continue
 		}
-		share := float64(n.hurtBy[id]) / math.Max(1, float64(total))
 		if n.hurtBy[id] > best {
 			top, best = p, n.hurtBy[id]
 		}
+		if p.target == n.ID {
+			p.attacking, p.pending = false, -1
+		}
+		if members := z.W.groupOf(p.Char.ID); members != nil {
+			groupDamage[members[0]] += n.hurtBy[id]
+			groupMembers[members[0]] = members
+			continue
+		}
+		share := float64(n.hurtBy[id]) / math.Max(1, float64(total))
 		if xp := rules.KillXP(n.Level, p.Char.Level, share); xp > 0 && !grey {
 			z.award(p, xp)
 		}
-		if p.target == n.ID {
-			p.attacking, p.pending = false, -1
+	}
+	for _, leader := range sortedIDs(groupDamage) {
+		var near []*Player
+		var levels []int
+		for _, c := range groupMembers[leader] {
+			p := z.players[PlayerIDBase+c]
+			if p == nil || p.closed.Load() || p.dead || math.Hypot(p.Body.X-n.Body.X, p.Body.Y-n.Body.Y) > GroupRange {
+				continue
+			}
+			near, levels = append(near, p), append(levels, p.Char.Level)
+		}
+		share := float64(groupDamage[leader]) / math.Max(1, float64(total))
+		for i, xp := range rules.GroupKillXP(n.Level, share, levels) {
+			if xp > 0 && !grey {
+				z.award(near[i], xp)
+			}
 		}
 	}
 	for _, p := range z.players {
