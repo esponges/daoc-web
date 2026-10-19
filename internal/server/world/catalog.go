@@ -181,27 +181,27 @@ type Catalog struct {
 		Realm, Race, Class int
 		Start
 	}
-	Loot       map[string][]LootEntry  // loot template -> entries
-	Gear       map[string][][4]int     // equipment template -> [slot, model, colour, extension] per worn piece
-	hasGear    bool                    // spawn.equip exists (a world.db imported before equipment was kept lacks it)
-	MobLoot    map[string][]string     // lower-case mob name -> loot template names
-	Stock      map[string][]string     // merchant list id -> item ids, in page then slot order
-	hasShops   bool                    // spawn.classtype and merchant_stock exist (a world.db imported before merchants lacks them)
-	hasRules   bool                    // item bonuses, races and abilities exist (a world.db imported before the rule book lacks them)
-	hasLevels  bool                    // spawn.levels exists (a world.db imported before templates were honoured lacks it)
-	Resists    map[int]map[int]float64 // race -> damage type -> percent
-	ClassSpecs map[int][]string        // class -> its spec and career keys
-	SpecNames  map[string]string       // spec key -> name
-	Grants     map[int][]rules.Grant   // class -> the ability grants of its careers and specs
-	Unsafe     []UnsafeStart           // starts the start rule replaced, from checkStarts
-	StartEquip map[int][]string        // class -> the items it starts with, in the table's order; nil when the store predates the table
-	Spells         map[int]*SpellDef // spell id -> spell, those something in the world casts
-	TemplateSpells map[int][]int     // npc template id -> its spells, in order
-	StyleSpells    []StyleSpell      // spells styles fire when they land
-	replaced   map[int]UnsafeStart     // index in Starts -> its replacement
-	dropOnce   sync.Once
-	dropPool   map[int][]string
-	db         *sql.DB
+	Loot           map[string][]LootEntry  // loot template -> entries
+	Gear           map[string][][4]int     // equipment template -> [slot, model, colour, extension] per worn piece
+	hasGear        bool                    // spawn.equip exists (a world.db imported before equipment was kept lacks it)
+	MobLoot        map[string][]string     // lower-case mob name -> loot template names
+	Stock          map[string][]string     // merchant list id -> item ids, in page then slot order
+	hasShops       bool                    // spawn.classtype and merchant_stock exist (a world.db imported before merchants lacks them)
+	hasRules       bool                    // item bonuses, races and abilities exist (a world.db imported before the rule book lacks them)
+	hasLevels      bool                    // spawn.levels exists (a world.db imported before templates were honoured lacks it)
+	Resists        map[int]map[int]float64 // race -> damage type -> percent
+	ClassSpecs     map[int][]string        // class -> its spec and career keys
+	SpecNames      map[string]string       // spec key -> name
+	Grants         map[int][]rules.Grant   // class -> the ability grants of its careers and specs
+	Unsafe         []UnsafeStart           // starts the start rule replaced, from checkStarts
+	StartEquip     map[int][]string        // class -> the items it starts with, in the table's order; nil when the store predates the table
+	Spells         map[int]*SpellDef       // spell id -> spell, those something in the world casts
+	TemplateSpells map[int][]int           // npc template id -> its spells, in order
+	StyleSpells    []StyleSpell            // spells styles fire when they land
+	replaced       map[int]UnsafeStart     // index in Starts -> its replacement
+	dropOnce       sync.Once
+	dropPool       map[int][]string
+	db             *sql.DB
 }
 
 // LoadCatalog reads world.db.

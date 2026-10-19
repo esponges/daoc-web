@@ -186,6 +186,9 @@ func (n *NPC) pickSpot(z *Zone) (float64, float64) {
 // stepToward moves toward (tx,ty) at a speed, turning first like the viewer's
 // NPCs do. It returns the distance left, or -1 if water is in the way.
 func (n *NPC) stepToward(z *Zone, tx, ty, speed float64) float64 {
+	if len(n.effects) > 0 {
+		speed *= speedFactor(n)
+	}
 	dx, dy := tx-n.Body.X, ty-n.Body.Y
 	d := math.Hypot(dx, dy)
 	n.speedNow = 0
@@ -239,6 +242,10 @@ func (n *NPC) update(z *Zone) {
 			}
 			n.reset()
 		}
+		return
+	}
+	if held(n) {
+		n.speedNow = 0
 		return
 	}
 	if n.Friendly {

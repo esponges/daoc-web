@@ -41,6 +41,11 @@ one second's worth. Backing up and strafing are always at walking pace (85
 units a second; running is 191). Collision (trees, walls, ledges) is part of
 the step on both sides.
 
+A slow scales every step's distance by the speed factor the server last sent
+in `effects` (`speed`, 1 when free), and a held character (`speed` 0) neither
+moves nor turns. The server applies its own factor when it steps the inputs,
+so a client that ignores `effects` is corrected.
+
 ## Snapshots
 
 Twenty a second:

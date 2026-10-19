@@ -202,6 +202,10 @@ func (z *Zone) requestStyle(p *Player, slot int) {
 	if p.dead || slot < 0 || slot >= len(p.bar) {
 		return
 	}
+	if held(p) {
+		p.errMsg("style", "You cannot act while you are held.")
+		return
+	}
 	if !p.attacking {
 		p.errMsg("style", "Start attacking first.")
 		return

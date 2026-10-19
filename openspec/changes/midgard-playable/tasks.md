@@ -46,7 +46,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 - [x] 6.2 Settle the unit of `LifeDrainReturn` from several drain spells in the data, and record it in the `rules-spell-effects` spec. Verify the spec and the 6.3 test agree.
 - [x] 6.3 Write `rules/spells.go`: the hit chance, resist and cap, variance, bolt block, damage-over-time ticks, slow factor, mesmerize, stun, drain and heal, each registered with its status. Verify with every `rules-spell-effects` scenario as a table test.
 - [x] 6.4 Add effects to combatants, ticked by the zone: start, tick, refresh on recast, end, broken by damage (mesmerize), removed on death and on logout. Send a player their own effects. Verify with world tests: five damage-over-time ticks, a refreshed recast, and a mesmerize broken by damage.
-- [ ] 6.5 Add the speed factor to `world.Step` and `web/move.js`, regenerate the shared vectors, and send the owner their factor. Stun and mesmerize set it to 0 and block actions. Verify that both movement test suites agree to zero difference with factors 1, 0.6 and 0.
+- [x] 6.5 Add the speed factor to `world.Step` and `web/move.js`, regenerate the shared vectors, and send the owner their factor. Stun and mesmerize set it to 0 and block actions. Verify that both movement test suites agree to zero difference with factors 1, 0.6 and 0.
 - [ ] 6.6 Show effects on the client: icons by effect kind (not by the imported icon number), countdowns, "you are stunned" and similar lines, with a plain fallback. Verify with a node test of the effect view, and in the browser with a slow from a creature.
 
 ## 7. Tier 2: creature casting and procs

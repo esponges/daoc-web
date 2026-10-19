@@ -19,6 +19,11 @@ export const STEPS_PER_SECOND = 60;
 // whatever blocks it: slide(x0, y0, x1, y1, z) -> [x, y]. It returns what the
 // step did, for choosing a clip.
 export function stepBody(ground, b, k, mover = null) {
+  const slow = k.slow || 0; // the share of speed a slow or hold takes away; 1 is held
+  if (slow >= 1) {
+    b.z = ground.groundAt(b.x, b.y, b.z);
+    return { speed: 0, back: false, side: 0 };
+  }
   b.yaw += k.turn * TURN * STEP_DT;
   const fx = Math.sin(b.yaw), fy = -Math.cos(b.yaw);
   const rx = Math.cos(b.yaw), ry = Math.sin(b.yaw);
@@ -31,7 +36,7 @@ export function stepBody(ground, b, k, mover = null) {
     m.back = k.fwd < 0;
     if (k.fwd === 0) m.side = k.strafe;
     const speed = k.run && !m.back && m.side === 0 ? RUN : WALK;
-    const d = speed * STEP_DT;
+    const d = speed * (1 - slow) * STEP_DT;
     let [nx, ny] = ground.clamp(b.x + mx * d, b.y + my * d);
     if (mover) [nx, ny] = mover.slide(b.x, b.y, nx, ny, b.z);
     m.speed = Math.hypot(nx - b.x, ny - b.y) / STEP_DT;

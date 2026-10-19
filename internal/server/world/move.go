@@ -22,6 +22,10 @@ type Body struct{ X, Y, Z, Yaw float64 }
 type Keys struct {
 	Fwd, Strafe, Turn int
 	Run               bool
+	// Slow is the share of speed a slow or a hold takes away: 0 free, 1 held,
+	// when the body neither moves nor turns. The server sets it from the
+	// body's effects; the client predicts with the factor it was sent.
+	Slow float64
 }
 
 // Motion is what a step did, for animation.
@@ -43,6 +47,10 @@ type Mover interface {
 // same maths (web/net.js) to predict. Backing up and sidestepping are always
 // at a walk, like the viewer's.
 func Step(g Ground, mv Mover, b *Body, k Keys) Motion {
+	if k.Slow >= 1 {
+		b.Z = g.GroundAt(b.X, b.Y, b.Z)
+		return Motion{}
+	}
 	b.Yaw += float64(k.Turn) * Turn * StepDT
 	fx, fy := math.Sin(b.Yaw), -math.Cos(b.Yaw)
 	rx, ry := math.Cos(b.Yaw), math.Sin(b.Yaw)
@@ -59,7 +67,7 @@ func Step(g Ground, mv Mover, b *Body, k Keys) Motion {
 		if k.Run && !m.Back && m.Side == 0 {
 			speed = Run
 		}
-		d := speed * StepDT
+		d := speed * (1 - k.Slow) * StepDT
 		nx, ny := g.Clamp(b.X+mx*d, b.Y+my*d)
 		if mv != nil {
 			nx, ny = mv.Slide(b.X, b.Y, nx, ny, b.Z)

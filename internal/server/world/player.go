@@ -120,8 +120,8 @@ type Player struct {
 	sh           sheet
 	statsSent    protocol.Stats
 	styleDefence int
-	welcomed     bool   // the welcome has gone out, so the sheet may follow
-	notice       string // a system line to send once welcomed, such as a moved start
+	welcomed     bool      // the welcome has gone out, so the sheet may follow
+	notice       string    // a system line to send once welcomed, such as a moved start
 	effects      []*effect // lasting spells on them; not saved, so a logout ends them
 
 	// Death and prayer: where they fell, what the death cost (the release costs
@@ -216,7 +216,9 @@ func (p *Player) applyInput(z *Zone) {
 	p.motion = Motion{}
 	for p.budget >= 1 && len(p.queue) > 0 {
 		r := &p.queue[0]
-		m := Step(z.G, z.Mv, &p.Body, r.k)
+		k := r.k
+		k.Slow = 1 - speedFactor(p)
+		m := Step(z.G, z.Mv, &p.Body, k)
 		if m.Speed > 0 {
 			moved = true
 			last = m

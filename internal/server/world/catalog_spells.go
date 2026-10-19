@@ -30,7 +30,9 @@ type SpellDef struct {
 }
 
 // Hostile says whether a spell is cast at an enemy.
-func (s *SpellDef) Hostile() bool { return s.Target == "Enemy" || s.Target == "Area" || s.Target == "Cone" }
+func (s *SpellDef) Hostile() bool {
+	return s.Target == "Enemy" || s.Target == "Area" || s.Target == "Cone"
+}
 
 // StyleSpell is a spell a style fires when it lands: for one class, or for
 // every class when Class is 0.

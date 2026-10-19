@@ -26,6 +26,7 @@ type vector struct {
 	Name  string     `json:"name"`
 	Start [4]float64 `json:"start"` // x, y, z, yaw
 	Runs  [][5]int   `json:"runs"`
+	Slow  float64    `json:"slow,omitempty"` // the speed taken away, held through every run
 	End   [4]float64 `json:"end"`
 }
 
@@ -33,6 +34,7 @@ func runVector(v *vector) [4]float64 {
 	b := Body{X: v.Start[0], Y: v.Start[1], Z: v.Start[2], Yaw: v.Start[3]}
 	for _, r := range v.Runs {
 		n, k := KeysFromRun(r)
+		k.Slow = v.Slow
 		for i := 0; i < n; i++ {
 			Step(plane{}, nil, &b, k)
 		}
@@ -50,6 +52,9 @@ func vectors() []vector {
 		{Name: "turn while running", Start: [4]float64{30000, 30000, 0, 1}, Runs: [][5]int{{30, 1, 0, 1, 1}, {30, 1, 0, -1, 1}, {15, 1, 0, 1, 0}}},
 		{Name: "stopped at the zone edge", Start: [4]float64{100, 100, 0, -math.Pi / 2}, Runs: [][5]int{{120, 1, 0, 0, 1}}},
 		{Name: "clamped input", Start: [4]float64{30000, 30000, 0, 0}, Runs: [][5]int{{10, 7, -9, 5, 3}}},
+		{Name: "run under a 40% slow", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 0, 0, 1}, {20, 1, 0, 1, 1}}, Slow: 0.4},
+		{Name: "held: no moving or turning", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 1, 1, 1}}, Slow: 1},
+		{Name: "free, the factor at 1", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 0, -1, 1}}, Slow: 0},
 	}
 }
 

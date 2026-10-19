@@ -48,6 +48,8 @@ export class NetClient {
     this.zone = 0;
     this.sent = 0;             // steps sent so far
     this.history = [];         // steps sent and not yet acknowledged: { seq, k }
+    this.effects = { list: [], at: 0 }; // our lasting spells, as last sent, and when
+    this.slow = 0;             // the share of speed they take away; 1 is held
     this.pendingRuns = [];     // runs not yet sent
     this.pendingSteps = 0;
     this.lastSend = 0;
@@ -115,6 +117,14 @@ export class NetClient {
       case 'stats': this.stats = m; this.on.stats?.(m); break;
       case 'trainer': this.trainer = m; this.on.trainer?.(m); break;
       case 'healer': this.healer = m; this.on.healer?.(m); break;
+      case 'effects':
+        // Our lasting spells, and the speed they leave: prediction steps at
+        // that factor from now on, as the server does.
+        this.effects = { list: m.list || [], at: this.now() };
+        this.slow = 1 - (m.speed ?? 1);
+        this.held = !!m.held;
+        this.on.effects?.(this.effects);
+        break;
       default: break; // an unknown message is ignored
     }
   }
@@ -196,7 +206,7 @@ export class NetClient {
     while (this.acc >= STEP_DT) {
       this.acc -= STEP_DT;
       if (!moving || me.dead) continue;
-      const k = { fwd: keys.fwd, strafe: keys.strafe, turn: keys.turn, run: !!keys.run };
+      const k = { fwd: keys.fwd, strafe: keys.strafe, turn: keys.turn, run: !!keys.run, slow: this.slow };
       const b = { x: me.x, y: me.y, z: me.z, yaw: me.yaw };
       const m = stepBody(this.ground, b, k, this.mover);
       me.x = b.x; me.y = b.y; me.z = b.z; me.yaw = b.yaw;

@@ -201,7 +201,9 @@ func (z *Zone) tickPlayer(p *Player) {
 	p.applyInput(z)
 	z.updatePrayer(p)
 	z.checkShop(p)
-	z.combatPlayer(p)
+	if !held(p) {
+		z.combatPlayer(p)
+	}
 	// Vitals come back: endurance every second, health every few seconds and
 	// only out of a fight.
 	if z.now >= p.regenAt {

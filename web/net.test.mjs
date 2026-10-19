@@ -18,6 +18,7 @@ for (const v of vectors) {
   const b = { x: v.start[0], y: v.start[1], z: v.start[2], yaw: v.start[3] };
   for (const r of v.runs) {
     const { count, keys } = runKeys(r);
+    keys.slow = v.slow || 0;
     for (let i = 0; i < count; i++) stepBody(planeGround, b, keys);
   }
   const got = [b.x, b.y, b.z, b.yaw];
@@ -46,7 +47,7 @@ function makeSim({ latency = 0.1, ground = planeGround } = {}) {
   sim.serverTick = () => {
     for (let i = 0; i < 3 && sim.srv.backlog.length; i++) {
       const k = sim.srv.backlog.shift();
-      stepBody(ground, sim.srv, k);
+      stepBody(ground, sim.srv, { ...k, slow: sim.srvSlow || 0 });
       sim.srv.applied++;
     }
     sim.tick++;
@@ -101,6 +102,28 @@ function makeSim({ latency = 0.1, ground = planeGround } = {}) {
   ok(sim.srv.applied === c.sent, `server applied every step sent (${sim.srv.applied}/${c.sent})`);
   ok(maxJump < 191 / 60 * 1.6, `the shown position never jumps (largest frame step ${maxJump.toFixed(2)} units)`);
   ok(c.history.length === 0, 'acknowledged steps are forgotten');
+}
+
+// --- a slow: prediction moves at the factor the server sent ---
+{
+  const sim = makeSim({ latency: 0.05 });
+  const c = sim.client;
+  sim.srvSlow = 0.4;
+  sim.toClient({ t: 'effects', list: [{ nm: 'Shroud of Doubt', k: 'slow', ic: 10082, left: 5, of: 5 }], speed: 0.6 });
+  sim.advance(0.06);
+  ok(Math.abs(c.slow - 0.4) < 1e-9 && c.effects.list.length === 1, 'the effects message sets the slow');
+  const y0 = c.me.y;
+  for (let i = 0; i < 60; i++) { sim.advance(1 / 60); c.update(1 / 60, { fwd: 1, strafe: 0, turn: 0, run: true }); }
+  const ran = y0 - c.me.y;
+  ok(Math.abs(ran - 191 * 0.6) < 2, `a second's run under a 40% slow covers ${ran.toFixed(1)} units, 60% of a run`);
+  for (let i = 0; i < 30; i++) { sim.advance(1 / 60); c.update(1 / 60, { fwd: 0, strafe: 0, turn: 0, run: false }); }
+  ok(Math.hypot(c.me.x - sim.srv.x, c.me.y - sim.srv.y) < 0.5, 'slowed prediction agrees with the server');
+  sim.srvSlow = 1;
+  sim.toClient({ t: 'effects', list: [{ nm: 'Stunning Yell', k: 'stun', ic: 1161, left: 3, of: 3 }], speed: 0, held: true });
+  sim.advance(0.06);
+  const held = { x: c.me.x, y: c.me.y, yaw: c.me.yaw };
+  for (let i = 0; i < 30; i++) { sim.advance(1 / 60); c.update(1 / 60, { fwd: 1, strafe: 0, turn: 1, run: true }); }
+  ok(c.held && c.me.x === held.x && c.me.y === held.y && c.me.yaw === held.yaw, 'a held player neither moves nor turns');
 }
 
 // --- a correction snaps ---
