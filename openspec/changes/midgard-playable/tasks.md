@@ -38,7 +38,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 - [x] 5.1 Introduce the combatant interface (player or NPC) and per-NPC hate tables in place of `NPC.target`, with `npcSwing` taking a combatant. Damage adds hate, packmates copy hate, and an NPC fights the highest-hate combatant in its zone. Verify that every existing sim and world test passes unchanged, plus new tests: two players, and the NPC turns to the one who did more damage.
 - [x] 5.2 Play a short session in the browser after the refactor: fight, flee past the leash, die, and fight with two clients on one creature. Verify behaviour is as before and record anything that differs.
-- [ ] 5.3 Check low-level melee against 1.65 (found in 5.2): a level 1 Warrior in the classic kit hits a level 2 creature for 1–2 and takes 10–11, with 29 hit points, and loses. Compare player hit points, weapon damage and creature damage at levels 1–5 with the rule book's sources and a 1.65 source for low-level fights; fix the rule that is wrong, or record why it is right. Verify with rule-book scenarios at level 1 and 2, and a world test that a level 1 Warrior in the kit usually beats a level 2 creature.
+- [x] 5.3 Check low-level melee against 1.65 (found in 5.2): a level 1 Warrior in the classic kit hits a level 2 creature for 1–2 and takes 10–11, with 39 hit points, and loses. Compare player hit points, weapon damage and creature damage at level 1 with the rule book's sources; fix the rule that is wrong, or record why it is right. Verify with rule-book scenarios at level 1 against a level 1 (yellow) and a level 2 (orange) creature, and a world test of forty fights. Outcome: the rule stands (findings.md 5.3).
 
 ## 6. Tier 2: spells and effects
 

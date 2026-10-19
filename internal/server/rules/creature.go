@@ -66,5 +66,7 @@ func init() {
 			Status: Documented, Sources: []string{"data"}, Scenarios: []string{"A thrust weakness"}},
 		Rule{ID: "creature.defences", Capability: "rules-creature-combat", Requirement: "Creature defences come from the template",
 			Status: Documented, Sources: []string{"data"}, Scenarios: []string{"A parrying bandit"}},
+		Rule{ID: "creature.level-one", Capability: "rules-creature-combat", Requirement: "Fights at level 1 follow the same rules",
+			Status: Reference, Sources: []string{"opendaoc", "mythic-con"}, Scenarios: []string{"A yellow creature at level 1", "An orange creature at level 1"}},
 	)
 }

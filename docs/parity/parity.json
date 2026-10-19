@@ -1860,6 +1860,10 @@
       "status": "reference"
     },
     {
+      "id": "creature.level-one",
+      "status": "reference"
+    },
+    {
       "id": "creature.resists",
       "status": "documented"
     },
@@ -2003,7 +2007,7 @@
   "rulesByStatus": {
     "documented": 24,
     "provisional": 4,
-    "reference": 19
+    "reference": 20
   },
   "placements": 29932,
   "levellingGear": [

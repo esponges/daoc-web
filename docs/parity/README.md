@@ -17,7 +17,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         32 gaps in 10 bands
-  rules: 24 documented, 19 reference, 4 provisional
+  rules: 24 documented, 20 reference, 4 provisional
 ```
 
 ## Creature spell types
@@ -320,6 +320,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | creature.blows | reference |
 | creature.defences | documented |
 | creature.hit-points | reference |
+| creature.level-one | reference |
 | creature.resists | documented |
 | creature.stats | reference |
 | creature.swing | reference |

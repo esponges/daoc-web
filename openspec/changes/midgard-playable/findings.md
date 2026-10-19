@@ -33,4 +33,17 @@ Two Troll Warriors (level 1, classic kit) on the scratch server, at a level 2 sp
 - **Leash:** the browser try was inconclusive: the second character's target was out of reach and no blows were exchanged before it teleported away. The leash is covered by `TestAggressiveWolfAttacksAndLeashes`, which passes unchanged.
 - **Nothing else differed** from before the refactor.
 
-**Finding: a level 1 Warrior loses to a level 2 creature.** Each character hit the yellow level 2 hog for 1–2 damage (training axe: 1.2 DPS, 2.5 s, 90% quality) and took 10–11 per hit from it, with 29 hit points. Both died; the hog was barely scratched. On 1.65 live, a fresh Warrior beats a yellow creature one-on-one. The creature rules are reference status (read from OpenDAoC-Core), and nothing in this change touched damage. Task 5.3 checks the level 1–5 numbers against sources.
+**Finding: a level 1 Warrior loses to a level 2 creature.** Each character hit the level 2 hog for 1–2 damage (training axe: 1.2 DPS, 2.5 s, 90% quality) and took 10–11 per hit from it, with 39 hit points. Both died; the hog was barely scratched. Task 5.3 checked it.
+
+## 5.3 Low-level melee (2026-10-19)
+
+The fight above is the rule book working as written, and the rule stands:
+- **Every number follows the rule book**, and the rule book follows OpenDAoC-Core with its default settings. Mob damage factors 2.5 and 120, a damage factor of 1, PvE melee 1.0, weapon skill 100%, NPC armour `int((1 + L/200) × L × 12.5) / 5` and the player's extra 0.4 AF per level all match, read from its `AttackComponent`, `GamePlayer`, `GameNPC`, `ArmorFactorCalculator`, `WeaponSkillCalculator` and `ServerProperties`.
+- **The hog was orange, not yellow.** At level 1 the con band is one level wide (level / 10 + 1), so a level 2 creature is orange to a level 1 character. The first reading of this finding called it yellow, which was wrong.
+- **Per hit, at the middle of the variance:**
+  - against a yellow level 1 creature (31 HP): the Warrior hits for 4.05 and takes 4.12;
+  - against an orange level 2 creature (46 HP): the Warrior hits for 1.93 and takes 10.78.
+- **Forty simulated fights** (`TestLowLevelFights`): the new Warrior in the kit beat the yellow creature 20 times in 20 and lost to the orange one 20 times in 20.
+- **The source:** a Camelot Herald wiki Combat page, as a search result summarised it (the page itself returns HTTP 402 here), says the ideal low-level melee target is one level below you and a yellow creature can be a tough fight.
+
+On these numbers, losing to an orange creature at level 1 is the classic warning colour doing its job. Two pieces are recorded as rule-book scenarios ("A yellow creature at level 1", "An orange creature at level 1"). Whether 1.65 live was gentler at levels 1–2 than this would need a combat log from the time. None was found, so it stays reference.

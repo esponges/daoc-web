@@ -67,3 +67,30 @@ func TestCreatureCombat(t *testing.T) {
 		}
 	})
 }
+
+func TestFightsAtLevelOne(t *testing.T) {
+	w := Combatant{Player: true, Level: 1, WeaponSkillBase: 460, Spec: 1,
+		Weapon: Weapon{DPS: 1.2, Speed: 2.5, ObjectType: 13, Quality: 0.9, Condition: 1, DamageType: DamageSlash}}
+	w.Stats[STR], w.Stats[CON] = 110, 80
+	w.Armour[LocTorso] = &Piece{AF: 4, Absorb: 0.19, Quality: 0.85, Condition: 1}
+	for _, c := range []struct {
+		scenario   string
+		level, con int
+		hp         int
+		out, in    float64
+	}{
+		{"A yellow creature at level 1", 1, ConYellow, 31, 4.05, 4.12},
+		{"An orange creature at level 1", 2, ConOrange, 46, 1.93, 10.78},
+	} {
+		vector(t, "rules-creature-combat", c.scenario, func(t *testing.T) {
+			cr := Creature(c.level, 0, 0, 0, false, DamageCrush, nil)
+			out, _, _ := HitDamage(Swing{Attacker: &w, Defender: &cr, Attackers: 1}, LocTorso, 0.5)
+			in, _, _ := HitDamage(Swing{Attacker: &cr, Defender: &w, Attackers: 1}, LocTorso, 0.5)
+			near(t, "Warrior's blow", out, c.out, 0.005)
+			near(t, "creature's blow", in, c.in, 0.005)
+			if Con(1, c.level) != c.con || CreatureHP(c.level) != c.hp || MaxHP(Classes[22], 1, 80, 0) != 39 {
+				t.Errorf("con %d hp %d warrior %d", Con(1, c.level), CreatureHP(c.level), MaxHP(Classes[22], 1, 80, 0))
+			}
+		})
+	}
+}
