@@ -219,3 +219,68 @@ func TestImportStartEquipment(t *testing.T) {
 		t.Errorf("missing %v, want starterequipment", rep.Missing)
 	}
 }
+
+// Spells come in with what names them: a template's list, a style's spell,
+// an item's proc, and the spells those fire in turn. A link to a spell the
+// dump lacks is dropped and counted.
+func TestImportSpells(t *testing.T) {
+	dir := minimalDump(t)
+	dumpTable(t, dir, "npctemplate", "`TemplateId`, `Name`, `Spells`", "1, 'wolf', ''", "2, 'shaman', '1001;1002;9999'")
+	dumpTable(t, dir, "stylexspell", "`SpellID`, `ClassID`, `StyleID`, `Chance`", "1003, 0, 164, 100")
+	dumpTable(t, dir, "itemtemplate", "`Id_nb`, `Name`, `ProcSpellID`, `ProcChance`", "'sword', 'sword', 1004, 0")
+	dumpTable(t, dir, "spell", "`SpellID`, `Name`, `Type`, `Target`, `Range`, `CastTime`, `Damage`, `DamageType`, `Duration`, `Frequency`, `RecastDelay`, `Value`, `LifeDrainReturn`, `SubSpellID`, `Uninterruptible`, `Message1`",
+		"1001, 'Spirit Bolt', 'Bolt', 'Enemy', 1875, 2.5, 24, 12, 0, 0, 20, 0, 0, 0, 0, 'A bolt hits you!'",
+		"1002, 'Mend', 'Heal', 'Self', 0, 3, 0, 0, 0, 0, 0, 36, 0, 0, 1, ''",
+		"1003, 'Slam Stun', 'Stun', 'Enemy', 0, 0, 0, 10, 3, 0, 0, 0, 0, 0, 0, 'You are stunned!'",
+		"1004, 'Blightstrike', 'OffensiveProc', 'Self', 0, 0, 0, 0, 1200, 15, 0, 1005, 0, 0, 0, ''",
+		"1005, 'Fungus', 'DirectDamage', 'Enemy', 1500, 0, 20, 15, 0, 0, 0, 0, 0, 1006, 0, ''",
+		"1006, 'Fungus Drain', 'Lifedrain', 'Enemy', 1500, 0, 10, 15, 0, 0, 0, 0, 50, 0, 0, ''",
+		"2000, 'Unused', 'Heal', 'Self', 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, ''")
+	out := filepath.Join(t.TempDir(), "world.db")
+	rep, err := Run(Options{Dump: dir, Out: out})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.SpellLinksMissing != 1 {
+		t.Errorf("missing links %d, want the one to 9999", rep.SpellLinksMissing)
+	}
+	db, _ := sql.Open("sqlite", out)
+	defer db.Close()
+	ids := func(q string) string {
+		rows, err := db.Query(q)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+		var l []string
+		for rows.Next() {
+			var s string
+			rows.Scan(&s)
+			l = append(l, s)
+		}
+		return fmt.Sprint(l)
+	}
+	if got := ids(`SELECT id FROM spell ORDER BY id`); got != "[1001 1002 1003 1004 1005 1006]" {
+		t.Errorf("spells %s, want the named ones and what they fire, not 2000", got)
+	}
+	if got := ids(`SELECT spell FROM template_spell WHERE template=2 ORDER BY ord`); got != "[1001 1002]" {
+		t.Errorf("template 2 casts %s", got)
+	}
+	if got := ids(`SELECT class||'/'||style||'/'||spell||'/'||chance FROM style_spell`); got != "[0/164/1003/100]" {
+		t.Errorf("style spells %s", got)
+	}
+	if got := ids(`SELECT proc_spell||'/'||proc_chance FROM item WHERE id='sword'`); got != "[1004/0]" {
+		t.Errorf("sword proc %s", got)
+	}
+	var cast, dmg float64
+	var freq, unint int
+	var msg string
+	db.QueryRow(`SELECT cast_time, damage, frequency, uninterruptible, message1 FROM spell WHERE id=1001`).Scan(&cast, &dmg, &freq, &unint, &msg)
+	if cast != 2.5 || dmg != 24 || msg != "A bolt hits you!" {
+		t.Errorf("bolt cast %v damage %v message %q", cast, dmg, msg)
+	}
+	db.QueryRow(`SELECT uninterruptible FROM spell WHERE id=1002`).Scan(&unint)
+	if unint != 1 {
+		t.Error("the heal lost its uninterruptible mark")
+	}
+}

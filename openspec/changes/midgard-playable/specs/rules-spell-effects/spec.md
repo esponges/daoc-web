@@ -47,10 +47,10 @@ A bolt that lands SHALL be tested against the target's block chance, as a melee 
 - **THEN** the bolt does no damage and both sides see it blocked
 
 ### Requirement: Damage over time ticks
-A damage-over-time spell SHALL hit once for its `Damage` after the resist, every `Frequency` milliseconds, for `Duration` seconds, with no variance. A second cast of the same spell on the same target SHALL restart its duration, not stack. Status: reference.
+A damage-over-time spell SHALL hit once for its `Damage` after the resist, every `Frequency` tenths of a second, for `Duration` seconds, with no variance. A second cast of the same spell on the same target SHALL restart its duration, not stack. Status: reference.
 
 #### Scenario: Five ticks
-- **WHEN** a spell with Damage 10, Frequency 4000 and Duration 20 lands on a target with no resist
+- **WHEN** a spell with Damage 10, Frequency 40 and Duration 20 lands on a target with no resist
 - **THEN** the target takes 10 five times, 4 seconds apart
 
 #### Scenario: Recast
@@ -79,7 +79,7 @@ A stun spell SHALL stop its target moving, swinging, casting and using styles fo
 - **THEN** the stun continues to its end
 
 ### Requirement: Life drain heals its caster
-A life-drain spell SHALL do damage as direct damage does, and SHALL heal its caster by that damage × `LifeDrainReturn` / 100, up to the caster's maximum health. Status: provisional, until the unit of `LifeDrainReturn` is confirmed.
+A life-drain spell SHALL do damage as direct damage does, and SHALL heal its caster by that damage × `LifeDrainReturn` / 100, up to the caster's maximum health. `LifeDrainReturn` is a percent: the data's 117 drain spells use values from 0 to 100. Status: reference.
 
 #### Scenario: Drain
 - **WHEN** a drain with Damage 40, return 50, rolls a variance of 1.0 on a target with no resist

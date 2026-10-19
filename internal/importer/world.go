@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -47,7 +48,8 @@ CREATE TABLE item(
   id TEXT PRIMARY KEY, name TEXT, level INTEGER, quality INTEGER, dps_af INTEGER, spd_abs INTEGER,
   hand INTEGER, damage_type INTEGER, object_type INTEGER, item_type INTEGER, model INTEGER,
   weight INTEGER, price INTEGER, realm INTEGER, allowed_classes TEXT, droppable INTEGER, level_req INTEGER,
-  bonus INTEGER, condition INTEGER, max_condition INTEGER, durability INTEGER);
+  bonus INTEGER, condition INTEGER, max_condition INTEGER, durability INTEGER,
+  proc_spell INTEGER, proc_chance INTEGER);
 CREATE TABLE item_bonus(item TEXT, type INTEGER, amount INTEGER);
 CREATE INDEX item_bonus_item ON item_bonus(item);
 CREATE TABLE style(
@@ -69,6 +71,14 @@ CREATE TABLE race(id INTEGER PRIMARY KEY, name TEXT,
   slash INTEGER, spirit INTEGER, thrust INTEGER);
 CREATE TABLE spec_ability(spec TEXT, spec_level INTEGER, ability TEXT, ability_level INTEGER, class_id INTEGER);
 CREATE TABLE start_equip(class INTEGER, item TEXT, ord INTEGER);
+CREATE TABLE spell(
+  id INTEGER PRIMARY KEY, name TEXT, type TEXT, target TEXT, range INTEGER, cast_time REAL, recast INTEGER,
+  damage REAL, damage_type INTEGER, value REAL, duration INTEGER, frequency INTEGER, life_drain INTEGER,
+  sub_spell INTEGER, uninterruptible INTEGER, icon INTEGER, radius INTEGER,
+  message1 TEXT, message2 TEXT, message3 TEXT, message4 TEXT);
+CREATE TABLE template_spell(template INTEGER, spell INTEGER, ord INTEGER);
+CREATE INDEX template_spell_template ON template_spell(template);
+CREATE TABLE style_spell(class INTEGER, style INTEGER, spell INTEGER, chance INTEGER);
 `
 
 // Options say where things are and which spawns to keep.
@@ -83,17 +93,18 @@ type Options struct {
 
 // Report is what an import kept and dropped.
 type Report struct {
-	Tables         map[string][2]int // table -> rows read, rows kept
-	DroppedModel   map[int]int       // model -> spawns dropped because the client cannot draw it
-	DroppedGround  int               // spawns too far off the terrain
-	DroppedOutside int               // spawns in no zone
-	UnknownEquip   int               // spawns whose equipment template has no rows
-	MerchantsSeen  int               // mobs of the merchant class type in the dump
-	MerchantsKept  int               // of those, the ones that became spawns
-	Missing        []string          // required tables absent or empty
-	Staged         string            // where the store was left when Out was in use, else ""
-	Replaced       int               // spawns whose template replaces the row's values
-	LevelReplaced  int               // of those, the ones whose own level is not in the template's list
+	Tables            map[string][2]int // table -> rows read, rows kept
+	DroppedModel      map[int]int       // model -> spawns dropped because the client cannot draw it
+	DroppedGround     int               // spawns too far off the terrain
+	DroppedOutside    int               // spawns in no zone
+	UnknownEquip      int               // spawns whose equipment template has no rows
+	MerchantsSeen     int               // mobs of the merchant class type in the dump
+	MerchantsKept     int               // of those, the ones that became spawns
+	Missing           []string          // required tables absent or empty
+	Staged            string            // where the store was left when Out was in use, else ""
+	Replaced          int               // spawns whose template replaces the row's values
+	LevelReplaced     int               // of those, the ones whose own level is not in the template's list
+	SpellLinksMissing int               // template and style links to spells the dump lacks
 }
 
 // tmplValues are what a template marked ReplaceMobValues puts in place of a
@@ -270,6 +281,8 @@ func build(o Options) (*Report, error) {
 	// --- templates ---
 	tmplEquip := map[int]string{} // npc template id -> equipment template id
 	replaces := map[int]tmplValues{}
+	tmplSpells := map[int][]int{} // npc template id -> the spells it casts, in order
+	wantSpell := map[int]bool{}   // spells something kept names
 	if err := read("npctemplate", func(r *Row) (bool, error) {
 		id := r.Int("TemplateId")
 		sl, sh := r.Range("Size")
@@ -281,6 +294,12 @@ func build(o Options) (*Report, error) {
 		ml, _ := r.Range("Model")
 		if e := r.Str("EquipmentTemplateID"); e != "" {
 			tmplEquip[id] = e
+		}
+		if s := NumberList(r.Str("Spells")); len(s) > 0 {
+			tmplSpells[id] = s
+			for _, sp := range s {
+				wantSpell[sp] = true
+			}
 		}
 		replace := r.Int("ReplaceMobValues") != 0
 		if replace {
@@ -424,6 +443,9 @@ func build(o Options) (*Report, error) {
 	}
 	if err := read("itemtemplate", func(r *Row) (bool, error) {
 		id := r.Str("Id_nb")
+		if p := r.Int("ProcSpellID"); p != 0 {
+			wantSpell[p] = true
+		}
 		for i := 1; i <= 10; i++ {
 			ty, amt := r.Int(fmt.Sprintf("Bonus%dType", i)), r.Int(fmt.Sprintf("Bonus%d", i))
 			if ty != 0 && amt != 0 {
@@ -432,11 +454,11 @@ func build(o Options) (*Report, error) {
 				}
 			}
 		}
-		return true, ins(`INSERT OR REPLACE INTO item VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		return true, ins(`INSERT OR REPLACE INTO item VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			r.Str("Id_nb"), r.Str("Name"), r.Int("Level"), r.Int("Quality"), r.Int("DPS_AF"), r.Int("SPD_ABS"),
 			r.Int("Hand"), r.Int("Type_Damage"), r.Int("Object_Type"), r.Int("Item_Type"), r.Int("Model"),
 			r.Int("Weight"), r.Int("Price"), r.Int("Realm"), r.Str("AllowedClasses"), r.Int("CanDropAsLoot"), r.Int("LevelRequirement"),
-			r.Int("Bonus"), r.Int("Condition"), r.Int("MaxCondition"), r.Int("Durability"))
+			r.Int("Bonus"), r.Int("Condition"), r.Int("MaxCondition"), r.Int("Durability"), r.Int("ProcSpellID"), r.Int("ProcChance"))
 	}); err != nil {
 		return nil, err
 	}
@@ -504,6 +526,89 @@ func build(o Options) (*Report, error) {
 			return nil, err
 		}
 	}
+
+	// --- spells: those templates, styles and items name, and their sub-spells ---
+	type styleSpell struct{ class, style, spell, chance int }
+	var styleSpells []styleSpell
+	if _, err := os.Stat(filepath.Join(o.Dump, "stylexspell.sql")); err == nil {
+		if err := read("stylexspell", func(r *Row) (bool, error) {
+			s := styleSpell{r.Int("ClassID"), r.Int("StyleID"), r.Int("SpellID"), r.Int("Chance")}
+			if s.spell == 0 || s.style == 0 {
+				return false, nil
+			}
+			styleSpells = append(styleSpells, s)
+			wantSpell[s.spell] = true
+			return true, nil
+		}); err != nil {
+			return nil, err
+		}
+	}
+	spells := map[int]*Row{}
+	if _, err := os.Stat(filepath.Join(o.Dump, "spell.sql")); err == nil {
+		if _, err := ReadTable(filepath.Join(o.Dump, "spell.sql"), func(r *Row) error {
+			spells[r.Int("SpellID")] = r
+			return nil
+		}); err != nil {
+			return nil, fmt.Errorf("spell: %w", err)
+		}
+	}
+	// A spell's sub-spell, and the spell an offensive proc fires (its value),
+	// come with it.
+	for queue := slices.Sorted(maps.Keys(wantSpell)); len(queue) > 0; queue = queue[1:] {
+		r := spells[queue[0]]
+		if r == nil {
+			continue
+		}
+		next := []int{r.Int("SubSpellID")}
+		if t := r.Str("Type"); t == "OffensiveProc" || t == "DefensiveProc" {
+			next = append(next, r.Int("Value"))
+		}
+		for _, id := range next {
+			if id != 0 && !wantSpell[id] {
+				wantSpell[id] = true
+				queue = append(queue, id)
+			}
+		}
+	}
+	kept := 0
+	for _, id := range slices.Sorted(maps.Keys(wantSpell)) {
+		r := spells[id]
+		if r == nil {
+			continue
+		}
+		kept++
+		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
+			r.Int("Range"), r.Float("CastTime"), r.Int("RecastDelay"), r.Float("Damage"), r.Int("DamageType"), r.Float("Value"),
+			r.Int("Duration"), r.Int("Frequency"), r.Int("LifeDrainReturn"), r.Int("SubSpellID"), r.Int("Uninterruptible"),
+			r.Int("Icon"), r.Int("Radius"), r.Str("Message1"), r.Str("Message2"), r.Str("Message3"), r.Str("Message4")); err != nil {
+			return nil, err
+		}
+	}
+	rep.Tables["spell"] = [2]int{len(spells), kept}
+	o.Log("  %-22s %7d read %7d kept", "spell", len(spells), kept)
+	links := 0
+	for _, t := range slices.Sorted(maps.Keys(tmplSpells)) {
+		for i, sp := range tmplSpells[t] {
+			if spells[sp] == nil {
+				rep.SpellLinksMissing++
+				continue
+			}
+			links++
+			if err := ins(`INSERT INTO template_spell VALUES(?,?,?)`, t, sp, i); err != nil {
+				return nil, err
+			}
+		}
+	}
+	for _, s := range styleSpells {
+		if spells[s.spell] == nil {
+			rep.SpellLinksMissing++
+			continue
+		}
+		if err := ins(`INSERT INTO style_spell VALUES(?,?,?,?)`, s.class, s.style, s.spell, s.chance); err != nil {
+			return nil, err
+		}
+	}
+	o.Log("  %-22s %7d template spell links, %d style spells, %d links to spells the dump lacks", "spell links", links, len(styleSpells), rep.SpellLinksMissing)
 
 	// --- travel: exits, starts, bind points ---
 	if err := read("zonepoint", func(r *Row) (bool, error) {
