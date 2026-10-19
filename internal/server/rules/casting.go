@@ -64,3 +64,30 @@ func init() {
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Interrupt", "Uninterruptible"}},
 	)
 }
+
+// DefaultProcChance is a weapon proc's chance when the item gives none.
+const DefaultProcChance = 0.10
+
+// ProcChance is a weapon proc's chance from the item's proc chance, a
+// percent, with 0 meaning the default.
+func ProcChance(itemChance int) float64 {
+	if itemChance <= 0 {
+		return DefaultProcChance
+	}
+	return float64(itemChance) / 100
+}
+
+// StyleSpellApplies says whether a style-spell row applies to an attacker:
+// a row for every class (0) or for theirs.
+func StyleSpellApplies(rowClass, attackerClass int) bool { return rowClass == 0 || rowClass == attackerClass }
+
+func init() {
+	register(
+		Rule{ID: "melee.style-spell", Capability: "rules-melee", Requirement: "Styles cast their spells on a hit",
+			Status: Reference, Sources: []string{"opendaoc", "data"}},
+		Rule{ID: "melee.weapon-proc", Capability: "rules-melee", Requirement: "Weapons cast their proc on a hit",
+			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"A 10% proc"}},
+		Rule{ID: "melee.creature-proc", Capability: "rules-melee", Requirement: "Creatures carry their offensive procs",
+			Status: Reference, Sources: []string{"opendaoc", "data"}},
+	)
+}

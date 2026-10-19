@@ -8,27 +8,27 @@
     {
       "name": "DirectDamage",
       "uses": 744,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SpeedDecrease",
       "uses": 372,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "OffensiveProc",
       "uses": 334,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DamageOverTime",
       "uses": 307,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Mesmerize",
       "uses": 300,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "BaseArmorFactorBuff",
@@ -38,12 +38,12 @@
     {
       "name": "Bolt",
       "uses": 133,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Heal",
       "uses": 46,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "StrengthConstitutionBuff",
@@ -58,12 +58,12 @@
     {
       "name": "Lifedrain",
       "uses": 37,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Stun",
       "uses": 37,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "StrengthDebuff",
@@ -78,7 +78,7 @@
     {
       "name": "DirectDamageNoVariance",
       "uses": 6,
-      "implemented": false
+      "implemented": true
     }
   ],
   "classSpellTypes": [
@@ -850,6 +850,11 @@
       "implemented": true
     },
     {
+      "name": "proc spell",
+      "uses": 264,
+      "implemented": true
+    },
+    {
       "name": "defence bonus",
       "uses": 132,
       "implemented": true
@@ -893,11 +898,6 @@
       "name": "opening: from the front",
       "uses": 7,
       "implemented": true
-    },
-    {
-      "name": "proc spell",
-      "uses": 5,
-      "implemented": false
     },
     {
       "name": "stealth opener",
@@ -1812,6 +1812,22 @@
   ],
   "rules": [
     {
+      "id": "cast.decision",
+      "status": "provisional"
+    },
+    {
+      "id": "cast.heal",
+      "status": "provisional"
+    },
+    {
+      "id": "cast.interrupt",
+      "status": "reference"
+    },
+    {
+      "id": "cast.time",
+      "status": "reference"
+    },
+    {
       "id": "character.class",
       "status": "reference"
     },
@@ -1932,6 +1948,10 @@
       "status": "documented"
     },
     {
+      "id": "melee.creature-proc",
+      "status": "reference"
+    },
+    {
       "id": "melee.critical",
       "status": "reference"
     },
@@ -1968,8 +1988,16 @@
       "status": "documented"
     },
     {
+      "id": "melee.style-spell",
+      "status": "reference"
+    },
+    {
       "id": "melee.swing-speed",
       "status": "documented"
+    },
+    {
+      "id": "melee.weapon-proc",
+      "status": "reference"
     },
     {
       "id": "melee.weapon-skill",
@@ -1996,6 +2024,46 @@
       "status": "documented"
     },
     {
+      "id": "spell.bolt-block",
+      "status": "reference"
+    },
+    {
+      "id": "spell.damage",
+      "status": "provisional"
+    },
+    {
+      "id": "spell.damage-over-time",
+      "status": "reference"
+    },
+    {
+      "id": "spell.heal",
+      "status": "reference"
+    },
+    {
+      "id": "spell.hit",
+      "status": "reference"
+    },
+    {
+      "id": "spell.lifedrain",
+      "status": "reference"
+    },
+    {
+      "id": "spell.mesmerize",
+      "status": "reference"
+    },
+    {
+      "id": "spell.resist",
+      "status": "reference"
+    },
+    {
+      "id": "spell.slow",
+      "status": "reference"
+    },
+    {
+      "id": "spell.stun",
+      "status": "reference"
+    },
+    {
       "id": "start.town",
       "status": "documented"
     },
@@ -2006,8 +2074,8 @@
   ],
   "rulesByStatus": {
     "documented": 24,
-    "provisional": 4,
-    "reference": 20
+    "provisional": 7,
+    "reference": 34
   },
   "placements": 29932,
   "levellingGear": [

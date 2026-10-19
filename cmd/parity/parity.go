@@ -52,8 +52,9 @@ type Report struct {
 	LevellingGear  []GearRow      `json:"levellingGear"`
 }
 
-// implementedSpellTypes are the spell types the server can cast. None yet.
-var implementedSpellTypes = map[string]bool{}
+// implementedClassSpellTypes are the spell types players can cast. None yet:
+// creatures cast (rules.ImplementedSpell), players do not.
+var implementedClassSpellTypes = map[string]bool{}
 
 // Run reads the dump and the registry.
 func Run(dump string) (*Report, error) {
@@ -102,7 +103,7 @@ func Run(dump string) (*Report, error) {
 		return nil, err
 	}
 	for k, n := range creatureSpells {
-		rep.CreatureSpells = append(rep.CreatureSpells, Item{Name: k, Uses: n, Implemented: implementedSpellTypes[k]})
+		rep.CreatureSpells = append(rep.CreatureSpells, Item{Name: k, Uses: n, Implemented: rules.ImplementedSpell(k)})
 	}
 	for k, n := range kinds {
 		rep.CreatureKinds = append(rep.CreatureKinds, Item{Name: k, Uses: n, Implemented: kindImplemented(k)})
@@ -145,7 +146,7 @@ func Run(dump string) (*Report, error) {
 		return nil, err
 	}
 	for k, n := range classSpells {
-		rep.ClassSpells = append(rep.ClassSpells, Item{Name: k, Uses: n, Classes: sorted(classSpellClasses[k]), Implemented: implementedSpellTypes[k]})
+		rep.ClassSpells = append(rep.ClassSpells, Item{Name: k, Uses: n, Classes: sorted(classSpellClasses[k]), Implemented: implementedClassSpellTypes[k]})
 	}
 	abilities, abilityClasses := map[string]int{}, map[string][]string{}
 	if err := read("specxability", func(r *importer.Row) error {
@@ -189,7 +190,7 @@ func Run(dump string) (*Report, error) {
 		for _, f := range styleFeatures(r) {
 			features[f]++
 		}
-		if procStyles[r.Str("ClassId")+"/"+r.Str("ID")] {
+		if procStyles[r.Str("ClassId")+"/"+r.Str("ID")] || procStyles["0/"+r.Str("ID")] { // class 0 is every class
 			features["proc spell"]++
 		}
 		return nil
@@ -299,7 +300,7 @@ var styleFeatureImplemented = map[string]bool{
 	"opening: anytime": true, "opening: after a parry": true, "opening: after a block": true, "opening: after an evade": true,
 	"opening: from behind": true, "opening: from the side": true, "opening: from the front": true,
 	"opening: after a miss": true, "opening: after a hit": true, "chain: after a style": true,
-	"growth damage": true, "to-hit bonus": true, "defence bonus": true,
+	"growth damage": true, "to-hit bonus": true, "defence bonus": true, "proc spell": true,
 }
 
 // kindImplemented says whether the server gives a creature class type its

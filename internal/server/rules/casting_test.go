@@ -69,3 +69,17 @@ func TestCreatureCasting(t *testing.T) {
 		}
 	})
 }
+
+func TestWeaponProcs(t *testing.T) {
+	vector(t, "rules-melee", "A 10% proc", func(t *testing.T) {
+		if c := ProcChance(0); c != 0.10 || !(0.05 < c) {
+			t.Errorf("default chance %v, want 0.10, so a roll of 0.05 fires", c)
+		}
+		if c := ProcChance(25); c != 0.25 {
+			t.Errorf("an item's 25%%: %v", c)
+		}
+	})
+	if !StyleSpellApplies(0, 22) || !StyleSpellApplies(22, 22) || StyleSpellApplies(31, 22) {
+		t.Error("a style spell row applies to every class at 0, or to its own")
+	}
+}

@@ -218,3 +218,87 @@ func (r *rig) rngHit(n *NPC, p *Player) {
 		r.z.npcHitsPlayer(n, p)
 	}
 }
+
+// procRig is a level 10 Warrior with a hammer beside a creature that never
+// defends unless told to, a stun on Slam (style 164) at chance 100, and the
+// stun and a damage proc in the catalog.
+func procRig(t *testing.T) (*rig, *Player, *NPC) {
+	r := newRig(t, wolf(1, 30100, 30000, 10))
+	n := r.z.npcs[0]
+	n.Aggro, n.Roam = 0, 0
+	n.cb.EvadePct, n.cb.ParryPct, n.cb.BlockPct = 0, 0, 0
+	stun := &SpellDef{ID: 20204, Name: "Slam Stun", Type: rules.SpellStun, Target: "Enemy", Duration: 9}
+	zap := &SpellDef{ID: 61020, Name: "Energy DD Proc", Type: rules.SpellDDNoVariance, Target: "Enemy", Range: 1500, Damage: 70, DamageType: 12}
+	r.w.Cat.Spells = map[int]*SpellDef{stun.ID: stun, zap.ID: zap}
+	r.w.Cat.StyleSpells = []StyleSpell{{Class: 0, Style: 164, Spell: stun.ID, Chance: 100}}
+	p := r.player("Slammer", 10, 30000, 30000, true)
+	p.Body.Yaw = math.Pi / 2
+	p.attacking = true
+	return r, p, n
+}
+
+// swingStyle swings with Slam until a blow lands (or, with parry, is parried).
+func swingStyle(r *rig, p *Player, n *NPC, want rules.Result) {
+	slam := StyleDef{ID: 164, Class: 22, Name: "Slam", Spec: "Hammer", WeaponReq: ObjHammer}
+	for seed := int64(1); seed < 200; seed++ {
+		r.z.rng = rand.New(rand.NewSource(seed))
+		p.bar, p.pending = []StyleDef{slam}, 0
+		hp := n.HP
+		r.z.playerSwing(p, n)
+		landed := n.HP < hp
+		if (want == rules.Hit) == landed {
+			return
+		}
+	}
+}
+
+func TestSlamStuns(t *testing.T) {
+	r, p, n := procRig(t)
+	swingStyle(r, p, n, rules.Hit)
+	if !held(n) || !hasEffect(n, 20204) {
+		t.Fatal("a landed Slam did not stun")
+	}
+	n.HP = n.MaxHP
+	r.ticks(TickRate * 5)
+	if n.speedNow != 0 {
+		t.Errorf("a stunned creature moved (speed %v)", n.speedNow)
+	}
+}
+
+func TestParriedStyleCastsNothing(t *testing.T) {
+	r, p, n := procRig(t)
+	n.cb.ParryPct = 100
+	n.Body.Yaw = -math.Pi / 2 // facing the player, so it can parry
+	swingStyle(r, p, n, rules.Parried)
+	if held(n) || len(n.effects) > 0 {
+		t.Error("a parried Slam stunned")
+	}
+}
+
+func TestWeaponProcFires(t *testing.T) {
+	r, p, n := procRig(t)
+	r.w.Cat.StyleSpells = nil
+	hammer := *p.weapon
+	hammer.ProcSpell, hammer.ProcChance = 61020, 100
+	p.weapon = &hammer
+	for seed := int64(1); seed < 200; seed++ {
+		r.z.rng = rand.New(rand.NewSource(seed))
+		before := n.HP
+		snaps(p)
+		r.z.playerSwing(p, n)
+		r.ticks(1)
+		var procs int
+		for _, s := range snaps(p) {
+			for _, e := range s.Ev {
+				if e.K == "spell" && e.Text == "Energy DD Proc" {
+					procs++
+				}
+			}
+		}
+		if n.HP < before && procs > 0 {
+			return
+		}
+		n.HP = n.MaxHP
+	}
+	t.Error("a 100% weapon proc never fired on a landed blow")
+}

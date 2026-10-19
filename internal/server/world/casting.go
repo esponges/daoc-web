@@ -146,3 +146,24 @@ func (z *Zone) creatureProcs(n *NPC, target combatant) {
 		z.castSpell(n, target, sp)
 	}
 }
+
+// playerProcs fires what a player's landed blow carries: the style's spells
+// (no hit roll; a row's chance in percent), then the weapon's proc (its hit
+// rolled as a caster of the item's level).
+func (z *Zone) playerProcs(p *Player, n *NPC, style *StyleDef) {
+	if style != nil {
+		for _, s := range z.W.Cat.StyleSpells {
+			if s.Style != style.ID || !rules.StyleSpellApplies(s.Class, p.Char.Class) {
+				continue
+			}
+			if sp := z.W.Cat.Spells[s.Spell]; sp != nil && z.rng.Float64()*100 < float64(s.Chance) && !n.dead() {
+				z.castSpellAs(p, n, sp, p.Char.Level, false)
+			}
+		}
+	}
+	if w := p.weapon; w != nil && w.ProcSpell != 0 && !n.dead() {
+		if sp := z.W.Cat.Spells[w.ProcSpell]; sp != nil && z.rng.Float64() < rules.ProcChance(w.ProcChance) {
+			z.castSpellAs(p, n, sp, max(1, w.Level), true)
+		}
+	}
+}

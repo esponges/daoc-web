@@ -6,9 +6,9 @@ How much of classic 1.65 Midgard the server implements, measured against the com
 
 ```
 Midgard (regions 100, 101, 151): 29932 placements
-  Creature spell types     0 of  15 implemented (0 of 2585 placements x spells)
+  Creature spell types    10 of  15 implemented (2316 of 2585 placements x spells)
   Class spell types        0 of  73 implemented (0 of 987 spells)
-  Style features          11 of  14 implemented (1115 of 1124 styles)
+  Style features          12 of  14 implemented (1379 of 1383 styles)
   Abilities               11 of  30 implemented (51 of 100 grants)
   Creature kinds           5 of 110 implemented (28767 of 29932 placements)
   quests                 81, none implemented
@@ -17,28 +17,28 @@ Midgard (regions 100, 101, 151): 29932 placements
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         32 gaps in 10 bands
-  rules: 24 documented, 20 reference, 4 provisional
+  rules: 24 documented, 34 reference, 7 provisional
 ```
 
 ## Creature spell types
 
 | name | placements x spells | implemented |
 | --- | --- | --- |
-| DirectDamage | 744 |  |
-| SpeedDecrease | 372 |  |
-| OffensiveProc | 334 |  |
-| DamageOverTime | 307 |  |
-| Mesmerize | 300 |  |
+| DirectDamage | 744 | yes |
+| SpeedDecrease | 372 | yes |
+| OffensiveProc | 334 | yes |
+| DamageOverTime | 307 | yes |
+| Mesmerize | 300 | yes |
 | BaseArmorFactorBuff | 155 |  |
-| Bolt | 133 |  |
-| Heal | 46 |  |
+| Bolt | 133 | yes |
+| Heal | 46 | yes |
 | StrengthConstitutionBuff | 44 |  |
 | StrengthBuff | 38 |  |
-| Lifedrain | 37 |  |
-| Stun | 37 |  |
+| Lifedrain | 37 | yes |
+| Stun | 37 | yes |
 | StrengthDebuff | 21 |  |
 | DexterityDebuff | 11 |  |
-| DirectDamageNoVariance | 6 |  |
+| DirectDamageNoVariance | 6 | yes |
 
 ## Class spell types
 
@@ -124,6 +124,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | --- | --- | --- |
 | growth damage | 341 | yes |
 | to-hit bonus | 280 | yes |
+| proc spell | 264 | yes |
 | defence bonus | 132 | yes |
 | chain: after a style | 130 | yes |
 | opening: anytime | 102 | yes |
@@ -133,7 +134,6 @@ Midgard (regions 100, 101, 151): 29932 placements
 | opening: from the side | 25 | yes |
 | opening: after an evade | 18 | yes |
 | opening: from the front | 7 | yes |
-| proc spell | 5 |  |
 | stealth opener | 3 |  |
 | opening: after result 3 | 1 |  |
 
@@ -308,6 +308,10 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 
 | rule | status |
 | --- | --- |
+| cast.decision | provisional |
+| cast.heal | provisional |
+| cast.interrupt | reference |
+| cast.time | reference |
 | character.class | reference |
 | character.creation | documented |
 | character.endurance | provisional |
@@ -338,6 +342,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | melee.armour | documented |
 | melee.base-damage | documented |
 | melee.block | documented |
+| melee.creature-proc | reference |
 | melee.critical | reference |
 | melee.evade | documented |
 | melee.location | reference |
@@ -347,12 +352,24 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | melee.parry | documented |
 | melee.style-cost | reference |
 | melee.style-damage | documented |
+| melee.style-spell | reference |
 | melee.swing-speed | documented |
+| melee.weapon-proc | reference |
 | melee.weapon-skill | reference |
 | spec.abilities | documented |
 | spec.items | documented |
 | spec.migration | documented |
 | spec.points | reference |
 | spec.training | documented |
+| spell.bolt-block | reference |
+| spell.damage | provisional |
+| spell.damage-over-time | reference |
+| spell.heal | reference |
+| spell.hit | reference |
+| spell.lifedrain | reference |
+| spell.mesmerize | reference |
+| spell.resist | reference |
+| spell.slow | reference |
+| spell.stun | reference |
 | start.town | documented |
 | start.unsafe | provisional |

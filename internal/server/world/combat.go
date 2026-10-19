@@ -345,7 +345,9 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 	z.provoke(n, p, float64(amount))
 	if n.HP <= 0 {
 		z.killNPC(n)
+		return
 	}
+	z.playerProcs(p, n, style)
 }
 
 // provoke makes a creature hate the one who struck at it by the damage done,
