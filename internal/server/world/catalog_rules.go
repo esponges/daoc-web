@@ -56,6 +56,18 @@ func (c *Catalog) loadRules(q func(string, func(*sql.Rows) error) error) error {
 	}); err != nil {
 		return err
 	}
+	c.RaceNames = map[int]string{}
+	if err := q(`SELECT id,COALESCE(name,'') FROM race`, func(r *sql.Rows) error {
+		var id int
+		var n string
+		if err := r.Scan(&id, &n); err != nil {
+			return err
+		}
+		c.RaceNames[id] = n
+		return nil
+	}); err != nil {
+		return err
+	}
 	// Resists by the data's damage type numbers: crush, slash and thrust
 	// (1 to 3), then body, cold, energy, heat, matter and spirit (10 to 15).
 	if err := q(`SELECT id,COALESCE(crush,0),COALESCE(slash,0),COALESCE(thrust,0),COALESCE(body,0),COALESCE(cold,0),

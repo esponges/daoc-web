@@ -104,8 +104,8 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 ## 15. Tier 3: character windows and the menu bar
 
-- [ ] 15.1 Build ATTRIB. from `StatsAttributes`, and SKILLS and STYLES from `Stats_Spec_Abil`, filled from the owner's sheet data with empty fields left empty. Styles can be dragged to the bar. Verify with node tests of each view, and in the browser that each opens and closes from the menu bar and `C`.
-- [ ] 15.2 Enable INV., ATTRIB., SKILLS, STYLES and GROUP, and give SPELLS, JOURNAL, MAP and WARMAP a tooltip saying why they are greyed. Verify in the browser, and with `web/data/ui/` moved aside that the plain sheet and panels work.
+- [x] 15.1 Build ATTRIB. from `StatsAttributes`, and SKILLS and STYLES from `Stats_Spec_Abil`, filled from the owner's sheet data with empty fields left empty. Styles can be dragged to the bar. Verify with node tests of each view, and in the browser that each opens and closes from the menu bar and `C`.
+- [x] 15.2 Enable INV., ATTRIB., SKILLS, STYLES and GROUP, and give SPELLS, JOURNAL, MAP and WARMAP a tooltip saying why they are greyed. Verify in the browser, and with `web/data/ui/` moved aside that the plain sheet and panels work.
 
 ## 16. Tier 3: orientation, the clock face, proofs and icons
 

@@ -121,6 +121,7 @@ type Player struct {
 	noExitUntil float64
 	exitLatched bool
 	bar         []StyleDef
+	barAlso     []StyleDef // styles they have learned but cannot use with what they hold
 
 	// The rules: the sheet derived from class, level, specs and gear, the last
 	// one sent, and the defence bonus of the player's last styled hit, which

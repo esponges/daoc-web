@@ -340,6 +340,8 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { z.Sell(p, m.Slot) })
 	case *protocol.Repair:
 		z.Do(func() { z.Repair(p, m) })
+	case *protocol.BarSet:
+		z.Do(func() { z.SetBarSlot(p, m.Slot, m.ID) })
 	case *protocol.GM:
 		z.Do(func() { s.World.GM(p, m.Line) })
 	case *protocol.Train:

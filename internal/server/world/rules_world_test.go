@@ -216,3 +216,46 @@ func TestCreaturesCarryTheirConColour(t *testing.T) {
 		t.Errorf("the wire form lacks cc: %s", b)
 	}
 }
+
+// A style dragged to a bar slot swaps with the one there and stays there when
+// the bar is built again; one the player cannot use is refused; one they have
+// learned but cannot use with what they hold is sent with the bar, locked.
+func TestStyleDraggedToTheBarStays(t *testing.T) {
+	r := newRig(t)
+	p := r.player("Dragger", 12, 30000, 30000, true)
+	r.train(p, map[string]int{"Hammer": 4})
+	if len(p.bar) < 2 {
+		t.Fatalf("bar %v, want at least two styles", p.bar)
+	}
+	first, last := p.bar[0].ID, p.bar[len(p.bar)-1].ID
+	r.z.SetBarSlot(p, 0, last)
+	if p.bar[0].ID != last || p.bar[len(p.bar)-1].ID != first {
+		t.Fatalf("after the drag the bar starts with %d and ends with %d, want %d and %d", p.bar[0].ID, p.bar[len(p.bar)-1].ID, last, first)
+	}
+	r.z.buildBar(p) // as after a level or a trained spec
+	if p.bar[0].ID != last {
+		t.Error("the bar was put back to the default order")
+	}
+	drain(p)
+	r.z.SetBarSlot(p, 0, -5)
+	if lastErr(t, p) == "" {
+		t.Error("a style the player cannot use was accepted")
+	}
+	r.z.SetBarSlot(p, 99, first)
+	if p.bar[0].ID != last {
+		t.Error("a slot past the bar changed it")
+	}
+	r.z.buildBar(p)
+	types, raws := sent(p)
+	var bar protocol.Bar
+	for i, ty := range types {
+		if ty == protocol.TStyleBar {
+			json.Unmarshal(raws[i], &bar)
+		}
+	}
+	for _, s := range bar.Also {
+		if !s.Locked {
+			t.Errorf("a style the player cannot use now is not marked locked: %+v", s)
+		}
+	}
+}

@@ -38,6 +38,7 @@ const (
 	TInteract = "interact" // ask an NPC to do what it does (open a merchant's shop)
 	TBuy      = "buy"      // buy an item from the open shop
 	TSell     = "sell"     // sell a pack item to the open shop
+	TBarSet   = "barset"   // put a style on a bar slot
 	TRepair   = "repair"   // ask the open blacksmith for a repair price, or accept it
 	TTrain    = "train"    // raise a spec at the trainer
 	TRestore  = "restore"  // pay a healer to restore lost constitution
@@ -448,6 +449,7 @@ type Ability struct {
 type Stats struct {
 	T         string    `json:"t"`
 	Class     string    `json:"cls"`
+	Race      string    `json:"race,omitempty"` // the race's name, when the store has it
 	Level     int       `json:"lv"`
 	Half      bool      `json:"half,omitempty"` // past the midpoint of the level, from 40
 	Base      [8]int    `json:"base"`           // strength, constitution, dexterity, quickness, intelligence, piety, empathy, charisma
@@ -485,6 +487,16 @@ type Healer struct {
 type Bar struct {
 	T     string    `json:"t"`
 	Slots []BarSlot `json:"slots"`
+	// Also are the styles the character has learned but cannot use with what
+	// they hold, by weapon line, for the styles window.
+	Also []BarSlot `json:"also,omitempty"`
+}
+
+// BarSet puts the style with an ID into a bar slot, swapping with what was there.
+type BarSet struct {
+	T    string `json:"t"`
+	Slot int    `json:"slot"`
+	ID   int    `json:"id"`
 }
 
 // Decode reads a message's type and, for those the server accepts, its body.
@@ -522,6 +534,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Sell{}
 	case TRepair:
 		v = &Repair{}
+	case TBarSet:
+		v = &BarSet{}
 	case TGM:
 		v = &GM{}
 	case TTrain:

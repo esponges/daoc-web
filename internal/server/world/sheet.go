@@ -186,7 +186,7 @@ func (w *World) recalc(p *Player) {
 // statsMsg is the character sheet as the protocol carries it.
 func (p *Player) statsMsg(cat *Catalog) protocol.Stats {
 	c, sh := p.Char, p.sh
-	m := protocol.Stats{T: protocol.TStats, Class: sh.class.Name, Level: c.Level, Half: sh.half, Base: c.Stats, Stats: sh.stats,
+	m := protocol.Stats{T: protocol.TStats, Class: sh.class.Name, Race: cat.RaceNames[c.Race], Level: c.Level, Half: sh.half, Base: c.Stats, Stats: sh.stats,
 		MaxHP: sh.maxHP, MaxEnd: rules.MaxEndurance, Unspent: sh.unspent, ConLost: c.ConLost}
 	for _, k := range cat.TrainableSpecs(c.Class) {
 		m.Specs = append(m.Specs, protocol.SpecRow{Key: k, Name: cat.SpecName(k), Level: p.specLevel(k),

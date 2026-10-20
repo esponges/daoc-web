@@ -86,6 +86,8 @@ export class NetClient {
   loot(corpse, index) { this._send({ t: 'loot', corpse, index }); }
   equip(from, to) { this._send({ t: 'equip', from, to }); }
   interact(id) { this._send({ t: 'interact', id }); }
+  // barSet puts a style the character has into a bar slot, swapping with what was there.
+  barSet(slot, id) { this._send({ t: 'barset', slot, id }); }
   buy(id) { this._send({ t: 'buy', id }); }
   sell(slot) { this._send({ t: 'sell', slot }); }
   // repair asks the open blacksmith for the price of repairing a slot, or, with
@@ -116,7 +118,7 @@ export class NetClient {
       case 'zone': this.shop = null; this.vault = null; this.smith = null; this.on.zone?.(m); break;
       case 'chatmsg': this.on.chat?.(m); break;
       case 'inv': this.inv = m; this.eq = m.eq || []; this.on.inv?.(m); break;
-      case 'bar': this.bar = m.slots || []; this.on.bar?.(this.bar); break;
+      case 'bar': this.bar = m.slots || []; this.barAlso = m.also || []; this.on.bar?.(this.bar); break;
       case 'corpse': this.corpse = m; this.on.corpse?.(m); break;
       case 'shop': this.shop = m; this.on.shop?.(m); break;
       case 'shopclose': this.shop = null; this.on.shopclose?.(); break;

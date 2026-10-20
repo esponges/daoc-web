@@ -4,13 +4,26 @@
 import { buildWindow } from './uiwin.js';
 import { coins } from './pack.js';
 
-// What the menu bar's buttons do. The inventory and the group have windows
-// to open; the rest are drawn greyed.
-const MENU_EVENTS = { ToggleStatsInventory: 'inventory', ToggleStatsGroup: 'group' };
+// What the menu bar's buttons do. The inventory, group, attributes, skills and
+// styles have windows to open; the rest are drawn greyed, with a tooltip.
+const MENU_EVENTS = {
+  ToggleStatsInventory: 'inventory', ToggleStatsGroup: 'group',
+  ToggleStatsAttributes: 'attributes', ToggleStatsSkills: 'skills', ToggleStatsStyles: 'styles',
+};
+
+// Why a button without a window is greyed.
+export const MENU_WHY = {
+  ToggleStatsSpells: 'Players cannot cast spells yet, and a Warrior has none.',
+  ToggleJournal: 'The journal is not built yet: there are no quests.',
+  ToggleMap: 'The map is not built yet.',
+  ShowWarMap: 'The war map is not built yet: there is no realm war.',
+  ToggleMainMenu: 'The main menu is not built yet: there are no options to set.',
+};
 
 // createStockMenuBar builds the stock menu bar: the experience bubbles and
 // bar, the money, and the row of window buttons.
-//   onAction(name)  a button that has a window was pressed ("inventory", "group")
+//   onAction(name)  a button that has a window was pressed ("inventory", "group",
+//                   "attributes", "skills", "styles")
 // update(me, money) takes the server's vitals (xp, xpNext) and the money in copper.
 export function createStockMenuBar(doc, data, { onAction } = {}) {
   const win = buildWindow(doc, data, 'menu_bar', {
@@ -18,6 +31,7 @@ export function createStockMenuBar(doc, data, { onAction } = {}) {
       if (MENU_EVENTS[ev]) onAction?.(MENU_EVENTS[ev]);
     },
     disabled: (ev) => !MENU_EVENTS[ev] && ev !== 'MenuBarToggleExp',
+    tooltip: (ev) => MENU_WHY[ev] || '',
   });
   return {
     el: win.el,

@@ -156,3 +156,5 @@ Limits: 16 KB a message, 120 messages a second per connection, 200
 characters a chat line, one line a second with a burst of four.
 
 `clock` is the game time of day: `gs`, seconds since midnight. It is sent after the welcome and every 30 seconds. A game day lasts 60 real minutes, so between messages the client runs it at 24 times real time. Night is 18:00 up to 06:00. Night-only and day-only creatures simply appear in and leave `ents` as their time begins and ends.
+
+`barset` (`slot`, `id`) puts the style with that id, one on the `bar` the server sent, into a slot, swapping with the style there; the server answers with a fresh `bar`, or `err` if the character cannot use that style. `bar` may carry `also`: the styles the character has learned but cannot use with what they hold (`locked: true`, `slot: -1`), for the styles window. `stats` may carry `race`, the race's name. The bar order a player sets lasts until they reconnect.

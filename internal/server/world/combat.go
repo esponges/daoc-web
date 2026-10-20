@@ -109,9 +109,15 @@ func (z *Zone) buildBar(p *Player) {
 	p.sendBar(z.W.Cat)
 }
 
-// computeBar chooses the bar without sending it.
+// computeBar chooses the bar without sending it. Styles the player has already
+// placed keep their order; new ones follow in the default order. The styles
+// they have learned but cannot use with what they hold are kept in p.barAlso.
 func (z *Zone) computeBar(p *Player) {
-	p.bar = p.bar[:0]
+	prev := make([]int, len(p.bar))
+	for i, s := range p.bar {
+		prev[i] = s.ID
+	}
+	p.bar, p.barAlso = p.bar[:0], p.barAlso[:0]
 	if z.W.Cat == nil {
 		return
 	}
@@ -122,9 +128,11 @@ func (z *Zone) computeBar(p *Player) {
 		switch {
 		case s.WeaponReq == ObjShield:
 			if p.shield == nil {
+				p.barAlso = append(p.barAlso, s)
 				continue
 			}
 		case p.weapon == nil || p.weapon.ObjectType != s.WeaponReq:
+			p.barAlso = append(p.barAlso, s)
 			continue
 		}
 		p.bar = append(p.bar, s)
@@ -136,6 +144,41 @@ func (z *Zone) computeBar(p *Player) {
 		}
 		return a.SpecLevel < b.SpecLevel
 	})
+	// The player's own order first.
+	pos := map[int]int{}
+	for i, id := range prev {
+		pos[id] = i
+	}
+	sort.SliceStable(p.bar, func(i, j int) bool {
+		pi, iok := pos[p.bar[i].ID]
+		pj, jok := pos[p.bar[j].ID]
+		if iok && jok {
+			return pi < pj
+		}
+		return iok && !jok
+	})
+}
+
+// SetBarSlot puts a style the player has on their bar into a slot, swapping it
+// with the style that was there, so the key for that slot uses it.
+func (z *Zone) SetBarSlot(p *Player, slot, id int) {
+	from := -1
+	for i := range p.bar {
+		if p.bar[i].ID == id {
+			from = i
+		}
+	}
+	if from < 0 {
+		p.errMsg("bar", "You cannot use that style with what you hold.")
+		return
+	}
+	if slot < 0 || slot >= len(p.bar) {
+		p.errMsg("bar", "There is no such slot on your bar.")
+		return
+	}
+	p.pending = -1
+	p.bar[from], p.bar[slot] = p.bar[slot], p.bar[from]
+	p.sendBar(z.W.Cat)
 }
 
 func (p *Player) sendBar(c *Catalog) {
@@ -144,6 +187,11 @@ func (p *Player) sendBar(c *Catalog) {
 		s := &p.bar[i]
 		b.Slots = append(b.Slots, protocol.BarSlot{Slot: i, ID: s.ID, Name: s.Name, Icon: s.Icon, Spec: s.Spec, Cost: p.styleCost(s),
 			Opens: c.openingText(s), Level: s.SpecLevel})
+	}
+	for i := range p.barAlso {
+		s := &p.barAlso[i]
+		b.Also = append(b.Also, protocol.BarSlot{Slot: -1, ID: s.ID, Name: s.Name, Icon: s.Icon, Spec: s.Spec, Cost: p.styleCost(s),
+			Opens: c.openingText(s), Level: s.SpecLevel, Locked: true})
 	}
 	p.send(b)
 }

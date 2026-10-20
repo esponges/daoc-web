@@ -191,6 +191,7 @@ type Catalog struct {
 	hasRules       bool                    // item bonuses, races and abilities exist (a world.db imported before the rule book lacks them)
 	hasLevels      bool                    // spawn.levels exists (a world.db imported before templates were honoured lacks it)
 	Resists        map[int]map[int]float64 // race -> damage type -> percent
+	RaceNames      map[int]string          // race -> name, for the character sheet
 	ClassSpecs     map[int][]string        // class -> its spec and career keys
 	SpecNames      map[string]string       // spec key -> name
 	Grants         map[int][]rules.Grant   // class -> the ability grants of its careers and specs

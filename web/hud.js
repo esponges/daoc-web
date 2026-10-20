@@ -195,11 +195,18 @@ export function createStockExp(doc, data) {
   };
 }
 
+// styleDragId reads the style id out of what a styles window row carries when
+// it is dragged ("style:<id>"), or null for anything else.
+export function styleDragId(data) {
+  const m = /^style:(\d+)$/.exec(data || '');
+  return m ? Number(m[1]) : null;
+}
+
 // createStockBar builds the style bar: one stock icon per style with its key
 // and endurance cost. A style that cannot be used now is shaded, one the
 // character cannot pay for is shaded red, one ready to use gets a gold frame.
 //   onUse(slot)  the player clicked a style
-export function createStockBar(doc, data, { onUse, keys = [] } = {}) {
+export function createStockBar(doc, data, { onUse, onDrop, keys = [] } = {}) {
   const root = doc.createElement('div');
   Object.assign(root.style, { display: 'flex', gap: '3px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '92vw' });
   let slots = [];
@@ -228,6 +235,13 @@ export function createStockBar(doc, data, { onUse, keys = [] } = {}) {
       if (keys[i]) cell.appendChild(label(keys[i], 'arial9', 4, 4));
       cell.appendChild(label(String(s.cost), 'arial9', 20, 24));
       cell.addEventListener('click', () => onUse?.(i));
+      // A style dragged from the styles window lands in this slot.
+      cell.addEventListener('dragover', (e) => e.preventDefault());
+      cell.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const id = styleDragId(e.dataTransfer?.getData('text/plain'));
+        if (id !== null) onDrop?.(i, id);
+      });
       root.appendChild(cell);
       return { cell, shade };
     });

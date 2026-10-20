@@ -702,6 +702,10 @@ export function buildWindow(doc, data, id, opts = {}) {
         case 'LabelDef':
         case 'ScalarLabelDef': {
           const lt = labelText(doc, data, c);
+          // A label with no adapter is a caption: its Data is the text, drawn
+          // by windows that ask for captions.
+          const adapter = str(c, 'Adapter') || str(c, 'AdapterName');
+          if (opts.captions && (!adapter || adapter === 'none') && str(c, 'Data')) lt.set(str(c, 'Data'));
           el = lt.el;
           el.style.left = px(r.x);
           el.style.top = px(r.y);
@@ -715,7 +719,12 @@ export function buildWindow(doc, data, id, opts = {}) {
           const id = str(c, 'ControlId');
           const ev = str(c, 'OnClickEvent') || str(c, 'onClickEvent');
           const b = hrButton(doc, data, str(c, 'TemplateName'), str(c, 'Label'), r.w, opts.onClick && (() => opts.onClick(ev || id)));
-          if (opts.disabled && opts.disabled(ev || id)) b.disable();
+          if (opts.disabled && opts.disabled(ev || id)) {
+            b.disable();
+            // A greyed button says why.
+            const why = opts.tooltip && opts.tooltip(ev || id);
+            if (why) b.el.title = why;
+          }
           el = b.el;
           el.style.left = px(r.x);
           el.style.top = px(r.y);

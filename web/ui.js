@@ -12,6 +12,7 @@ import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
 import { createVault, firstFreeVault } from './vault.js';
 import { gameSeconds, clockFace } from './daynight.js';
+import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
@@ -95,14 +96,16 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
 
   // --- vitals ---
   // The stock summary window replaces the built-in bars when it is there.
-  let summary = null, menuBar = null, compassWin = null, clockWin = null;
+  let summary = null, menuBar = null, compassWin = null, clockWin = null, charWins = null;
   if (stock) {
     summary = createStockSummary(document, stock);
     Object.assign(summary.el.style, { position: 'fixed', right: '12px', left: 'auto', top: '12px', zIndex: 12, pointerEvents: 'none' });
     root.appendChild(summary.el);
     // The menu bar across the top carries the experience and the money, so
     // the separate experience window is not needed.
-    menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); } });
+    charWins = createStockCharWindows(document, stock);
+    root.appendChild(charWins.el);
+    menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); else charWins.toggle(a); } });
     Object.assign(menuBar.el.style, { position: 'fixed', left: '50%', top: '0px', marginLeft: '-400px', zIndex: 12 });
     root.appendChild(menuBar.el);
     summary.el.style.top = '34px';
@@ -130,7 +133,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const bar = el('div', 'stylebar');
   root.appendChild(bar);
   if (stock) {
-    stockBar = createStockBar(document, stock, { onUse: (i) => net.style(i), keys: BAR_KEYS.map((k) => k.replace('Digit', '')) });
+    stockBar = createStockBar(document, stock, { onUse: (i) => net.style(i), onDrop: (slot, id) => net.barSet(slot, id), keys: BAR_KEYS.map((k) => k.replace('Digit', '')) });
     bar.appendChild(stockBar.el);
   }
   let barSlots = [];
@@ -147,7 +150,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       bar.appendChild(b);
     });
   };
-  net.on.bar = (slots) => { barSlots = slots; renderBar(); };
+  net.on.bar = (slots) => { barSlots = slots; renderBar(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso); };
   // Abilities used on a target (Guard, Protect, Intercept, Engage) sit beside the styles.
   const abBar = el('div', 'stylebar abilities');
   root.appendChild(abBar);
@@ -402,8 +405,13 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     }
     sheetPanel.append(closeButton(sheetPanel));
   };
-  net.on.stats = () => { renderAbilities(); if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
-  const toggleSheet = () => { sheetPanel.classList.toggle('open'); renderSheet(); };
+  net.on.stats = () => { renderAbilities(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso); if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
+  // C opens the stock attributes window when the converted interface is there, the plain sheet when not.
+  const toggleSheet = () => {
+    if (charWins) { charWins.toggle('attributes'); return; }
+    sheetPanel.classList.toggle('open');
+    renderSheet();
+  };
   const renderTrainer = (m) => {
     const v = trainerView(m);
     trainPanel.replaceChildren(el('h2', '', v.title), el('div', 'line', v.points + ' specialization points to spend'));
