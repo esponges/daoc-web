@@ -13,6 +13,8 @@ import (
 // What interacting with an NPC does.
 const (
 	KindMerchant = "merchant"
+	// KindNotClassic marks NPCs whose service 1.65 did not have; they answer with a line.
+	KindNotClassic = "notclassic"
 )
 
 // A player can interact with an NPC this close to its edge. The reach is
@@ -33,12 +35,19 @@ func npcKind(classType string) string {
 		return KindMerchant
 	case importer.IsStableClass(classType):
 		return KindStable
+	case notClassic(classType):
+		return KindNotClassic
 	case importer.IsHealerClass(classType):
 		return KindHealer
 	case teaches(classType) != "":
 		return KindTrainer
 	}
 	return ""
+}
+
+func notClassic(classType string) bool {
+	_, ok := importer.NotClassicOf(classType)
+	return ok
 }
 
 func interactRange(n *NPC) float64 { return interactBase + n.Reach*0.5 }
@@ -72,6 +81,9 @@ func (z *Zone) Interact(p *Player, id int64) {
 		z.openShop(p, n)
 	case KindStable:
 		z.openStable(p, n)
+	case KindNotClassic:
+		nc, _ := importer.NotClassicOf(n.Spawn.ClassType)
+		sys(p, n.title()+" says: \"I cannot help you with that; it is not part of this world.\" ("+nc.Reason+")")
 	case KindTrainer:
 		z.openTrainer(p, n)
 	case KindHealer:

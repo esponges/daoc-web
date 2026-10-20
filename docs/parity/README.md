@@ -9,15 +9,15 @@ Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    10 of  15 implemented (2316 of 2585 placements x spells)
   Class spell types        0 of  73 implemented (0 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
-  Abilities               11 of  30 implemented (51 of 100 grants)
-  Creature kinds           6 of 110 implemented (28964 of 29932 placements)
+  Abilities               15 of  30 implemented (66 of 100 grants)
+  Creature kinds           7 of 110 implemented (28987 of 29932 placements, 7 kinds not classic)
   quests                 81, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         32 gaps in 10 bands
-  rules: 24 documented, 34 reference, 10 provisional
+  rules: 25 documented, 39 reference, 10 provisional
 ```
 
 ## Creature spell types
@@ -144,16 +144,16 @@ Midgard (regions 100, 101, 151): 29932 placements
 | Evade (Berserker, Hunter, Midgard Rogue, Savage, Shadowblade, Skald, Warrior) | 17 | yes |
 | MidArmor (Berserker, Bonedancer, Healer, Hunter, Midgard Rogue, Mystic, Runemaster, Savage, Seer, Shadowblade, Shaman, Skald, Spiritmaster, Thane, Viking, Warrior) | 10 | yes |
 | Critical Shot (Hunter) | 9 |  |
-| Protect (Berserker, Skald, Thane, Warrior) | 8 |  |
+| Protect (Berserker, Skald, Thane, Warrior) | 8 | yes |
 | Shield (Berserker, Healer, Savage, Seer, Shadowblade, Shaman, Skald, Thane, Viking, Warrior) | 8 | yes |
 | Safe Fall (Shadowblade) | 5 |  |
 | Berserk (Berserker) | 4 |  |
-| Guard (Thane, Warrior) | 4 |  |
+| Guard (Thane, Warrior) | 4 | yes |
 | Weaponry: Staves (Berserker, Bonedancer, Healer, Hunter, Midgard Rogue, Mystic, Runemaster, Savage, Seer, Shadowblade, Shaman, Skald, Spiritmaster, Thane, Viking, Warrior) | 4 | yes |
 | Penetrating Arrow (Hunter) | 3 |  |
 | Weaponry: Thrown (Berserker, Shadowblade, Warrior) | 3 | yes |
 | Charge (Berserker, Savage) | 2 |  |
-| Intercept (Thane, Warrior) | 2 |  |
+| Intercept (Thane, Warrior) | 2 | yes |
 | Rapid Fire (Hunter) | 2 |  |
 | Weaponry: Axes (Berserker, Savage, Shadowblade, Skald, Thane, Viking, Warrior) | 2 | yes |
 | Weaponry: Hammers (Berserker, Healer, Savage, Seer, Shaman, Skald, Thane, Viking, Warrior) | 2 | yes |
@@ -164,7 +164,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | Danger Sense (Shadowblade) | 1 |  |
 | Detect Hidden (Shadowblade) | 1 |  |
 | Distraction (Shadowblade) | 1 |  |
-| Engage (Thane, Warrior) | 1 |  |
+| Engage (Thane, Warrior) | 1 | yes |
 | Enhanced Evade (Berserker, Savage) | 1 |  |
 | QuickCast (Bonedancer, Runemaster, Spiritmaster) | 1 |  |
 | Weaponry: Composite Bows (Hunter) | 1 | yes |
@@ -184,18 +184,18 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.NightSpawn | 71 |  |
 | DOL.GS.Scripts.ShiveringPresence | 51 |  |
 | DOL.GS.Keeps.GuardArcher | 49 |  |
-| DOL.GS.GameHastener | 27 |  |
+| DOL.GS.GameHastener | 27 | not classic: a hastener: a speed boost on request |
 | DOL.GS.Keeps.GuardCommander | 26 |  |
 | DOL.GS.Blacksmith | 23 |  |
-| DOL.GS.GameStableMaster | 23 |  |
+| DOL.GS.GameStableMaster | 23 | yes |
 | DOL.GS.QueenMajorAdd | 22 |  |
 | DOL.GS.GameHealer | 18 | yes |
-| DOL.GS.Scripts.OFAssistant | 18 |  |
-| DOL.GS.Scripts.LiveTeleporter | 15 |  |
+| DOL.GS.Scripts.OFAssistant | 18 | not classic: a teleporter's assistant |
+| DOL.GS.Scripts.LiveTeleporter | 15 | not classic: a teleporter: Live-era travel the horse routes replace |
 | DOL.GS.Enchanter | 14 |  |
 | DOL.GS.StripeAdd | 13 |  |
 | DOL.GS.ZritZritAdd | 13 |  |
-| DOL.GS.Keeps.FrontierHastener | 11 |  |
+| DOL.GS.Keeps.FrontierHastener | 11 | not classic: a hastener: a speed boost on request |
 | DOL.GS.GameVaultKeeper | 9 |  |
 | DOL.GS.OonaUndeadSoldier | 9 |  |
 | DOL.GS.Keeps.GuardStaticArcher | 8 |  |
@@ -222,9 +222,9 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Trainer.VikingTrainer | 5 | yes |
 | DOL.GS.DPSDummy | 4 |  |
 | DOL.GS.Trainer.MysticTrainer | 4 |  |
-| DOL.GS.GameBountyMerchant | 3 |  |
+| DOL.GS.GameBountyMerchant | 3 | not classic: a bounty merchant: a later reward shop |
 | DOL.GS.MidgardSITeleporter | 3 |  |
-| DOL.GS.Scripts.OFTeleporter | 3 |  |
+| DOL.GS.Scripts.OFTeleporter | 3 | not classic: a teleporter: Origin Fantasy convenience travel |
 | DOL.GS.SnarlsAdd | 3 |  |
 | DOL.GS.Trainer.RogueTrainer | 3 |  |
 | DOL.GS.AlchemistsMaster | 2 |  |
@@ -239,7 +239,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Scripts.Recharger | 2 |  |
 | DOL.GS.TailoringMaster | 2 |  |
 | DOL.GS.WeaponCraftingMaster | 2 |  |
-| DOL.GS.AccountVaultKeeper | 1 |  |
+| DOL.GS.AccountVaultKeeper | 1 | not classic: an account vault: shared storage across characters |
 | DOL.GS.Alina | 1 |  |
 | DOL.GS.Basilius | 1 |  |
 | DOL.GS.Boligar | 1 |  |
@@ -308,6 +308,12 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 
 | rule | status |
 | --- | --- |
+| ability.engage | reference |
+| ability.gained | documented |
+| ability.guard | reference |
+| ability.intercept | reference |
+| ability.protect | reference |
+| ability.target | reference |
 | cast.decision | provisional |
 | cast.heal | provisional |
 | cast.interrupt | reference |

@@ -85,7 +85,17 @@ func summary(w io.Writer, rep *Report) {
 	for _, s := range sections {
 		l := s.get(rep)
 		n, uses, total := done(l)
-		fmt.Fprintf(w, "  %-22s %3d of %3d implemented (%d of %d %s)\n", s.title, n, len(l), uses, total, s.uses)
+		nc := 0
+		for _, it := range l {
+			if it.NotClassic != "" {
+				nc++
+			}
+		}
+		extra := ""
+		if nc > 0 {
+			extra = fmt.Sprintf(", %d kinds not classic", nc)
+		}
+		fmt.Fprintf(w, "  %-22s %3d of %3d implemented (%d of %d %s%s)\n", s.title, n, len(l), uses, total, s.uses, extra)
 	}
 	for _, c := range rep.Content {
 		fmt.Fprintf(w, "  %-22s %d, none implemented\n", c.Name, c.Uses)
@@ -109,6 +119,8 @@ func readme(b *strings.Builder, rep *Report) {
 			mark := ""
 			if it.Implemented {
 				mark = "yes"
+			} else if it.NotClassic != "" {
+				mark = "not classic: " + it.NotClassic
 			}
 			name := it.Name
 			if len(it.Classes) > 0 {

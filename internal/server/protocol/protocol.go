@@ -228,7 +228,7 @@ type Entity struct {
 	Back     bool     `json:"bk,omitempty"`
 	Side     int      `json:"sd,omitempty"`
 	Friendly bool     `json:"fr,omitempty"`
-	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant", "trainer", "healer", "stable"; absent for nothing
+	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant", "trainer", "healer", "stable", "notclassic"; absent for nothing
 	Con      *int     `json:"cc,omitempty"` // a creature's con colour to you, -3 grey to 3 purple
 	Own      bool     `json:"own,omitempty"`
 	Ride     bool     `json:"rd,omitempty"` // a player on a horse

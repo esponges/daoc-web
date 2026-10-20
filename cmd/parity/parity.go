@@ -29,6 +29,7 @@ type Item struct {
 	Uses        int      `json:"uses"`
 	Classes     []string `json:"classes,omitempty"`
 	Implemented bool     `json:"implemented"`
+	NotClassic  string   `json:"notClassic,omitempty"` // why 1.65 did not have it, for NPC kinds that are left out on purpose
 }
 
 // RuleRow is one registered rule.
@@ -106,7 +107,11 @@ func Run(dump string) (*Report, error) {
 		rep.CreatureSpells = append(rep.CreatureSpells, Item{Name: k, Uses: n, Implemented: rules.ImplementedSpell(k)})
 	}
 	for k, n := range kinds {
-		rep.CreatureKinds = append(rep.CreatureKinds, Item{Name: k, Uses: n, Implemented: kindImplemented(k)})
+		it := Item{Name: k, Uses: n, Implemented: kindImplemented(k)}
+		if nc, ok := importer.NotClassicOf(k); ok {
+			it.NotClassic = nc.Reason
+		}
+		rep.CreatureKinds = append(rep.CreatureKinds, it)
 	}
 
 	// Classes: their specs and careers, the spell lines of those specs, and the
@@ -307,7 +312,7 @@ var styleFeatureImplemented = map[string]bool{
 // behaviour: plain creatures, town guards, merchants, healers, and trainers of
 // the classes it covers.
 func kindImplemented(classType string) bool {
-	if classType == "DOL.GS.GameNPC" || classType == "DOL.GS.GameGuard" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) {
+	if classType == "DOL.GS.GameNPC" || classType == "DOL.GS.GameGuard" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) || importer.IsStableClass(classType) {
 		return true
 	}
 	t := importer.TrainerClass(classType)

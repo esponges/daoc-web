@@ -965,7 +965,7 @@
         "Thane",
         "Warrior"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Shield",
@@ -1007,7 +1007,7 @@
         "Thane",
         "Warrior"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Weaponry: Staves",
@@ -1066,7 +1066,7 @@
         "Thane",
         "Warrior"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Rapid Fire",
@@ -1177,7 +1177,7 @@
         "Thane",
         "Warrior"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Enhanced Evade",
@@ -1275,7 +1275,8 @@
     {
       "name": "DOL.GS.GameHastener",
       "uses": 27,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a hastener: a speed boost on request"
     },
     {
       "name": "DOL.GS.Keeps.GuardCommander",
@@ -1290,7 +1291,7 @@
     {
       "name": "DOL.GS.GameStableMaster",
       "uses": 23,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.QueenMajorAdd",
@@ -1305,12 +1306,14 @@
     {
       "name": "DOL.GS.Scripts.OFAssistant",
       "uses": 18,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a teleporter's assistant"
     },
     {
       "name": "DOL.GS.Scripts.LiveTeleporter",
       "uses": 15,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a teleporter: Live-era travel the horse routes replace"
     },
     {
       "name": "DOL.GS.Enchanter",
@@ -1330,7 +1333,8 @@
     {
       "name": "DOL.GS.Keeps.FrontierHastener",
       "uses": 11,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a hastener: a speed boost on request"
     },
     {
       "name": "DOL.GS.GameVaultKeeper",
@@ -1465,7 +1469,8 @@
     {
       "name": "DOL.GS.GameBountyMerchant",
       "uses": 3,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a bounty merchant: a later reward shop"
     },
     {
       "name": "DOL.GS.MidgardSITeleporter",
@@ -1475,7 +1480,8 @@
     {
       "name": "DOL.GS.Scripts.OFTeleporter",
       "uses": 3,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a teleporter: Origin Fantasy convenience travel"
     },
     {
       "name": "DOL.GS.SnarlsAdd",
@@ -1550,7 +1556,8 @@
     {
       "name": "DOL.GS.AccountVaultKeeper",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "an account vault: shared storage across characters"
     },
     {
       "name": "DOL.GS.Alina",
@@ -1811,6 +1818,30 @@
     }
   ],
   "rules": [
+    {
+      "id": "ability.engage",
+      "status": "reference"
+    },
+    {
+      "id": "ability.gained",
+      "status": "documented"
+    },
+    {
+      "id": "ability.guard",
+      "status": "reference"
+    },
+    {
+      "id": "ability.intercept",
+      "status": "reference"
+    },
+    {
+      "id": "ability.protect",
+      "status": "reference"
+    },
+    {
+      "id": "ability.target",
+      "status": "reference"
+    },
     {
       "id": "cast.decision",
       "status": "provisional"
@@ -2085,9 +2116,9 @@
     }
   ],
   "rulesByStatus": {
-    "documented": 24,
+    "documented": 25,
     "provisional": 10,
-    "reference": 34
+    "reference": 39
   },
   "placements": 29932,
   "levellingGear": [
