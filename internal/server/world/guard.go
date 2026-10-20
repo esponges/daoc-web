@@ -25,7 +25,7 @@ func (n *NPC) watch(z *Zone) {
 	var best *NPC
 	bd := math.Inf(1)
 	for _, o := range z.npcs {
-		if o == n || o.dead() || o.Friendly || o.Aggro <= 0 || o.Spawn.Realm == n.Spawn.Realm {
+		if o == n || o.dead() || o.hidden || o.Friendly || o.Aggro <= 0 || o.Spawn.Realm == n.Spawn.Realm {
 			continue
 		}
 		d := math.Hypot(o.Body.X-n.Body.X, o.Body.Y-n.Body.Y)

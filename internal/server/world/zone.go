@@ -57,6 +57,7 @@ func NewZone(w *World, id int, name string, g Ground, mv Mover, spawns []Spawn) 
 		z.npcs = append(z.npcs, n)
 		z.byID[n.ID] = n
 	}
+	z.startTimed()
 	z.loadGraves()
 	if w.Cat != nil {
 		for _, e := range w.Cat.Exits {
@@ -160,6 +161,10 @@ func (z *Zone) Tick() {
 	z.tickEffects()
 	if z.tick%TickRate == 0 {
 		z.groupTick()
+		z.checkTimed()
+	}
+	if z.tick%(TickRate*clockEvery) == 0 {
+		z.sendClock()
 	}
 	z.snapshots()
 	for id, p := range z.players {

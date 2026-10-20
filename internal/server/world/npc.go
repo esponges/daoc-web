@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strings"
 
+	"daocweb/internal/importer"
 	"daocweb/internal/server/rules"
 )
 
@@ -83,6 +84,14 @@ type NPC struct {
 	lootOwner  int64
 	gone       bool
 	rng        *rand.Rand
+
+	// A night-only or day-only creature (rules.NightOnly, rules.DayOnly) is in the
+	// world only at its time. It arrives appear game seconds into it, leaves when
+	// it ends, and stays while in a fight (leaving) until the fight is over.
+	timed   int
+	appear  int
+	hidden  bool
+	leaving bool
 }
 
 // newNPC builds a creature from its spawn row.
@@ -97,6 +106,7 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 		speed = Run
 	}
 	n := &NPC{
+		timed: importer.SpawnTiming(sp.ClassType), appear: int(sp.ID * 37 % rules.AppearGameSecond),
 		ID: sp.ID, Spawn: sp, Name: sp.Name, Model: sp.Model, Level: level, Size: size,
 		HX: sp.X, HY: sp.Y, Roam: float64(sp.Roam),
 		RunSpd: speed, Walk: math.Max(40, speed*0.45),
@@ -246,6 +256,9 @@ func turnToward(cur, target, maxStep float64) float64 {
 
 // update runs one tick of a creature's life.
 func (n *NPC) update(z *Zone) {
+	if n.hidden {
+		return
+	}
 	switch n.state {
 	case npcDead:
 		n.speedNow = 0
@@ -254,6 +267,10 @@ func (n *NPC) update(z *Zone) {
 			n.loot, n.money = nil, 0
 		}
 		if z.now >= n.respawnAt {
+			if n.timed != rules.Always && !rules.Present(n.timed, n.appear, z.W.gameSeconds()) {
+				n.hide() // it comes back with its time, not before
+				return
+			}
 			if len(n.Spawn.Levels) > 1 {
 				n.setLevel(spawnLevel(n.Spawn, n.rng))
 			}

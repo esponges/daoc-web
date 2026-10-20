@@ -18,7 +18,7 @@ func (p *Player) fightable(z *Zone) bool {
 
 func (n *NPC) entityID() int64              { return n.ID }
 func (n *NPC) position() (float64, float64) { return n.Body.X, n.Body.Y }
-func (n *NPC) fightable(z *Zone) bool       { return !n.dead() && z.byID[n.ID] == n }
+func (n *NPC) fightable(z *Zone) bool       { return !n.dead() && !n.hidden && z.byID[n.ID] == n }
 
 // hateEntry is how much a creature hates one combatant, and when it began,
 // which settles ties in favour of the first.

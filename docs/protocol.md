@@ -154,3 +154,5 @@ an armour piece belongs in) and `line` (a weapon's line) for the same reason.
 
 Limits: 16 KB a message, 120 messages a second per connection, 200
 characters a chat line, one line a second with a burst of four.
+
+`clock` is the game time of day: `gs`, seconds since midnight. It is sent after the welcome and every 30 seconds. A game day lasts 60 real minutes, so between messages the client runs it at 24 times real time. Night is 18:00 up to 06:00. Night-only and day-only creatures simply appear in and leave `ents` as their time begins and ends.

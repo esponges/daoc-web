@@ -27,6 +27,8 @@ type Config struct {
 	// IdleUnload is how long an empty zone keeps running before it is
 	// saved and unloaded, in seconds (20 if zero).
 	IdleUnload float64
+	// Clock is real time for the game clock; nil means time.Now. Tests inject one.
+	Clock func() time.Time
 }
 
 // World is the whole running game.
@@ -43,6 +45,14 @@ type World struct {
 
 	groups *groups
 	rides  rides // riders in the middle of a zone change
+}
+
+// gameSeconds is the game time of day now, in seconds since midnight.
+func (w *World) gameSeconds() int {
+	if w.Clock != nil {
+		return rules.GameSeconds(w.Clock())
+	}
+	return rules.GameSeconds(time.Now())
 }
 
 // ErrOnline is returned when a character is already playing.
@@ -278,6 +288,7 @@ func (z *Zone) join(p *Player) {
 	p.send(p.statsSent)
 	p.sendInv(w.Cat, c.Money)
 	p.sendBar(w.Cat)
+	p.send(protocol.Clock{T: protocol.TClock, GS: w.gameSeconds()})
 	z.event(protocol.Event{K: "join", To: p.ID, Text: c.Name}, p.Body.X, p.Body.Y)
 	if p.notice != "" {
 		p.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "sys", Text: p.notice})

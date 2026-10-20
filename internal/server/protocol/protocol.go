@@ -61,6 +61,7 @@ const (
 	TSmith       = "smith"       // what a blacksmith can repair for the player, with prices
 	TSmithClose  = "smithclose"  // the repair window is closed
 	TRepairQuote = "repairquote" // the price of repairing one item, to be accepted
+	TClock       = "clock"       // the game time of day, on entering and once a minute
 	TVault       = "vault"       // the character's own vault, sent when a vault keeper opens it
 	TVaultClose  = "vaultclose"  // the open vault is closed
 	TStats       = "stats"       // the character sheet
@@ -375,6 +376,13 @@ type RepairQuote struct {
 	Slot  int    `json:"slot"`
 	Name  string `json:"nm"`
 	Price int64  `json:"price"`
+}
+
+// Clock is the game time of day, in seconds since midnight. A game day lasts
+// 60 real minutes, so the client runs it at 24 times real time between messages.
+type Clock struct {
+	T  string `json:"t"`
+	GS int    `json:"gs"`
 }
 
 // Vault is a character's vault: its items, each with its slot (1000 to 1039,
