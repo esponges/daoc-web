@@ -162,7 +162,8 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       } else if (v.deathPlayed) {
         a.clear(); v.deathPlayed = false;
       }
-      const sp = e.speed || 0;
+      // A rider moves far faster than any clip: drawn at a run's pace.
+      const sp = e.ride ? Math.min(e.speed || 0, t.run * v.scale) : (e.speed || 0);
       v.moving = sp > 5;
       let base = 'idle';
       if (v.moving && !v.dead) {

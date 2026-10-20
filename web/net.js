@@ -14,7 +14,7 @@
 //
 // No WebGL here: net.test.mjs drives it headlessly against a fake server.
 
-import { stepBody, STEP_DT } from './move.js';
+import { stepBody, STEP_DT, RUN } from './move.js';
 
 export const PROTOCOL = 1;
 
@@ -169,6 +169,7 @@ export class NetClient {
     me.target = s.tg; me.attacking = s.at; me.dead = !!s.dead; me.fighting = !!s.fg;
     me.avail = s.av || [];
     me.serverSpeed = s.sp;
+    me.ride = !!s.rd;
 
     const t = this.now();
     const seen = new Set();
@@ -186,6 +187,7 @@ export class NetClient {
       if (e.eq || e.gs) r.eq = e.eq || [];
       r.speed = e.sp || 0; r.hp = e.hp; r.state = e.st || ''; r.scale = e.sc || 0;
       r.aggro = !!e.ag; r.loot = !!e.lt; r.friendly = !!e.fr; r.kind = e.ik || ''; r.back = !!e.bk; r.side = e.sd || 0;
+      r.ride = !!e.rd; // on a horse route
       r.con = e.cc; r.own = !!e.own; // a creature's con colour to you; your own gravestone
       r.samples.push({ t, x: e.x, y: e.y, z: e.z, yaw: e.h });
       if (r.samples.length > 8) r.samples.shift();
@@ -207,7 +209,8 @@ export class NetClient {
     if (!me) return this.motion;
     const t = this.now();
     this.acc = Math.min(this.acc + dt, 0.25);
-    const moving = keys.fwd || keys.strafe || keys.turn;
+    // A rider is carried by the server along a route; their keys do nothing.
+    const moving = !me.ride && (keys.fwd || keys.strafe || keys.turn);
     while (this.acc >= STEP_DT) {
       this.acc -= STEP_DT;
       if (!moving || me.dead) continue;
@@ -221,7 +224,8 @@ export class NetClient {
       if (m.speed > 0 || k.turn) { this.motion = m; this.motionAt = t; }
     }
     if (this.pendingSteps > 0 && (t - this.lastSend >= SEND_EVERY || this.pendingSteps >= 6)) this._flush(t);
-    if (t - this.motionAt > MOTION_HOLD) this.motion = { speed: 0, back: false, side: 0 };
+    if (me.ride) { this.motion = { speed: RUN, back: false, side: 0 }; this.motionAt = t; } // drawn running
+    else if (t - this.motionAt > MOTION_HOLD) this.motion = { speed: 0, back: false, side: 0 };
 
     // Ease the smoothed error away.
     const f = Math.exp(-EASE_RATE * dt);

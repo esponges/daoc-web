@@ -321,7 +321,7 @@ func (z *Zone) selfOf(p *Player) protocol.Self {
 		Level: c.Level, XP: c.XP - cur, XPNext: next - cur, Money: c.Money,
 		Target: p.target, Attacking: p.attacking, Dead: p.dead, Correct: p.correct,
 		Back: p.motion.Back, Side: p.motion.Side, Speed: p.motion.Speed,
-		Fighting: z.now < p.combatUntil,
+		Fighting: z.now < p.combatUntil, Ride: p.ride != nil,
 	}
 	if c.Level >= MaxLevel {
 		s.XP, s.XPNext = 1, 1

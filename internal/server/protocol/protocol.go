@@ -268,6 +268,7 @@ type Self struct {
 	Back      bool    `json:"bk,omitempty"`  // moving backwards, for the clip
 	Side      int     `json:"sd,omitempty"`
 	Speed     float64 `json:"sp"`
+	Ride      bool    `json:"rd,omitempty"` // on a horse route: inputs do nothing
 	Fighting  bool    `json:"fg,omitempty"`
 	Avail     []int   `json:"av,omitempty"` // style bar slots usable right now
 }

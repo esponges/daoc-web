@@ -348,8 +348,10 @@ func (w *World) moveToZone(z *Zone, p *Player, dst int, x, y, zz float64) {
 	if err := w.Store.Save(c); err != nil {
 		w.Log("saving %s: %v", c.Name, err)
 	}
-	p.send(protocol.ZoneChange{T: protocol.TZone, Zone: dst, X: x, Y: y})
+	// Zoning is set before the client is told: it may disconnect at once, and a
+	// leave that does not know it is a zone change drops the group and the ride.
 	p.zoning.Store(true)
+	p.send(protocol.ZoneChange{T: protocol.TZone, Zone: dst, X: x, Y: y})
 	p.closed.Store(true)
 	w.forget(p)
 }
