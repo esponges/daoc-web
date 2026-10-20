@@ -26,6 +26,8 @@ func minimalDump(t *testing.T) string {
 	dumpTable(t, dir, "style", "`ID`, `ClassId`, `Name`", "1, 22, 'Slam'")
 	dumpTable(t, dir, "startuplocation", "`RealmID`, `RaceID`, `ClassID`, `Region`, `XPos`, `YPos`, `ZPos`", "2, 6, 22, 1, 50, 50, 0")
 	dumpTable(t, dir, "starterequipment", "`StarterEquipmentID`, `Class`, `TemplateID`", "1, '22;', 'sword'")
+	dumpTable(t, dir, "path", "`PathID`, `PathType`", "'HS_X_Y', 1")
+	dumpTable(t, dir, "pathpoints", "`PathID`, `Step`, `X`, `Y`, `Z`, `MaxSpeed`, `WaitTime`", "'HS_X_Y', 1, 100, 100, 0, 0, 0")
 	for _, tb := range []string{"loottemplate", "mobxloottemplate", "specialization", "classxspecialization", "race", "zonepoint", "bindpoint"} {
 		dumpTable(t, dir, tb, "`Unused`", "0")
 	}

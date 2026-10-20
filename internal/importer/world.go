@@ -71,6 +71,9 @@ CREATE TABLE race(id INTEGER PRIMARY KEY, name TEXT,
   slash INTEGER, spirit INTEGER, thrust INTEGER);
 CREATE TABLE spec_ability(spec TEXT, spec_level INTEGER, ability TEXT, ability_level INTEGER, class_id INTEGER);
 CREATE TABLE start_equip(class INTEGER, item TEXT, ord INTEGER);
+CREATE TABLE route(path TEXT PRIMARY KEY, region INTEGER, start_zone INTEGER, points INTEGER);
+CREATE TABLE route_point(path TEXT, step INTEGER, zone INTEGER, x REAL, y REAL, z REAL, speed INTEGER, wait INTEGER);
+CREATE INDEX route_point_path ON route_point(path, step);
 CREATE TABLE spell(
   id INTEGER PRIMARY KEY, name TEXT, type TEXT, target TEXT, range INTEGER, cast_time REAL, recast INTEGER,
   damage REAL, damage_type INTEGER, value REAL, duration INTEGER, frequency INTEGER, life_drain INTEGER,
@@ -105,6 +108,8 @@ type Report struct {
 	Replaced          int               // spawns whose template replaces the row's values
 	LevelReplaced     int               // of those, the ones whose own level is not in the template's list
 	SpellLinksMissing int               // template and style links to spells the dump lacks
+	Routes            int               // horse routes kept: a stable master sells a ticket named for a path whose points all lie in a zone
+	RoutesDropped     int               // sold paths with a point outside every zone, or no points
 }
 
 // tmplValues are what a template marked ReplaceMobValues puts in place of a
@@ -610,6 +615,102 @@ func build(o Options) (*Report, error) {
 	}
 	o.Log("  %-22s %7d template spell links, %d style spells, %d links to spells the dump lacks", "spell links", links, len(styleSpells), rep.SpellLinksMissing)
 
+	// --- horse routes ---
+	// A ticket is an item whose id is also the id of a path (checked over the
+	// dump: 216 of its 223 tickets); a stable master sells the tickets of its
+	// stock list. A path's points are in region coordinates and have no region
+	// of their own, so a route takes the region of the stable that sells it.
+	pathName := map[string]string{}
+	if err := read("path", func(r *Row) (bool, error) {
+		n := r.Str("PathID")
+		if n == "" {
+			return false, nil
+		}
+		pathName[strings.ToLower(n)] = n
+		return true, nil
+	}); err != nil {
+		return nil, err
+	}
+	type pathPoint struct {
+		step, speed, wait int
+		x, y, z           float64
+	}
+	points := map[string][]pathPoint{}
+	if err := read("pathpoints", func(r *Row) (bool, error) {
+		n := strings.ToLower(r.Str("PathID"))
+		if _, ok := pathName[n]; !ok {
+			return false, nil
+		}
+		points[n] = append(points[n], pathPoint{r.Int("Step"), r.Int("MaxSpeed"), r.Int("WaitTime"), r.Float("X"), r.Float("Y"), r.Float("Z")})
+		return true, nil
+	}); err != nil {
+		return nil, err
+	}
+	regionOf := map[int]int{}
+	for _, z := range zones {
+		regionOf[z.id] = z.region
+	}
+	type sold struct {
+		zone int
+		item string
+	}
+	var tickets []sold
+	seen := map[string]bool{}
+	rows, err := tx.Query(`SELECT DISTINCT s.zone, m.item FROM spawn s JOIN merchant_stock m ON m.list = s.items_list
+		WHERE s.classtype = 'DOL.GS.GameStableMaster' ORDER BY s.zone, m.item`)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var t sold
+		if err := rows.Scan(&t.zone, &t.item); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		tickets = append(tickets, t)
+	}
+	rows.Close()
+	for _, t := range tickets {
+		key := strings.ToLower(t.item)
+		if _, ok := pathName[key]; !ok {
+			continue // not a route: something else a stable master sells
+		}
+		pts := points[key]
+		sort.Slice(pts, func(i, j int) bool { return pts[i].step < pts[j].step })
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		type placed struct {
+			zone    int
+			x, y, z float64
+			p       pathPoint
+		}
+		var out []placed
+		for _, p := range pts {
+			z, lx, ly, ok := zoneAt(regionOf[t.zone], p.x, p.y)
+			if !ok {
+				out = nil
+				break
+			}
+			out = append(out, placed{z.id, lx, ly, p.z, p})
+		}
+		if len(out) == 0 {
+			rep.RoutesDropped++
+			continue
+		}
+		if err := ins(`INSERT INTO route VALUES(?,?,?,?)`, t.item, regionOf[t.zone], t.zone, len(out)); err != nil {
+			return nil, err
+		}
+		for _, p := range out {
+			if err := ins(`INSERT INTO route_point VALUES(?,?,?,?,?,?,?,?)`, t.item, p.p.step, p.zone, p.x, p.y, p.z, p.p.speed, p.p.wait); err != nil {
+				return nil, err
+			}
+		}
+		rep.Routes++
+	}
+	o.Log("  %-22s %7d horse routes kept, %d dropped (a point outside every zone)", "routes", rep.Routes, rep.RoutesDropped)
+
 	// --- travel: exits, starts, bind points ---
 	if err := read("zonepoint", func(r *Row) (bool, error) {
 		sz, slx, sly, sok := zoneAt(r.Int("SourceRegion"), r.Float("SourceX"), r.Float("SourceY"))
@@ -645,7 +746,7 @@ func build(o Options) (*Report, error) {
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-	for _, t := range []string{"zones", "mob", "npctemplate", "npcequipment", "style", "itemtemplate", "startuplocation", "merchantitem", "starterequipment"} {
+	for _, t := range []string{"zones", "mob", "npctemplate", "npcequipment", "style", "itemtemplate", "startuplocation", "merchantitem", "starterequipment", "path", "pathpoints"} {
 		if c := rep.Tables[t]; c[0] == 0 || c[1] == 0 {
 			rep.Missing = append(rep.Missing, t)
 		}

@@ -78,8 +78,8 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 ## 11. Tier 2: horse routes
 
-- [ ] 11.1 Spike: find in the data how a ticket names its route (ticket items, `HS_` paths, stable masters' stock lists). Record the link, or its absence and the fallback, in design.md §11 and the README. Verify by listing the Mularn stable master's tickets and the path each resolves to.
-- [ ] 11.2 Import paths and points. Verify with the "A horse route" importer test.
+- [x] 11.1 Spike: find in the data how a ticket names its route (ticket items, `HS_` paths, stable masters' stock lists). Record the link, or its absence and the fallback, in design.md §11 and the README. Verify by listing the Mularn stable master's tickets and the path each resolves to.
+- [x] 11.2 Import paths and points. Verify with the "A horse route" importer test.
 - [ ] 11.3 Add the stable master kind, ticket hand-in, the server-driven ride across zone borders, riders ignored by creatures, and dismount at the end. Verify with world tests for every `horse-routes` scenario.
 - [ ] 11.4 Show riders on a horse (convert the horse model if the install has one, otherwise draw the rider running). Verify in the browser with two clients that one rides from Mularn and the other sees them pass.
 

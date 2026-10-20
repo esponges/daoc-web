@@ -114,7 +114,7 @@ func TestImportLinksNPCEquipment(t *testing.T) {
 		"'bare', 1, 300, 100, 0, 10, 0, ''",
 		"'dangling', 1, 400, 100, 0, 10, 0, 'nope'")
 	for _, tb := range []string{"loottemplate", "mobxloottemplate", "itemtemplate", "style", "specialization",
-		"classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint", "merchantitem"} {
+		"classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint", "merchantitem", "path", "pathpoints"} {
 		dumpTable(t, dir, tb, "`Unused`", "0")
 	}
 	out := filepath.Join(t.TempDir(), "world.db")
@@ -161,7 +161,7 @@ func TestImportKeepsMerchantsAndStock(t *testing.T) {
 	dumpTable(t, dir, "merchantitem", "`ItemListID`, `ItemTemplateID`, `PageNumber`, `SlotPosition`",
 		"'L1', 'sword', 0, 1", "'L1', 'shield', 1, 0", "'', 'orphan', 0, 0")
 	for _, tb := range []string{"npcequipment", "npctemplate", "loottemplate", "mobxloottemplate", "itemtemplate", "style",
-		"specialization", "classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint"} {
+		"specialization", "classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint", "path", "pathpoints"} {
 		dumpTable(t, dir, tb, "`Unused`", "0")
 	}
 	out := filepath.Join(t.TempDir(), "world.db")
@@ -200,7 +200,7 @@ func TestMissingMerchantStockIsReported(t *testing.T) {
 		"1, 1, 0, 0, 1, 1, 'Test', 0, 1")
 	dumpTable(t, dir, "merchantitem", "`ItemListID`, `ItemTemplateID`, `PageNumber`, `SlotPosition`", "'', '', 0, 0")
 	for _, tb := range []string{"mob", "npcequipment", "npctemplate", "loottemplate", "mobxloottemplate", "itemtemplate", "style",
-		"specialization", "classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint"} {
+		"specialization", "classxspecialization", "race", "zonepoint", "startuplocation", "bindpoint", "path", "pathpoints"} {
 		dumpTable(t, dir, tb, "`Unused`", "0")
 	}
 	rep, err := Run(Options{Dump: dir, Out: filepath.Join(t.TempDir(), "w.db")})
@@ -232,7 +232,7 @@ func TestImportBonusesRacesAndAbilities(t *testing.T) {
 	dumpTable(t, dir, "specxability", "`Spec`, `SpecLevel`, `AbilityKey`, `AbilityLevel`, `ClassId`",
 		"'WarriorCareer', 10, 'MidArmor', 4, 0", "'Shields', 5, 'Guard', 1, 0", "'', 1, 'Nothing', 1, 0")
 	for _, tb := range []string{"npcequipment", "npctemplate", "loottemplate", "mobxloottemplate", "style", "specialization",
-		"classxspecialization", "zonepoint", "startuplocation", "bindpoint", "merchantitem"} {
+		"classxspecialization", "zonepoint", "startuplocation", "bindpoint", "merchantitem", "path", "pathpoints"} {
 		dumpTable(t, dir, tb, "`Unused`", "0")
 	}
 	out := filepath.Join(t.TempDir(), "world.db")
