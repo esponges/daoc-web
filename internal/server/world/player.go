@@ -54,6 +54,7 @@ type invItem struct {
 	ID    string
 	Slot  int
 	Count int
+	Cond  int // condition in hundredths of a percent, store.FullCondition whole
 }
 
 // Player is a connected character in a zone. All fields belong to the zone's

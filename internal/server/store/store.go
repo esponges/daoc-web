@@ -69,13 +69,19 @@ const XPSchemeRules = 1
 
 // Item is one stack in a character's inventory or worn on it.
 type Item struct {
-	ID      int64
-	CharID  int64
-	ItemID  string // the world store's item.id
-	Slot    int    // 0-39 backpack, 40+ equipment
-	Count   int
+	ID     int64
+	CharID int64
+	ItemID string // the world store's item.id
+	Slot   int    // 0-39 backpack, 40+ equipment
+	Count  int
+	// Cond is the item's condition in hundredths of a percent, 10000 whole.
+	// Rows from before condition was kept load at 10000.
+	Cond    int
 	Created time.Time
 }
+
+// FullCondition is a whole item's condition.
+const FullCondition = 10000
 
 var (
 	ErrNameTaken = errors.New("that name is taken")
@@ -100,7 +106,7 @@ CREATE TABLE IF NOT EXISTS char_spec(
   PRIMARY KEY(char_id, spec));
 CREATE TABLE IF NOT EXISTS item(
   id INTEGER PRIMARY KEY AUTOINCREMENT, char_id INTEGER NOT NULL REFERENCES character(id) ON DELETE CASCADE,
-  item_id TEXT NOT NULL, slot INTEGER NOT NULL, count INTEGER NOT NULL DEFAULT 1, created INTEGER NOT NULL,
+  item_id TEXT NOT NULL, slot INTEGER NOT NULL, count INTEGER NOT NULL DEFAULT 1, cond INTEGER NOT NULL DEFAULT 10000, created INTEGER NOT NULL,
   UNIQUE(char_id, slot));
 `
 
@@ -146,6 +152,19 @@ func Open(path string) (*Store, error) {
 				db.Close()
 				return nil, err
 			}
+		}
+	}
+	// An item table from before condition was kept gets its column here, every
+	// existing item at full condition.
+	var hasCond int
+	if err := db.QueryRow(`SELECT count(*) FROM pragma_table_info('item') WHERE name='cond'`).Scan(&hasCond); err != nil {
+		db.Close()
+		return nil, err
+	}
+	if hasCond == 0 {
+		if _, err := db.Exec(`ALTER TABLE item ADD COLUMN cond INTEGER NOT NULL DEFAULT 10000`); err != nil {
+			db.Close()
+			return nil, err
 		}
 	}
 	return &Store{db: db}, nil
@@ -326,7 +345,7 @@ func (s *Store) DeleteCharacter(accountID, id int64) error {
 
 // Items lists what a character carries and wears.
 func (s *Store) Items(charID int64) ([]Item, error) {
-	rows, err := s.db.Query(`SELECT id,char_id,item_id,slot,count,created FROM item WHERE char_id=? ORDER BY slot`, charID)
+	rows, err := s.db.Query(`SELECT id,char_id,item_id,slot,count,cond,created FROM item WHERE char_id=? ORDER BY slot`, charID)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +354,7 @@ func (s *Store) Items(charID int64) ([]Item, error) {
 	for rows.Next() {
 		var it Item
 		var created int64
-		if err := rows.Scan(&it.ID, &it.CharID, &it.ItemID, &it.Slot, &it.Count, &created); err != nil {
+		if err := rows.Scan(&it.ID, &it.CharID, &it.ItemID, &it.Slot, &it.Count, &it.Cond, &created); err != nil {
 			return nil, err
 		}
 		it.Created = time.Unix(created, 0)
@@ -386,6 +405,20 @@ func (t *Tx) FreeSlot(charID int64, packSize int) (int, error) {
 func (t *Tx) AddItem(charID int64, itemID string, slot, count int) error {
 	_, err := t.tx.Exec(`INSERT INTO item(char_id,item_id,slot,count,created) VALUES(?,?,?,?,?)`,
 		charID, itemID, slot, count, time.Now().Unix())
+	return err
+}
+
+// AddItemCond puts an item in a slot (which must be empty) at a condition, in
+// hundredths of a percent.
+func (t *Tx) AddItemCond(charID int64, itemID string, slot, count, cond int) error {
+	_, err := t.tx.Exec(`INSERT INTO item(char_id,item_id,slot,count,cond,created) VALUES(?,?,?,?,?,?)`,
+		charID, itemID, slot, count, cond, time.Now().Unix())
+	return err
+}
+
+// SetCondition saves the condition of the item in a slot.
+func (t *Tx) SetCondition(charID int64, slot, cond int) error {
+	_, err := t.tx.Exec(`UPDATE item SET cond=? WHERE char_id=? AND slot=?`, cond, charID, slot)
 	return err
 }
 

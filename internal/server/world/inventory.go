@@ -59,10 +59,10 @@ func (w *World) loadInventory(p *Player) {
 	}
 	for _, it := range items {
 		if inVault(it.Slot) {
-			p.vault[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count}
+			p.vault[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count, Cond: it.Cond}
 			continue
 		}
-		p.inv[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count}
+		p.inv[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count, Cond: it.Cond}
 	}
 	w.recalc(p)
 }
@@ -176,7 +176,7 @@ func (w *World) addItem(p *Player, id string, count int) (int, error) {
 		if slot < 0 {
 			return errors.New("your pack is full")
 		}
-		if err := tx.AddItem(p.Char.ID, id, slot, count); err != nil {
+		if err := tx.AddItemCond(p.Char.ID, id, slot, count, w.Cat.newCondition(id)); err != nil {
 			return err
 		}
 		return tx.SaveCharacter(p.Char)
@@ -184,7 +184,7 @@ func (w *World) addItem(p *Player, id string, count int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	p.inv[slot] = &invItem{ID: id, Slot: slot, Count: count}
+	p.inv[slot] = &invItem{ID: id, Slot: slot, Count: count, Cond: w.Cat.newCondition(id)}
 	p.sendInv(w.Cat, p.Char.Money)
 	return slot, nil
 }
@@ -329,7 +329,7 @@ func (w *World) GiveStarterKit(c *store.Character) error {
 				slot, pack = pack, pack+1
 			}
 			taken[slot] = true
-			if err := tx.AddItem(c.ID, id, slot, 1); err != nil {
+			if err := tx.AddItemCond(c.ID, id, slot, 1, w.Cat.newCondition(id)); err != nil {
 				return err
 			}
 		}

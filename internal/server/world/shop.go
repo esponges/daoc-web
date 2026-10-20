@@ -186,7 +186,7 @@ func (z *Zone) Buy(p *Player, itemID string) {
 		if slot < 0 {
 			return errPackFull
 		}
-		if err := tx.AddItem(p.Char.ID, itemID, slot, 1); err != nil {
+		if err := tx.AddItemCond(p.Char.ID, itemID, slot, 1, z.W.Cat.newCondition(itemID)); err != nil {
 			return err
 		}
 		p.Char.Money -= it.Price
@@ -201,7 +201,7 @@ func (z *Zone) Buy(p *Player, itemID string) {
 		}
 		return
 	}
-	p.inv[slot] = &invItem{ID: itemID, Slot: slot, Count: 1}
+	p.inv[slot] = &invItem{ID: itemID, Slot: slot, Count: 1, Cond: z.W.Cat.newCondition(itemID)}
 	p.sendInv(cat, p.Char.Money)
 }
 

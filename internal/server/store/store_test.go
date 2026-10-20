@@ -210,3 +210,46 @@ INSERT INTO character(account_id,name,race,class,level,xp,zone,x,y,z,created) VA
 		t.Error("a cleared grave came back")
 	}
 }
+
+// An item table from before condition was kept gets the column, and every
+// item in it loads at full condition; a saved condition round-trips.
+func TestOldItemsLoadAtFullCondition(t *testing.T) {
+	path := t.TempDir() + "/old.db"
+	db, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = db.Exec(`CREATE TABLE account(id INTEGER PRIMARY KEY AUTOINCREMENT, discord_id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, admin INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
+CREATE TABLE character(id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER NOT NULL, name TEXT NOT NULL UNIQUE COLLATE NOCASE, race INTEGER NOT NULL, gender INTEGER NOT NULL DEFAULT 0, class INTEGER NOT NULL,
+ level INTEGER NOT NULL DEFAULT 1, xp INTEGER NOT NULL DEFAULT 0, zone INTEGER NOT NULL, x REAL NOT NULL, y REAL NOT NULL, z REAL NOT NULL, heading INTEGER NOT NULL DEFAULT 0,
+ hp INTEGER NOT NULL DEFAULT 0, endurance INTEGER NOT NULL DEFAULT 0, money INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
+CREATE TABLE item(id INTEGER PRIMARY KEY AUTOINCREMENT, char_id INTEGER NOT NULL, item_id TEXT NOT NULL, slot INTEGER NOT NULL, count INTEGER NOT NULL DEFAULT 1, created INTEGER NOT NULL, UNIQUE(char_id, slot));
+INSERT INTO account VALUES(1,'old','old',0,1);
+INSERT INTO character(account_id,name,race,class,level,xp,zone,x,y,z,created) VALUES(1,'Elder',6,22,10,4000,100,1,2,3,1);
+INSERT INTO item(char_id,item_id,slot,count,created) VALUES(1,'old_sword',40,1,1);`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	items, err := s.Items(1)
+	if err != nil || len(items) != 1 || items[0].Cond != FullCondition {
+		t.Fatalf("old items %+v (%v), want one at %d", items, err, FullCondition)
+	}
+	if err := s.Tx(func(tx *Tx) error {
+		if err := tx.SetCondition(1, 40, 8731); err != nil {
+			return err
+		}
+		return tx.AddItemCond(1, "worn_axe", 0, 1, 5000)
+	}); err != nil {
+		t.Fatal(err)
+	}
+	items, _ = s.Items(1)
+	if len(items) != 2 || items[0].Cond != 5000 || items[1].Cond != 8731 {
+		t.Errorf("saved conditions %+v, want 5000 and 8731", items)
+	}
+}

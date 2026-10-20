@@ -3,9 +3,11 @@ package world
 import (
 	"database/sql"
 	"log"
+	"math"
 	"strings"
 
 	"daocweb/internal/server/rules"
+	"daocweb/internal/server/store"
 )
 
 // loadRules reads what the rule book needs from the store: item bonuses, race
@@ -141,3 +143,13 @@ func (c *Catalog) SpecName(key string) string {
 
 // HasRules reports whether the store carries what the rule book reads.
 func (c *Catalog) HasRules() bool { return c.hasRules }
+
+// newCondition is the condition a new item starts at, in hundredths of a
+// percent: whole, or the item template's own when it gives one.
+func (c *Catalog) newCondition(id string) int {
+	it := c.Items[id]
+	if it == nil || it.Condition <= 0 || it.Condition >= 1 {
+		return store.FullCondition
+	}
+	return int(math.Round(it.Condition * store.FullCondition))
+}
