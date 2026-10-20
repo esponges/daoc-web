@@ -1145,8 +1145,8 @@ async function main() {
           break;
         case 'hit':
           if (toMe) eventAnim(anim, ev, player.gait > 0);
-          if (mine) log('You hit ' + the(ev.to) + (ev.x ? ' with ' + ev.x : '') + ' for ' + ev.n + ' damage!' + (ev.c ? ' Critical!' : ''), ev.x ? 'style' : 'hit');
-          else if (toMe) log(cap(the(ev.from)) + ' hits you for ' + ev.n + ' damage!', 'hit-in');
+          if (mine) log('You hit ' + the(ev.to) + (ev.x ? ' with ' + ev.x : '') + ' for ' + (ev.n || 0) + ' damage!' + (ev.c ? ' Critical!' : ''), ev.x ? 'style' : 'hit');
+          else if (toMe) log(cap(the(ev.from)) + ' hits you for ' + (ev.n || 0) + ' damage!', 'hit-in');
           break;
         case 'miss':
           if (mine) log('You miss ' + the(ev.to) + '!', 'miss');
