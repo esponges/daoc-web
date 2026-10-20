@@ -265,7 +265,7 @@ func (z *Zone) SetAttack(p *Player, on bool) {
 		p.errMsg("target", "You cannot attack "+n.title()+".")
 		return
 	}
-	p.attacking = true
+	p.attacking, p.ab.engage = true, 0
 	if p.swingAt < z.now {
 		p.swingAt = z.now + 0.4
 	}
@@ -364,6 +364,10 @@ func (z *Zone) provoke(n *NPC, by combatant, damage float64) {
 	if n.dead() || n.Friendly && !n.Guard || n.state == npcReturn {
 		return
 	}
+	n.attackedAt = z.now
+	if p, ok := by.(*Player); ok && damage > 0 {
+		damage = z.protectShift(n, p, damage)
+	}
 	n.addHate(by, damage)
 	n.engage(by, z)
 }
@@ -423,20 +427,22 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 // npcHitsPlayer resolves a creature's blow against a player.
 func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	z.event(protocol.Event{K: "swing", From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
-	if w := z.interceptFor(p); w != nil {
+	member := p
+	w := z.interceptFor(p)
+	if w != nil {
 		p = w
-	} else if z.guardBlocks(n, p) {
-		p.combatUntil = z.now + CombatLinger
-		return
 	}
 	p.combatUntil = z.now + CombatLinger
-	sw := rules.Swing{Attacker: &n.cb, Defender: p.combatant(z.W.Cat), Attackers: z.attackersOf(p),
-		InFront: angleOff(p.Body.Yaw, angleTo(p.Body.X, p.Body.Y, n.Body.X, n.Body.Y)) <= frontArc}
-	p.ab.attackedAt = z.now
-	if p.ab.engage == n.ID && z.engageBlocks(n, p, sw.InFront) {
+	cb := p.combatant(z.W.Cat)
+	inFront := angleOff(p.Body.Yaw, angleTo(p.Body.X, p.Body.Y, n.Body.X, n.Body.Y)) <= frontArc
+	if w == nil {
+		z.engageBoost(n, p, cb)
+	}
+	sw := rules.Swing{Attacker: &n.cb, Defender: cb, Attackers: z.attackersOf(p), InFront: inFront, NoDefence: w != nil}
+	o := rules.Resolve(sw, z.rng)
+	if w == nil && (o.Result == rules.Hit || o.Result == rules.Missed) && z.guardBlocks(n, member) {
 		return
 	}
-	o := rules.Resolve(sw, z.rng)
 	switch o.Result {
 	case rules.Missed:
 		z.event(protocol.Event{K: "miss", From: n.ID, To: p.ID}, p.Body.X, p.Body.Y)
@@ -450,7 +456,6 @@ func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	z.event(protocol.Event{K: "hit", From: n.ID, To: p.ID, Amount: o.Damage}, p.Body.X, p.Body.Y)
 	p.hp -= float64(o.Damage)
 	z.damaged(p)
-	z.protectHate(n, p, o.Damage)
 	if p.hp <= 0 {
 		z.killPlayer(p, n)
 	}

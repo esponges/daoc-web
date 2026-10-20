@@ -101,6 +101,9 @@ type Combatant struct {
 
 	// The defence bonus of this combatant's last styled attack, while it holds.
 	StyleDefence int
+
+	// EngageBlock is added to a player's block chance while they engage the attacker.
+	EngageBlock float64
 }
 
 // Style is a style as a swing uses it.
@@ -117,6 +120,7 @@ type Swing struct {
 	Style              *Style
 	InFront            bool // the attacker is within 60 degrees of the defender's facing
 	Attackers          int  // how many are attacking the defender, at least 1
+	NoDefence          bool // the blow cannot be evaded, parried, blocked or missed (an intercepted one)
 }
 
 // Result is how a swing ended.
@@ -159,6 +163,7 @@ func Resolve(s Swing, r Rolls) Outcome {
 	o.Chance.Parry = ParryChance(d, s.InFront, s.Attackers, a.Weapon.TwoHanded)
 	o.Chance.Block = BlockChance(d, s.InFront)
 	switch {
+	case s.NoDefence:
 	case dice[0] < o.Chance.Evade:
 		o.Result = Evaded
 		return o
@@ -176,7 +181,7 @@ func Resolve(s Swing, r Rolls) Outcome {
 		}
 	}
 	o.Chance.Miss = MissChance(s, o.Location)
-	if dice[4] < o.Chance.Miss {
+	if !s.NoDefence && dice[4] < o.Chance.Miss {
 		o.Result = Missed
 		return o
 	}
@@ -248,7 +253,7 @@ func BlockChance(d *Combatant, inFront bool) float64 {
 		return 0
 	}
 	c := perMille(skillDefence(d.Stats[DEX], d.ShieldSpec)) * d.Shield.Quality * d.Shield.Condition
-	return math.Max(0, c)
+	return math.Max(0, c+d.EngageBlock)
 }
 
 // --- miss ---

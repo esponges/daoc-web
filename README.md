@@ -1532,7 +1532,10 @@ Sources the rules come from:
 - A 2001 forum thread on the Warrior shield abilities
   ([quartertothree.com](https://www.quartertothree.com/boards/messages/17/1030.shtml)):
   what Guard, Protect, Intercept and Engage do in outline. It gives no ranges,
-  durations or shares, so those stay provisional.
+  durations or shares. The abilities' numbers and order of resolution follow
+  OpenDAoC's (Guard 256 units and +5% a level, Intercept 128 units at 50% with
+  a 60 s reuse, Protect 10% a level moved to the protector within 1,000 units,
+  Engage +65% block for 5 endurance a blow), read to understand them.
 - [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
   understand rules that no public page gives a number for. Nothing is copied
   from it.

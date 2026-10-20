@@ -25,33 +25,34 @@ type lootItem struct {
 
 // NPC is a creature in a zone, run by the server.
 type NPC struct {
-	ID       int64
-	Spawn    Spawn
-	Name     string
-	Model    int
-	Gear     [][4]int // worn pieces, shared with every NPC of the same equipment template
-	Level    int
-	Size     int
-	Scale    float64
-	Body     Body
-	HX, HY   float64 // home
-	Roam     float64
-	Walk     float64 // walking pace, units a second
-	RunSpd   float64
-	HP       int
-	MaxHP    int
-	Swing    float64
-	cb       rules.Combatant // its side of a swing, under the creature rules
-	Reach    float64
-	Parry    float64
-	Evade    float64
-	Block    float64
-	Aggro    float64 // 0 means it only fights back
-	Friendly bool    // guards, villagers, merchants: players cannot attack them, nor they players
-	Guard    bool    // a town guard: fights the creatures that threaten its realm
-	Kind     string  // what interacting with it does (KindMerchant), "" for nothing
-	Teaches  string  // the class a trainer teaches
-	Tether   float64
+	ID         int64
+	attackedAt float64 // when an enemy last attacked it, for Engage
+	Spawn      Spawn
+	Name       string
+	Model      int
+	Gear       [][4]int // worn pieces, shared with every NPC of the same equipment template
+	Level      int
+	Size       int
+	Scale      float64
+	Body       Body
+	HX, HY     float64 // home
+	Roam       float64
+	Walk       float64 // walking pace, units a second
+	RunSpd     float64
+	HP         int
+	MaxHP      int
+	Swing      float64
+	cb         rules.Combatant // its side of a swing, under the creature rules
+	Reach      float64
+	Parry      float64
+	Evade      float64
+	Block      float64
+	Aggro      float64 // 0 means it only fights back
+	Friendly   bool    // guards, villagers, merchants: players cannot attack them, nor they players
+	Guard      bool    // a town guard: fights the creatures that threaten its realm
+	Kind       string  // what interacting with it does (KindMerchant), "" for nothing
+	Teaches    string  // the class a trainer teaches
+	Tether     float64
 
 	twoHanded  bool
 	damageType int

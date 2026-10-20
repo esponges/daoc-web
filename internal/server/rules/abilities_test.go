@@ -24,33 +24,42 @@ func TestAbilities(t *testing.T) {
 		}
 	})
 	vector(t, abl, "Guarded blow", func(t *testing.T) {
-		if !GuardBlocks(150, 0.30, 0.20) {
-			t.Error("the guard at 150 units with 30% block and a 0.20 roll should block")
+		// A 30% block and Guard II make a 40% guard chance: a 0.35 roll blocks.
+		if c := GuardChance(0.30, 2); c < 0.399 || c > 0.401 || !GuardBlocks(150, c, 0.35) {
+			t.Errorf("guard chance %v at 150 units with a 0.35 roll, want a block at 40%%", c)
 		}
 	})
 	vector(t, abl, "Too far", func(t *testing.T) {
-		if GuardBlocks(400, 0.30, 0.20) {
+		if GuardBlocks(400, 0.40, 0.20) {
 			t.Error("a guard 400 units away should not act")
 		}
 	})
 	vector(t, abl, "Intercepted", func(t *testing.T) {
-		if !InterceptTakes(100) || InterceptTakes(200) {
-			t.Error("intercept should take a blow at 100 units and not at 200")
+		if !InterceptTakes(100, 0.49) || InterceptTakes(200, 0.1) {
+			t.Error("intercept should take a blow at 100 units on a 0.49 roll and not at 200")
+		}
+	})
+	vector(t, abl, "Intercept fails its roll", func(t *testing.T) {
+		if InterceptTakes(100, 0.5) {
+			t.Error("intercept took a blow on a 0.5 roll")
 		}
 	})
 	vector(t, abl, "Protect II", func(t *testing.T) {
-		if got := ProtectHate(2, 100); got != 20 {
-			t.Errorf("hate %v, want 20", got)
+		if got := ProtectShift(2, 100); got != 20 {
+			t.Errorf("shift %v, want 20 moved to the protector", got)
 		}
 	})
 	vector(t, abl, "Engaged", func(t *testing.T) {
-		if !EngageBlocks(true, 50, 0.9) || EngageBlocks(true, 50, 0.96) || EngageBlocks(false, 50, 0.1) || EngageBlocks(true, 4, 0.1) {
-			t.Error("engage should block 95% of frontal blows while there is endurance")
+		d := &Combatant{Player: true, Stats: Stats{DEX: 60}, ShieldSpec: 10, Shield: &Shield{Size: 2, Quality: 1, Condition: 1}}
+		base := BlockChance(d, true)
+		d.EngageBlock = EngageBonus
+		if got := BlockChance(d, true) - base; got < 0.649 || got > 0.651 {
+			t.Errorf("engage raised block by %v, want 0.65", got)
 		}
 	})
 	vector(t, abl, "Already in combat", func(t *testing.T) {
 		if EngageAllowed(2) || !EngageAllowed(5) {
-			t.Error("engage should be refused 2s after a blow and allowed after 5s")
+			t.Error("engage should be refused 2s after an enemy attacked the creature and allowed after 5s")
 		}
 	})
 }

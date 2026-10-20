@@ -16,7 +16,6 @@ type abilityState struct {
 	guard, protect, intercept int64
 	engage                    int64
 	interceptReadyAt          float64
-	attackedAt                float64
 }
 
 var abilityNames = map[string]string{"guard": rules.AbGuard, "protect": rules.AbProtect,
@@ -130,11 +129,12 @@ func (z *Zone) useEngage(p *Player, a *abilityState) {
 		sys(p, "Engage needs a shield.")
 		return
 	}
-	if a.attackedAt != 0 && !rules.EngageAllowed(z.now-a.attackedAt) {
-		sys(p, "You cannot engage: you were attacked a moment ago.")
+	if n.attackedAt != 0 && !rules.EngageAllowed(z.now-n.attackedAt) {
+		sys(p, n.title()+" has been attacked recently and you cannot engage it.")
 		return
 	}
 	a.engage = n.ID
+	p.attacking, p.pending = false, -1 // an engaged Warrior blocks and does not swing
 	sys(p, "You engage "+n.title()+".")
 }
 
@@ -152,28 +152,37 @@ func (z *Zone) abilityGuarders(member *Player, pick func(*abilityState) int64) [
 
 func distance(a, b *Player) float64 { return math.Hypot(a.Body.X-b.Body.X, a.Body.Y-b.Body.Y) }
 
-// interceptFor returns the Warrior who takes this member's next blow, ending
-// their Intercept; nil when there is none in reach.
+// interceptFor returns the Warrior who takes this member's blow: one armed to
+// intercept for them, in range and able to act, who passes the chance roll. The
+// Intercept ends when it takes a blow, and stays armed when the roll fails.
 func (z *Zone) interceptFor(member *Player) *Player {
 	for _, w := range z.abilityGuarders(member, func(a *abilityState) int64 { return a.intercept }) {
-		if rules.InterceptTakes(distance(w, member)) {
-			w.ab.intercept = 0
-			sys(w, "You intercept the blow for "+member.Char.Name+".")
-			sys(member, w.Char.Name+" intercepts the blow for you.")
-			return w
+		if held(w) || !rules.InterceptTakes(distance(w, member), z.rng.Float64()) {
+			continue
 		}
+		w.ab.intercept = 0
+		sys(w, "You intercept the blow for "+member.Char.Name+".")
+		sys(member, w.Char.Name+" intercepts the blow for you.")
+		return w
 	}
 	return nil
 }
 
-// guardBlocks tells whether a guarding Warrior blocks this blow for the member.
+// guardBlocks tells whether a guarding Warrior blocks this blow for the member:
+// one with a shield, within reach of them and with the creature in front of
+// them, who passes their block chance plus the Guard level's bonus.
 func (z *Zone) guardBlocks(n *NPC, member *Player) bool {
 	for _, w := range z.abilityGuarders(member, func(a *abilityState) int64 { return a.guard }) {
-		if w.shield == nil {
+		cb := w.combatant(z.W.Cat)
+		if cb.Shield == nil || held(w) {
 			continue
 		}
-		cb := w.combatant(z.W.Cat)
-		if rules.GuardBlocks(distance(w, member), rules.BlockChance(cb, true), z.rng.Float64()) {
+		inFront := angleOff(w.Body.Yaw, angleTo(w.Body.X, w.Body.Y, n.Body.X, n.Body.Y)) <= frontArc
+		if !inFront {
+			continue
+		}
+		chance := rules.GuardChance(rules.BlockChance(cb, true), w.sh.abilities[rules.AbGuard])
+		if rules.GuardBlocks(distance(w, member), chance, z.rng.Float64()) {
 			z.event(protocol.Event{K: "block", From: w.ID, To: n.ID}, w.Body.X, w.Body.Y)
 			sys(w, "You block the blow meant for "+member.Char.Name+".")
 			sys(member, w.Char.Name+" blocks the blow for you.")
@@ -183,34 +192,37 @@ func (z *Zone) guardBlocks(n *NPC, member *Player) bool {
 	return false
 }
 
-// engageBlocks tells whether the Warrior's Engage blocks this blow, taking its
-// endurance, and ends the Engage when they run out.
-func (z *Zone) engageBlocks(n *NPC, p *Player, inFront bool) bool {
-	if p.ab.engage != n.ID {
-		return false
+// engageBoost raises the Warrior's block chance against the creature they
+// engage, for this blow, and takes the endurance for it. The Engage ends when
+// they cannot pay. It does nothing once an enemy has attacked the creature.
+func (z *Zone) engageBoost(n *NPC, p *Player, cb *rules.Combatant) {
+	if p.ab.engage != n.ID || cb.Shield == nil {
+		return
+	}
+	if n.attackedAt != 0 && !rules.EngageAllowed(z.now-n.attackedAt) {
+		return
 	}
 	if p.end < rules.EngageCost {
 		p.ab.engage = 0
 		sys(p, "You are too tired to keep engaging.")
-		return false
-	}
-	if !rules.EngageBlocks(inFront, p.end, z.rng.Float64()) {
-		return false
+		return
 	}
 	p.end -= rules.EngageCost
-	z.event(protocol.Event{K: "block", From: p.ID, To: n.ID}, p.Body.X, p.Body.Y)
-	p.lastDef = defence{kind: "block", at: z.now}
-	return true
+	cb.EngageBlock = rules.EngageBonus
 }
 
-// protectHate draws a creature's anger to the Warriors protecting a member it
-// has just damaged.
-func (z *Zone) protectHate(n *NPC, member *Player, damage int) {
+// protectShift moves part of the hate a member earns to the Warriors protecting
+// them, and returns what stays with the member.
+func (z *Zone) protectShift(n *NPC, member *Player, hate float64) float64 {
 	for _, w := range z.abilityGuarders(member, func(a *abilityState) int64 { return a.protect }) {
-		if distance(w, member) <= rules.ProtectRange {
-			n.addHate(w, rules.ProtectHate(w.sh.abilities[rules.AbProtect], damage))
+		if held(w) || distance(w, member) > rules.ProtectRange {
+			continue
 		}
+		moved := rules.ProtectShift(w.sh.abilities[rules.AbProtect], hate)
+		hate -= moved
+		n.addHate(w, moved)
 	}
+	return hate
 }
 
 // sameGroup says whether two characters are in one group.
