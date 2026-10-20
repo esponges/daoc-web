@@ -169,3 +169,12 @@ func TestEngageRefusedAfterBeingHit(t *testing.T) {
 		t.Error("engage was allowed 2 seconds after a blow")
 	}
 }
+
+func TestUseAbilityByName(t *testing.T) {
+	g, tank, skald, _ := abilityRig(t, 30100)
+	g.z.SetTarget(tank, 0)
+	g.z.UseAbility(tank, "guard", "skald")
+	if tank.ab.guard != skald.ID {
+		t.Error("guard by name did not set")
+	}
+}

@@ -24,7 +24,9 @@ var abilityNames = map[string]string{"guard": rules.AbGuard, "protect": rules.Ab
 
 // UseAbility runs a player's use of Guard, Protect, Intercept or Engage on
 // their target. Using one again on the same target ends it.
-func (z *Zone) UseAbility(p *Player, name string) {
+// A member (or, for Engage, nothing) may be named after the ability; without a
+// name the player's target is used.
+func (z *Zone) UseAbility(p *Player, name string, who ...string) {
 	key := abilityNames[strings.ToLower(name)]
 	if key == "" {
 		sys(p, "There is no ability called "+name+".")
@@ -48,8 +50,16 @@ func (z *Zone) UseAbility(p *Player, name string) {
 		return
 	}
 	t := z.players[p.target]
+	if len(who) > 0 && who[0] != "" {
+		t = nil
+		for _, o := range z.players {
+			if strings.EqualFold(o.Char.Name, who[0]) {
+				t = o
+			}
+		}
+	}
 	if t == nil || t == p || t.dead {
-		sys(p, key+": target a member of your group.")
+		sys(p, key+": target a member of your group, or name one.")
 		return
 	}
 	if !z.W.sameGroup(p.Char.ID, t.Char.ID) {
