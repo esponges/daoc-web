@@ -15,6 +15,9 @@ export function conColour(cc) {
 
 // sheetView is the character sheet's content: a title, stat rows (with what
 // items and levels changed from the base) and the spec and ability lists.
+// USABLE are the abilities a player uses on a target, by name (the server's /guard and so on).
+const USABLE = new Set(['Guard', 'Protect', 'Intercept', 'Engage']);
+
 export function sheetView(s) {
   if (!s) return null;
   const level = s.lv + (s.half ? '.5' : '');
@@ -27,7 +30,7 @@ export function sheetView(s) {
     ],
     specs: (s.specs || []).map((r) => ({ name: r.nm, level: r.lv, text: r.nm + ' ' + r.lv + (r.bonus ? ' (+' + r.bonus + ')' : '') })),
     points: s.pts,
-    abilities: (s.ab || []).map((a) => ({ text: a.nm + (a.lv > 1 ? ' ' + a.lv : ''), on: !!a.on })),
+    abilities: (s.ab || []).map((a) => ({ text: a.nm + (a.lv > 1 ? ' ' + a.lv : ''), on: !!a.on, ...(USABLE.has(a.nm) && a.on ? { use: a.nm.toLowerCase() } : {}) })),
   };
 }
 

@@ -146,6 +146,20 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     });
   };
   net.on.bar = (slots) => { barSlots = slots; renderBar(); };
+  // Abilities used on a target (Guard, Protect, Intercept, Engage) sit beside the styles.
+  const abBar = el('div', 'stylebar abilities');
+  root.appendChild(abBar);
+  const renderAbilities = () => {
+    abBar.replaceChildren();
+    if (!net.stats) return;
+    for (const a of sheetView(net.stats).abilities) {
+      if (!a.use) continue;
+      const b = el('button', 'style', a.text);
+      b.title = 'Use on your target (/' + a.use + ')';
+      b.addEventListener('click', () => net.chat('say', '/' + a.use));
+      abBar.appendChild(b);
+    }
+  };
 
   // --- pack ---
   const pack = el('div', 'panel pack');
@@ -317,10 +331,14 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     sheetPanel.append(el('h3', '', 'Specializations (' + v.points + ' points to spend)'));
     for (const s of v.specs) sheetPanel.append(el('div', 'line', s.text));
     sheetPanel.append(el('h3', '', 'Abilities'));
-    for (const a of v.abilities) sheetPanel.append(el('div', 'line' + (a.on ? '' : ' off'), a.text + (a.on ? '' : ' (not yet in this game)')));
+    for (const a of v.abilities) {
+      const row = el('div', 'line' + (a.on ? '' : ' off'), a.text + (a.on ? '' : ' (not yet in this game)'));
+      if (a.use) { const b = el('button', 'use', 'Use'); b.title = 'Use on your target (/' + a.use + ')'; b.addEventListener('click', () => net.chat('say', '/' + a.use)); row.append(' ', b); }
+      sheetPanel.append(row);
+    }
     sheetPanel.append(closeButton(sheetPanel));
   };
-  net.on.stats = () => { if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
+  net.on.stats = () => { renderAbilities(); if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
   const toggleSheet = () => { sheetPanel.classList.toggle('open'); renderSheet(); };
   const renderTrainer = (m) => {
     const v = trainerView(m);

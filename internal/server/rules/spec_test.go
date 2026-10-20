@@ -81,8 +81,8 @@ func TestSpecialization(t *testing.T) {
 	})
 	vector(t, sp, "An ability not yet implemented", func(t *testing.T) {
 		ab := Abilities(warriorGrants, warriorCareers, 7, map[string]int{"Shields": 1})
-		if ab["Protect"] != 1 || ActiveAbility("Protect") {
-			t.Errorf("protect %d, active %v", ab["Protect"], ActiveAbility("Protect"))
+		if ab["Protect"] != 1 || ActiveAbility("Nightshade") {
+			t.Errorf("protect %d, nightshade active %v", ab["Protect"], ActiveAbility("Nightshade"))
 		}
 		if ab["Guard"] != 0 {
 			t.Error("guard granted below shields 5")

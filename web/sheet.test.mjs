@@ -7,7 +7,7 @@ const stats = {
   base: [110, 80, 45, 35, 60, 60, 60, 60], stats: [152, 99, 60, 35, 60, 60, 60, 60],
   mhp: 1004, mend: 100, ws: 312, af: 140, conlost: 2, pts: 44,
   specs: [{ key: 'Sword', nm: 'Sword', lv: 30, bonus: 3 }, { key: 'Parry', nm: 'Parry', lv: 1 }],
-  ab: [{ nm: 'Evade', lv: 1, on: true }, { nm: 'Protect', lv: 3 }],
+  ab: [{ nm: 'Evade', lv: 1, on: true }, { nm: 'Protect', lv: 3 }, { nm: 'Guard', lv: 1, on: true }],
 };
 const v = sheetView(stats);
 assert.equal(v.title, 'Warrior, level 44.5');
@@ -15,7 +15,7 @@ assert.deepEqual(v.stats[0], { name: 'Strength', value: 152, base: 110, diff: 42
 assert.equal(v.stats.length, 8);
 assert.ok(v.lines.includes('Constitution lost 2 (a healer restores it)'));
 assert.deepEqual(v.specs.map((s) => s.text), ['Sword 30 (+3)', 'Parry 1']);
-assert.deepEqual(v.abilities, [{ text: 'Evade', on: true }, { text: 'Protect 3', on: false }]);
+assert.deepEqual(v.abilities, [{ text: 'Evade', on: true }, { text: 'Protect 3', on: false }, { text: 'Guard', on: true, use: 'guard' }]);
 assert.equal(v.points, 44);
 assert.equal(sheetView(null), null);
 assert.ok(!sheetView({ ...stats, conlost: 0 }).lines.some((l) => l.startsWith('Constitution lost')));
