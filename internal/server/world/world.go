@@ -298,6 +298,7 @@ func (w *World) savePlayer(p *Player) {
 	if err := w.Store.Save(c); err != nil {
 		w.Log("saving %s: %v", c.Name, err)
 	}
+	w.saveConditions(p)
 }
 
 // --- places ---

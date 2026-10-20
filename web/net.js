@@ -88,6 +88,9 @@ export class NetClient {
   interact(id) { this._send({ t: 'interact', id }); }
   buy(id) { this._send({ t: 'buy', id }); }
   sell(slot) { this._send({ t: 'sell', slot }); }
+  // repair asks the open blacksmith for the price of repairing a slot, or, with
+  // the price they were quoted, accepts it.
+  repair(slot, price = 0) { this._send({ t: 'repair', slot, ...(price ? { accept: true, price } : {}) }); }
   train(spec, n = 1) { this._send({ t: 'train', spec, n }); }
   restore(npc) { this._send({ t: 'restore', npc }); }
   pray() { this._send({ t: 'pray' }); }
@@ -110,13 +113,16 @@ export class NetClient {
         }
         this.on.err?.(m);
         break;
-      case 'zone': this.shop = null; this.vault = null; this.on.zone?.(m); break;
+      case 'zone': this.shop = null; this.vault = null; this.smith = null; this.on.zone?.(m); break;
       case 'chatmsg': this.on.chat?.(m); break;
       case 'inv': this.inv = m; this.eq = m.eq || []; this.on.inv?.(m); break;
       case 'bar': this.bar = m.slots || []; this.on.bar?.(this.bar); break;
       case 'corpse': this.corpse = m; this.on.corpse?.(m); break;
       case 'shop': this.shop = m; this.on.shop?.(m); break;
       case 'shopclose': this.shop = null; this.on.shopclose?.(); break;
+      case 'smith': this.smith = m; this.on.smith?.(m); break;
+      case 'smithclose': this.smith = null; this.on.smithclose?.(); break;
+      case 'repairquote': this.on.repairquote?.(m); break;
       case 'vault': this.vault = m; this.on.vault?.(m); break;
       case 'vaultclose': this.vault = null; this.on.vaultclose?.(); break;
       case 'stats': this.stats = m; this.on.stats?.(m); break;

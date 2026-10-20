@@ -30,6 +30,7 @@ func (z *Zone) openVault(p *Player, n *NPC) {
 		return
 	}
 	z.closeShop(p)
+	z.closeSmith(p)
 	p.vaultNPC = n.ID
 	p.sendVault(z.W.Cat, n)
 	p.sendInv(z.W.Cat, p.Char.Money)

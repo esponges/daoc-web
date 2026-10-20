@@ -332,6 +332,41 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   };
   net.on.vaultclose = hideVault;
 
+  // --- blacksmith ---
+  // What the player holds that has worn, with the price of each. A click asks
+  // for the price; the server's answer is shown here to accept or turn down.
+  const smithPanel = el('div', 'panel smith');
+  root.appendChild(smithPanel);
+  let quote = null;
+  const hideSmith = () => { smithPanel.classList.remove('open'); net.smith = null; quote = null; };
+  const renderSmith = () => {
+    const m = net.smith;
+    if (!m) { hideSmith(); return; }
+    smithPanel.replaceChildren(el('h2', '', 'Repairs — ' + m.nm));
+    if (!(m.items || []).length) smithPanel.append(el('div', 'row', 'Nothing you carry needs repair.'));
+    for (const it of m.items || []) {
+      const r = el('div', 'row', it.nm + ' — ' + (it.d || '') + '  ' + money(it.pr || 0));
+      if ((it.pr || 0) > (net.inv?.mo || 0)) r.style.opacity = '.55';
+      r.addEventListener('click', () => { quote = null; net.repair(it.slot); });
+      smithPanel.append(r);
+    }
+    if (quote) {
+      const q = el('div', 'quote', 'Repair ' + quote.nm + ' for ' + money(quote.price) + '?');
+      const yes = el('button', '', 'Accept'), no = el('button', '', 'Cancel');
+      yes.addEventListener('click', () => { const p = quote; quote = null; net.repair(p.slot, p.price); });
+      no.addEventListener('click', () => { quote = null; renderSmith(); });
+      q.append(' ', yes, no);
+      smithPanel.append(q);
+    }
+    const close = el('button', '', 'Close');
+    close.addEventListener('click', hideSmith);
+    smithPanel.append(close);
+    smithPanel.classList.add('open');
+  };
+  net.on.smith = (m) => { quote = null; renderSmith(m); };
+  net.on.repairquote = (q) => { quote = q; renderSmith(); };
+  net.on.smithclose = hideSmith;
+
   // --- character sheet, trainer, healer ---
   // Plain panels; stock windows for them can come later and fall back to these.
   const sheetPanel = el('div', 'panel sheet');

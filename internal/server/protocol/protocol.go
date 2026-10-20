@@ -38,6 +38,7 @@ const (
 	TInteract = "interact" // ask an NPC to do what it does (open a merchant's shop)
 	TBuy      = "buy"      // buy an item from the open shop
 	TSell     = "sell"     // sell a pack item to the open shop
+	TRepair   = "repair"   // ask the open blacksmith for a repair price, or accept it
 	TTrain    = "train"    // raise a spec at the trainer
 	TRestore  = "restore"  // pay a healer to restore lost constitution
 	TPray     = "pray"     // pray at the targeted gravestone
@@ -46,25 +47,28 @@ const (
 
 // Message types, server to client.
 const (
-	TWelcome    = "welcome"
-	TSnap       = "snap"
-	TChatMsg    = "chatmsg"
-	TErr        = "err"
-	TZone       = "zone" // the character moved zone: reload at the given one
-	TInv        = "inv"  // the character's inventory and equipment
-	TCorpse     = "corpse"
-	TPong       = "pong"
-	TStyleBar   = "bar"
-	TShop       = "shop"       // a merchant's stock, sent when interaction opens it
-	TShopClose  = "shopclose"  // the open shop is closed (walked away, died, moved zone)
-	TVault      = "vault"      // the character's own vault, sent when a vault keeper opens it
-	TVaultClose = "vaultclose" // the open vault is closed
-	TStats      = "stats"      // the character sheet
-	TTrainer    = "trainer"    // a trainer's offer: the character's specs and their costs
-	THealer     = "healer"     // a healer's offer to restore lost constitution
-	TEffects    = "effects"    // the character's own lasting effects, and the speed they leave
-	TGroup      = "group"      // the character's group: its members and how they fare
-	TGroupInv   = "groupinv"   // an invitation to join a group
+	TWelcome     = "welcome"
+	TSnap        = "snap"
+	TChatMsg     = "chatmsg"
+	TErr         = "err"
+	TZone        = "zone" // the character moved zone: reload at the given one
+	TInv         = "inv"  // the character's inventory and equipment
+	TCorpse      = "corpse"
+	TPong        = "pong"
+	TStyleBar    = "bar"
+	TShop        = "shop"        // a merchant's stock, sent when interaction opens it
+	TShopClose   = "shopclose"   // the open shop is closed (walked away, died, moved zone)
+	TSmith       = "smith"       // what a blacksmith can repair for the player, with prices
+	TSmithClose  = "smithclose"  // the repair window is closed
+	TRepairQuote = "repairquote" // the price of repairing one item, to be accepted
+	TVault       = "vault"       // the character's own vault, sent when a vault keeper opens it
+	TVaultClose  = "vaultclose"  // the open vault is closed
+	TStats       = "stats"       // the character sheet
+	TTrainer     = "trainer"     // a trainer's offer: the character's specs and their costs
+	THealer      = "healer"      // a healer's offer to restore lost constitution
+	TEffects     = "effects"     // the character's own lasting effects, and the speed they leave
+	TGroup       = "group"       // the character's group: its members and how they fare
+	TGroupInv    = "groupinv"    // an invitation to join a group
 )
 
 // Envelope reads just the type of a message.
@@ -153,6 +157,15 @@ type Buy struct {
 }
 
 // Sell sells the item in a pack slot to the open shop.
+// Repair asks the open blacksmith to repair the item in a slot: without Accept
+// for the price, with it to pay the Price the player was shown.
+type Repair struct {
+	T      string `json:"t"`
+	Slot   int    `json:"slot"`
+	Accept bool   `json:"accept,omitempty"`
+	Price  int64  `json:"price,omitempty"`
+}
+
 type Sell struct {
 	T    string `json:"t"`
 	Slot int    `json:"slot"`
@@ -230,7 +243,7 @@ type Entity struct {
 	Back     bool     `json:"bk,omitempty"`
 	Side     int      `json:"sd,omitempty"`
 	Friendly bool     `json:"fr,omitempty"`
-	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant", "trainer", "healer", "stable", "vault", "notclassic"; absent for nothing
+	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant", "trainer", "healer", "stable", "vault", "smith", "notclassic"; absent for nothing
 	Con      *int     `json:"cc,omitempty"` // a creature's con colour to you, -3 grey to 3 purple
 	Own      bool     `json:"own,omitempty"`
 	Ride     bool     `json:"rd,omitempty"` // a player on a horse
@@ -339,6 +352,29 @@ type Shop struct {
 	NPC   int64     `json:"npc"`
 	Name  string    `json:"nm"`
 	Items []InvItem `json:"items"`
+}
+
+// Smith lists what a blacksmith can repair for the player: each item with
+// its repair price in Price (copper) and its condition in Detail.
+type Smith struct {
+	T     string    `json:"t"`
+	NPC   int64     `json:"npc"`
+	Name  string    `json:"nm"`
+	Items []InvItem `json:"items"`
+}
+
+// SmithClose says the repair window is gone.
+type SmithClose struct {
+	T string `json:"t"`
+}
+
+// RepairQuote is the price of repairing one item, which the player accepts or
+// not.
+type RepairQuote struct {
+	T     string `json:"t"`
+	Slot  int    `json:"slot"`
+	Name  string `json:"nm"`
+	Price int64  `json:"price"`
 }
 
 // Vault is a character's vault: its items, each with its slot (1000 to 1039,
@@ -476,6 +512,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Buy{}
 	case TSell:
 		v = &Sell{}
+	case TRepair:
+		v = &Repair{}
 	case TGM:
 		v = &GM{}
 	case TTrain:

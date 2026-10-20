@@ -42,6 +42,11 @@
 .pack .cash { margin-top: 8px; color: #ffe066; }
 .loot { left: 50%; top: 22%; transform: translateX(-50%); min-width: 240px; }
 .shop { left: 16px; top: 12%; width: min(460px, calc(100vw - 390px)); max-height: calc(100vh - 140px); overflow: auto; }
+.smith { left: 16px; top: 12%; width: min(460px, calc(100vw - 390px)); max-height: calc(100vh - 140px); overflow: auto; }
+.smith .row { padding: 4px 6px; cursor: pointer; border-radius: 4px; }
+.smith .row:hover { background: rgba(143,208,255,.15); }
+.smith .quote { margin: 8px 0 4px; color: #ffd76a; }
+.smith button { margin: 6px 6px 0 0; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }
 .vault { left: 16px; top: 12%; max-height: calc(100vh - 140px); overflow: auto; }
 .vault button { margin-top: 6px; font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 3px 10px; cursor: pointer; }
 .shop .row { padding: 4px 6px; cursor: pointer; border-radius: 4px; }

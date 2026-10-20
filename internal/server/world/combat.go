@@ -345,6 +345,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 	} else {
 		p.lastStyle = 0
 	}
+	z.wearItem(p, SlotWeapon)
 	amount := o.Damage
 	p.lastHit, p.lastHitAt = true, z.now
 	z.event(protocol.Event{K: "hit", From: p.ID, To: n.ID, Amount: amount, Crit: o.Critical > 0, Text: ev.Text}, n.Body.X, n.Body.Y)
@@ -447,6 +448,7 @@ func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	if w == nil && (o.Result == rules.Hit || o.Result == rules.Missed) && z.guardBlocks(n, member) {
 		return
 	}
+	z.wearBlow(p, o)
 	switch o.Result {
 	case rules.Missed:
 		z.event(protocol.Event{K: "miss", From: n.ID, To: p.ID}, p.Body.X, p.Body.Y)

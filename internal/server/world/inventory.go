@@ -141,7 +141,11 @@ func (p *Player) sendInv(c *Catalog, money int64) {
 	}
 	for _, slot := range sortedSlots(p.inv) {
 		if it := c.Items[p.inv[slot].ID]; it != nil {
-			m.Items = append(m.Items, itemView(slot, it, p.inv[slot].Count))
+			v := itemView(slot, it, p.inv[slot].Count)
+			if repairable(it) {
+				v.Detail += ", " + conditionText(p.inv[slot].Cond)
+			}
+			m.Items = append(m.Items, v)
 		}
 	}
 	p.send(m)

@@ -96,7 +96,7 @@ func TestNPCKindComesFromClassType(t *testing.T) {
 	if npcKind("DOL.GS.GameMerchant") != KindMerchant {
 		t.Error("GameMerchant is a merchant")
 	}
-	for _, c := range []string{"", "DOL.GS.GameGuard", "DOL.GS.GameNPC", "DOL.GS.Blacksmith"} {
+	for _, c := range []string{"", "DOL.GS.GameGuard", "DOL.GS.GameNPC"} {
 		if k := npcKind(c); k != "" {
 			t.Errorf("npcKind(%q) = %q, want none", c, k)
 		}

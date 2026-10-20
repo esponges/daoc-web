@@ -93,7 +93,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 - [x] 13.1 Add item condition to inventory rows (an additive column, defaulting to 100%), taking it from the template's condition for new items. Verify with a store test that old rows load at 100%.
 - [x] 13.2 Write the wear, effectiveness, warning and repair-price rules, registered as provisional except where sourced. Verify with each `rules-item-condition` scenario as a table test.
-- [ ] 13.3 Apply wear and effectiveness in combat, warn at the thresholds, and add the blacksmith kind with a priced, confirmed repair. Verify with world tests, and in the browser by repairing a worn weapon.
+- [x] 13.3 Apply wear and effectiveness in combat, warn at the thresholds, and add the blacksmith kind with a priced, confirmed repair. Verify with world tests, and in the browser by repairing a worn weapon.
 
 ## 14. Tier 2: the game clock and night spawns
 

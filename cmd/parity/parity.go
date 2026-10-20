@@ -312,7 +312,7 @@ var styleFeatureImplemented = map[string]bool{
 // behaviour: plain creatures, town guards, merchants, healers, and trainers of
 // the classes it covers.
 func kindImplemented(classType string) bool {
-	if classType == "DOL.GS.GameNPC" || classType == "DOL.GS.GameGuard" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) || importer.IsStableClass(classType) || importer.IsVaultClass(classType) {
+	if classType == "DOL.GS.GameNPC" || classType == "DOL.GS.GameGuard" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) || importer.IsStableClass(classType) || importer.IsVaultClass(classType) || importer.IsSmithClass(classType) {
 		return true
 	}
 	t := importer.TrainerClass(classType)

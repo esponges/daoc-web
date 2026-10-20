@@ -114,6 +114,8 @@ type Player struct {
 	shop        int64            // the merchant whose shop is open, 0 for none
 	vault       map[int]*invItem // their vault, by slot (VaultBase and up)
 	vaultNPC    int64            // the vault keeper whose vault is open, 0 for none
+	smithNPC    int64            // the blacksmith whose repair window is open, 0 for none
+	condDirty   bool             // some item's condition changed since the last save
 	weapon      *Item
 	shield      *Item
 	noExitUntil float64

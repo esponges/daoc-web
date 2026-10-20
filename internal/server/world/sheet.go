@@ -253,6 +253,9 @@ func (p *Player) combatant(cat *Catalog) *rules.Combatant {
 	cb := &rules.Combatant{Player: true, Level: p.Char.Level, Stats: sh.stats, WeaponSkillBase: sh.class.WeaponSkillBase,
 		Weapon: weaponOf(p.weapon), EvadeLevel: sh.abilities[rules.AbEvade], StyleDefence: p.styleDefence}
 	if p.weapon != nil {
+		cb.Weapon.Condition = p.condOf(SlotWeapon)
+	}
+	if p.weapon != nil {
 		cb.Spec = p.combatSpec(weaponSpec(p.weapon.ObjectType))
 	} else {
 		cb.Unarmed = true
@@ -262,13 +265,13 @@ func (p *Player) combatant(cat *Catalog) *rules.Combatant {
 	}
 	if s := p.shield; s != nil && sh.abilities[rules.AbShield] > 0 {
 		cb.ShieldSpec = p.combatSpec("Shields")
-		cb.Shield = &rules.Shield{Size: max(1, s.DamageType), Quality: itemFraction(s.Quality), Condition: condition(s.Condition)}
+		cb.Shield = &rules.Shield{Size: max(1, s.DamageType), Quality: itemFraction(s.Quality), Condition: p.condOf(SlotShield)}
 	}
 	for l, slot := range locationSlot {
 		if it := p.inv[slot]; it != nil {
 			if x := cat.Items[it.ID]; x != nil && x.IsArmour() {
 				cb.Armour[l] = &rules.Piece{AF: float64(x.AF), Absorb: float64(x.Absorb) / 100, Cloth: x.ObjectType == rules.ObjCloth,
-					Quality: itemFraction(x.Quality), Condition: condition(x.Condition), Bonus: x.Bonus}
+					Quality: itemFraction(x.Quality), Condition: p.condOf(slot), Bonus: x.Bonus}
 			}
 		}
 	}
