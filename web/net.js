@@ -110,13 +110,15 @@ export class NetClient {
         }
         this.on.err?.(m);
         break;
-      case 'zone': this.shop = null; this.on.zone?.(m); break;
+      case 'zone': this.shop = null; this.vault = null; this.on.zone?.(m); break;
       case 'chatmsg': this.on.chat?.(m); break;
       case 'inv': this.inv = m; this.eq = m.eq || []; this.on.inv?.(m); break;
       case 'bar': this.bar = m.slots || []; this.on.bar?.(this.bar); break;
       case 'corpse': this.corpse = m; this.on.corpse?.(m); break;
       case 'shop': this.shop = m; this.on.shop?.(m); break;
       case 'shopclose': this.shop = null; this.on.shopclose?.(); break;
+      case 'vault': this.vault = m; this.on.vault?.(m); break;
+      case 'vaultclose': this.vault = null; this.on.vaultclose?.(); break;
       case 'stats': this.stats = m; this.on.stats?.(m); break;
       case 'trainer': this.trainer = m; this.on.trainer?.(m); break;
       case 'healer': this.healer = m; this.on.healer?.(m); break;

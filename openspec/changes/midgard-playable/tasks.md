@@ -87,7 +87,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 - [x] 12.1 Add the sourced not-classic table, the `notclassic` kind and its answer, and the census column. Verify with the `npc-interaction` scenarios as world tests, and that `cmd/parity` lists teleporters and hasteners as "not classic".
 - [x] 12.2 Add the vault keeper kind and vault slots 1000–1039 on inventory rows. Moves are refused out of reach, swaps happen in one transaction, and only the owner is sent the vault. Verify with world and store tests for every `vault-storage` scenario, including a restart.
-- [ ] 12.3 Build the vault window beside the pack, with a plain fallback. Verify in the browser by storing and taking an item and reopening at another keeper.
+- [x] 12.3 Build the vault window beside the pack, with a plain fallback. Verify in the browser by storing and taking an item and reopening at another keeper.
 
 ## 13. Tier 2: item condition and repair
 

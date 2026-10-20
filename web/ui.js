@@ -10,6 +10,7 @@ import { createStockChat, createStockSummary, createStockBar, createStockRelease
 import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
+import { createVault, firstFreeVault } from './vault.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
@@ -174,6 +175,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       onMove: (from, to) => net.equip(from, to),
       onUse: (slot) => {
         if (shopOpen()) { net.sell(slot); return; }
+        if (vaultOpen()) { toVault(slot); return; }
         const it = net.inv.items.find((i) => i.slot === slot);
         if (it && (it.k === 'weapon' || it.k === 'shield' || it.k === 'armour')) net.equip(slot, -2);
       },
@@ -213,6 +215,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
         c.addEventListener('click', (e) => {
           if (e.shiftKey) { net.equip(i, -1); return; }
           if (shopOpen()) { net.sell(i); return; }
+          if (vaultOpen()) { toVault(i); return; }
           if (it.k === 'weapon' || it.k === 'shield' || it.k === 'armour') net.equip(i, -2);
         });
       }
@@ -303,6 +306,31 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   };
   net.on.shop = renderShop;
   net.on.shopclose = hideShop;
+
+  // --- vault ---
+  // The character's vault beside the pack: the stock frame when the interface
+  // is there, a plain panel when not. A click on a pack item stores it while
+  // the vault is open (see the pack handlers above); a click on a vault item
+  // takes it, and cells can be dragged onto one another.
+  const vaultWin = createVault(document, stock || null, {
+    onMove: (from, to) => net.equip(from, to),
+    onClose: () => hideVault(),
+    getInv: () => net.inv,
+  });
+  if (stock) Object.assign(vaultWin.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-170px', zIndex: 15 });
+  root.appendChild(vaultWin.el);
+  const vaultOpen = () => vaultWin.isOpen;
+  const toVault = (slot) => {
+    const free = firstFreeVault(net.vault);
+    if (free >= 0) net.equip(slot, free);
+  };
+  const hideVault = () => { vaultWin.hide(); net.vault = null; };
+  net.on.vault = (m) => {
+    vaultWin.show(m);
+    // Something to store: bring the pack up beside it.
+    if (stockPack) { if (!stockPack.isOpen) togglePack(); } else if (!pack.classList.contains('open')) togglePack();
+  };
+  net.on.vaultclose = hideVault;
 
   // --- character sheet, trainer, healer ---
   // Plain panels; stock windows for them can come later and fall back to these.
