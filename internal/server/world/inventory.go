@@ -52,11 +52,16 @@ func canUse(p *Player, it *Item) error {
 
 func (w *World) loadInventory(p *Player) {
 	p.inv = map[int]*invItem{}
+	p.vault = map[int]*invItem{}
 	items, err := w.Store.Items(p.Char.ID)
 	if err != nil {
 		w.Log("loading items of %s: %v", p.Char.Name, err)
 	}
 	for _, it := range items {
+		if inVault(it.Slot) {
+			p.vault[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count}
+			continue
+		}
 		p.inv[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count}
 	}
 	w.recalc(p)
@@ -188,6 +193,10 @@ func (w *World) addItem(p *Player, id string, count int) (int, error) {
 // equips it, if the item and the character allow.
 func (z *Zone) MoveItem(p *Player, from, to int) {
 	w := z.W
+	if inVault(from) || inVault(to) {
+		z.vaultMove(p, from, to)
+		return
+	}
 	if from == to || from < 0 || to < 0 || from >= SlotCount || to >= SlotCount {
 		return
 	}

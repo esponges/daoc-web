@@ -100,7 +100,7 @@ Players carry their look too. `welcome` and each player entity have `rc` (the ra
 | `pray` | | pray at your targeted gravestone, within 2,000 units: after 5 seconds without moving or fighting you regain the experience it holds and it disappears. `/pray` in chat does the same |
 | `buy` | `id` | buy one of the open shop's items by item id; the server checks stock, money, pack space and reach, then resends `inv` |
 | `sell` | `slot` | sell the item in a pack slot (0-39) to the open shop for half its price, at least 1 copper; worn slots and worthless items are refused |
-| `equip` | `from`, `to` | move between pack (0-39) and worn (40-47) slots; `to` -1 destroys, -2 wears it where it belongs |
+| `equip` | `from`, `to` | move between pack (0-39) and worn (40-47) slots; `to` -1 destroys, -2 wears it where it belongs. While a vault is open, either end may be a vault slot (1000-1039): items move between pack and vault, swap with what is there, and move within the vault; a worn item must be taken off first |
 | `chat` | `ch`, `text` | `say` (3,000 units) or `all`; a leading `/` is a command (`/who`, `/pray`, `/bind`, `/gm ...`, the group commands, `/send` or `/tell <name> <text>` to one player of your realm in any zone, `/g <text>` to your group in any zone) |
 | `groupop` | `op`, `id`, `name` | group requests: `invite` the player with `id` (in your zone) or `name` (anywhere, any case), `accept` or `decline` your invitation, `leave` the group, or, for the leader, `remove` the member `name`. Refusals come as `sys` chat lines. The same are typed as `/invite [name]` (your target without a name), `/accept`, `/decline`, `/disband` and `/remove <name>` |
 | `gm` | `line` | an administrator's command: `goto`, `tp`, `level`, `heal`, `give`, `kill`, `where` |
@@ -137,6 +137,8 @@ icon numbers come from a later client than the one a player installs, so the
 web client draws a picture by `spec` and does not look `icon` up. Items in
 `inv` and `corpse` carry `k` (weapon, shield, armour, misc), `w` (the worn slot
 an armour piece belongs in) and `line` (a weapon's line) for the same reason.
+
+`vault` is the character's own vault, sent when `interact` on a vault keeper (`ik:"vault"`) opens it, and again after each move: `npc`, `nm`, and `items` (slots 1000-1039). It goes only to its owner, with a fresh `inv` for the pack beside it. `vaultclose` follows when they walk out of reach, die or leave. The same vault opens at every keeper of the character's realm.
 
 `shop` is a merchant's stock, sent when `interact` opens it: `npc` (its id), `nm`, and `items`, each an `inv`-style row (`id`, `nm`, `k`, `line`, `w`, `d`, `lv`) with `pr`, the price in copper, and `slot`, its place in the list in the order to show. Buy by `id`, not by `slot`. The shop stays open until `shopclose`, which the server sends when the player walks out of reach, dies or the merchant is gone; a character that changes zone simply starts with none open. A creature entity may carry `ik`, what interacting with it does (`"merchant"`, `"trainer"`, `"healer"`, `"stable"`); absent means nothing. A player entity carries `rd: true` while it rides a horse route: the server moves it along the route, its inputs do nothing, and creatures leave it alone. A ride across a zone border arrives as `zone`, as walking does, and the ride goes on in the next zone.
 

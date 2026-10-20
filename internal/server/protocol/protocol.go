@@ -46,23 +46,25 @@ const (
 
 // Message types, server to client.
 const (
-	TWelcome   = "welcome"
-	TSnap      = "snap"
-	TChatMsg   = "chatmsg"
-	TErr       = "err"
-	TZone      = "zone" // the character moved zone: reload at the given one
-	TInv       = "inv"  // the character's inventory and equipment
-	TCorpse    = "corpse"
-	TPong      = "pong"
-	TStyleBar  = "bar"
-	TShop      = "shop"      // a merchant's stock, sent when interaction opens it
-	TShopClose = "shopclose" // the open shop is closed (walked away, died, moved zone)
-	TStats     = "stats"     // the character sheet
-	TTrainer   = "trainer"   // a trainer's offer: the character's specs and their costs
-	THealer    = "healer"    // a healer's offer to restore lost constitution
-	TEffects   = "effects"   // the character's own lasting effects, and the speed they leave
-	TGroup     = "group"     // the character's group: its members and how they fare
-	TGroupInv  = "groupinv"  // an invitation to join a group
+	TWelcome    = "welcome"
+	TSnap       = "snap"
+	TChatMsg    = "chatmsg"
+	TErr        = "err"
+	TZone       = "zone" // the character moved zone: reload at the given one
+	TInv        = "inv"  // the character's inventory and equipment
+	TCorpse     = "corpse"
+	TPong       = "pong"
+	TStyleBar   = "bar"
+	TShop       = "shop"       // a merchant's stock, sent when interaction opens it
+	TShopClose  = "shopclose"  // the open shop is closed (walked away, died, moved zone)
+	TVault      = "vault"      // the character's own vault, sent when a vault keeper opens it
+	TVaultClose = "vaultclose" // the open vault is closed
+	TStats      = "stats"      // the character sheet
+	TTrainer    = "trainer"    // a trainer's offer: the character's specs and their costs
+	THealer     = "healer"     // a healer's offer to restore lost constitution
+	TEffects    = "effects"    // the character's own lasting effects, and the speed they leave
+	TGroup      = "group"      // the character's group: its members and how they fare
+	TGroupInv   = "groupinv"   // an invitation to join a group
 )
 
 // Envelope reads just the type of a message.
@@ -228,7 +230,7 @@ type Entity struct {
 	Back     bool     `json:"bk,omitempty"`
 	Side     int      `json:"sd,omitempty"`
 	Friendly bool     `json:"fr,omitempty"`
-	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant", "trainer", "healer", "stable", "notclassic"; absent for nothing
+	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant", "trainer", "healer", "stable", "vault", "notclassic"; absent for nothing
 	Con      *int     `json:"cc,omitempty"` // a creature's con colour to you, -3 grey to 3 purple
 	Own      bool     `json:"own,omitempty"`
 	Ride     bool     `json:"rd,omitempty"` // a player on a horse
@@ -337,6 +339,20 @@ type Shop struct {
 	NPC   int64     `json:"npc"`
 	Name  string    `json:"nm"`
 	Items []InvItem `json:"items"`
+}
+
+// Vault is a character's vault: its items, each with its slot (1000 to 1039,
+// the numbers an equip move names). Sent only to its owner.
+type Vault struct {
+	T     string    `json:"t"`
+	NPC   int64     `json:"npc"`
+	Name  string    `json:"nm"`
+	Items []InvItem `json:"items"`
+}
+
+// VaultClose says the open vault is gone.
+type VaultClose struct {
+	T string `json:"t"`
 }
 
 // ShopClose says the open shop is gone.

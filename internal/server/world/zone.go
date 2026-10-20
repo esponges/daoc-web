@@ -208,6 +208,7 @@ func (z *Zone) tickPlayer(p *Player) {
 	p.applyInput(z)
 	z.updatePrayer(p)
 	z.checkShop(p)
+	z.checkVault(p)
 	if !held(p) {
 		z.combatPlayer(p)
 	}

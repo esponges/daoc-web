@@ -35,6 +35,8 @@ func npcKind(classType string) string {
 		return KindMerchant
 	case importer.IsStableClass(classType):
 		return KindStable
+	case importer.IsVaultClass(classType):
+		return KindVault
 	case notClassic(classType):
 		return KindNotClassic
 	case importer.IsHealerClass(classType):
@@ -81,6 +83,8 @@ func (z *Zone) Interact(p *Player, id int64) {
 		z.openShop(p, n)
 	case KindStable:
 		z.openStable(p, n)
+	case KindVault:
+		z.openVault(p, n)
 	case KindNotClassic:
 		nc, _ := importer.NotClassicOf(n.Spawn.ClassType)
 		sys(p, n.title()+" says: \"I cannot help you with that; it is not part of this world.\" ("+nc.Reason+")")
@@ -109,6 +113,7 @@ func (z *Zone) openShop(p *Player, n *NPC) {
 	if skipped > 0 {
 		log.Printf("shop %q (%s): %d of %d stock items are not in the item table", n.Name, n.Spawn.ItemsList, skipped, len(list))
 	}
+	z.closeVault(p)
 	p.shop = n.ID
 	p.send(msg)
 }

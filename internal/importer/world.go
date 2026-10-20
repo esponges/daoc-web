@@ -768,6 +768,12 @@ func IsStableClass(classType string) bool {
 	return classType == "DOL.GS.GameStableMaster"
 }
 
+// IsVaultClass reports whether a mob's class type is a vault keeper. The
+// account vault keeper is another class type and is not classic.
+func IsVaultClass(classType string) bool {
+	return classType == "DOL.GS.GameVaultKeeper"
+}
+
 // IsHealerClass reports whether a mob's class type is a healer, who restores
 // constitution lost to deaths.
 func IsHealerClass(classType string) bool {
