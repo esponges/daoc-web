@@ -100,6 +100,8 @@ Each one cast skips the hit roll and applies through decision 5.
 `World` keeps the groups (id, leader, ordered members) and an online-name index, both under `w.mu`. Group state goes to each member once a second, from that member's zone tick, built from a snapshot of the other members (health, endurance, zone, and distance when in the same zone). Tells and `/g` look up recipients through the index and send through each player's existing send queue. The experience split runs in the zone where the kill happened. Members in other zones are out of range by definition, so the split only needs that zone's players.
 
 ### 10. The clock is a function of real time
+**Sourced (task 14.1):** OpenDAoC-Core, read to understand it, agrees with the reference values: its `world_day_increment` defaults to 24, a 60-minute day, and its `IsNightTime` is hour ≥ 18 or < 6. It also has day-only spawns (`DaySpawn`, 51 in the data) mirroring the night-only ones (`NightSpawn`, 562), which the server treats the same way, reversed. It notes that newer clients run nights 25% faster; that is not applied, as 1.65 is not known to. The statuses stay reference.
+
 Game seconds = (Unix seconds × 24) mod 86,400, so one game day is 60 real minutes. It needs no state, survives restarts, and every zone computes the same value. Each zone checks once a second whether day or night has flipped, and spawns or retires its night-only spawns. A retiring spawn in combat is marked to leave when its fight ends. Clients get the clock on entering the world and once a minute after, and interpolate between.
 
 ### 11. Horse routes are a server-driven rider state

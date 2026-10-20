@@ -67,3 +67,20 @@ Two clients on the scratch server, Partyleader and Groupmate, both Troll Warrior
 - **Without `web/data/ui/`.** `/invite groupmate` brought up the plain prompt, Accept opened the plain group panel on both ("★ Partyleader 1 Warrior", "Groupmate 20 Warrior", red health bars), and `/g`, a tell and `/disband` read and coloured the same in the plain chat.
 - **`new_group` is not an invitation.** The layout's `new_group` window holds eight health bars bound to `group_health0`–`7`, a compact group list. The invitation is drawn on the stock `dlg_sm_title_noresize` frame with `button_large` ACCEPT and DECLINE; the `groups` spec now says so.
 - FIND, SET LFG, BENEFITS, ASSIST, FOLLOW, STICK, FACE, CGF, OPTIONS and the window's own WARMAP and MAP buttons are greyed: nothing is behind them.
+
+## 10.1 Sources for the Warrior's abilities (2026-10-19)
+
+One bounded search. The Camelot Herald wiki pages (Guard, Protect, Intercept, Engage) answer HTTP 402 here and Neoseeker's 1.63 beginner's guide 403, so only search summaries of them were seen. One period source was read in full:
+
+- **ZAM/Allakhazam, "Hero class guide" v2.0** ([camelot.allakhazam.com/guides/Hero_guide_v.2.0.html](https://camelot.allakhazam.com/guides/Hero_guide_v.2.0.html)), written before patch 1.52 (it calls 1.52 upcoming in Europe). The Hero's Guard, Protect, Intercept and Engage are the same abilities the Warrior has.
+
+What it says, against the spec as written:
+
+| ability | the guide | the spec | outcome |
+| --- | --- | --- | --- |
+| Guard | one member, shield worn, within trading distance; blocks blows at them; one guard per member | block chance at the member within 256 units | agrees; 256 stays provisional (no number given); one guard per member added |
+| Protect | moves the anger the member draws by **healing, nuking or debuffing** to the protector; does nothing for a member engaged in melee; no numbers | a share of the **damage the member takes** | disagrees: the mechanic follows the guide; the 10/20/30% stay provisional |
+| Intercept | stays armed until it triggers, then about **one minute** to recharge; the blow is taken with evade, parry and block not helping; the member close and **faced** | next blow taken, resolved against the Warrior's defences and armour, 60 s | reuse documented (60 s); no defence roll; facing added; 128 units provisional |
+| Engage | a monster that is attacking you; **every** attack from it blocked for a little endurance each; you cannot attack it; fails if the group attacked it first | 95% block when not attacked for 5 s, 5 endurance a block | disagrees on the condition; 95% and 5 stay provisional (the guide gives "every" and "a small amount") |
+
+Two community notes agree with the guide: a 2001 Quarter to Three forum post (Intercept takes the hit with no armour absorption, so harder than the member would have; Guard needs you right next to the member) and the Gaheris FAQ, as a search summarised it (Protect I and II move only a small fraction of a healer's anger; the protector's weapon must be out).

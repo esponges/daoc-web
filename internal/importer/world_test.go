@@ -276,3 +276,28 @@ func TestClassKinds(t *testing.T) {
 		t.Error("healer class type")
 	}
 }
+
+// A mob of class type NightSpawn is stored as night-only, one of DaySpawn as
+// day-only, and the rest as always there.
+func TestImportMarksNightSpawns(t *testing.T) {
+	dir := minimalDump(t)
+	dumpTable(t, dir, "mob", "`Name`, `Region`, `X`, `Y`, `Z`, `Model`, `ClassType`",
+		"'Ghoul', 1, 100, 100, 0, 10, 'DOL.GS.NightSpawn'",
+		"'Bird', 1, 200, 100, 0, 10, 'DOL.GS.DaySpawn'",
+		"'Wolf', 1, 300, 100, 0, 10, 'DOL.GS.GameNPC'")
+	out := filepath.Join(t.TempDir(), "world.db")
+	if _, err := Run(Options{Dump: dir, Out: out}); err != nil {
+		t.Fatal(err)
+	}
+	db, err := sql.Open("sqlite", out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	for name, want := range map[string]int{"Ghoul": NightOnly, "Bird": DayOnly, "Wolf": Always} {
+		var got int
+		if err := db.QueryRow(`SELECT timed FROM spawn WHERE name=?`, name).Scan(&got); err != nil || got != want {
+			t.Errorf("%s timed = %d (%v), want %d", name, got, err, want)
+		}
+	}
+}

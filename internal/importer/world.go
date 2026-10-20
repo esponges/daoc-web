@@ -33,7 +33,7 @@ CREATE TABLE spawn(
   x REAL, y REAL, z REAL, heading INTEGER, level INTEGER, size INTEGER, speed INTEGER,
   template INTEGER, roam INTEGER, respawn_s INTEGER, aggro_level INTEGER, aggro_range INTEGER,
   realm INTEGER, flags INTEGER, path TEXT, brain TEXT, equip TEXT, classtype TEXT, items_list TEXT, race INTEGER,
-  levels TEXT);
+  levels TEXT, timed INTEGER);
 CREATE INDEX spawn_zone ON spawn(zone);
 CREATE TABLE merchant_stock(list TEXT, item TEXT, page INTEGER, slot INTEGER);
 CREATE INDEX merchant_stock_list ON merchant_stock(list);
@@ -416,12 +416,12 @@ func build(o Options) (*Report, error) {
 		if outside {
 			rep.LevelReplaced++
 		}
-		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list,race,levels)
-			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list,race,levels,timed)
+			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			z.id, name, r.Str("Guild"), model, lx, ly, zz, r.Int("Heading"), level, r.Int("Size"),
 			speed, r.Int("NPCTemplateID"), r.Int("RoamingRange"), r.Int("RespawnInterval"),
 			aggroLevel, aggroRange, r.Int("Realm"), flags, r.Str("PathID"), r.Str("Brain"), equip,
-			classType, r.Str("ItemsListTemplateID"), r.Int("Race"), levels)
+			classType, r.Str("ItemsListTemplateID"), r.Int("Race"), levels, SpawnTiming(classType))
 	}); err != nil {
 		return nil, err
 	}
@@ -753,6 +753,26 @@ func build(o Options) (*Report, error) {
 	}
 	sort.Strings(rep.Missing)
 	return rep, nil
+}
+
+// When a spawn is present. A creature of class type NightSpawn is there only at
+// night, and one of class type DaySpawn only by day; everything else is
+// always there.
+const (
+	Always    = 0
+	NightOnly = 1
+	DayOnly   = 2
+)
+
+// SpawnTiming says when a spawn of this class type is present.
+func SpawnTiming(classType string) int {
+	switch classType {
+	case "DOL.GS.NightSpawn":
+		return NightOnly
+	case "DOL.GS.DaySpawn":
+		return DayOnly
+	}
+	return Always
 }
 
 // IsMerchantClass reports whether a mob's class type is the plain merchant.
