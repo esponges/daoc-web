@@ -1529,6 +1529,10 @@ Sources the rules come from:
 - ZAM's [starting-zones table](https://camelot.allakhazam.com/Start_Zones.html)
   (Shrouded Isles and Trials of Atlantis era): the town each Midgard race and
   base class starts in. The imported start rows agree with it.
+- A 2001 forum thread on the Warrior shield abilities
+  ([quartertothree.com](https://www.quartertothree.com/boards/messages/17/1030.shtml)):
+  what Guard, Protect, Intercept and Engage do in outline. It gives no ranges,
+  durations or shares, so those stay provisional.
 - [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
   understand rules that no public page gives a number for. Nothing is copied
   from it.

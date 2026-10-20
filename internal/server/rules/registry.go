@@ -53,6 +53,7 @@ var Sources = map[string]string{
 	"mythic-con":    "Mythic's description of con colour bands (level / 10 + 1)",
 	"zam-starts":    "ZAM's starting-zones table (camelot.allakhazam.com/Start_Zones.html)",
 	"opendaoc":      "OpenDAoC-Core, read to understand (GPL; nothing copied)",
+	"forum2001":     "a 2001 forum thread on Guard, Protect, Intercept and Engage (outline only)",
 	"data":          "the imported community database",
 	"project":       "this project's choice",
 }

@@ -67,6 +67,8 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
   - Mythic's con colour band description;
   - ZAM's starting-zones table (camelot.allakhazam.com/Start_Zones.html): the
     start town of each race and class;
+  - A 2001 forum thread on Guard, Protect, Intercept and Engage
+    (quartertothree.com/boards/messages/17/1030.shtml): outline only, no numbers;
   - OpenDAoC-Core, for reference-status rules only.
 
   If you use another source (a wiki, a format write-up, a community table), add

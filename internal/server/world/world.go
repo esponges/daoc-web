@@ -447,6 +447,8 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		} else {
 			w.GroupOp(p, &protocol.GroupOp{Op: protocol.GroupInvite, ID: p.target})
 		}
+	case "guard", "protect", "intercept", "engage":
+		z.UseAbility(p, f[0])
 	case "accept":
 		w.AcceptInvite(p)
 	case "decline":

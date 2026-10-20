@@ -219,6 +219,9 @@ func (z *Zone) requestStyle(p *Player, slot int) {
 
 // SetTarget selects an NPC (id 0 clears it).
 func (z *Zone) SetTarget(p *Player, id int64) {
+	if id != p.ab.engage {
+		p.ab.engage = 0
+	}
 	if id == 0 {
 		p.target, p.attacking, p.pending = 0, false, -1
 		return
@@ -420,9 +423,19 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 // npcHitsPlayer resolves a creature's blow against a player.
 func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	z.event(protocol.Event{K: "swing", From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
+	if w := z.interceptFor(p); w != nil {
+		p = w
+	} else if z.guardBlocks(n, p) {
+		p.combatUntil = z.now + CombatLinger
+		return
+	}
 	p.combatUntil = z.now + CombatLinger
 	sw := rules.Swing{Attacker: &n.cb, Defender: p.combatant(z.W.Cat), Attackers: z.attackersOf(p),
 		InFront: angleOff(p.Body.Yaw, angleTo(p.Body.X, p.Body.Y, n.Body.X, n.Body.Y)) <= frontArc}
+	p.ab.attackedAt = z.now
+	if p.ab.engage == n.ID && z.engageBlocks(n, p, sw.InFront) {
+		return
+	}
 	o := rules.Resolve(sw, z.rng)
 	switch o.Result {
 	case rules.Missed:
@@ -437,6 +450,7 @@ func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	z.event(protocol.Event{K: "hit", From: n.ID, To: p.ID, Amount: o.Damage}, p.Body.X, p.Body.Y)
 	p.hp -= float64(o.Damage)
 	z.damaged(p)
+	z.protectHate(n, p, o.Damage)
 	if p.hp <= 0 {
 		z.killPlayer(p, n)
 	}
