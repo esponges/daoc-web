@@ -74,7 +74,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 - [x] 10.1 Look for 1.65 sources for Guard's range, Intercept's range and duration, Protect's hate share and Engage's numbers. Record what was found, and add any source to CLAUDE.md and the README. Verify the `rules-abilities` statuses match what was found.
 - [x] 10.2 Load abilities from the specialisation-ability rows, and implement Guard, Intercept, Protect and Engage as rules plus world effects. Verify with each `rules-abilities` scenario as a table test and world tests in a group.
-- [ ] 10.3 Let abilities be used from the skills window and the bar, with refusals as system lines. Verify with the census counting the four abilities as implemented, and in the browser with two grouped clients using Guard.
+- [x] 10.3 Let abilities be used from the skills window and the bar, with refusals as system lines. Verify with the census counting the four abilities as implemented, and in the browser with two grouped clients using Guard.
 
 ## 11. Tier 2: horse routes
 
