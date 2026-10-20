@@ -12,7 +12,9 @@ type combatant interface {
 
 func (p *Player) entityID() int64              { return p.ID }
 func (p *Player) position() (float64, float64) { return p.Body.X, p.Body.Y }
-func (p *Player) fightable(z *Zone) bool       { return !p.dead && !p.closed.Load() && p.Zone == z }
+func (p *Player) fightable(z *Zone) bool {
+	return !p.dead && !p.closed.Load() && p.Zone == z && p.ride == nil
+}
 
 func (n *NPC) entityID() int64              { return n.ID }
 func (n *NPC) position() (float64, float64) { return n.Body.X, n.Body.Y }

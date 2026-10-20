@@ -33,6 +33,9 @@ func (z *Zone) UseAbility(p *Player, name string, who ...string) {
 	}
 	lv := p.sh.abilities[key]
 	switch {
+	case p.ride != nil:
+		sys(p, "You cannot do that while riding.")
+		return
 	case p.dead:
 		sys(p, "You cannot do that while dead.")
 		return

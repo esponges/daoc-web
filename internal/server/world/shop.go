@@ -31,6 +31,8 @@ func npcKind(classType string) string {
 	switch {
 	case importer.IsMerchantClass(classType):
 		return KindMerchant
+	case importer.IsStableClass(classType):
+		return KindStable
 	case importer.IsHealerClass(classType):
 		return KindHealer
 	case teaches(classType) != "":
@@ -53,6 +55,10 @@ func (z *Zone) Interact(p *Player, id int64) {
 		p.errMsg("interact", "There is nothing there.")
 		return
 	}
+	if p.ride != nil {
+		p.errMsg("interact", "You cannot do that while riding.")
+		return
+	}
 	if n.Kind == "" {
 		p.errMsg("interact", "You cannot interact with that.")
 		return
@@ -64,6 +70,8 @@ func (z *Zone) Interact(p *Player, id int64) {
 	switch n.Kind {
 	case KindMerchant:
 		z.openShop(p, n)
+	case KindStable:
+		z.openStable(p, n)
 	case KindTrainer:
 		z.openTrainer(p, n)
 	case KindHealer:

@@ -186,6 +186,7 @@ type Catalog struct {
 	hasGear        bool                    // spawn.equip exists (a world.db imported before equipment was kept lacks it)
 	MobLoot        map[string][]string     // lower-case mob name -> loot template names
 	Stock          map[string][]string     // merchant list id -> item ids, in page then slot order
+	Routes         map[string]*Route       // horse routes by lowercase path id, which a ticket item shares
 	hasShops       bool                    // spawn.classtype and merchant_stock exist (a world.db imported before merchants lacks them)
 	hasRules       bool                    // item bonuses, races and abilities exist (a world.db imported before the rule book lacks them)
 	hasLevels      bool                    // spawn.levels exists (a world.db imported before templates were honoured lacks it)
@@ -393,6 +394,12 @@ func LoadCatalog(path string) (*Catalog, error) {
 	}
 	if err := c.loadSpells(db, q); err != nil {
 		return nil, err
+	}
+	if err := c.loadRoutes(db, q); err != nil {
+		return nil, err
+	}
+	if len(c.Routes) == 0 {
+		log.Printf("world store has no horse routes; stable masters only sell (run cmd/dbimport again)")
 	}
 	for _, l := range c.checkStarts() {
 		log.Print(l)

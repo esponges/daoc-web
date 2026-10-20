@@ -256,6 +256,10 @@ func (z *Zone) SetAttack(p *Player, on bool) {
 		p.attacking, p.pending = false, -1
 		return
 	}
+	if p.ride != nil {
+		p.errMsg("target", "You cannot fight while riding.")
+		return
+	}
 	n := z.byID[p.target]
 	if p.dead || n == nil || n.dead() {
 		p.errMsg("target", "You need a target.")

@@ -762,6 +762,12 @@ func IsMerchantClass(classType string) bool {
 	return classType == "DOL.GS.GameMerchant"
 }
 
+// IsStableClass reports whether a mob's class type is a stable master, who
+// sells horse tickets and rides them.
+func IsStableClass(classType string) bool {
+	return classType == "DOL.GS.GameStableMaster"
+}
+
 // IsHealerClass reports whether a mob's class type is a healer, who restores
 // constitution lost to deaths.
 func IsHealerClass(classType string) bool {

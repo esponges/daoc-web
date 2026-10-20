@@ -201,6 +201,10 @@ func (z *Zone) tickPlayer(p *Player) {
 		}
 		return
 	}
+	if p.ride != nil {
+		z.rideStep(p)
+		return
+	}
 	p.applyInput(z)
 	z.updatePrayer(p)
 	z.checkShop(p)
@@ -340,7 +344,7 @@ func (z *Zone) playerEntity(o *Player) protocol.Entity {
 	return protocol.Entity{
 		ID: o.ID, K: "p", Name: o.Char.Name, Char: o.Arch.Key, Race: o.Char.Race, Female: o.Char.Gender == 1, Level: o.Char.Level,
 		X: o.Body.X, Y: o.Body.Y, Z: o.Body.Z, Yaw: o.Body.Yaw, Speed: o.motion.Speed,
-		HP: math.Max(0, o.hp/float64(o.maxHP())), State: st, Back: o.motion.Back, Side: o.motion.Side,
+		HP: math.Max(0, o.hp/float64(o.maxHP())), State: st, Back: o.motion.Back, Side: o.motion.Side, Ride: o.ride != nil,
 	}
 }
 

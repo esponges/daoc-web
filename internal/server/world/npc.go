@@ -280,7 +280,7 @@ func (n *NPC) update(z *Zone) {
 		n.watch(z)
 	} else if n.target == nil && n.Aggro > 0 && n.state != npcReturn {
 		if p := z.nearestPlayer(n.Body.X, n.Body.Y, n.Aggro, func(p *Player) bool {
-			return !p.dead && p.Char.Level-n.Level < 8
+			return !p.dead && p.ride == nil && p.Char.Level-n.Level < 8
 		}); p != nil {
 			n.engage(p, z)
 		}

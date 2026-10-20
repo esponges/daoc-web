@@ -42,6 +42,7 @@ type World struct {
 	drops  map[int][]string
 
 	groups *groups
+	rides  rides // riders in the middle of a zone change
 }
 
 // ErrOnline is returned when a character is already playing.
@@ -204,6 +205,7 @@ func (w *World) Leave(p *Player) {
 	p.disconnected.Store(true)
 	if !p.zoning.Load() {
 		w.logoutGroup(p.Char.ID)
+		w.rides.take(p.Char.ID)
 	}
 	z := p.Zone
 	if z == nil {
@@ -266,6 +268,7 @@ func (z *Zone) join(p *Player) {
 	}
 	p.hp = math.Min(float64(c.HP), float64(p.maxHP()))
 	z.computeBar(p)
+	z.resumeRide(p)
 	z.add(p)
 	p.exitLatched = z.exitAt(p) != nil
 	p.send(protocol.Welcome{T: protocol.TWelcome, V: protocol.Version, You: p.ID, Name: c.Name, Char: p.Arch.Key, Race: c.Race, Female: c.Gender == 1,

@@ -60,6 +60,7 @@ type invItem struct {
 // goroutine; connections reach them through Zone.Do.
 type Player struct {
 	ID       int64
+	ride     *ride          // the horse route they are on, nil when walking
 	ab       abilityState   // Guard, Protect, Intercept and Engage in force
 	gearSent map[int64]bool // NPCs whose equipment this player has been sent while they stayed in view
 	gear     [][4]int       // what this player wears, as [slot, model, colour, extension]; slot is the item table's, so it reads like an NPC's
