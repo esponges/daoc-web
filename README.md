@@ -1327,6 +1327,7 @@ with no way to log in.
 | --- | --- |
 | `DAOC_ADMIN_PASSWORD` or `DAOC_ADMIN_HASH` | the administrator's password, or its bcrypt hash; an administrator may use the `/gm` commands |
 | `DAOC_DISCORD_CLIENT_ID`, `DAOC_DISCORD_CLIENT_SECRET` | log in with Discord: create an application at discord.com/developers, add `<DAOC_PUBLIC_URL>/auth/discord/callback` as its redirect, scope `identify` |
+| `DAOC_CLOCK_SHIFT` | a testing aid: seconds added to real time for the game clock, to see a dusk or dawn without waiting (game time is real time times 24 modulo a day); zero by default |
 | `DAOC_PUBLIC_URL` | where browsers reach the server, `http://localhost:8777` by default; `https://` also marks cookies Secure |
 | `DAOC_SESSION_KEY` | signs the session cookie; generated into `server/data/session.key` if unset |
 | `DAOC_ADDR` / `-addr` | the address to listen on; `localhost:8777`, or `:8777` for the whole network |

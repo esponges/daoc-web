@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -89,8 +90,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	// DAOC_CLOCK_SHIFT is a testing aid: real seconds added to the time the game
+	// clock is read from, to see a dusk without waiting for one. Zero by default.
+	var clock func() time.Time
+	if s := os.Getenv("DAOC_CLOCK_SHIFT"); s != "" {
+		sec, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "gameserver: DAOC_CLOCK_SHIFT must be a number of seconds:", err)
+			os.Exit(1)
+		}
+		clock = func() time.Time { return time.Now().Add(time.Duration(sec) * time.Second) }
+		log.Printf("game clock shifted by %d seconds (DAOC_CLOCK_SHIFT)", sec)
+	}
 	w := world.New(world.Config{WebData: webData, Cat: cat, Store: st, Log: log.Printf,
-		Collision: world.OutdoorCollision})
+		Collision: world.OutdoorCollision, Clock: clock})
 	srv := &gameserver.Server{Auth: a, World: w, Store: st, WebDir: *webDir, Log: log.Printf}
 	hs := &http.Server{Addr: *addr, Handler: srv.Handler(), ReadHeaderTimeout: 10 * time.Second}
 

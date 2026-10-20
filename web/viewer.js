@@ -15,6 +15,7 @@ import { createCombat } from './combat.js';
 import { Animator } from './animator.js';
 import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows, setSkyLight, setInteriorLight, setPointLights, SUN_DIR } from './lighting.js';
 import { createSky } from './sky.js';
+import { gameSeconds, nightness, nightLook, createDarken } from './daynight.js';
 import { createGrass } from './grass.js';
 import { createParticles } from './particles.js';
 import { loadInterior } from './interior.js';
@@ -1104,6 +1105,11 @@ async function main() {
   }
   const fog = man.fog;
   const fogColor = world.fog ? world.fog.color : sky ? sky.fog : [fog.r / 255, fog.g / 255, fog.b / 255];
+  // Night: the day's fog is the base the night look is blended from; a flat blue
+  // veil darkens the day sky where no night sky art is converted.
+  const fogBase = [...fogColor];
+  const darken = sky ? createDarken(gl) : null;
+  let nightAlpha = 0;
   $('title').textContent = man.name + '  (zone ' + man.zone + ')';
   for (const [id, text] of world.hud) $(id).textContent = text;
   $('i-props').textContent = props
@@ -1393,6 +1399,13 @@ async function main() {
     const near = followMode ? 15 : 20;
     const vp = mul(perspective(FOV, w / h, near, far), lookAt(eye, target, [0, 1, 0]));
     view.eye = eye; view.target = target;
+    if (sky && net && net.clock) {
+      const n = nightness(gameSeconds(net.clock, net.now()));
+      const look = nightLook({ fog: fogBase, ambient: sky.ambient, sun: sky.sun }, n);
+      for (let i = 0; i < 3; i++) fogColor[i] = look.fog[i];
+      setSkyLight(look.ambient, look.sun);
+      nightAlpha = 0.8 * n;
+    }
     const fogStart = world.fog ? world.fog.start : far * 0.25;
     const fogEnd = world.fog ? world.fog.end : far * 0.92;
 
@@ -1451,6 +1464,7 @@ async function main() {
     gl.clearColor(fogColor[0], fogColor[1], fogColor[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     if (sky) sky.draw({ f: f.map((x) => x / fl), s: camRight, u: camUp }, FOV, w / h, SUN_DIR, now / 1000);
+    if (darken) darken.draw(nightAlpha);
     drawWorld(vp, light, false);
     // The target's ring: gold when selected, red while it is a fight.
     const tgt = combat && combat.target;

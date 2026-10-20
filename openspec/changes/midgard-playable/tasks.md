@@ -100,7 +100,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 - [x] 14.1 Look for the 1.65 day length and night hours. Record the result, and keep 60 minutes and 18:00–06:00 as reference if nothing better is found. Verify the `world-time` statuses match.
 - [x] 14.2 Mark night-only spawns at import. Verify with the "A night spawn" importer test.
 - [x] 14.3 Add the clock as a function of real time. Night spawns appear over the first game minute of night and leave at dawn, staying while in combat. Add the load count. Verify with world tests using an injected clock: dusk, dawn mid-fight, and a respawn only at night.
-- [ ] 14.4 Send the clock to clients, and darken the sky and light at night with a fallback. Verify with a node test of the clock view, and in the browser across a dusk.
+- [x] 14.4 Send the clock to clients, and darken the sky and light at night with a fallback. Verify with a node test of the clock view, and in the browser across a dusk.
 
 ## 15. Tier 3: character windows and the menu bar
 

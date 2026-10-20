@@ -54,8 +54,9 @@ export function clockText(date) {
   return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
-// createStockClock builds the stock clock. The viewer has no day and night,
-// so there is no game time to show: it shows the player's own.
+// createStockClock builds the stock clock. update(date) takes a Date or
+// anything with getHours and getMinutes (the game's time of day when a server
+// is sending it); with none, it shows the player's own time.
 export function createStockClock(doc, data) {
   const win = buildWindow(doc, data, 'Clock');
   let last = '';

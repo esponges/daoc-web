@@ -123,6 +123,7 @@ export class NetClient {
       case 'smith': this.smith = m; this.on.smith?.(m); break;
       case 'smithclose': this.smith = null; this.on.smithclose?.(); break;
       case 'repairquote': this.on.repairquote?.(m); break;
+      case 'clock': this.clock = { gs: m.gs, at: this.now() }; this.on.clock?.(this.clock); break;
       case 'vault': this.vault = m; this.on.vault?.(m); break;
       case 'vaultclose': this.vault = null; this.on.vaultclose?.(); break;
       case 'stats': this.stats = m; this.on.stats?.(m); break;

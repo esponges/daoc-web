@@ -11,6 +11,7 @@ import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
 import { createVault, firstFreeVault } from './vault.js';
+import { gameSeconds, clockFace } from './daynight.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
@@ -474,7 +475,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     const me = net.me;
     if (!me) return;
     if (menuBar) menuBar.update(me, net.inv.mo || 0);
-    if (clockWin) clockWin.update();
+    // The game's time of day when the server has sent it, the player's own otherwise.
+    if (clockWin) clockWin.update(net.clock ? clockFace(gameSeconds(net.clock, net.now())) : undefined);
     if (summary) {
       const t = getTarget ? getTarget() : null;
       summary.update(me, t, t ? (t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColour(t.e?.con) || conColor(t.level, me.level)) : undefined);
