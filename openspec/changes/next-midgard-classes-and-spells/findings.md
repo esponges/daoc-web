@@ -41,3 +41,16 @@ Most of the plumbing was already there: the `gender` column, `fm` on `welcome` a
 ## 4.1–4.2 Power (2026-10-21)
 
 Two searches (the 1.65 power pool and regeneration; the class tables) found only that the pool follows the class's casting stat and the Herald's spec multipliers. The pool is `10 + level × (5 + acuity / 50)` and regeneration a fiftieth of the pool every three seconds out of combat (a two-hundredth in it); both provisional. Spells draw a share of the pool, using the data's `Power` column as a percentage (to be checked against the data when spells are imported, 4.3).
+
+## 4.3–4.7 Casting in the browser (2026-10-21)
+
+On the scratch server with a fresh import (the staged world store now carries the spell lines and each spell's power):
+- **Healer** (female Dwarf, level 1): the stock SPELLS window lists three lines (Augmentation, Mending, Pacification) with each spell's level, power and cast time. Clicking Minor Mending logs "You begin casting Minor Mending." and, 2.2 seconds later, "Your Minor Mending heals you for 6 hit points." A shift-click put it on the spell bar, Shift+1 cast it again, and the slot survived a reload. Without `web/data/ui/` the plain panel (P) shows the same book.
+- **Runemaster** (level 1): with a sveawolf cub targeted from afar, "Your target is too far away."; after moving close, "Your Lesser Sigil of Ruin hits the sveawolf cub for 6 damage!" and the cubs came at the caster.
+- **Not seen:** buffs and a group heal in the browser (they need a second client; the server tests cover them).
+
+Things this showed:
+1. **The healed amount is the spell's value, not what was restored.** At full health the log still says "heals you for 6 hit points". Not fixed.
+2. **A level 1 caster has a pool of 16 and every level 1 spell costs 1 to 2 percent of it**, so the pool is never the limit at level 1; whether it is later depends on the provisional pool formula.
+3. **Spell damage does not scale with the line's spec level** (the data's base value is used); the bolt did 6 damage at spec level 1.
+4. **Line of sight is not checked** and the spec says so.

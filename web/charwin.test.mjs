@@ -31,5 +31,5 @@ ok(v.usable.map((r) => r.header || r.text).join('|') === 'Hammer|Slam  anytime, 
 ok(v.usable.filter((r) => r.draggable).every((r) => Number.isInteger(r.id)), 'each usable style row carries its id to drag');
 ok(v.locked.length === 1 && v.locked[0].draggable === false && v.locked[0].text.includes('Sword'), 'a style the character cannot use now is listed but cannot be dragged');
 ok(styleDragId('style:42') === 42 && styleDragId('42') === null && styleDragId(undefined) === null, 'only a style drag is read as one');
-ok(Object.keys(MENU_WHY).length === 5 && MENU_WHY.ShowWarMap && Object.values(MENU_WHY).every((t) => t.length > 10), 'each greyed menu button has a tooltip saying why');
+ok(Object.keys(MENU_WHY).length === 4 && MENU_WHY.ShowWarMap && Object.values(MENU_WHY).every((t) => t.length > 10), 'each greyed menu button has a tooltip saying why');
 process.exit(failed ? 1 : 0);

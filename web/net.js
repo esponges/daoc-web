@@ -44,6 +44,7 @@ export class NetClient {
     this.events = [];          // server events since the UI last took them
     this.inv = { items: [], mo: 0 };
     this.bar = [];
+    this.book = { lines: [] }; // the spellbook, as the server sent it
     this.corpse = null;
     this.zone = 0;
     this.sent = 0;             // steps sent so far
@@ -82,6 +83,8 @@ export class NetClient {
   target(id) { this._send({ t: 'target', id }); if (this.me) this.me.target = id; }
   attack(on) { this._send({ t: 'attack', on }); if (this.me) this.me.attacking = on; }
   style(slot) { this._send({ t: 'style', slot }); }
+  // cast casts a spell of the book at an entity (the held target when 0).
+  cast(sp, tg = 0) { this._send({ t: 'cast', sp, ...(tg ? { tg } : {}) }); }
   release() { this._send({ t: 'release' }); }
   loot(corpse, index) { this._send({ t: 'loot', corpse, index }); }
   equip(from, to) { this._send({ t: 'equip', from, to }); }
@@ -118,6 +121,7 @@ export class NetClient {
       case 'zone': this.shop = null; this.vault = null; this.smith = null; this.on.zone?.(m); break;
       case 'chatmsg': this.on.chat?.(m); break;
       case 'inv': this.inv = m; this.eq = m.eq || []; this.on.inv?.(m); break;
+      case 'book': this.book = { lines: m.lines || [] }; this.on.book?.(this.book); break;
       case 'bar': this.bar = m.slots || []; this.barAlso = m.also || []; this.on.bar?.(this.bar); break;
       case 'corpse': this.corpse = m; this.on.corpse?.(m); break;
       case 'shop': this.shop = m; this.on.shop?.(m); break;

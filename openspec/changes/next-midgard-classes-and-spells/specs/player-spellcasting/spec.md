@@ -12,7 +12,7 @@ A character of a casting class SHALL have a spellbook holding the spells of the 
 - **THEN** the spell is added to the book and the chat log says so
 
 ### Requirement: Casting
-The client SHALL send a cast request naming a spell and, when the spell needs one, a target. The server SHALL accept it only when the caster is alive, knows the spell, has the power, is in range and in line of sight where the world has collision, and is not already casting. A cast SHALL take the spell's cast time, after which the effect applies and power is spent.
+The client SHALL send a cast request naming a spell and, when the spell needs one, a target. The server SHALL accept it only when the caster is alive, knows the spell, has the power, is in range, and is not already casting. Line of sight is not checked yet. A cast SHALL take the spell's cast time, after which the effect applies and power is spent.
 
 #### Scenario: Out of power
 - **WHEN** a caster asks for a spell that costs more power than they have

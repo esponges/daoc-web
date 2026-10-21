@@ -89,3 +89,18 @@
 #log .style { color: #ffa24a; }
 #log .parry, #log .evade { color: #8fc7ff; }
 @media (max-width: 760px) { .game-ui .chat { bottom: 200px; } .stylebar { bottom: 130px; } .pack { top: 12px; } }
+.stylebar.spellbar { bottom: 112px; }
+.stylebar.spellbar .style.empty { opacity: .45; }
+.stylebar.spellbar .style .key { color: #3ec7c1; }
+.panel.spells { right: 12px; top: 160px; width: 300px; max-height: 60vh; overflow-y: auto; }
+.panel.spells h3 { margin: 8px 0 3px; font-size: 12px; color: #ffd76a; }
+.panel.spells .spell { padding: 2px 4px; cursor: pointer; color: #dbe6f2; }
+.panel.spells .spell:hover { background: rgba(120,170,220,.18); }
+.panel.spells .spell.off { color: #8a929c; cursor: default; }
+.castbar { position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%); z-index: 12; width: 240px; height: 16px; border-radius: 4px;
+  background: rgba(8,14,22,.85); border: 1px solid rgba(120,170,220,.45); overflow: hidden; }
+.castbar .fill { height: 100%; width: 0; background: #3ec7c1; }
+.castbar .nm { position: absolute; left: 0; right: 0; top: 0; text-align: center; font-size: 11px; line-height: 16px; color: #fff; text-shadow: 0 1px 2px #000; }
+.stylebar.spellbar { flex-wrap: nowrap; gap: 3px; }
+.stylebar.spellbar .style { min-width: 0; width: 78px; padding: 3px 5px; gap: 0 4px; font-size: 10px; }
+.stylebar.spellbar .style .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 52px; }

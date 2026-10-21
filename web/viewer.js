@@ -24,6 +24,7 @@ import { loadOutdoorCollision } from './collision.js';
 import { createRemote, eventAnim } from './remote.js';
 import { candidates } from './race.js';
 import { createUI, conColor } from './ui.js';
+import { ownCastLine } from './spells.js';
 import { eventLine, conColour } from './sheet.js';
 import { effectRows, effectChangeLines, spellLine, castLine } from './effects.js';
 import { loadUI, registerFonts } from './uiwin.js';
@@ -1176,7 +1177,14 @@ async function main() {
           if (l) log(l.text, l.cls);
           break;
         }
-        case 'cast': case 'interrupt': {
+        case 'cast': case 'interrupt': case 'castfail': {
+          if (mine) {
+            ui?.castEvent(ev);
+            const l = ownCastLine(ev, me.id);
+            if (l) log(l.text, l.cls);
+            break;
+          }
+          if (ev.k === 'castfail') break;
           const v = remote.views.get(ev.from);
           if (ev.to === me.id || (v && Math.hypot(v.x - player.x, v.y - player.y) < 2500)) {
             const l = castLine(ev, the);

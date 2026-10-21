@@ -26,8 +26,8 @@
 - [x] 4.3 The import now carries the spell lines of the Midgard classes (`line_spell`) and each spell's power; the spellbook is built from the specs a class trains (shared lines plus lines made for the class), sent as `book`, with a "You learn ..." line for new spells.
 - [x] 4.4 `cast` request: checks (known, supported, ready, target, power, range), cast time, interrupts by damage and by moving, recast and power spent on landing (`internal/server/world/pcasting.go`, tests in `pcasting_test.go`).
 - [x] 4.5 First slice of spell types applied for players: the creature engine's (direct damage, bolt, heal, damage over time, slow, mesmerize, stun, life drain) plus stat and armour buffs and damage add; unsupported types stay in the book marked and refuse a cast. `cmd/parity` counts class spell types by what a player can cast.
-- [ ] 4.6 Build the SPELLS window from the stock layout, spells on the quickbar and a cast bar, with the built-in panel as the fallback. Check with `web/data/ui/` moved aside.
-- [ ] 4.7 Cast a heal, a bolt and a buff in the browser against a real creature and a group member.
+- [x] 4.6 SPELLS window from the stock `Stats_Spec_Abil` layout (the menu button is on), a spell bar (Shift+1 to Shift+8, kept in the browser per character), a cast bar and the power bar; without `web/data/ui/` a plain panel (P) does the same. `web/spells.js`, `web/spells.test.mjs`.
+- [x] 4.7 Cast a heal, a bolt and the range refusal in the browser (see findings); buffs and a group spell are covered by `TestBuffsRaiseTheSheetAndExpire` and `TestGroupSpellReachesMembers`.
 
 ## 5. Left from the last change
 

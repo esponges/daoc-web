@@ -9,11 +9,11 @@ import { coins } from './pack.js';
 const MENU_EVENTS = {
   ToggleStatsInventory: 'inventory', ToggleStatsGroup: 'group',
   ToggleStatsAttributes: 'attributes', ToggleStatsSkills: 'skills', ToggleStatsStyles: 'styles',
+  ToggleStatsSpells: 'spells',
 };
 
 // Why a button without a window is greyed.
 export const MENU_WHY = {
-  ToggleStatsSpells: 'Players cannot cast spells yet, and a Warrior has none.',
   ToggleJournal: 'The journal is not built yet: there are no quests.',
   ToggleMap: 'The map is not built yet.',
   ShowWarMap: 'The war map is not built yet: there is no realm war.',

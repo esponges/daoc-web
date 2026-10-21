@@ -55,6 +55,7 @@ export function spellLine(ev, me, the) {
   const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
   switch (ev.k) {
     case 'spell':
+      if (ev.n < 0 && !toMe) return { text: 'Your ' + ev.x + ' heals ' + the(ev.to) + ' for ' + -ev.n + ' hit points.', cls: 'heal' };
       if (ev.n < 0) return toMe ? { text: (mine ? 'Your ' + ev.x + ' heals you' : cap(the(ev.from)) + ' heals you') + ' for ' + -ev.n + ' hit points.', cls: 'heal' } : null;
       if (toMe) return { text: (ev.from ? cap(the(ev.from)) + "'s " : '') + ev.x + ' hits you for ' + (ev.n || 0) + ' damage!', cls: 'spell-in' };
       return { text: 'Your ' + ev.x + ' hits ' + the(ev.to) + ' for ' + (ev.n || 0) + ' damage!', cls: 'spell' };

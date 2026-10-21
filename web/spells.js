@@ -1,0 +1,185 @@
+// The spellbook on the client: what the SPELLS window lists, the spell bar's
+// slots and the cast bar. The pure parts are tested by spells.test.mjs; the
+// DOM parts are the built-in panels used when the converted interface is
+// absent, and the bar and cast bar in both cases.
+
+// spellsView is the spells window's content: for each spec line a header and
+// its spells, each with its level, power and cast time. A spell the server
+// cannot cast yet is greyed (on: false) and cannot be dragged.
+export function spellsView(book) {
+  const rows = [];
+  for (const line of (book && book.lines) || []) {
+    rows.push({ header: line.nm });
+    for (const s of line.sp) {
+      const cast = s.ct ? s.ct + 's' : 'instant';
+      rows.push({
+        id: s.id,
+        text: s.nm + '  ' + s.lv + ', ' + s.pw + ' pw, ' + cast + (s.ok ? '' : ' (not yet)'),
+        on: !!s.ok,
+        draggable: !!s.ok,
+        drag: 'spell:' + s.id,
+        spell: s,
+      });
+    }
+  }
+  return rows;
+}
+
+// findSpell returns a spell of the book by id, or null.
+export function findSpell(book, id) {
+  for (const line of (book && book.lines) || []) {
+    for (const s of line.sp) if (s.id === id) return s;
+  }
+  return null;
+}
+
+// spellDragId reads the spell id out of what a spell row carries when it is
+// dragged ("spell:<id>"), or null for anything else.
+export function spellDragId(data) {
+  const m = /^spell:(\d+)$/.exec(data || '');
+  return m ? Number(m[1]) : null;
+}
+
+export const SPELL_SLOTS = 8;
+
+// slotsFor keeps a bar's slot assignments to spells the character still has:
+// a slot holds a spell id, or 0.
+export function slotsFor(saved, book) {
+  const out = new Array(SPELL_SLOTS).fill(0);
+  (saved || []).slice(0, SPELL_SLOTS).forEach((id, i) => { if (findSpell(book, id)) out[i] = id; });
+  return out;
+}
+
+// assignSlot puts a spell into a slot (the first free one when slot is
+// negative), taking it out of any other, and returns the new slots.
+export function assignSlot(slots, id, slot = -1) {
+  const out = slots.map((x) => (x === id ? 0 : x));
+  if (slot < 0) slot = out.findIndex((x) => x === 0);
+  if (slot >= 0 && slot < SPELL_SLOTS) out[slot] = id;
+  return out;
+}
+
+// castBar is the state of the cast bar at a time: null when nothing is being
+// cast, else the spell's name and how far along it is, 0 to 1. A cast starts
+// on the player's own cast event and ends with its interrupt or failure, or
+// when its time has run.
+export function castBar(cast, nowS) {
+  if (!cast) return null;
+  const f = cast.dur > 0 ? (nowS - cast.start) / cast.dur : 1;
+  if (f >= 1.05) return null;
+  return { name: cast.name, f: Math.max(0, Math.min(1, f)) };
+}
+
+// castEventEffect says what a cast-related event does to the player's own cast:
+// 'start' (with the spell's name and time), 'end', or null when it is not theirs.
+export function castEventEffect(ev, me) {
+  if (ev.from !== me) return null;
+  switch (ev.k) {
+    case 'cast': return { what: 'start', name: ev.x, dur: ev.dur || 0 };
+    case 'interrupt': case 'castfail': return { what: 'end', failed: true };
+  }
+  return null;
+}
+
+// castLine is the log line for the player's own cast beginning, failing or
+// being interrupted; null for anything else.
+export function ownCastLine(ev, me) {
+  const e = castEventEffect(ev, me);
+  if (!e) return null;
+  if (e.what === 'start') return { text: 'You begin casting ' + e.name + '.', cls: 'spell' };
+  return ev.k === 'interrupt' ? { text: 'Your spell is interrupted.', cls: 'miss' } : { text: 'Your spell fails.', cls: 'miss' };
+}
+
+// --- the built-in panels ---
+
+const el = (doc, tag, cls, text) => {
+  const e = doc.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+};
+
+// createSpellPanel builds the plain spells panel: the book's lines with each
+// spell; a click casts it, a drag (or shift-click) puts it on the spell bar.
+//   onCast(id)  onAssign(id)
+export function createSpellPanel(doc, { onCast, onAssign } = {}) {
+  const panel = el(doc, 'div', 'panel spells');
+  panel.append(el(doc, 'h2', '', 'Spells'));
+  const list = el(doc, 'div', 'spell-list');
+  panel.appendChild(list);
+  return {
+    el: panel,
+    toggle(on = !panel.classList.contains('open')) { panel.classList.toggle('open', on); },
+    isOpen: () => panel.classList.contains('open'),
+    render(book) {
+      list.replaceChildren();
+      const rows = spellsView(book);
+      if (!rows.length) list.appendChild(el(doc, 'div', 'empty', 'You have no spells.'));
+      for (const r of rows) {
+        if (r.header) { list.appendChild(el(doc, 'h3', '', r.header)); continue; }
+        const d = el(doc, 'div', 'spell' + (r.on ? '' : ' off'), r.text);
+        if (r.on) {
+          d.draggable = true;
+          d.title = 'Click to cast at your target · shift-click or drag onto the spell bar';
+          d.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', r.drag));
+          d.addEventListener('click', (e) => (e.shiftKey ? onAssign?.(r.id) : onCast?.(r.id)));
+        } else d.title = 'This kind of spell does not work yet.';
+        list.appendChild(d);
+      }
+    },
+  };
+}
+
+// createSpellBar builds the row of spell slots (Shift+1 to Shift+8). set(slots,
+// book) refills it; a slot's click casts, and a spell dropped on a slot is
+// assigned to it.
+//   onCast(id)  onAssign(id, slot)  onClear(slot)
+export function createSpellBar(doc, { onCast, onAssign, onClear } = {}) {
+  const bar = el(doc, 'div', 'stylebar spellbar');
+  return {
+    el: bar,
+    set(slots, book) {
+      bar.replaceChildren();
+      const any = slots.some(Boolean);
+      bar.style.display = any ? '' : 'none';
+      slots.forEach((id, i) => {
+        const s = id ? findSpell(book, id) : null;
+        const b = el(doc, 'button', 'style' + (s ? '' : ' empty'));
+        b.dataset.slot = i;
+        b.append(el(doc, 'span', 'key', '⇧' + (i + 1)), el(doc, 'span', 'nm', s ? s.nm : ''), el(doc, 'span', 'cost', s ? s.pw + ' pw' : ''));
+        if (s) {
+          b.title = s.nm + ' (level ' + s.lv + ') · right-click to remove';
+          b.addEventListener('click', () => onCast?.(id));
+          b.addEventListener('contextmenu', (e) => { e.preventDefault(); onClear?.(i); });
+        }
+        b.addEventListener('dragover', (e) => e.preventDefault());
+        b.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const sid = spellDragId(e.dataTransfer?.getData('text/plain'));
+          if (sid) onAssign?.(sid, i);
+        });
+        bar.appendChild(b);
+      });
+    },
+  };
+}
+
+// createCastBar builds the bar that fills while the player casts. update(cast,
+// nowS) takes the cast state castBar reads.
+export function createCastBar(doc) {
+  const box = el(doc, 'div', 'castbar');
+  const name = el(doc, 'span', 'nm');
+  const fill = el(doc, 'div', 'fill');
+  box.append(fill, name);
+  box.style.display = 'none';
+  return {
+    el: box,
+    update(cast, nowS) {
+      const s = castBar(cast, nowS);
+      box.style.display = s ? '' : 'none';
+      if (!s) return;
+      name.textContent = s.name;
+      fill.style.width = (100 * s.f).toFixed(1) + '%';
+    },
+  };
+}

@@ -16,6 +16,7 @@ import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
+import { createSpellPanel, createSpellBar, createCastBar, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, SPELL_SLOTS } from './spells.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -103,7 +104,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     root.appendChild(summary.el);
     // The menu bar across the top carries the experience and the money, so
     // the separate experience window is not needed.
-    charWins = createStockCharWindows(document, stock);
+    charWins = createStockCharWindows(document, stock, { onCast: (id) => castSpell(id), onAssign: (id) => setSpellSlot(id, -1) });
     root.appendChild(charWins.el);
     menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); else charWins.toggle(a); } });
     Object.assign(menuBar.el.style, { position: 'fixed', left: '50%', top: '0px', marginLeft: '-400px', zIndex: 12 });
@@ -151,7 +152,61 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       bar.appendChild(b);
     });
   };
-  net.on.bar = (slots) => { barSlots = slots; renderBar(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso); };
+  net.on.bar = (slots) => { barSlots = slots; renderBar(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book); };
+  // --- spells ---
+  // The spell bar (Shift+1 to Shift+8) and the cast bar; the plain panel stands in
+  // for the stock SPELLS window when the converted interface is absent.
+  const slotKey = () => 'spellbar:' + (net.me && net.me.name);
+  let spellSlots = new Array(SPELL_SLOTS).fill(0);
+  const loadSlots = () => {
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem(slotKey()) || '[]'); } catch { /* private window: no memory */ }
+    spellSlots = slotsFor(saved, net.book);
+  };
+  const castSpell = (id) => {
+    const t = getTarget ? getTarget() : null;
+    net.cast(id, t && !t.dead ? t.id : 0);
+  };
+  const spellBar = createSpellBar(document, {
+    onCast: castSpell,
+    onAssign: (id, slot) => setSpellSlot(id, slot),
+    onClear: (slot) => { spellSlots[slot] = 0; saveSlots(); },
+  });
+  root.appendChild(spellBar.el);
+  const castBox = createCastBar(document);
+  root.appendChild(castBox.el);
+  const saveSlots = () => {
+    try { localStorage.setItem(slotKey(), JSON.stringify(spellSlots)); } catch { /* not remembered */ }
+    spellBar.set(spellSlots, net.book);
+  };
+  function setSpellSlot(id, slot) {
+    if (!findSpell(net.book, id)) return;
+    spellSlots = assignSlot(spellSlots, id, slot);
+    saveSlots();
+  }
+  let plainSpells = null;
+  if (!stock) {
+    plainSpells = createSpellPanel(document, { onCast: castSpell, onAssign: (id) => setSpellSlot(id, -1) });
+    root.appendChild(plainSpells.el);
+  }
+  const toggleSpells = () => {
+    if (charWins) { charWins.toggle('spells'); return; }
+    plainSpells.toggle();
+    plainSpells.render(net.book);
+  };
+  net.on.book = () => {
+    loadSlots();
+    spellBar.set(spellSlots, net.book);
+    if (plainSpells) plainSpells.render(net.book);
+    if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book);
+  };
+  let cast = null; // the spell being cast: { name, start, dur }, in seconds of the page's clock
+  const castEvent = (ev) => {
+    const e = castEventEffect(ev, net.me.id);
+    if (!e) return;
+    cast = e.what === 'start' ? { name: e.name, start: performance.now() / 1000, dur: e.dur } : null;
+  };
+
   // Abilities used on a target (Guard, Protect, Intercept, Engage) sit beside the styles.
   const abBar = el('div', 'stylebar abilities');
   root.appendChild(abBar);
@@ -406,7 +461,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     }
     sheetPanel.append(closeButton(sheetPanel));
   };
-  net.on.stats = () => { renderAbilities(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso); if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
+  net.on.stats = () => { renderAbilities(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book); if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
   // C opens the stock attributes window when the converted interface is there, the plain sheet when not.
   const toggleSheet = () => {
     if (charWins) { charWins.toggle('attributes'); return; }
@@ -498,6 +553,12 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (release) release.update(me.dead, performance.now() / 1000);
     else dead.classList.toggle('on', me.dead);
     if (stockBar) stockBar.update(me);
+    castBox.update(cast, performance.now() / 1000);
+    spellBar.el.querySelectorAll('.style').forEach((b) => {
+      const id = spellSlots[Number(b.dataset.slot)];
+      const s = id && findSpell(net.book, id);
+      b.classList.toggle('poor', !!s && me.power < s.pw);
+    });
     bar.querySelectorAll('.style').forEach((b) => {
       const i = Number(b.dataset.slot);
       b.classList.toggle('ready', me.avail.includes(i));
@@ -520,7 +581,14 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'Enter') { openChat(); e.preventDefault(); return true; }
     if (e.code === 'Slash') { openChat('/'); e.preventDefault(); return true; }
     if (e.code === 'KeyI' && !e.repeat) { togglePack(); return true; }
+    if (e.code === 'KeyP' && !e.repeat) { toggleSpells(); return true; } // the spellbook
     if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera
+    // Shift+1 to Shift+8 cast the spell on that slot of the spell bar.
+    const sn = /^Digit([1-8])$/.exec(e.code);
+    if (sn && e.shiftKey) {
+      if (!e.repeat && spellSlots[Number(sn[1]) - 1]) castSpell(spellSlots[Number(sn[1]) - 1]);
+      return true;
+    }
     const i = BAR_KEYS.indexOf(e.code);
     if (i >= 0 && !e.repeat) { net.style(i); return true; }
     return false;
@@ -531,8 +599,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   if (net.inv.items.length) renderInv();
   if (net.corpse) renderLoot(net.corpse);
   if (net.stats) net.on.stats(net.stats);
+  if (net.book.lines.length) net.on.book();
 
   // The compass follows the camera; the viewer gives its heading each frame.
   const setHeading = (deg) => { if (compassWin) compassWin.setHeading(deg); };
-  return { update, setHeading, key, say, get typing() { return chatApi.typing; }, renderLoot, togglePack, toggleSheet, toggleGroup };
+  return { update, setHeading, key, say, castEvent, toggleSpells, get typing() { return chatApi.typing; }, renderLoot, togglePack, toggleSheet, toggleGroup };
 }

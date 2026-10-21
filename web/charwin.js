@@ -5,6 +5,7 @@
 
 import { buildWindow, place, text } from './uiwin.js';
 import { STAT_NAMES } from './sheet.js';
+import { spellsView } from './spells.js';
 
 // --- what each window shows (pure, so node can test it) ---
 
@@ -89,7 +90,11 @@ function listRows(doc, data, win, id, rows) {
       d.draggable = true;
       d.style.cursor = 'grab';
       d.title = 'Drag onto the style bar';
-      d.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', 'style:' + row.id));
+      d.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', row.drag || 'style:' + row.id));
+    }
+    if (row.onClick) {
+      d.style.cursor = 'pointer';
+      d.addEventListener('click', row.onClick);
     }
     box.appendChild(d);
   }
@@ -99,17 +104,18 @@ function listRows(doc, data, win, id, rows) {
 // createStockCharWindows builds the attributes, skills and styles windows,
 // hidden. update(me, stats, bar, also) refills them; toggle(name) opens or
 // closes one ("attributes", "skills", "styles").
-export function createStockCharWindows(doc, data) {
+export function createStockCharWindows(doc, data, { onCast, onAssign } = {}) {
   const attrib = buildWindow(doc, data, 'StatsAttributes', { captions: true });
   const skills = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true });
   const styles = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true });
-  skills.id = styles.id = 'Stats_Spec_Abil';
+  const spells = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true });
+  skills.id = styles.id = spells.id = 'Stats_Spec_Abil';
   // The styles window reuses the layout: its first list holds the styles that
   // can be used now, the second those learned but not usable.
-  const wins = { attributes: attrib, skills, styles };
+  const wins = { attributes: attrib, skills, styles, spells };
   const root = doc.createElement('div');
-  const open = { attributes: false, skills: false, styles: false };
-  const place3 = { attributes: 0, skills: 200, styles: 400 };
+  const open = { attributes: false, skills: false, styles: false, spells: false };
+  const place3 = { attributes: 0, skills: 200, styles: 400, spells: 600 };
   for (const [name, w] of Object.entries(wins)) {
     Object.assign(w.el.style, { position: 'fixed', left: '12px', top: '60px', marginLeft: place3[name] + 'px', zIndex: 14, display: 'none' });
     root.appendChild(w.el);
@@ -118,7 +124,7 @@ export function createStockCharWindows(doc, data) {
   let last = {};
 
   function render() {
-    const { me, st, bar, also } = last;
+    const { me, st, bar, also, book } = last;
     const a = attributesView(me, st);
     cap(attrib, 'stats_name', a.name);
     cap(attrib, 'stats_level', a.level);
@@ -142,6 +148,12 @@ export function createStockCharWindows(doc, data) {
     for (const old of styles.el.querySelectorAll('.listrows')) old.remove();
     listRows(doc, data, styles, '1000', v.usable);
     listRows(doc, data, styles, '1001', v.locked);
+
+    // The spells: the book by spec line; a click casts at the target, shift-click or a drag puts it on the spell bar.
+    cap(spells, 'stats_spec_points', '');
+    for (const old of spells.el.querySelectorAll('.listrows')) old.remove();
+    const sv = spellsView(book).map((r) => (r.id ? { ...r, onClick: (e) => (e.shiftKey ? onAssign?.(r.id) : onCast?.(r.id)) } : r));
+    listRows(doc, data, spells, '1000', sv.length ? sv : [{ header: 'You have no spells.' }]);
   }
 
   // The attributes window's additional-info list box.
@@ -169,8 +181,8 @@ export function createStockCharWindows(doc, data) {
       wins[name].el.style.display = on ? 'block' : 'none';
       if (on) render();
     },
-    update(me, st, bar, also) {
-      last = { me, st, bar, also };
+    update(me, st, bar, also, book) {
+      last = { me, st, bar, also, book };
       if (Object.values(open).some(Boolean)) render();
     },
   };
