@@ -1,5 +1,15 @@
 # daoc-web
 
+# Most Importantly
+I trust you and your proposed work. Any work that can be verified by you, it should not be
+delegated to me for retest. I'll go with your suggestions 9 of 10 times. So unless you really
+need to hear about me is something you're not certain at all.
+
+# The GOAL
+This is not a POC anymore. We want to have the closest version to 1.65 version playable
+via web. For the moment this is just a close friend version. Don't worry about resources
+required to scale the application (servers, CDN's, replicas, etc). That's future work
+
 A fan project that rebuilds Dark Age of Camelot's Midgard in the browser. It
 started as a set of Go converters that read a local DAoC install and a WebGL2
 viewer for the result, and is now a multiplayer game: a Go server that owns the
