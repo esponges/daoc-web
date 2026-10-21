@@ -94,3 +94,13 @@ func TestFightsAtLevelOne(t *testing.T) {
 		})
 	}
 }
+
+// Scenario "Ordinary kills" of loot-and-release: the generic chance grows with
+// level from 22 and stops at 40.
+func TestGenericDropPercent(t *testing.T) {
+	for _, c := range []struct{ level, want int }{{0, 22}, {1, 22}, {3, 23}, {11, 27}, {37, 40}, {50, 40}} {
+		if got := GenericDropPercent(c.level); got != c.want {
+			t.Errorf("level %d: %d%%, want %d%%", c.level, got, c.want)
+		}
+	}
+}

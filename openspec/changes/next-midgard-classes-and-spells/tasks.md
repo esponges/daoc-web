@@ -1,10 +1,10 @@
 ## 1. Playtest findings
 
 - [x] 1.1 Show the attack state on the quickbar or target window, and stop a repeat press of the attack key from silently cancelling. Verify in the browser.
-- [ ] 1.2 Look for a source on 1.65's attack toggle and auto-walk to a target. Adopt it (add to CLAUDE.md and README sources) and implement, or record in `findings.md` that none was found and behaviour stays.
-- [ ] 1.3 Look for a source on night spawns appearing at dusk. Same rule as 1.2.
+- [x] 1.2 Look for a source on 1.65's attack toggle and auto-walk to a target. Adopt it (add to CLAUDE.md and README sources) and implement, or record in `findings.md` that none was found and behaviour stays.
+- [x] 1.3 Look for a source on night spawns appearing at dusk. Same rule as 1.2.
 - [x] 1.4 Pack-to-pack `equip` is the pack's drag-to-rearrange (`web/ui.js` onMove), so it is kept, not rejected; a server test (`TestPackSlotsRearrange`) pins it. Finding 5 was a script mix-up, not a bug.
-- [ ] 1.5 Loot by creature level and kind (`loot-and-release` delta): search once for a 1.65 source, else add the provisional table to `rules`, register it, write the rule-book scenarios and tests, and check a batch of simulated kills.
+- [x] 1.5 Loot by creature level (`loot-and-release` delta): no 1.65 source found for the generators, so `rules.GenericDropPercent` (22% at level 1 rising to 40%) is registered as provisional with a table test. Fitting items to the creature kind needs item-kind data the import lacks, so it is left out and the spec says so.
 
 ## 2. Gender
 

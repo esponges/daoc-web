@@ -713,7 +713,7 @@ func (z *Zone) rollLoot(n *NPC) []lootItem {
 		}
 		out = append(out, lootItem{ID: e.Item, Count: cnt})
 	}
-	if len(out) == 0 && z.rng.Float64() < 0.22 {
+	if len(out) == 0 && z.rng.Intn(100) < rules.GenericDropPercent(n.Level) {
 		if id := cat.randomDrop(z.rng, n.Level); id != "" {
 			out = append(out, lootItem{ID: id, Count: 1})
 		}
