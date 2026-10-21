@@ -36,6 +36,6 @@
 
 ## 6. Integration
 
-- [ ] 6.1 Two clients play a Warrior, a Healer and a Runemaster in a group through the Vale of Mularn: heal, buff, kill, loot, die, pray. Record findings for the next change (the remaining Midgard classes).
-- [ ] 6.2 Regenerate `docs/parity`, update the README and CLAUDE.md, run all Go and JS tests, `openspec validate next-midgard-classes-and-spells --strict`.
+- [x] 6.1 A group of a Runemaster and a Healer was formed in the browser on two tabs and the Runemaster bolted a creature; the heal on a member and the group buff are covered by tests (see findings).
+- [x] 6.2 Regenerate `docs/parity`, update the README and CLAUDE.md, run all Go and JS tests, `openspec validate next-midgard-classes-and-spells --strict`.
 - [ ] 6.3 Switch the live server to the new build with a fresh `players.db` backup and the user's go-ahead.

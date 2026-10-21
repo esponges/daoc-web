@@ -61,3 +61,21 @@ Things this showed:
 - **Vault:** Idonna's window opened beside the stock pack.
 - **Death:** a level 10 Berserker standing in the svartalf camp was killed in seconds by level 14 hunters hitting for 74 to 79, lost 1 constitution and woke at the bind point.
 - **Fights are done in simulation.** The shared screen runs at one to four frames a second, so reaching a creature on foot takes minutes; `TestMeleeClassesFightWithStyles` and `TestRealCasterCreatureHurts` fight on the real data instead.
+
+## 6.1 A group in the browser (2026-10-21)
+
+Two tabs on the scratch server: a Runemaster and a Healer, both level 1, in East Svealand.
+- **Group:** `/invite Healina` brought the stock invitation on the Healer's screen; accepting showed both in the stock group window, the leader starred, with class and level.
+- **Combat:** the Runemaster teleported to three sveawolf cubs and cast Lesser Sigil of Ruin (6 damage); the cubs killed the level 1 caster before the Healer could heal them, and the group window showed "dead" beside their name. That is the level 1 melee-against-a-caster danger the rules give (cubs hit for 8 to 9 against a Runemaster with 30-odd hit points); a real group would pull one at a time, and 1.65's casters had the same fragility.
+- **Not seen:** a heal on another player, a group buff and the Shaman in the browser. The server tests cover the heal on a group member's target and the group buff (`TestGroupSpellReachesMembers`); a heal on a targeted member goes through the same `castTarget` as a heal on oneself, seen above.
+
+What felt unlike 1.65 for the next change (the remaining classes and a real playtest):
+1. **Casters die to the first pack.** No pets, no Bladeturn, no armour for cloth casters yet.
+2. **Spell damage and heals do not scale with the spec** (data base values only).
+3. **The healed amount reported is the spell's, not what was restored.**
+4. **No line of sight, no concentration for buffs, no resurrection** (Reception from Valhalla is marked not yet).
+5. **Spells that need a corpse, a pet or a group of kinds the slice lacks** show greyed in the book.
+
+## 6.2 Checks (2026-10-21)
+
+`go test ./...`, `go vet`, every `web/*.test.mjs`, the parity census (`docs/parity`: class spell types 13 of 73, creature kinds 16 of 110, 18 provisional rules) and `openspec validate --strict` pass. `TestRideCrossesAZoneBorder` failed once when every package ran in parallel on a loaded machine and passed in all three runs alone and in the package; it is timing-sensitive and was not changed.

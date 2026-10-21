@@ -94,7 +94,7 @@
         "Spiritmaster",
         "Thane"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Heal",
@@ -106,7 +106,7 @@
         "Shaman",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DamageOverTime",
@@ -116,7 +116,7 @@
         "Shadowblade",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DamageAdd",
@@ -132,7 +132,7 @@
         "Spiritmaster",
         "Thane"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Mesmerize",
@@ -146,7 +146,7 @@
         "Skald",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SpeedDecrease",
@@ -161,7 +161,7 @@
         "Skald",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "StrengthConstitutionBuff",
@@ -177,7 +177,7 @@
         "Spiritmaster",
         "Thane"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SummonMinion",
@@ -201,7 +201,7 @@
         "Shaman",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Bolt",
@@ -210,7 +210,7 @@
         "Runemaster",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "BaseArmorFactorBuff",
@@ -225,7 +225,7 @@
         "Shaman",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DamageShield",
@@ -258,7 +258,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SpeedEnhancement",
@@ -325,7 +325,7 @@
       "classes": [
         "Healer"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Disease",
@@ -407,7 +407,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "UnbreakableSpeedDecrease",
@@ -1359,7 +1359,7 @@
     {
       "name": "DOL.GS.Trainer.BerserkerTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.BonedancerTrainer",
@@ -1369,7 +1369,7 @@
     {
       "name": "DOL.GS.Trainer.HealerTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.HunterTrainer",
@@ -1379,7 +1379,7 @@
     {
       "name": "DOL.GS.Trainer.RunemasterTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.ShadowbladeTrainer",
@@ -1389,7 +1389,7 @@
     {
       "name": "DOL.GS.Trainer.ShamanTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.SkaldTrainer",
@@ -1434,7 +1434,7 @@
     {
       "name": "DOL.GS.Trainer.SavageTrainer",
       "uses": 7,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.RainbowSpriteGreen",
@@ -1449,7 +1449,7 @@
     {
       "name": "DOL.GS.Trainer.SeerTrainer",
       "uses": 5,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.VikingTrainer",
@@ -1464,7 +1464,7 @@
     {
       "name": "DOL.GS.Trainer.MysticTrainer",
       "uses": 4,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.GameBountyMerchant",
@@ -1863,6 +1863,10 @@
       "status": "reference"
     },
     {
+      "id": "character.class-midgard",
+      "status": "provisional"
+    },
+    {
       "id": "character.creation",
       "status": "documented"
     },
@@ -1995,6 +1999,10 @@
       "status": "documented"
     },
     {
+      "id": "loot.generic",
+      "status": "provisional"
+    },
+    {
       "id": "loot.money",
       "status": "provisional"
     },
@@ -2067,6 +2075,14 @@
       "status": "reference"
     },
     {
+      "id": "power.pool",
+      "status": "provisional"
+    },
+    {
+      "id": "power.regen",
+      "status": "provisional"
+    },
+    {
       "id": "spec.abilities",
       "status": "documented"
     },
@@ -2089,6 +2105,10 @@
     {
       "id": "spell.bolt-block",
       "status": "reference"
+    },
+    {
+      "id": "spell.buff",
+      "status": "provisional"
     },
     {
       "id": "spell.damage",
@@ -2145,7 +2165,7 @@
   ],
   "rulesByStatus": {
     "documented": 25,
-    "provisional": 13,
+    "provisional": 18,
     "reference": 43
   },
   "placements": 29932,

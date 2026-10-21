@@ -129,7 +129,7 @@ not show that a window looks right. Check the fallback by temporarily moving
 - **Specs drive work.** Changes live in `openspec/changes/<name>/` (proposal,
   specs, design, tasks); `/opsx:propose`, `/opsx:apply` and `/opsx:archive`
   run them. Archived changes sync into `openspec/specs/`. Open now:
-  `midgard-playable`.
+  `next-midgard-classes-and-spells` (`midgard-playable` is complete and waits to be archived).
 - **Game rules have a rule book.** Every mechanic the server decides has a
   `rules-<mechanic>` spec giving the formula in our words, its sources, a status
   (documented, reference or provisional) and worked examples. Each numbered

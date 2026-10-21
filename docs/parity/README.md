@@ -7,17 +7,17 @@ How much of classic 1.65 Midgard the server implements, measured against the com
 ```
 Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    10 of  15 implemented (2316 of 2585 placements x spells)
-  Class spell types        0 of  73 implemented (0 of 987 spells)
+  Class spell types       13 of  73 implemented (529 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
   Abilities               15 of  30 implemented (66 of 100 grants)
-  Creature kinds           9 of 110 implemented (29019 of 29932 placements, 7 kinds not classic)
+  Creature kinds          16 of 110 implemented (29067 of 29932 placements, 7 kinds not classic)
   quests                 81, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         32 gaps in 10 bands
-  rules: 25 documented, 43 reference, 13 provisional
+  rules: 25 documented, 43 reference, 18 provisional
 ```
 
 ## Creature spell types
@@ -44,26 +44,26 @@ Midgard (regions 100, 101, 151): 29932 placements
 
 | name | spells | implemented |
 | --- | --- | --- |
-| DirectDamage (Bonedancer, Mystic, Runemaster, Shaman, Skald, Spiritmaster, Thane) | 100 |  |
-| Heal (Bonedancer, Healer, Seer, Shaman, Spiritmaster) | 75 |  |
-| DamageOverTime (Bonedancer, Shadowblade, Shaman) | 56 |  |
-| DamageAdd (Bonedancer, Healer, Mystic, Runemaster, Seer, Shaman, Skald, Spiritmaster, Thane) | 46 |  |
-| Mesmerize (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Skald, Spiritmaster) | 44 |  |
-| SpeedDecrease (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Shaman, Skald, Spiritmaster) | 40 |  |
-| StrengthConstitutionBuff (Bonedancer, Healer, Hunter, Mystic, Runemaster, Seer, Shaman, Spiritmaster, Thane) | 40 |  |
+| DirectDamage (Bonedancer, Mystic, Runemaster, Shaman, Skald, Spiritmaster, Thane) | 100 | yes |
+| Heal (Bonedancer, Healer, Seer, Shaman, Spiritmaster) | 75 | yes |
+| DamageOverTime (Bonedancer, Shadowblade, Shaman) | 56 | yes |
+| DamageAdd (Bonedancer, Healer, Mystic, Runemaster, Seer, Shaman, Skald, Spiritmaster, Thane) | 46 | yes |
+| Mesmerize (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Skald, Spiritmaster) | 44 | yes |
+| SpeedDecrease (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Shaman, Skald, Spiritmaster) | 40 | yes |
+| StrengthConstitutionBuff (Bonedancer, Healer, Hunter, Mystic, Runemaster, Seer, Shaman, Spiritmaster, Thane) | 40 | yes |
 | SummonMinion (Bonedancer, Mystic, Runemaster, Spiritmaster) | 36 |  |
-| DexterityQuicknessBuff (Bonedancer, Healer, Hunter, Seer, Shaman, Spiritmaster) | 30 |  |
-| Bolt (Runemaster, Shaman) | 29 |  |
-| BaseArmorFactorBuff (Bonedancer, Healer, Hunter, Mystic, Runemaster, Seer, Shaman, Spiritmaster) | 26 |  |
+| DexterityQuicknessBuff (Bonedancer, Healer, Hunter, Seer, Shaman, Spiritmaster) | 30 | yes |
+| Bolt (Runemaster, Shaman) | 29 | yes |
+| BaseArmorFactorBuff (Bonedancer, Healer, Hunter, Mystic, Runemaster, Seer, Shaman, Spiritmaster) | 26 | yes |
 | DamageShield (Healer, Seer, Shaman, Spiritmaster) | 26 |  |
 | DamageSpeedDecrease (Bonedancer, Mystic, Runemaster, Spiritmaster) | 24 |  |
-| Lifedrain (Bonedancer, Mystic, Runemaster, Spiritmaster) | 21 |  |
+| Lifedrain (Bonedancer, Mystic, Runemaster, Spiritmaster) | 21 | yes |
 | SpeedEnhancement (Healer, Hunter, Runemaster, Seer, Shaman, Skald) | 20 |  |
 | CombatSpeedBuff (Healer, Seer, Shaman, Spiritmaster) | 16 |  |
 | CombatSpeedDebuff (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 16 |  |
 | HealthRegenBuff (Healer, Seer, Shaman, Skald) | 16 |  |
 | DirectDamageWithDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 15 |  |
-| Stun (Healer) | 14 |  |
+| Stun (Healer) | 14 | yes |
 | Disease (Shadowblade, Shaman) | 13 |  |
 | OffensiveProc (Shadowblade, Spiritmaster) | 13 |  |
 | StrengthConstitutionDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 |  |
@@ -71,7 +71,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | Charm (Hunter) | 10 |  |
 | Bladeturn (Bonedancer, Mystic, Runemaster, Spiritmaster) | 8 |  |
 | DexterityDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 8 |  |
-| StrengthBuff (Healer, Seer, Shaman) | 8 |  |
+| StrengthBuff (Healer, Seer, Shaman) | 8 | yes |
 | UnbreakableSpeedDecrease (Shadowblade) | 8 |  |
 | Confusion (Bonedancer, Mystic, Runemaster, Spiritmaster) | 7 |  |
 | ConstitutionBuff (Healer, Seer, Shaman) | 7 |  |
@@ -200,13 +200,13 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.OonaUndeadSoldier | 9 |  |
 | DOL.GS.Keeps.GuardStaticArcher | 8 |  |
 | DOL.GS.RainbowSpriteWhite | 8 |  |
-| DOL.GS.Trainer.BerserkerTrainer | 8 |  |
+| DOL.GS.Trainer.BerserkerTrainer | 8 | yes |
 | DOL.GS.Trainer.BonedancerTrainer | 8 |  |
-| DOL.GS.Trainer.HealerTrainer | 8 |  |
+| DOL.GS.Trainer.HealerTrainer | 8 | yes |
 | DOL.GS.Trainer.HunterTrainer | 8 |  |
-| DOL.GS.Trainer.RunemasterTrainer | 8 |  |
+| DOL.GS.Trainer.RunemasterTrainer | 8 | yes |
 | DOL.GS.Trainer.ShadowbladeTrainer | 8 |  |
-| DOL.GS.Trainer.ShamanTrainer | 8 |  |
+| DOL.GS.Trainer.ShamanTrainer | 8 | yes |
 | DOL.GS.Trainer.SkaldTrainer | 8 |  |
 | DOL.GS.Trainer.SpiritmasterTrainer | 8 |  |
 | DOL.GS.Trainer.ThaneTrainer | 8 |  |
@@ -215,13 +215,13 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Keeps.GuardLord | 7 |  |
 | DOL.GS.RainbowSpriteBlue | 7 |  |
 | DOL.GS.RainbowSpriteTan | 7 |  |
-| DOL.GS.Trainer.SavageTrainer | 7 |  |
+| DOL.GS.Trainer.SavageTrainer | 7 | yes |
 | DOL.GS.RainbowSpriteGreen | 6 |  |
 | DOL.GS.Recharger | 5 |  |
-| DOL.GS.Trainer.SeerTrainer | 5 |  |
+| DOL.GS.Trainer.SeerTrainer | 5 | yes |
 | DOL.GS.Trainer.VikingTrainer | 5 | yes |
 | DOL.GS.DPSDummy | 4 |  |
-| DOL.GS.Trainer.MysticTrainer | 4 |  |
+| DOL.GS.Trainer.MysticTrainer | 4 | yes |
 | DOL.GS.GameBountyMerchant | 3 | not classic: a bounty merchant: a later reward shop |
 | DOL.GS.MidgardSITeleporter | 3 |  |
 | DOL.GS.Scripts.OFTeleporter | 3 | not classic: a teleporter: Origin Fantasy convenience travel |
@@ -319,6 +319,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | cast.interrupt | reference |
 | cast.time | reference |
 | character.class | reference |
+| character.class-midgard | provisional |
 | character.creation | documented |
 | character.endurance | provisional |
 | character.health-regen | provisional |
@@ -352,6 +353,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | experience.group-split | provisional |
 | experience.kill | documented |
 | experience.table | documented |
+| loot.generic | provisional |
 | loot.money | provisional |
 | melee.armour | documented |
 | melee.base-damage | documented |
@@ -370,12 +372,15 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | melee.swing-speed | documented |
 | melee.weapon-proc | reference |
 | melee.weapon-skill | reference |
+| power.pool | provisional |
+| power.regen | provisional |
 | spec.abilities | documented |
 | spec.items | documented |
 | spec.migration | documented |
 | spec.points | reference |
 | spec.training | documented |
 | spell.bolt-block | reference |
+| spell.buff | provisional |
 | spell.damage | provisional |
 | spell.damage-over-time | reference |
 | spell.heal | reference |

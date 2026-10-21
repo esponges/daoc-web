@@ -1602,6 +1602,29 @@ After `midgard-playable` it reads:
   (7 kinds are marked not classic: left out on purpose);
 - 25 documented rules, 43 reference and 13 provisional.
 
+After `next-midgard-classes-and-spells` it reads:
+
+- 10 of 15 creature spell types and 13 of the 73 class spell types (529 of 987 spells):
+  a player casts direct damage, bolts, heals, damage over time, slows, mesmerize,
+  stun, life drain, stat and armour buffs and damage add;
+- 16 of 110 creature kinds;
+- 25 documented rules, 43 reference and 18 provisional.
+
+### Classes, spells and power
+
+The creation page offers every race and class pair the data's start table lists
+for Warrior, Berserker, Savage, Healer, Shaman and Runemaster, each with a
+choice of male or female. A caster has a power pool (`rules/power.go`;
+provisional: no public source gave the numbers) and a spellbook built from the
+imported spell lines of the specs they train (`line_spell`, with each spell's
+power as a percentage of the pool). `cast` asks for a spell; the server checks
+that it is known, ready, targeted, in range and paid for, runs the cast time,
+stops it on damage or movement, and applies it with the same engine creatures
+use. The stock SPELLS window (the `Stats_Spec_Abil` layout), a spell bar
+(Shift+1 to Shift+8) and a cast bar draw it; without `web/data/ui/` a plain
+panel (P) does. Not yet: line of sight, concentration, resurrection, pets and
+charm, spell scaling with the spec, and the other Midgard classes.
+
 ### The game's own interface
 
 The menu bar, compass and clock, chat (with its Main and Chat tabs, which also
