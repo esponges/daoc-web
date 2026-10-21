@@ -1606,8 +1606,10 @@ What the install does and does not hold:
 - **The loot window has no layout either.** It is built on the stock frame
   with the stock button; the Release window, menu bar, compass and clock are
   built from their layouts. The compass scrolls a 512-pixel strip by the camera's
-  heading, and the clock shows the player's own time, since the viewer has no
-  day and night.
+  heading, with north the zone's -y (checked against the zone offsets and across
+  a zone border), and the clock shows the server's game time (real time times
+  24, with `DAOC_CLOCK_SHIFT` to move it). What was watched in the browser is in
+  `openspec/changes/midgard-playable/proofs.md`.
 - **Icons are drawn by kind, not by number.** The icon sheets are 10 by 10
   grids of 32-pixel icons, one file per hundred numbers. The imported
   database's icon numbers come from a later client: only about a tenth of

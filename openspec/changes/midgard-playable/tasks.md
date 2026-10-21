@@ -109,10 +109,10 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 ## 16. Tier 3: orientation, the clock face, proofs and icons
 
-- [ ] 16.1 Check the compass against a zone exit of known direction, and fix its north if wrong, using one north for every zone. Verify the `world-orientation` scenarios in the browser, including across a border.
-- [ ] 16.2 Show the server's game time on the stock clock. Verify the `hud-chrome` clock scenario in the browser.
-- [ ] 16.3 Watch a real kill's loot through the stock loot window (one item, then Take all), and a real death through the Release window (release early once, wait once). Record what was seen in this change folder.
-- [ ] 16.4 Do one bounded search for a source that maps the imported icon numbers to this install's sheets, trying it on `Two Fists` (105, sheet 636) and `Bloodletter` (60, sheet 505). Adopt it if it works; otherwise record that none was found.
+- [x] 16.1 Check the compass against a zone exit of known direction, and fix its north if wrong, using one north for every zone. Verify the `world-orientation` scenarios in the browser, including across a border.
+- [x] 16.2 Show the server's game time on the stock clock. Verify the `hud-chrome` clock scenario in the browser.
+- [x] 16.3 Watch a real kill's loot through the stock loot window (one item, then Take all), and a real death through the Release window (release early once, wait once). Record what was seen in this change folder.
+- [x] 16.4 Do one bounded search for a source that maps the imported icon numbers to this install's sheets, trying it on `Two Fists` (105, sheet 636) and `Bloodletter` (60, sheet 505). Adopt it if it works; otherwise record that none was found.
 
 ## 17. Tier 3: carried over from the closed changes
 
