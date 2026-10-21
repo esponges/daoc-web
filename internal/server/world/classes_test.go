@@ -126,3 +126,94 @@ func TestPlayerPower(t *testing.T) {
 		t.Errorf("the Healer's snapshot says %d of %d, want %d of %d", s.Power, s.MaxPower, int(h.power), full)
 	}
 }
+
+// A Berserker and a Savage in the starting kit kill a level 1 creature, and a
+// trained style is used on the way. On the imported data.
+func TestMeleeClassesFightWithStyles(t *testing.T) {
+	cat, err := LoadCatalog(filepath.Join("..", "..", "..", "server", "data", "world.db"))
+	if err != nil {
+		t.Skip("no world store: run go run ./cmd/dbimport")
+	}
+	for _, c := range []struct {
+		class int
+		spec  string
+	}{{rules.ClassBerserker, "Axe"}, {rules.ClassSavage, "Axe"}} {
+		name := rules.Classes[c.class].Name
+		r := newRig(t, wolf(1, 30100, 30000, 1))
+		r.w.Cat = cat
+		n := r.z.npcs[0]
+		n.Aggro, n.Roam = 0, 0
+		p := r.player("Fighter", 10, 30000, 30000, false)
+		p.Char.Class = c.class
+		p.Char.Specs = map[string]int{c.spec: 4}
+		if err := r.w.GiveStarterKit(p.Char); err != nil {
+			t.Fatal(err)
+		}
+		r.w.loadInventory(p)
+		r.w.recalc(p)
+		r.z.buildBar(p)
+		if p.weapon == nil {
+			t.Fatalf("%s wields nothing from the kit", name)
+		}
+		if len(p.bar) == 0 {
+			t.Fatalf("%s has no styles on the bar after training %s to 4", name, c.spec)
+		}
+		p.Body.Yaw = angleTo(p.Body.X, p.Body.Y, n.Body.X, n.Body.Y)
+		r.z.SetTarget(p, n.ID)
+		r.z.SetAttack(p, true)
+		styled := false
+		for i := 0; i < 40*TickRate && !n.dead(); i++ {
+			if ok, _ := r.z.styleReady(p, &p.bar[0]); ok && p.pending < 0 {
+				r.z.RequestStyle(p, 0)
+			}
+			r.z.Tick()
+			styled = styled || p.lastStyle != 0
+		}
+		if !n.dead() {
+			t.Errorf("%s did not kill a level 1 creature in 40 seconds (it has %d of %d)", name, n.HP, n.MaxHP)
+		}
+		if !styled {
+			t.Errorf("%s never landed a style", name)
+		}
+	}
+}
+
+// A svartalf chanter of the imported data casts Gleam Blast at a Healer who
+// is fought.
+func TestRealCasterCreatureHurts(t *testing.T) {
+	cat, err := LoadCatalog(filepath.Join("..", "..", "..", "server", "data", "world.db"))
+	if err != nil {
+		t.Skip("no world store: run go run ./cmd/dbimport")
+	}
+	sp := Spawn{ID: 1, Name: "svartalf chanter", Model: 622, X: 30800, Y: 30000, Z: 5000, Level: 14, Size: 50, Speed: 191, Template: 20008,
+		RespawnS: 30, AggroLevel: 1, AggroRange: 800}
+	r := newRig(t, sp)
+	r.w.Cat = cat
+	n := r.z.npcs[0]
+	n.learnSpells(cat)
+	if len(n.spells) == 0 {
+		t.Fatal("the chanter knows no spell the server can cast")
+	}
+	p := r.player("Healer", 10, 30000, 30000, false)
+	p.Char.Class = rules.ClassHealer
+	p.powerSet = false
+	r.w.recalc(p)
+	hp := p.hp
+	n.engage(p, r.z)
+	var blast bool
+	for i := 0; i < 20*TickRate && !blast; i++ {
+		r.z.Tick()
+		for _, s := range snaps(p) {
+			for _, e := range s.Ev {
+				blast = blast || (e.K == "spell" && e.Text == "Gleam Blast")
+			}
+		}
+	}
+	if !blast {
+		t.Fatalf("no Gleam Blast in 20 seconds; the chanter has %v", n.spells)
+	}
+	if p.hp >= hp {
+		t.Errorf("the Healer lost no health: %v of %v", p.hp, hp)
+	}
+	t.Logf("the chanter's spells: %d; the Healer is at %.0f of %.0f", len(n.spells), p.hp, hp)
+}

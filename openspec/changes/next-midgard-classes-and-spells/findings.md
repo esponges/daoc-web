@@ -54,3 +54,10 @@ Things this showed:
 2. **A level 1 caster has a pool of 16 and every level 1 spell costs 1 to 2 percent of it**, so the pool is never the limit at level 1; whether it is later depends on the provisional pool formula.
 3. **Spell damage does not scale with the line's spec level** (the data's base value is used); the bolt did 6 damage at spec level 1.
 4. **Line of sight is not checked** and the spec says so.
+
+## 3.4, 5.1, 5.2 What the browser reached (2026-10-21)
+
+- **Berserker:** Krek's window offered Axe, Hammer, Sword, Parry and Left Axe with 94 points at level 10; three clicks took Axe to 4 and two style icons appeared on the bar. The Berserker's ability list shows a Protect button, which comes from the data's grants (a Warrior ability); not checked against 1.65.
+- **Vault:** Idonna's window opened beside the stock pack.
+- **Death:** a level 10 Berserker standing in the svartalf camp was killed in seconds by level 14 hunters hitting for 74 to 79, lost 1 constitution and woke at the bind point.
+- **Fights are done in simulation.** The shared screen runs at one to four frames a second, so reaching a creature on foot takes minutes; `TestMeleeClassesFightWithStyles` and `TestRealCasterCreatureHurts` fight on the real data instead.

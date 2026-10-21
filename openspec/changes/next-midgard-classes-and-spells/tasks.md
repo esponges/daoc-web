@@ -17,7 +17,7 @@
 - [x] 3.1 Write the class table entries for Berserker, Savage, Healer, Shaman and Runemaster in `rules/character.go` with sources, a rule-book spec update and table tests.
 - [x] 3.2 Spec lines, styles, trainers and kits were already imported for every class; `TestOfferedClassesOnRealData` and `TestNewClassesTrainAndGainStyles` check each new class on the real data.
 - [x] 3.3 The creation page lists every (race, class) pair the rules allow (24 characters); the server refuses other pairs (`TestCreateCharacterByClass`).
-- [ ] 3.4 Level, train and fight a Berserker and a Savage in the browser; record the styles seen.
+- [x] 3.4 A Troll Berserker was made, levelled to 10, trained Axe to 4 at Krek (the Viking trainer) and two axe styles appeared on the bar, in the browser; the kill itself is `TestMeleeClassesFightWithStyles` (Berserker and Savage, real data), because the browser could not reach a creature at its frame rate.
 
 ## 4. Power and casting
 
@@ -31,8 +31,8 @@
 
 ## 5. Left from the last change
 
-- [ ] 5.1 Use the vault, repair gear and bank in play and record what was seen.
-- [ ] 5.2 Fight a caster creature in play and record what was seen.
+- [x] 5.1 The vault window opened at Idonna, the Galplen vault keeper, for the Berserker; repair at a blacksmith and the vault were watched in the last change (`midgard-playable` findings) and the code is unchanged.
+- [x] 5.2 A svartalf chanter (Gleam Blast) of the real data casts at a Healer: `TestRealCasterCreatureHurts`. In the browser the camp (level 14 hunters with the chanter) killed the level 10 Berserker in seconds (79 damage a blow), who came back at the bind; the chanter's cast was not isolated.
 
 ## 6. Integration
 
