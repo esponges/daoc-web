@@ -722,25 +722,39 @@ models once (positions and normals negated in x, winding swapped), so each
 instance stays a plain rotation; an instance written off the vertical axis
 carries that axis in `props.json` beside its angle.
 
-| Zone | Name | Kind | Placed | Origin | Exits and lights on the geometry |
-| ---: | --- | --- | ---: | --- | ---: |
-| 120 | Jordheim | city | 31 | 23436, 23997, 8111 | 35 of 37 |
-| 125 | Spindelhalla | dungeon | 196 | 23564, 23719, 16060 | 90 of 90 |
-| 126 | Vendo Caverns | dungeon | 54 | 23569, 23654, 15842 | 34 of 34 |
-| 127 | Varulvhamn | dungeon | 184 | 23966, 23907, 16112 | 105 of 110 |
-| 128 | Cursed Tomb | dungeon | 52 | 23683, 24094, 15993 | 37 of 38 |
-| 129 | Nisse's Lair | dungeon | 130 | 24004, 23702, 15805 | 77 of 86 |
-| 149 | Nyttheim | dungeon | 77 | 23382, 23735, 15912 | 8 of 8 |
-| 150 | Trollheim | dungeon | 158 | 23616, 23400, 15800 | 87 of 138 |
-| 160 | Tuscaran Glacier | dungeon | 72 | 23687, 23653, 16335 | 33 of 51 |
-| 161 | Iarnvidiur's Lair | dungeon | 127 | 24120, 23912, 16104 | 106 of 108 |
-| 188 | Midgard's Darkspire | dungeon | 77 | 22999, 23403, 15630 | 3 of 3 |
-| 189 | Midgard's Glashtin Forges | dungeon | 125 | 23083, 23491, 15791 | 8 of 8 |
-| 226 | Midgard's Abandoned Mines | dungeon | 978 | 23555, 23838, 16056 | 24 of 24 |
+| Zone | Name | Kind | Placed | Origin | Exits and lights on the geometry | On it or inside a piece |
+| ---: | --- | --- | ---: | --- | ---: | ---: |
+| 120 | Jordheim | city | 31 | 23436, 23997, 8111 | 35 of 37 | 37 of 37 |
+| 125 | Spindelhalla | dungeon | 196 | 23564, 23719, 16060 | 90 of 90 | 90 of 90 |
+| 126 | Vendo Caverns | dungeon | 54 | 23569, 23654, 15842 | 34 of 34 | 34 of 34 |
+| 127 | Varulvhamn | dungeon | 184 | 23966, 23907, 16112 | 105 of 110 | 105 of 110 |
+| 128 | Cursed Tomb | dungeon | 52 | 23683, 24094, 15993 | 37 of 38 | 37 of 38 |
+| 129 | Nisse's Lair | dungeon | 130 | 23920, 23680, 15824 | 80 of 86 | 80 of 86 |
+| 149 | Nyttheim | dungeon | 77 | 23382, 23735, 15912 | 8 of 8 | 8 of 8 |
+| 150 | Trollheim | dungeon | 158 | 23567, 23598, 15904 | 90 of 138 | 94 of 138 |
+| 160 | Tuscaran Glacier | dungeon | 72 | 23687, 23653, 16335 | 33 of 51 | 41 of 51 |
+| 161 | Iarnvidiur's Lair | dungeon | 127 | 24120, 23912, 16104 | 106 of 108 | 107 of 108 |
+| 188 | Midgard's Darkspire | dungeon | 77 | 22999, 23403, 15630 | 3 of 3 | 3 of 3 |
+| 189 | Midgard's Glashtin Forges | dungeon | 125 | 23083, 23491, 15791 | 8 of 8 | 8 of 8 |
+| 226 | Midgard's Abandoned Mines | dungeon | 978 | 23555, 23838, 16056 | 24 of 24 | 24 of 24 |
 
-Trollheim and Tuscaran Glacier are the exceptions: a third of their points
-lie off the geometry under any origin. Nisse's Lair falls just short of
-nine in ten. The test reports these three rather than failing on them. The census table gives every other realm's interiors too.
+The fit is made against the placed models' vertices. A zone that then has
+fewer than nine in ten of its points on the geometry or inside a placed piece
+(the oriented box of a piece, which is where a light hangs in the middle of a
+cavern with no wall within a cell) is fitted again against a surface sampled
+across the triangles, since a large floor or wall is one triangle whose corners
+are far from its middle, and the better of the two fits is kept; a zone that
+fits well keeps its first fit, so its origin does not wander over the flat top
+of a good fit. That moved Nisse's Lair (77 to 80 of 86, now over nine in ten)
+and Trollheim (87 to 90 on the geometry, 94 with the boxes); Tuscaran Glacier's
+first fit stood. Trollheim (94 of 138) and Tuscaran Glacier (41 of 51) are the
+two exceptions: the points they miss are hundreds to thousands of units from
+any placed piece and spread over the whole zone, and no one of the eight
+orientations with any origin puts more than 27 of Trollheim's 48 misses on its
+geometry (the tries are in `openspec/changes/midgard-playable/proofs.md`), so
+the layouts seem to leave parts of those two dungeons out, and no transform
+can put them back. The test holds them at what they reach (0.65 and 0.78)
+rather than at nine in ten.
 
 `zone.json` for an interior has `kind`, the fitted `transform`, the
 geometry's `bounds`, its `entrances` and `lights`, and the fog colour and
@@ -933,6 +947,13 @@ lines up with the shape names:
 Body1 → m1_bodym.dds      Arms1  → m1_arm1.dds     HeadA1 → nor_m_head01.dds
 LBody1 → m1_tunic1.dds    Legs1  → m1_legs1.dds    Boots1 → m1_boot1.dds
 ```
+
+For a creature or race read from `monsters.csv` the head is a trap: its
+"Head" skin column is the *hair* colour (`hair_white`, `hair_black`), and the
+face is the separate "Face" column (column 18: `SV_MHed1`, `V_MHed1`), a
+`skins.csv` row like the others. `charconv -model` dresses the head shape in
+the Face skin when the row has one and keeps the Head skin when it does not
+(the head of a monster that has only that); hair itself is not drawn.
 
 Prefixes are race codes (`a` Avalonian, `b` Briton, `d` Dwarf, `k` Kobold,
 `t` Troll, `v` Valkyn …), with `m1`/`m2`/`m3` the Midgard sets and three-letter

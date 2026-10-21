@@ -1,6 +1,7 @@
 package interior
 
 import (
+	"math"
 	"os"
 	"testing"
 )
@@ -73,13 +74,14 @@ func TestJordheim(t *testing.T) {
 // twelve dungeons.
 var midgard = []int{120, 125, 126, 127, 128, 129, 149, 150, 160, 161, 188, 189, 226}
 
-// Each Midgard interior's fitted transform puts its exits and lights on its
-// geometry. Trollheim and Tuscaran Glacier are reported rather than held:
-// a third of their points lie off the geometry under any origin (see
-// fit.go and the README). Nisse's Lair falls just short, at 77 of 86.
+// Each Midgard interior's fitted transform puts at least nine in ten of its
+// exits and lights on its geometry or inside a placed piece. Trollheim and
+// Tuscaran Glacier fall short under every origin and orientation tried (see
+// fit.go and the README), so they are held at what they reach, not at nine in
+// ten.
 func TestTransformsFit(t *testing.T) {
 	game := gamePath(t)
-	known := map[int]bool{129: true, 150: true, 160: true}
+	known := map[int]float64{150: 0.65, 160: 0.78}
 	for _, n := range midgard {
 		l, err := Read(game, n)
 		if err != nil {
@@ -87,14 +89,23 @@ func TestTransformsFit(t *testing.T) {
 			continue
 		}
 		b := Build(game, l)
-		f := FitInterior(l, b.Surface)
-		t.Logf("zone %d %s: origin %.0f, %.0f, %.0f; %d of %d points on the geometry (%.2f)",
-			n, l.Kind, f.Origin[0], f.Origin[1], f.Origin[2], f.OnSurface, f.Points, f.Score())
+		f := b.Fit(l)
+		covered := b.Covered(f.Transform, l.Points())
+		share := 0.0
+		if f.Points > 0 {
+			share = float64(covered) / float64(f.Points)
+		}
+		t.Logf("zone %d %s: origin %.0f, %.0f, %.0f; %d of %d points on the geometry (%.2f), %d on it or inside a piece (%.2f)",
+			n, l.Kind, f.Origin[0], f.Origin[1], f.Origin[2], f.OnSurface, f.Points, f.Score(), covered, share)
 		if f.Turn != 2 || !f.MirrorY {
 			t.Errorf("zone %d: orientation turn %d mirror %v, want x mirrored", n, f.Turn, f.MirrorY)
 		}
-		if f.Score() < 0.9 && !known[n] {
-			t.Errorf("zone %d: only %d of %d exits and lights on the geometry", n, f.OnSurface, f.Points)
+		floor, short := known[n]
+		if !short {
+			floor = 0.9
+		}
+		if share < floor {
+			t.Errorf("zone %d: only %d of %d exits and lights on the geometry or in a piece, want %.2f", n, covered, f.Points, floor)
 		}
 	}
 }
@@ -146,5 +157,28 @@ func TestPropsSitOnPieces(t *testing.T) {
 	}
 	if rejected == 0 {
 		t.Errorf("no zone tells the props' frames apart")
+	}
+}
+
+// A large triangle is sampled across, so a cell it crosses is on the surface
+// even where none of its corners is near.
+func TestLargeTriangleCoversItsMiddle(t *testing.T) {
+	s := NewSurface(fill(nil, [3]float32{0, 0, 0}, [3]float32{4000, 0, 0}, [3]float32{0, 4000, 0}))
+	if !s.Near([3]float32{1000, 1000, 0}) {
+		t.Error("the middle of a 4000-unit triangle is not on the surface")
+	}
+	if s.Near([3]float32{3000, 3000, 0}) {
+		t.Error("a point beyond the triangle's far edge is on the surface")
+	}
+}
+
+// A point in the middle of a room is inside the piece that makes the room,
+// turned and scaled as placed, though no wall is near.
+func TestPointInsideATurnedPiece(t *testing.T) {
+	m := Placement{Pos: [3]float32{1000, 0, 0}, Angle: float32(math.Pi / 2), Axis: [3]float32{0, 0, 1}, Scale: 2}.Matrix()
+	b := &Built{Dense: NewSurface(nil), pieces: []pieceBox{newPieceBox(m, Box{Min: [3]float32{-100, -50, 0}, Max: [3]float32{100, 50, 100}})}}
+	// Turned a quarter turn, the 200-long side lies along y; scaled by two it runs 400 across.
+	if got := b.Covered(Transform{}, [][3]float32{{1000, 150, 100}, {1000, 250, 100}, {1090, 0, 100}, {1000 + 150, 0, 100}}); got != 2 {
+		t.Errorf("covered %d, want 2 (inside along the long side and across the short one, not past either)", got)
 	}
 }

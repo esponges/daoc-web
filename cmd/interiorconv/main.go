@@ -71,9 +71,10 @@ func run(game string, num int, name, out string) error {
 		return err
 	}
 	built := interior.Build(game, l)
-	fit := interior.FitInterior(l, built.Surface)
-	fmt.Printf("zone %d %s: %d placed (%d skipped); transform origin %.0f, %.0f, %.0f puts %d of %d exits and lights on the geometry\n",
-		num, l.Kind, len(built.Placed), built.Skipped, fit.Origin[0], fit.Origin[1], fit.Origin[2], fit.OnSurface, fit.Points)
+	fit := built.Fit(l)
+	fmt.Printf("zone %d %s: %d placed (%d skipped); transform origin %.0f, %.0f, %.0f puts %d of %d exits and lights on the geometry, %d on it or inside a piece\n",
+		num, l.Kind, len(built.Placed), built.Skipped, fit.Origin[0], fit.Origin[1], fit.Origin[2], fit.OnSurface, fit.Points,
+		built.Covered(fit.Transform, l.Points()))
 
 	dirs := interior.ModelDirs(game, l)
 	var (
