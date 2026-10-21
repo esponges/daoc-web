@@ -116,7 +116,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 ## 17. Tier 3: carried over from the closed changes
 
-- [ ] 17.1 NPC faces (from `npc-equipment` 4.5): find why the converted head texture is `hair_*.png` and fix the skin mapping in the converter. Verify by looking at a guard, a smith and a monster in the browser, and, with the `web/data/` lookup moved aside, that NPCs still draw plain.
+- [x] 17.1 NPC faces (from `npc-equipment` 4.5): find why the converted head texture is `hair_*.png` and fix the skin mapping in the converter. Verify by looking at a guard, a smith and a monster in the browser, and, with the `web/data/` lookup moved aside, that NPCs still draw plain.
 - [ ] 17.2 Race and gear checks (from `npc-gear-mapping` 7.3, 7.4 and 7.6):
   - two clients of different races see each other's race and worn gear;
   - a same-race gender pair looks different;
