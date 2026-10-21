@@ -44,3 +44,31 @@ One bounded search, three web searches for a table mapping the community databas
 - **Two races.** `Browsertroll` (Troll Warrior, race 6) and `Secondtroll` (Norse Warrior, race 5) stood next to each other in Vale of Mularn, each client in its own tab. Each saw the other's race by body: the troll tall in chain, the Norseman shorter with a bare head, the labels `Browsertroll 12` and the other's name. It was night in the game, so the picture is dark.
 - **Equipping live.** From the page, the Troll's worn arm piece was swapped for `Tattered Rawhide Mjuklaedar Sleeves` and back. The server's `eq` for that slot went from model 232 to 282 and back, in the Troll's own client and, within about a second and a half, in the Norseman's client, which sees the entity's `eq`. The difference in the dark picture is too small to point at, so what was checked is the data both clients drew from.
 - **Not done.** A same-race gender pair: nothing lets a player choose gender yet (characters are male), so no female character exists to compare. "In each realm": only the Midgard races and gear are converted, so Albion and Hibernia NPCs cannot be looked at, and the three armed NPCs, full-set NPC, torso-only NPC and robed caster were not each looked at. These need the character-creation wizard and the other realms' conversions.
+
+## 17.4 Interior tour
+
+All 13 Midgard interiors were opened in the offline viewer (`/?zone=N`), each looked at three ways: where the character stands at the start, a walk forward with W held for four seconds, and a free-fly plan view from above (`C`, then the camera over the zone). The test browser draws only a few frames a second, so a walk covered 57 to 76 units in four seconds; what the walk shows is that the feet stay on a floor.
+
+| Zone | Name | Start | Walk (units, change in height) | Plan view |
+| ---: | --- | --- | --- | --- |
+| 120 | Jordheim | in a street between walls, lit | 57, none to speak of | roofs and streets, lit by torches |
+| 125 | Spindelhalla | on a wooden platform at the entrance, dim | to 23499, 23558 | cave pieces, warm lights |
+| 126 | Vendo Caverns | on a ledge in the dark | 60 | cave chambers joined by tunnels |
+| 127 | Varulvhamn | in a rock passage with a lit end | 57, -25 | chambers and passages |
+| 128 | Cursed Tomb | in a stone corridor | 76, +39 | round and square rooms |
+| 129 | Nisse's Lair | on a rock ledge, dark | 57, -9 | chambers (this one is now the fit of 80 of 86) |
+| 149 | Nyttheim | on dark ground among plants | 57, -25 | large round shapes, very dark |
+| 150 | Trollheim | in a cave mouth, dark | 76, none | a large round chamber and a passage, seen from the fit's centre |
+| 160 | Tuscaran Glacier | nearly black: the character is barely seen | 76, none | blue-grey ice chambers, seen from the fit's centre |
+| 161 | Iarnvidiur's Lair | in a rock passage, red lava glow | 57, -13 | rock with red light |
+| 188 | Midgard's Darkspire | almost black | 60, -3 | almost black |
+| 189 | Midgard's Glashtin Forges | in a hall, dim | 60, -2 | a ring of platforms around a centre |
+| 226 | Midgard's Abandoned Mines | on a lift platform with ropes and barrels, dim | 57, none | only torches and a few props show |
+
+- **Frame rate.** The viewer's own counter read 21 to 23 frames a second in every interior, 22 in Abandoned Mines (978 placements, about 29,000 triangles in the window's figure). The test browser's page loop ran at 1 to 4 frames a second, so the counter is the better figure and neither is a measure of a player's machine.
+- **Findings.**
+  1. **Tuscaran Glacier and Darkspire are nearly unlit at the start.** The spawn is far from any light (Darkspire has three lights in all, Tuscaran 49 for a very large zone). Nothing is wrong with the geometry; the interior is as dark as its light data. The ambient is 0.27; a first-time player there sees almost nothing.
+  2. **Trollheim and Tuscaran Glacier have far-off pieces.** Their geometry bounds run tens of thousands of units outside the region the exits and lights lie in (Trollheim from x 9453 to 62345), so a plan view from the bounds' centre sees nothing, and the missing lights of 17.3 are not explained by them. Looked at from the fit's centre both draw their chambers.
+  3. **Spindelhalla's start is a narrow platform** at the entrance with a wall close in front; the chase camera is pulled in tight. It stands on a floor.
+  4. **The plan view is of limited use** in the large, sparse zones (Abandoned Mines, Darkspire): the geometry is a thin shell and the plan view shows mostly black. A walk along a passage is the better look.
+- No zone's start was off a floor, none fell during a walk, and none failed to load.

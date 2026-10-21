@@ -125,7 +125,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
   Record the approximations seen in this change folder.
 - [x] 17.3 Interior fit (from `jordheim-and-midgard-dungeons` 2.2): run the scored transform search on all 13 Midgard interiors. Verify a test checks that at least 90% of entrance centres and lights fall inside placed pieces, improving Trollheim, Tuscaran Glacier and Nisse's Lair, and record each fit in the README.
-- [ ] 17.4 Interior tour (from `jordheim-and-midgard-dungeons` 6.1): for all 13 Midgard interiors, check the spawn view, a walk along a passage and a free-fly overview, and note the frame rate in Abandoned Mines. Record any zone that still looks wrong as a finding.
+- [x] 17.4 Interior tour (from `jordheim-and-midgard-dungeons` 6.1): for all 13 Midgard interiors, check the spawn view, a walk along a passage and a free-fly overview, and note the frame rate in Abandoned Mines. Record any zone that still looks wrong as a finding.
 
 ## 18. Integration
 
