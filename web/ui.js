@@ -123,8 +123,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const you = document.getElementById('you-box');
   const endBar = el('div', 'bar thin end'); endBar.appendChild(el('i'));
   const xpBar = el('div', 'bar thin xp'); xpBar.appendChild(el('i'));
+  const powBar = el('div', 'bar thin pow'); powBar.appendChild(el('i')); powBar.style.display = 'none';
   const lvl = el('small', 'lvl');
-  you.append(endBar, xpBar);
+  you.append(endBar, powBar, xpBar);
   you.querySelector('.name').prepend(lvl);
 
   // --- style bar ---
@@ -490,6 +491,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       summary.update(me, t, t ? (t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColour(t.e?.con) || conColor(t.level, me.level)) : undefined, !!me.attacking);
     }
     fill(endBar, me.end / me.maxEnd);
+    powBar.style.display = me.maxPower ? '' : 'none';
+    if (me.maxPower) fill(powBar, me.power / me.maxPower);
     fill(xpBar, me.xpNext ? me.xp / me.xpNext : 0);
     lvl.textContent = 'L' + me.level;
     if (release) release.update(me.dead, performance.now() / 1000);

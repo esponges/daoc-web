@@ -97,3 +97,32 @@ func TestNewClassesTrainAndGainStyles(t *testing.T) {
 		}
 	}
 }
+
+// A caster has a power pool that fills at first, drains and regenerates; a
+// Warrior has none, and the snapshot carries power only for the caster.
+func TestPlayerPower(t *testing.T) {
+	r := newRig(t)
+	w := r.player("Warrior", 5, 30000, 30000, true)
+	h := r.player("Healer", 5, 30500, 30000, true)
+	h.Char.Class = rules.ClassHealer
+	h.powerSet = false // as for a character who has never had a pool
+	r.w.recalc(h)
+	if w.sh.maxPower != 0 || w.power != 0 {
+		t.Errorf("a Warrior has power %v of %d", w.power, w.sh.maxPower)
+	}
+	if h.sh.maxPower <= 0 || h.power != float64(h.sh.maxPower) {
+		t.Fatalf("a Healer has %v of %d power, want a full pool", h.power, h.sh.maxPower)
+	}
+	if s := r.z.selfOf(w); s.MaxPower != 0 || s.Power != 0 {
+		t.Errorf("a Warrior's snapshot carries power %+v", s)
+	}
+	full := h.sh.maxPower
+	h.power = 0
+	r.ticks(int(rules.PowerRegenPeriod*float64(TickRate))*3 + 5)
+	if h.power <= 0 || h.power > float64(full) {
+		t.Errorf("after regeneration the Healer has %v of %d", h.power, full)
+	}
+	if s := r.z.selfOf(h); s.MaxPower != full || s.Power != int(h.power) {
+		t.Errorf("the Healer's snapshot says %d of %d, want %d of %d", s.Power, s.MaxPower, int(h.power), full)
+	}
+}

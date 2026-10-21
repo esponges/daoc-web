@@ -14,6 +14,7 @@
 .unit .lvl { color: #ffe066; margin-right: 6px; }
 .bar.thin { height: 5px; margin-top: 4px; }
 .bar.end i { background: #4a8fe0; }
+.bar.pow i { background: #3ec7c1; }
 .bar.xp i { background: #b07ae0; }
 .stylebar { position: fixed; left: 50%; bottom: 74px; transform: translateX(-50%); z-index: 11; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 92vw; }
 .stylebar .style { display: grid; grid-template-columns: auto 1fr; gap: 0 6px; align-items: center; min-width: 108px; text-align: left;

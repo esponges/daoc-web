@@ -169,7 +169,8 @@ export function createStockSummary(doc, data, { name = '' } = {}) {
         win.setText('summary_player_hits', me.dead ? '' : Math.ceil(me.hp));
         win.setBar('summary_player_end', frac(me.end, me.maxEnd));
         win.setText('summary_player_end', Math.ceil(me.end));
-        win.setBar('summary_player_power', 0);
+        win.setBar('summary_player_power', frac(me.power, me.maxPower));
+        win.setText('summary_player_power', me.maxPower ? Math.ceil(me.power) : '');
         win.setText('stats_level', me.level || '');
       }
       win.setText('summary_target', target ? target.name + (target.dead ? ' (dead)' : attacking ? ' (attacking)' : '') : '', target ? targetColor : undefined);

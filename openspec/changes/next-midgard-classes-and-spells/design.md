@@ -38,6 +38,6 @@ Back up `players.db`, re-run `dbimport` (staged store swapped at next start), re
 
 ## Open Questions
 
-- Which source gives 1.65's power pool and regeneration? (Searched in task 4.1.)
+- Which source gives 1.65's power pool and regeneration? (Two searches found nothing; the rule is provisional.)
 - Does a source show the staggering of night spawns or the attack auto-walk? (Tasks 1.2, 1.3.)
 - Are female models for every Midgard race converted by `charconv`? (Task 2.1 checks.)

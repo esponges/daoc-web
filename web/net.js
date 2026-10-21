@@ -151,7 +151,7 @@ export class NetClient {
     this.me = {
       id: m.you, name: m.name, char: m.char, race: m.rc || 0, female: !!m.fm, level: m.level, admin: !!m.admin,
       x: m.x, y: m.y, z: m.z, yaw: m.yaw,
-      hp: 1, maxHp: 1, end: 100, maxEnd: 100, xp: 0, xpNext: 1, money: 0,
+      hp: 1, maxHp: 1, end: 100, maxEnd: 100, power: 0, maxPower: 0, xp: 0, xpNext: 1, money: 0,
       target: 0, attacking: false, dead: false, fighting: false, avail: [],
     };
     this._ready.res(m);
@@ -175,7 +175,7 @@ export class NetClient {
       this.err.x += ex; this.err.y += ey; // shown, then eased away
     }
     me.x = b.x; me.y = b.y; me.z = b.z; me.yaw = b.yaw;
-    me.hp = s.hp; me.maxHp = s.mhp; me.end = s.end; me.maxEnd = s.mend;
+    me.hp = s.hp; me.maxHp = s.mhp; me.end = s.end; me.maxEnd = s.mend; me.power = s.pw || 0; me.maxPower = s.mpw || 0;
     me.level = s.lv; me.xp = s.xp; me.xpNext = s.xpn; me.money = s.mo;
     me.target = s.tg; me.attacking = s.at; me.dead = !!s.dead; me.fighting = !!s.fg;
     me.avail = s.av || [];

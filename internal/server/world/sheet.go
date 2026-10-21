@@ -21,6 +21,7 @@ type sheet struct {
 	skillBonus map[string]int // spec key -> item bonus, before the cap
 	abilities  map[string]int
 	maxHP      int
+	maxPower   int // 0 for a class that does not cast
 	unspent    int
 	half       bool
 }
@@ -163,6 +164,7 @@ func (w *World) recalc(p *Player) {
 	}
 	sh.stats = rules.Modified(c.Stats, sh.class, c.Level, sh.itemStats, c.ConLost)
 	sh.maxHP = rules.MaxHP(sh.class, c.Level, sh.stats[rules.CON], sh.itemHP)
+	sh.maxPower = rules.MaxPower(sh.class, c.Level, sh.stats[sh.class.Acuity])
 	sh.half = c.Level >= 40 && c.XP >= rules.HalfLevel(c.Level)
 	sh.unspent = rules.SpecPoints(sh.class, c.Level, sh.half) - w.trainedSpent(c)
 	trained := map[string]int{}
@@ -173,6 +175,10 @@ func (w *World) recalc(p *Player) {
 	p.sh = sh
 	if p.hp > float64(sh.maxHP) {
 		p.hp = float64(sh.maxHP)
+	}
+	if p.power > float64(sh.maxPower) || !p.powerSet {
+		// A character who has not been given a pool yet starts with a full one.
+		p.power, p.powerSet = float64(sh.maxPower), true
 	}
 	if !p.welcomed {
 		return // join sends the sheet after the welcome
@@ -187,7 +193,7 @@ func (w *World) recalc(p *Player) {
 func (p *Player) statsMsg(cat *Catalog) protocol.Stats {
 	c, sh := p.Char, p.sh
 	m := protocol.Stats{T: protocol.TStats, Class: sh.class.Name, Race: cat.RaceNames[c.Race], Level: c.Level, Half: sh.half, Base: c.Stats, Stats: sh.stats,
-		MaxHP: sh.maxHP, MaxEnd: rules.MaxEndurance, Unspent: sh.unspent, ConLost: c.ConLost}
+		MaxHP: sh.maxHP, MaxEnd: rules.MaxEndurance, MaxPower: sh.maxPower, Unspent: sh.unspent, ConLost: c.ConLost}
 	for _, k := range cat.TrainableSpecs(c.Class) {
 		m.Specs = append(m.Specs, protocol.SpecRow{Key: k, Name: cat.SpecName(k), Level: p.specLevel(k),
 			Bonus: p.combatSpec(k) - p.specLevel(k)})

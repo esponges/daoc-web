@@ -161,3 +161,43 @@ func TestMidgardClasses(t *testing.T) {
 		}
 	})
 }
+
+const rp = "rules-power"
+
+func TestPower(t *testing.T) {
+	vector(t, rp, "A non-caster", func(t *testing.T) {
+		if p := MaxPower(Classes[ClassWarrior], 30, 120); p != 0 {
+			t.Errorf("a Warrior has %d power", p)
+		}
+	})
+	vector(t, rp, "Levelling", func(t *testing.T) {
+		healer := Classes[ClassHealer]
+		a, b := MaxPower(healer, 1, 70), MaxPower(healer, 2, 70)
+		if a != 16 || b != 22 {
+			t.Errorf("level 1 and 2 pools %d and %d, want 16 and 22", a, b)
+		}
+		if got := MaxPower(healer, 10, 150); got != 90 {
+			t.Errorf("level 10 with 150 piety: %d, want 90", got)
+		}
+	})
+	vector(t, rp, "Resting", func(t *testing.T) {
+		if r := PowerRegen(100, false); r != 2 {
+			t.Errorf("100 power regenerates %d a tick out of combat, want 2", r)
+		}
+		if r := PowerRegen(16, false); r != 1 {
+			t.Errorf("a small pool regenerates %d, want 1", r)
+		}
+		if r := PowerRegen(400, true); r != 2 {
+			t.Errorf("in combat 400 power regenerates %d, want 2", r)
+		}
+	})
+	vector(t, rp, "Interrupted cast", func(t *testing.T) {
+		// Cost is taken only when a spell lands; the cost itself is a share of the pool.
+		if c := SpellPowerCost(10, 90); c != 9 {
+			t.Errorf("10%% of 90 is %d, want 9", c)
+		}
+		if c := SpellPowerCost(1, 16); c != 1 {
+			t.Errorf("the least cost is %d, want 1", c)
+		}
+	})
+}

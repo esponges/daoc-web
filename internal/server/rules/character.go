@@ -55,6 +55,8 @@ type Class struct {
 	SpecMultiplier               int    // spec points per level, in tenths
 	Base                         string // the base class it grows from (a Warrior is a Viking until 5 in 1.65)
 	Races                        []int
+	Casts                        bool // has a power pool and a spellbook
+	Acuity                       Stat // the stat that sets the pool
 }
 
 // The Midgard classes the rules cover, by the class numbers the data uses.
@@ -79,11 +81,11 @@ var Classes = map[int]Class{
 	ClassSavage: {ID: ClassSavage, Name: "Savage", Primary: STR, Secondary: CON, Tertiary: DEX,
 		BaseHP: 880, WeaponSkillBase: 440, SpecMultiplier: 15, Base: "Viking", Races: []int{5, 8, 6, 7, 14}},
 	ClassHealer: {ID: ClassHealer, Name: "Healer", Primary: PIE, Secondary: CON, Tertiary: DEX,
-		BaseHP: 720, WeaponSkillBase: 340, SpecMultiplier: 10, Base: "Seer", Races: []int{5, 7}},
+		BaseHP: 720, WeaponSkillBase: 340, SpecMultiplier: 10, Base: "Seer", Races: []int{5, 7}, Casts: true, Acuity: PIE},
 	ClassShaman: {ID: ClassShaman, Name: "Shaman", Primary: PIE, Secondary: CON, Tertiary: DEX,
-		BaseHP: 720, WeaponSkillBase: 340, SpecMultiplier: 10, Base: "Seer", Races: []int{5, 8, 6}},
+		BaseHP: 720, WeaponSkillBase: 340, SpecMultiplier: 10, Base: "Seer", Races: []int{5, 8, 6}, Casts: true, Acuity: PIE},
 	ClassRunemaster: {ID: ClassRunemaster, Name: "Runemaster", Primary: PIE, Secondary: DEX, Tertiary: CON,
-		BaseHP: 560, WeaponSkillBase: 280, SpecMultiplier: 10, Base: "Mystic", Races: []int{8, 7, 5}},
+		BaseHP: 560, WeaponSkillBase: 280, SpecMultiplier: 10, Base: "Mystic", Races: []int{8, 7, 5}, Casts: true, Acuity: PIE},
 }
 
 // TaughtBy says whether a trainer of the named class can teach this one: its

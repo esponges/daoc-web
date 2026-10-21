@@ -100,6 +100,9 @@ type invItem struct {
 // goroutine; connections reach them through Zone.Do.
 type Player struct {
 	ID       int64
+	power    float64        // spell power, up to sh.maxPower
+	powerSet bool           // the pool has been filled once
+	powerAt  float64        // when the next power tick is due
 	ride     *ride          // the horse route they are on, nil when walking
 	ab       abilityState   // Guard, Protect, Intercept and Engage in force
 	gearSent map[int64]bool // NPCs whose equipment this player has been sent while they stayed in view

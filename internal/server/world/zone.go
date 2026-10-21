@@ -229,6 +229,12 @@ func (z *Zone) tickPlayer(p *Player) {
 		}
 		p.end = math.Min(float64(rules.MaxEndurance), p.end+gain)
 	}
+	if z.now >= p.powerAt {
+		p.powerAt = z.now + rules.PowerRegenPeriod
+		if mp := p.sh.maxPower; mp > 0 && p.power < float64(mp) {
+			p.power = math.Min(float64(mp), p.power+float64(rules.PowerRegen(mp, z.now < p.combatUntil)))
+		}
+	}
 	if z.now >= p.healAt {
 		p.healAt = z.now + rules.HealthRegenPeriod
 		if p.hp < float64(p.maxHP()) {
@@ -324,7 +330,7 @@ func (z *Zone) selfOf(p *Player) protocol.Self {
 	next, cur := rules.XPToReach(c.Level+1), rules.XPToReach(c.Level)
 	s := protocol.Self{
 		X: p.Body.X, Y: p.Body.Y, Z: p.Body.Z, Yaw: p.Body.Yaw,
-		HP: int(math.Ceil(p.hp)), MaxHP: p.maxHP(), End: int(p.end), MaxEnd: rules.MaxEndurance,
+		HP: int(math.Ceil(p.hp)), MaxHP: p.maxHP(), End: int(p.end), MaxEnd: rules.MaxEndurance, Power: int(p.power), MaxPower: p.sh.maxPower,
 		Level: c.Level, XP: c.XP - cur, XPNext: next - cur, Money: c.Money,
 		Target: p.target, Attacking: p.attacking, Dead: p.dead, Correct: p.correct,
 		Back: p.motion.Back, Side: p.motion.Side, Speed: p.motion.Speed,

@@ -274,6 +274,8 @@ type Self struct {
 	MaxHP     int     `json:"mhp"`
 	End       int     `json:"end"`
 	MaxEnd    int     `json:"mend"`
+	Power     int     `json:"pw,omitempty"` // spell power, casters only
+	MaxPower  int     `json:"mpw,omitempty"`
 	Level     int     `json:"lv"`
 	XP        int64   `json:"xp"`
 	XPNext    int64   `json:"xpn"`
@@ -456,6 +458,7 @@ type Stats struct {
 	Stats     [8]int    `json:"stats"`          // with level gains, capped items and constitution lost
 	MaxHP     int       `json:"mhp"`
 	MaxEnd    int       `json:"mend"`
+	MaxPower  int       `json:"mpw,omitempty"`
 	Specs     []SpecRow `json:"specs"`
 	Unspent   int       `json:"pts"`
 	Abilities []Ability `json:"ab"`

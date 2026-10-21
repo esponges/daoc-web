@@ -21,8 +21,8 @@
 
 ## 4. Power and casting
 
-- [ ] 4.1 Search for the power pool and regeneration sources; write `rules-power` with status, tests and a registry entry.
-- [ ] 4.2 Add power to the sheet, the protocol (additive) and the HUD power bar.
+- [x] 4.1 No source gave the power pool or regeneration numbers (two searches, see findings), so `rules/power.go` is provisional with table tests for the `rules-power` scenarios and a registry entry.
+- [x] 4.2 Power is on the sheet (`mpw`), the snapshot (`pw`, `mpw`) and the HUD (stock summary power bar and a built-in bar for casters); `TestPlayerPower`.
 - [ ] 4.3 Build the spellbook from the imported lines by class and level, with level-up additions and messages.
 - [ ] 4.4 Add the cast request: checks, cast time, power spend, interrupts and recast, reusing the creature engine. Protocol and server tests.
 - [ ] 4.5 Implement the first slice of spell types: direct damage, bolt, heal, damage over time, damage add, stat and armour buffs, speed decrease, mesmerize, stun. Unsupported types are marked and refuse a cast. Update `cmd/parity` to count class spell types.
