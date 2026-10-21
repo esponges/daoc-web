@@ -16,3 +16,8 @@ web/data/
 # Server data: the community database checkout (GPL-3.0, describes EA-owned
 # content) and the world store built from it. Never committed.
 server/data/
+
+# Scratch programs and local-only Claude Code state. The commands and skills
+# under .claude/ are committed; throwaway tools are not.
+.claude/tmp/
+.claude/settings.local.json
