@@ -14,9 +14,9 @@
 
 ## 3. Classes
 
-- [ ] 3.1 Write the class table entries for Berserker, Savage, Healer, Shaman and Runemaster in `rules/character.go` with sources, a rule-book spec update and table tests.
-- [ ] 3.2 Import their spec lines, styles, trainers and starting kits in `dbimport`; extend `catalog_start.go`; rerun the census.
-- [ ] 3.3 Offer only the classes a race may be on the creation page; refuse others on the server with a test.
+- [x] 3.1 Write the class table entries for Berserker, Savage, Healer, Shaman and Runemaster in `rules/character.go` with sources, a rule-book spec update and table tests.
+- [x] 3.2 Spec lines, styles, trainers and kits were already imported for every class; `TestOfferedClassesOnRealData` and `TestNewClassesTrainAndGainStyles` check each new class on the real data.
+- [x] 3.3 The creation page lists every (race, class) pair the rules allow (24 characters); the server refuses other pairs (`TestCreateCharacterByClass`).
 - [ ] 3.4 Level, train and fight a Berserker and a Savage in the browser; record the styles seen.
 
 ## 4. Power and casting

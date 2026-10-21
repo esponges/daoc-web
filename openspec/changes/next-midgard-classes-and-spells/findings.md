@@ -29,3 +29,11 @@ A standard search for 1.65 generic loot rates found nothing (only the later 1.10
 ## 2.1–2.3 Gender (2026-10-21)
 
 Most of the plumbing was already there: the `gender` column, `fm` on `welcome` and player entities, and female bases for all six Midgard races. The missing piece was the choice at creation. On a scratch server (a copy of the data, port 8788) a female Troll Warrior was made from the login page; the list reads "Female Troll Warrior", and in play the client loaded `m145` (Troll Female) for the player and `m137` (Troll Male) for the Troll Flayer beside them. The night screen is too dark to judge the model by eye, so the proof is which base was fetched.
+
+## 3.1–3.3 Classes (2026-10-21)
+
+- **Races come from the data.** The import's `startup` table lists the races each class has a start for: Berserker 5, 6, 7, 14; Savage 5, 6, 7, 8, 14; Healer 5, 7; Shaman 5, 6, 8; Runemaster 5, 7, 8 (Norseman, Troll, Dwarf, Kobold, Valkyn). The class table uses them.
+- **Numbers are provisional.** Primary, secondary and tertiary stats, base hit points and weapon skill base for the five new classes are this project's choice by class kind; a search found only the spec multipliers (Berserker 2.0, Savage 1.5, casters 1.0 on the Camelot Herald). The `character.class-midgard` rule says so. Replace them when a source with the table is found.
+- **Everything else was already class-generic**: specs, styles, trainers (a Berserker trains at a Viking trainer, a Healer at a Seer trainer), starting kit and start town are read by class number from the data. Every new class wears its whole kit at level 1.
+- **Creation page.** Characters are now offered for every legal race and class pair: `GET /api/me` lists them with ids such as `dwarf-healer`; `troll-warrior` and `norseman` keep theirs.
+- **Browser (scratch server, 8788):** created a Troll Berserker, a female Kobold Savage, a female Dwarf Healer and a Norseman Runemaster from the page's API; a Kobold Healer was refused (400). The Berserker entered the world, was levelled to 10 with the admin command and targeted a frog. No blows were exchanged because the target was out of reach, so 3.4 (a fight and styles seen in the browser) stays open and is done in the integration playtest. The stock styles window drew its section titles but no rows on this screen; it is the same window the Warrior uses.

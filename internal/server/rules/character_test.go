@@ -1,6 +1,9 @@
 package rules
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 const cs = "rules-character-stats"
 
@@ -116,6 +119,45 @@ func TestCharacterStats(t *testing.T) {
 		}
 		if HealthRegen(20, true) != 0 {
 			t.Error("health returns in combat")
+		}
+	})
+}
+
+const mc = "midgard-classes"
+
+func TestMidgardClasses(t *testing.T) {
+	vector(t, mc, "A race that may not", func(t *testing.T) {
+		healer := Classes[ClassHealer]
+		if _, err := Create(Races[8], healer, DefaultBuild(healer)); err == nil {
+			t.Error("a Kobold Healer was created")
+		}
+		if _, err := Create(Races[5], healer, DefaultBuild(healer)); err != nil {
+			t.Errorf("a Norse Healer was refused: %v", err)
+		}
+	})
+	vector(t, mc, "Class list", func(t *testing.T) {
+		// The classes a Troll may be: the data's start table gives the Warrior,
+		// Berserker, Savage and Shaman, and not the Healer or Runemaster.
+		var got []string
+		for _, id := range []int{ClassWarrior, ClassBerserker, ClassSavage, ClassHealer, ClassShaman, ClassRunemaster} {
+			if Classes[id].MayBe(6) {
+				got = append(got, Classes[id].Name)
+			}
+		}
+		if want := "Warrior Berserker Savage Shaman"; strings.Join(got, " ") != want {
+			t.Errorf("a Troll may be %v, want %s", got, want)
+		}
+	})
+	t.Run("every class builds a legal default", func(t *testing.T) {
+		for id, c := range Classes {
+			for _, r := range c.Races {
+				if _, err := Create(Races[r], c, DefaultBuild(c)); err != nil {
+					t.Errorf("%s of race %d: %v", c.Name, r, err)
+				}
+			}
+			if id != c.ID {
+				t.Errorf("%s is keyed %d but numbered %d", c.Name, id, c.ID)
+			}
 		}
 	})
 }

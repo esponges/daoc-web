@@ -112,7 +112,7 @@ func (s *Server) view(c *store.Character) charView {
 	if zi := s.World.Cat.Zones[c.Zone]; zi != nil {
 		zn = zi.Name
 	}
-	return charView{ID: c.ID, Name: c.Name, Arch: a.Key, Label: a.Label, Female: c.Gender == 1, Level: c.Level, Zone: c.Zone, ZoneName: zn}
+	return charView{ID: c.ID, Name: c.Name, Arch: a.ID, Label: a.Label, Female: c.Gender == 1, Level: c.Level, Zone: c.Zone, ZoneName: zn}
 }
 
 func (s *Server) me(w http.ResponseWriter, r *http.Request, sess *auth.Session) {
@@ -132,7 +132,7 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request, sess *auth.Session) 
 	}
 	arch := []map[string]any{}
 	for _, a := range world.Archetypes {
-		arch = append(arch, map[string]any{"key": a.Key, "label": a.Label})
+		arch = append(arch, map[string]any{"key": a.ID, "label": a.Label})
 	}
 	writeJSON(w, map[string]any{"name": acct.Name, "admin": sess.Admin, "characters": out, "archetypes": arch, "max": MaxCharacters})
 }
@@ -154,7 +154,7 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 	}
 	var arch *world.Archetype
 	for i := range world.Archetypes {
-		if world.Archetypes[i].Key == body.Arch {
+		if world.Archetypes[i].ID == body.Arch {
 			arch = &world.Archetypes[i]
 		}
 	}

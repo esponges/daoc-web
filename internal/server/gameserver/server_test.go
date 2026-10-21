@@ -438,3 +438,37 @@ func TestCreateCharacterGender(t *testing.T) {
 		t.Errorf("genders %v, want Herman 0 and Hilda 1", got)
 	}
 }
+
+// The creation page offers each class only to the races that may be it, and
+// the server refuses any other pair.
+func TestCreateCharacterByClass(t *testing.T) {
+	ts, c, w := testServer(t)
+	login(t, ts, c)
+	offered := map[string]bool{}
+	for _, a := range world.Archetypes {
+		offered[a.ID] = true
+	}
+	for _, id := range []string{"troll-berserker", "dwarf-healer", "kobold-shaman", "norseman-runemaster", "kobold-savage"} {
+		if !offered[id] {
+			t.Errorf("%s is not offered", id)
+		}
+	}
+	for _, id := range []string{"kobold-healer", "troll-runemaster", "troll-healer", "dwarf-shaman"} {
+		if offered[id] {
+			t.Errorf("%s is offered but its race may not take the class", id)
+		}
+		if r := post(t, c, ts.URL+"/api/characters", map[string]string{"name": "Nope", "arch": id}); r.StatusCode != 400 {
+			t.Errorf("creating %s: %d, want 400", id, r.StatusCode)
+		}
+	}
+	if r := post(t, c, ts.URL+"/api/characters", map[string]string{"name": "Brunhild", "arch": "dwarf-healer"}); r.StatusCode != 201 {
+		t.Fatalf("a Dwarf Healer: %d", r.StatusCode)
+	}
+	list, _ := w.Store.Characters(1)
+	if len(list) != 1 || list[0].Class != 26 || list[0].Race != 7 {
+		t.Errorf("stored %+v, want one Healer of race 7", list)
+	}
+	if list[0].HP < 1 || !list[0].HasStats {
+		t.Errorf("the Healer has no hit points or stats: %+v", list[0])
+	}
+}

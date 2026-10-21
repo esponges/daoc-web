@@ -57,13 +57,33 @@ type Class struct {
 	Races                        []int
 }
 
-// ClassWarrior is the Warrior's class number.
-const ClassWarrior = 22
+// The Midgard classes the rules cover, by the class numbers the data uses.
+const (
+	ClassWarrior    = 22
+	ClassHealer     = 26
+	ClassShaman     = 28
+	ClassRunemaster = 29
+	ClassBerserker  = 31
+	ClassSavage     = 32
+)
 
 // Classes are the classes the rules cover.
 var Classes = map[int]Class{
 	ClassWarrior: {ID: ClassWarrior, Name: "Warrior", Primary: STR, Secondary: CON, Tertiary: DEX,
 		BaseHP: 880, WeaponSkillBase: 460, SpecMultiplier: 20, Base: "Viking", Races: []int{7, 8, 5, 6, 14}},
+	// The five below are provisional: their races are the data's start table,
+	// their spec multipliers the Camelot Herald's, the rest this project's
+	// choice by class kind (see the rules-character-stats spec).
+	ClassBerserker: {ID: ClassBerserker, Name: "Berserker", Primary: STR, Secondary: CON, Tertiary: DEX,
+		BaseHP: 880, WeaponSkillBase: 440, SpecMultiplier: 20, Base: "Viking", Races: []int{5, 6, 7, 14}},
+	ClassSavage: {ID: ClassSavage, Name: "Savage", Primary: STR, Secondary: CON, Tertiary: DEX,
+		BaseHP: 880, WeaponSkillBase: 440, SpecMultiplier: 15, Base: "Viking", Races: []int{5, 8, 6, 7, 14}},
+	ClassHealer: {ID: ClassHealer, Name: "Healer", Primary: PIE, Secondary: CON, Tertiary: DEX,
+		BaseHP: 720, WeaponSkillBase: 340, SpecMultiplier: 10, Base: "Seer", Races: []int{5, 7}},
+	ClassShaman: {ID: ClassShaman, Name: "Shaman", Primary: PIE, Secondary: CON, Tertiary: DEX,
+		BaseHP: 720, WeaponSkillBase: 340, SpecMultiplier: 10, Base: "Seer", Races: []int{5, 8, 6}},
+	ClassRunemaster: {ID: ClassRunemaster, Name: "Runemaster", Primary: PIE, Secondary: DEX, Tertiary: CON,
+		BaseHP: 560, WeaponSkillBase: 280, SpecMultiplier: 10, Base: "Mystic", Races: []int{8, 7, 5}},
 }
 
 // TaughtBy says whether a trainer of the named class can teach this one: its
@@ -212,6 +232,8 @@ func init() {
 			Status: Documented, Sources: []string{"disorder", "opendaoc"}, Scenarios: []string{"The Midgard races"}},
 		Rule{ID: "character.class", Capability: "rules-character-stats", Requirement: "Classes name a primary, secondary and tertiary stat and base numbers",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Warrior definition"}},
+		Rule{ID: "character.class-midgard", Capability: "midgard-classes", Requirement: "Five more classes",
+			Status: Provisional, Sources: []string{"data", "herald", "project"}, Scenarios: []string{"A race that may not", "Class list"}},
 		Rule{ID: "character.creation", Capability: "rules-character-stats", Requirement: "Creation spends exactly 30 points",
 			Status: Documented, Sources: []string{"disorder", "opendaoc"}, Scenarios: []string{"Cost of a stat", "Default build", "Overspent build"}},
 		Rule{ID: "character.level-stats", Capability: "rules-character-stats", Requirement: "Levels from 6 raise the class stats",

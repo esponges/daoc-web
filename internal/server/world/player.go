@@ -3,9 +3,12 @@ package world
 import (
 	"encoding/json"
 	"math"
+	"sort"
+	"strings"
 	"sync/atomic"
 
 	"daocweb/internal/server/protocol"
+	"daocweb/internal/server/rules"
 	"daocweb/internal/server/store"
 )
 
@@ -14,24 +17,60 @@ const PlayerIDBase = 1_000_000
 
 // Archetype is what a player character is drawn as and starts with.
 type Archetype struct {
-	Key   string // the web/data/char directory
+	ID    string // what the creation page sends: "troll-warrior", "dwarf-healer"
+	Key   string // the web/data/char directory drawn when no race base model fits
 	Label string
 	Race  int
 	Class int
 	Realm int
 }
 
-// Archetypes are the characters a player may create. Both are Midgard
-// warriors: the class whose styles the data and the combat rules cover.
-var Archetypes = []Archetype{
-	{Key: "troll-warrior", Label: "Troll Warrior", Race: 6, Class: 22, Realm: 2},
-	{Key: "norseman", Label: "Norse Warrior", Race: 5, Class: 22, Realm: 2},
+// Archetypes are the characters a player may create: every race a class the
+// rules cover may be, in Midgard. The first two keep the ids they always had.
+var Archetypes = buildArchetypes()
+
+func buildArchetypes() []Archetype {
+	var out []Archetype
+	ids := make([]int, 0, len(rules.Classes))
+	for id := range rules.Classes {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return rules.Classes[ids[i]].Name < rules.Classes[ids[j]].Name })
+	for _, id := range ids {
+		c := rules.Classes[id]
+		races := append([]int(nil), c.Races...)
+		sort.Ints(races)
+		for _, r := range races {
+			race, ok := rules.Races[r]
+			if !ok {
+				continue
+			}
+			a := Archetype{ID: strings.ToLower(race.Name) + "-" + strings.ToLower(c.Name),
+				Key: "norseman", Label: race.Name + " " + c.Name, Race: r, Class: id, Realm: 2}
+			switch a.ID {
+			case "troll-warrior":
+				a.Key = "troll-warrior"
+			case "norseman-warrior":
+				a.ID = "norseman"
+			}
+			if r == 6 {
+				a.Key = "troll-warrior"
+			}
+			out = append(out, a)
+		}
+	}
+	return out
 }
 
 // ArchetypeFor finds the archetype of a saved character.
 func ArchetypeFor(race, class int) Archetype {
 	for _, a := range Archetypes {
 		if a.Race == race && a.Class == class {
+			return a
+		}
+	}
+	for _, a := range Archetypes {
+		if a.ID == "troll-warrior" {
 			return a
 		}
 	}
