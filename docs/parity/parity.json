@@ -1286,7 +1286,7 @@
     {
       "name": "DOL.GS.Blacksmith",
       "uses": 23,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.GameStableMaster",
@@ -1339,7 +1339,7 @@
     {
       "name": "DOL.GS.GameVaultKeeper",
       "uses": 9,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.OonaUndeadSoldier",
@@ -1891,6 +1891,26 @@
       "status": "documented"
     },
     {
+      "id": "condition.effectiveness",
+      "status": "reference"
+    },
+    {
+      "id": "condition.repair-price",
+      "status": "provisional"
+    },
+    {
+      "id": "condition.start",
+      "status": "reference"
+    },
+    {
+      "id": "condition.warning",
+      "status": "provisional"
+    },
+    {
+      "id": "condition.wear",
+      "status": "provisional"
+    },
+    {
       "id": "creature.armour",
       "status": "reference"
     },
@@ -2113,12 +2133,20 @@
     {
       "id": "start.unsafe",
       "status": "provisional"
+    },
+    {
+      "id": "time.day-length",
+      "status": "reference"
+    },
+    {
+      "id": "time.night",
+      "status": "reference"
     }
   ],
   "rulesByStatus": {
     "documented": 25,
-    "provisional": 10,
-    "reference": 39
+    "provisional": 13,
+    "reference": 43
   },
   "placements": 29932,
   "levellingGear": [

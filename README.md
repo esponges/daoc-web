@@ -1593,6 +1593,15 @@ the first baseline:
 - 5 of 110 creature kinds, which covers 28,767 of Midgard's 29,932 placements;
 - 23 documented rules, 19 reference and 3 provisional.
 
+After `midgard-playable` it reads:
+
+- 10 of 15 creature spell types and none of the 73 class spell types;
+- 12 of 14 style features;
+- 15 of 30 abilities (Guard, Intercept, Protect and Engage among them);
+- 9 of 110 creature kinds, which covers 29,019 of Midgard's 29,932 placements
+  (7 kinds are marked not classic: left out on purpose);
+- 25 documented rules, 43 reference and 13 provisional.
+
 ### The game's own interface
 
 The menu bar, compass and clock, chat (with its Main and Chat tabs, which also
@@ -1656,9 +1665,11 @@ look at them (`/uidemo.html` on the running server).
 
 ## Known limitations
 
-- **It is always a clear midday.** The sky file has dawn, dusk, night, stars,
-  a moon and storms; only the clear day is converted, and the sun's direction
-  is chosen here rather than following a clock. The point lights in an
+- **Day and night are a tint, not the sky file's.** The game clock (real time
+  times 24) drives a darkening and a blue cast over the converted clear day, and
+  night-only creatures appear at night; the sky file's own dawn, dusk, night,
+  stars, a moon and storms are not converted, and the sun's direction is chosen
+  here rather than following the clock. The point lights in an
   outdoor zone's `lights.csv` are not lit; only cities and dungeons light
   theirs, and those cast no shadows. Cast shadows reach 2400 units from the player;
   beyond that only slope lighting remains.
@@ -1688,9 +1699,10 @@ look at them (`/uidemo.html` on the running server).
 - **Interiors are reached through their exits, and stay thin.** A dungeon
   mouth in an outdoor zone takes a player in, and the way back out. Dungeons
   have no water: the game's pools and underground rivers are not converted.
-  Trollheim and Tuscaran Glacier fit worse than the rest, and Nisse's Lair
-  a little worse; see [Cities and dungeons](#cities-and-dungeons). Nothing
-  falls: a ledge is a wall.
+  Trollheim (94 of 138 exits and lights) and Tuscaran Glacier (41 of 51)
+  fit worse than the rest, because their layouts leave parts out; see
+  [Cities and dungeons](#cities-and-dungeons). Tuscaran Glacier and Midgard's
+  Darkspire are almost unlit at the start. Nothing falls: a ledge is a wall.
 - **The playable outfits are still hand-written.** Creatures come from the
   tables by model number, but the two player outfits pick plate and cloth tiers
   by hand; nothing reads `items.csv` to dress a character from equipment. The
@@ -1735,6 +1747,15 @@ look at them (`/uidemo.html` on the running server).
   not are `_p00` files with a bad header, none of them placed by
   `city.csv`. The other realms' cities and dungeons convert but, like
   their outdoor zones, have only been measured.
+- **Faces, not hair.** A humanoid's head wears the Face skin from
+  `monsters.csv`; the hair is a separate style number that is not mapped, so
+  a head shows only what its face texture paints.
+- **Character options are thin.** There is no creation wizard, so a character
+  is a Troll or Norse Warrior as the login page offers, always male. The style
+  bar's order, which a player sets by dragging a style onto it, is not kept
+  across a reconnect. Repair is a plain panel; the stock frame has none. The
+  clock has no plain window when the converted interface is absent. The
+  journal, map, war map and spells buttons are greyed, with a tooltip saying why.
 - **A long session in one tab can stall the GPU.** Moving between zones
   reloads the page, and the viewer hands its WebGL context back as it goes;
   even so, after many zones in one tab the browser can stop drawing. A fresh

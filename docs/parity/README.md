@@ -10,14 +10,14 @@ Midgard (regions 100, 101, 151): 29932 placements
   Class spell types        0 of  73 implemented (0 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
   Abilities               15 of  30 implemented (66 of 100 grants)
-  Creature kinds           7 of 110 implemented (28987 of 29932 placements, 7 kinds not classic)
+  Creature kinds           9 of 110 implemented (29019 of 29932 placements, 7 kinds not classic)
   quests                 81, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         32 gaps in 10 bands
-  rules: 25 documented, 39 reference, 10 provisional
+  rules: 25 documented, 43 reference, 13 provisional
 ```
 
 ## Creature spell types
@@ -186,7 +186,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Keeps.GuardArcher | 49 |  |
 | DOL.GS.GameHastener | 27 | not classic: a hastener: a speed boost on request |
 | DOL.GS.Keeps.GuardCommander | 26 |  |
-| DOL.GS.Blacksmith | 23 |  |
+| DOL.GS.Blacksmith | 23 | yes |
 | DOL.GS.GameStableMaster | 23 | yes |
 | DOL.GS.QueenMajorAdd | 22 |  |
 | DOL.GS.GameHealer | 18 | yes |
@@ -196,7 +196,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.StripeAdd | 13 |  |
 | DOL.GS.ZritZritAdd | 13 |  |
 | DOL.GS.Keeps.FrontierHastener | 11 | not classic: a hastener: a speed boost on request |
-| DOL.GS.GameVaultKeeper | 9 |  |
+| DOL.GS.GameVaultKeeper | 9 | yes |
 | DOL.GS.OonaUndeadSoldier | 9 |  |
 | DOL.GS.Keeps.GuardStaticArcher | 8 |  |
 | DOL.GS.RainbowSpriteWhite | 8 |  |
@@ -326,6 +326,11 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | character.item-stats | documented |
 | character.level-stats | documented |
 | character.race-stats | documented |
+| condition.effectiveness | reference |
+| condition.repair-price | provisional |
+| condition.start | reference |
+| condition.warning | provisional |
+| condition.wear | provisional |
 | creature.armour | reference |
 | creature.blows | reference |
 | creature.defences | documented |
@@ -382,3 +387,5 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | spell.stun | reference |
 | start.town | documented |
 | start.unsafe | provisional |
+| time.day-length | reference |
+| time.night | reference |

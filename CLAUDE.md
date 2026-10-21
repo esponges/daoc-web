@@ -37,6 +37,9 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
   (`world/move.go`) and JS (`web/move.js`), checked against shared vectors.
 - **The built-in UI is the fallback.** Anything built from `web/data/ui/` must
   fall back to the plain panels when that folder is absent.
+- **A humanoid's `Head` skin in `monsters.csv` is its hair colour**; the face is the
+  `Face` column. `charconv -model` uses the Face skin (see the README, "Character
+  textures").
 - **Icon numbers in the imported data do not match this install's sheets**, so
   styles and items are drawn by weapon line and kind. Do not "fix" this by
   guessing an offset (see `openspec/changes/archive/2026-10-19-stock-ui-followups/design.md`).

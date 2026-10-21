@@ -130,7 +130,7 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 ## 18. Integration
 
 - [ ] 18.1 Play with two clients for an evening's worth of the 1.65 loop: create Warriors, start safely, group, level in Vale of Mularn, ride to another town, bind, bank, repair, see night fall, fight casters, die and pray. Record what broke or felt unlike 1.65 as findings for the next change.
-- [ ] 18.2 Regenerate `docs/parity`. Check that rule statuses are listed with no regressions, and update the README's limitations and CLAUDE.md for what changed. Verify all Go and JS tests, `openspec validate midgard-playable --strict`, and the parity regression test pass.
+- [x] 18.2 Regenerate `docs/parity`. Check that rule statuses are listed with no regressions, and update the README's limitations and CLAUDE.md for what changed. Verify all Go and JS tests, `openspec validate midgard-playable --strict`, and the parity regression test pass.
 - [ ] 18.3 Switch the user's live server to the final build as in 4.1, with their go-ahead and a fresh `players.db` backup.
 
 ## Workflow follow-up
