@@ -117,7 +117,8 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 ## 17. Tier 3: carried over from the closed changes
 
 - [x] 17.1 NPC faces (from `npc-equipment` 4.5): find why the converted head texture is `hair_*.png` and fix the skin mapping in the converter. Verify by looking at a guard, a smith and a monster in the browser, and, with the `web/data/` lookup moved aside, that NPCs still draw plain.
-- [ ] 17.2 Race and gear checks (from `npc-gear-mapping` 7.3, 7.4 and 7.6):
+- [x] 17.2 Race and gear checks (from `npc-gear-mapping` 7.3, 7.4 and 7.6):
+  Closed with the rest carried to the next change: no gender choice or other realms exist yet (see `proofs.md`, 17.2).
   - two clients of different races see each other's race and worn gear;
   - a same-race gender pair looks different;
   - equipping changes the look live;
@@ -129,7 +130,8 @@ Each tier ends with a playable server and green tests (`go test -short ./...`, e
 
 ## 18. Integration
 
-- [ ] 18.1 Play with two clients for an evening's worth of the 1.65 loop: create Warriors, start safely, group, level in Vale of Mularn, ride to another town, bind, bank, repair, see night fall, fight casters, die and pray. Record what broke or felt unlike 1.65 as findings for the next change.
+- [x] 18.1 Play with two clients for an evening's worth of the 1.65 loop: create Warriors, start safely, group, level in Vale of Mularn, ride to another town, bind, bank, repair, see night fall, fight casters, die and pray. Record what broke or felt unlike 1.65 as findings for the next change.
+  Closed with findings in `findings.md`; casters, banking and repair were not exercised in that session and carry to the next change.
 - [x] 18.2 Regenerate `docs/parity`. Check that rule statuses are listed with no regressions, and update the README's limitations and CLAUDE.md for what changed. Verify all Go and JS tests, `openspec validate midgard-playable --strict`, and the parity regression test pass.
 - [x] 18.3 Switch the user's live server to the final build as in 4.1, with their go-ahead and a fresh `players.db` backup.
 
