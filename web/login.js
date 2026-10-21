@@ -37,7 +37,7 @@ async function render() {
     const info = document.createElement('div');
     info.innerHTML = '<b></b><small></small>';
     info.querySelector('b').textContent = c.name;
-    info.querySelector('small').textContent = `${c.label}, level ${c.level} · ${c.zoneName || 'zone ' + c.zone}`;
+    info.querySelector('small').textContent = `${c.female ? "Female " : ""}${c.label}, level ${c.level} · ${c.zoneName || 'zone ' + c.zone}`;
     const play = document.createElement('a');
     play.className = 'btn primary'; play.textContent = 'Play';
     play.href = `/?play=${c.id}&zone=${c.zone}`;
@@ -64,7 +64,7 @@ $('admin-box').addEventListener('submit', async (e) => {
 $('new').addEventListener('submit', async (e) => {
   e.preventDefault();
   msg('');
-  try { await post('/api/characters', { name: $('name').value, arch: $('arch').value }); $('name').value = ''; render(); } catch (err) { msg(err.message); }
+  try { await post('/api/characters', { name: $('name').value, arch: $('arch').value, female: $('gender').value === 'f' }); $('name').value = ''; render(); } catch (err) { msg(err.message); }
 });
 $('logout').addEventListener('click', async () => { await post('/auth/logout', {}); render(); });
 

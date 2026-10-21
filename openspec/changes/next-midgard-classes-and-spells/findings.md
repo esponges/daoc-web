@@ -25,3 +25,7 @@ A standard search found only that a caster's power pool depends on their primary
 ## 1.5 Loot (2026-10-21)
 
 A standard search for 1.65 generic loot rates found nothing (only the later 1.104 classic-dungeon loot overhaul). The existing level-banded pool already returns an item at every level from 1 to 40 (200 of 200 draws each), so the thin loot came from the flat 22% chance, not an empty pool. The chance now rises with level (`rules.GenericDropPercent`, provisional). Matching the item to the creature's kind (hides, bones) is not done: the imported items carry no such link. This narrows the proposal's "level and kind"; the spec delta was edited to say so.
+
+## 2.1–2.3 Gender (2026-10-21)
+
+Most of the plumbing was already there: the `gender` column, `fm` on `welcome` and player entities, and female bases for all six Midgard races. The missing piece was the choice at creation. On a scratch server (a copy of the data, port 8788) a female Troll Warrior was made from the login page; the list reads "Female Troll Warrior", and in play the client loaded `m145` (Troll Female) for the player and `m137` (Troll Male) for the Troll Flayer beside them. The night screen is too dark to judge the model by eye, so the proof is which base was fetched.

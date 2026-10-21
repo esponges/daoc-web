@@ -92,9 +92,18 @@ type charView struct {
 	Name     string `json:"name"`
 	Arch     string `json:"arch"`
 	Label    string `json:"label"`
+	Female   bool   `json:"female,omitempty"`
 	Level    int    `json:"level"`
 	Zone     int    `json:"zone"`
 	ZoneName string `json:"zoneName"`
+}
+
+// genderOf is the stored gender number: 0 male, 1 female.
+func genderOf(female bool) int {
+	if female {
+		return 1
+	}
+	return 0
 }
 
 func (s *Server) view(c *store.Character) charView {
@@ -103,7 +112,7 @@ func (s *Server) view(c *store.Character) charView {
 	if zi := s.World.Cat.Zones[c.Zone]; zi != nil {
 		zn = zi.Name
 	}
-	return charView{ID: c.ID, Name: c.Name, Arch: a.Key, Label: a.Label, Level: c.Level, Zone: c.Zone, ZoneName: zn}
+	return charView{ID: c.ID, Name: c.Name, Arch: a.Key, Label: a.Label, Female: c.Gender == 1, Level: c.Level, Zone: c.Zone, ZoneName: zn}
 }
 
 func (s *Server) me(w http.ResponseWriter, r *http.Request, sess *auth.Session) {
@@ -134,9 +143,10 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 		return
 	}
 	var body struct {
-		Name  string  `json:"name"`
-		Arch  string  `json:"arch"`
-		Build *[8]int `json:"build"` // how far each stat is raised; absent for the class default
+		Name   string  `json:"name"`
+		Arch   string  `json:"arch"`
+		Build  *[8]int `json:"build"`  // how far each stat is raised; absent for the class default
+		Female bool    `json:"female"` // false (or absent) is male
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -163,7 +173,8 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 		return
 	}
 	c := &store.Character{AccountID: sess.AccountID, Name: body.Name, Race: arch.Race, Class: arch.Class, Level: 1,
-		Stats: stats, HasStats: true, XPScheme: store.XPSchemeRules, Specs: map[string]int{}}
+		Gender: genderOf(body.Female),
+		Stats:  stats, HasStats: true, XPScheme: store.XPSchemeRules, Specs: map[string]int{}}
 	if st, ok := s.World.Cat.StartFor(arch.Realm, arch.Race, arch.Class); ok {
 		c.Zone, c.X, c.Y, c.Z, c.Heading = st.Zone, st.X, st.Y, st.Z, st.Heading
 		c.Bind = &store.Place{Zone: st.Zone, X: st.X, Y: st.Y, Z: st.Z, Heading: st.Heading}

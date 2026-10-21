@@ -8,9 +8,9 @@
 
 ## 2. Gender
 
-- [ ] 2.1 Check which Midgard races have female models in `charconv`, and convert the missing ones from the install.
-- [ ] 2.2 Add `gender` to characters (additive column, default male), the protocol field in `docs/protocol.md`, and a protocol test.
-- [ ] 2.3 Add the choice to the creation page and draw the right model and face on every client, with the male fallback. Verify two clients of the same race and different genders in the browser.
+- [x] 2.1 Female bases are already converted for all six Midgard races (`races.json`: Norseman, Troll, Dwarf, Kobold, Valkyn, Frostalf), so nothing is missing.
+- [x] 2.2 The `gender` column, `fm` on the wire and the male default already existed; creation now takes `female` (docs/protocol.md, `TestCreateCharacterGender`).
+- [x] 2.3 Add the choice to the creation page and draw the right model and face on every client, with the male fallback. Verify two clients of the same race and different genders in the browser.
 
 ## 3. Classes
 

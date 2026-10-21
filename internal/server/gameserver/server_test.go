@@ -409,3 +409,32 @@ func TestCreateCharacterWithBuild(t *testing.T) {
 		t.Errorf("Plain %v", got["Plain"])
 	}
 }
+
+// Creation takes a gender: absent means male, and a female character is stored
+// and listed as one.
+func TestCreateCharacterGender(t *testing.T) {
+	ts, c, w := testServer(t)
+	login(t, ts, c)
+	type body struct {
+		Name   string `json:"name"`
+		Arch   string `json:"arch"`
+		Female bool   `json:"female,omitempty"`
+	}
+	if r := post(t, c, ts.URL+"/api/characters", body{Name: "Herman", Arch: "troll-warrior"}); r.StatusCode != 201 {
+		t.Fatalf("male: %d", r.StatusCode)
+	}
+	if r := post(t, c, ts.URL+"/api/characters", body{Name: "Hilda", Arch: "troll-warrior", Female: true}); r.StatusCode != 201 {
+		t.Fatalf("female: %d", r.StatusCode)
+	}
+	list, err := w.Store.Characters(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]int{}
+	for _, ch := range list {
+		got[ch.Name] = ch.Gender
+	}
+	if got["Herman"] != 0 || got["Hilda"] != 1 {
+		t.Errorf("genders %v, want Herman 0 and Hilda 1", got)
+	}
+}
