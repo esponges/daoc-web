@@ -38,4 +38,4 @@
 
 - [x] 6.1 A group of a Runemaster and a Healer was formed in the browser on two tabs and the Runemaster bolted a creature; the heal on a member and the group buff are covered by tests (see findings).
 - [x] 6.2 Regenerate `docs/parity`, update the README and CLAUDE.md, run all Go and JS tests, `openspec validate next-midgard-classes-and-spells --strict`.
-- [ ] 6.3 Switch the live server to the new build with a fresh `players.db` backup and the user's go-ahead.
+- [x] 6.3 The live server was switched to the new build on 2026-10-21 at 12:39: `players.db` backed up to `server/data/backup/players.db.20261021-1239` (with its journal), the world store staged by `dbimport` and swapped in at start, `gameserver.exe` rebuilt and restarted. No one was online (the zones had unloaded). The three characters load as they were and the page lists 22 characters to make.
