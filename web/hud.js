@@ -163,7 +163,7 @@ export function createStockSummary(doc, data, { name = '' } = {}) {
   const frac = (v, max) => (max > 0 ? Math.max(0, Math.min(1, v / max)) : 0);
   return {
     el: win.el,
-    update(me, target, targetColor) {
+    update(me, target, targetColor, attacking = false) {
       if (me) {
         win.setBar('summary_player_hits', frac(me.hp, me.maxHp));
         win.setText('summary_player_hits', me.dead ? '' : Math.ceil(me.hp));
@@ -172,7 +172,7 @@ export function createStockSummary(doc, data, { name = '' } = {}) {
         win.setBar('summary_player_power', 0);
         win.setText('stats_level', me.level || '');
       }
-      win.setText('summary_target', target ? target.name + (target.dead ? ' (dead)' : '') : '', target ? targetColor : undefined);
+      win.setText('summary_target', target ? target.name + (target.dead ? ' (dead)' : attacking ? ' (attacking)' : '') : '', target ? targetColor : undefined);
       win.setBar('summary_target_hits', target && !target.dead ? target.hp : 0);
       win.setText('summary_target_hits', target && !target.dead ? Math.round(target.hp * 100) : '');
     },

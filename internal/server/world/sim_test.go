@@ -940,3 +940,27 @@ func TestPlayerRaceAndGenderAreSent(t *testing.T) {
 		}
 	}
 }
+
+// Dragging within the pack sends the same equip message as wearing; both
+// slots below PackSize must move or swap the items and nothing else.
+func TestPackSlotsRearrange(t *testing.T) {
+	r := newRig(t)
+	p := r.player("Packer", 1, 30000, 30000, false)
+	r.st.Tx(func(tx *store.Tx) error {
+		tx.AddItem(p.Char.ID, "hammer", 0, 1)
+		tx.AddItem(p.Char.ID, "helm", 1, 1)
+		return nil
+	})
+	r.w.loadInventory(p)
+	r.z.MoveItem(p, 0, 5)
+	if p.inv[5] == nil || p.inv[5].ID != "hammer" || p.inv[0] != nil {
+		t.Error("the hammer did not move to slot 5")
+	}
+	r.z.MoveItem(p, 1, 5)
+	if p.inv[1] == nil || p.inv[1].ID != "hammer" || p.inv[5].ID != "helm" {
+		t.Error("the two pack items did not swap")
+	}
+	if p.weapon != nil || p.inv[SlotWeapon] != nil || p.inv[SlotHead] != nil {
+		t.Error("a pack move wore something")
+	}
+}

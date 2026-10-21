@@ -1,9 +1,9 @@
 ## 1. Playtest findings
 
-- [ ] 1.1 Show the attack state on the quickbar or target window, and stop a repeat press of the attack key from silently cancelling. Verify in the browser.
+- [x] 1.1 Show the attack state on the quickbar or target window, and stop a repeat press of the attack key from silently cancelling. Verify in the browser.
 - [ ] 1.2 Look for a source on 1.65's attack toggle and auto-walk to a target. Adopt it (add to CLAUDE.md and README sources) and implement, or record in `findings.md` that none was found and behaviour stays.
 - [ ] 1.3 Look for a source on night spawns appearing at dusk. Same rule as 1.2.
-- [ ] 1.4 Reject a pack-to-pack `equip` with a clear message; add a server test.
+- [x] 1.4 Pack-to-pack `equip` is the pack's drag-to-rearrange (`web/ui.js` onMove), so it is kept, not rejected; a server test (`TestPackSlotsRearrange`) pins it. Finding 5 was a script mix-up, not a bug.
 - [ ] 1.5 Loot by creature level and kind (`loot-and-release` delta): search once for a 1.65 source, else add the provisional table to `rules`, register it, write the rule-book scenarios and tests, and check a batch of simulated kills.
 
 ## 2. Gender

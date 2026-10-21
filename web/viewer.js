@@ -1510,7 +1510,7 @@ async function main() {
       const t = combat.target, box = $('target-box');
       box.classList.toggle('on', !!t);
       if (t) {
-        $('tgt-name').textContent = t.name;
+        $('tgt-name').textContent = t.name + (combat.attacking && !t.dead ? ' (attacking)' : '');
         if (net) $('tgt-name').style.color = t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColor(t.level, net.me.level);
         $('tgt-hp').textContent = t.dead ? 'dead'
           : (net ? Math.round(t.hp * 100) + '%' : Math.ceil(t.hp) + ' / ' + t.maxHp) + '  ·  ' + Math.round(Math.hypot(t.x - player.x, t.y - player.y)) + 'u';

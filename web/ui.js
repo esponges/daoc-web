@@ -487,7 +487,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (clockWin) clockWin.update(net.clock ? clockFace(gameSeconds(net.clock, net.now())) : undefined);
     if (summary) {
       const t = getTarget ? getTarget() : null;
-      summary.update(me, t, t ? (t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColour(t.e?.con) || conColor(t.level, me.level)) : undefined);
+      summary.update(me, t, t ? (t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColour(t.e?.con) || conColor(t.level, me.level)) : undefined, !!me.attacking);
     }
     fill(endBar, me.end / me.maxEnd);
     fill(xpBar, me.xpNext ? me.xp / me.xpNext : 0);
