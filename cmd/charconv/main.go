@@ -328,6 +328,13 @@ func fromTables(game string, id int) (outfit, error) {
 			return outfit{}, fmt.Errorf("model %d: %s skin %d not in skins.csv", id, slot, sid)
 		}
 		o.textures[slot] = s.DDS()
+		if slot == "Head" && m.Face > 0 {
+			// The Head column of a humanoid is its hair colour (hair_white);
+			// the face is the row's Face skin, which the head shape wears.
+			if f, ok := t.Skins[m.Face]; ok {
+				o.textures[slot] = f.DDS()
+			}
+		}
 		if slot == "Body" {
 			o.textures[""] = s.DDS()
 		}

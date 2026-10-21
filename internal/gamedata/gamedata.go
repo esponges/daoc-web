@@ -37,7 +37,10 @@ type Monster struct {
 	Name   string
 	Figure int            // monnifs.csv row
 	Skins  map[string]int // slot -> skins.csv row; slots with 0 are left out
-	Scale  float64        // 1.0 is the model as authored
+	// Face is the skins.csv row of the head's face texture, 0 if the row has
+	// none. The "Head" skin of a humanoid is its hair colour, not its face.
+	Face  int
+	Scale float64 // 1.0 is the model as authored
 }
 
 // Figure is one row of monnifs.csv.
@@ -112,6 +115,7 @@ func Load(game string) (*Tables, error) {
 				m.Skins[s] = v
 			}
 		}
+		m.Face = num(r, 18) // the column headed "Face"
 		m.Scale = float64(num(r, 12)) / 100
 		if m.Scale <= 0 {
 			m.Scale = 1

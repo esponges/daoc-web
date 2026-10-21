@@ -127,3 +127,21 @@ func TestPlaybackRate(t *testing.T) {
 		}
 	}
 }
+
+// A humanoid's Head skin is its hair colour; its face is the row's Face skin.
+func TestHumanoidFaceIsNotTheHair(t *testing.T) {
+	tb := load(t)
+	m, ok := tb.Monsters[1051] // Frostalf Male 1
+	if !ok {
+		t.Fatal("no model 1051")
+	}
+	if h := tb.Skins[m.Skins["Head"]].DDS(); !strings.HasPrefix(h, "hair_") {
+		t.Errorf("head skin %q, want a hair colour", h)
+	}
+	if f := tb.Skins[m.Face].DDS(); !strings.Contains(strings.ToLower(f), "hed") {
+		t.Errorf("face skin %q, want a head texture", f)
+	}
+	if w := tb.Monsters[56]; w.Face != 0 {
+		t.Errorf("a wolf has no face skin, got %d", w.Face)
+	}
+}
