@@ -14,7 +14,46 @@ const (
 	SpellLifedrain      = "Lifedrain"
 	SpellHeal           = "Heal"
 	SpellOffensiveProc  = "OffensiveProc"
+
+	// Spells only players cast in this slice: buffs and damage added to blows.
+	SpellStrConBuff   = "StrengthConstitutionBuff"
+	SpellDexQuiBuff   = "DexterityQuicknessBuff"
+	SpellStrengthBuff = "StrengthBuff"
+	SpellArmourBuff   = "BaseArmorFactorBuff"
+	SpellDamageAdd    = "DamageAdd"
 )
+
+// ImplementedPlayerSpell says whether a player can cast a spell type: what a
+// creature casts, plus the buffs and the damage add.
+func ImplementedPlayerSpell(spellType string) bool {
+	switch spellType {
+	case SpellStrConBuff, SpellDexQuiBuff, SpellStrengthBuff, SpellArmourBuff, SpellDamageAdd:
+		return true
+	}
+	return ImplementedSpell(spellType) && spellType != SpellOffensiveProc
+}
+
+// BuffStatCap is the most spell buffs add to one stat, by level; the items'
+// cap is separate. Provisional.
+func BuffStatCap(level int) int { return level * 5 / 4 }
+
+// BuffAFCap is the most armour factor buffs add, by level. Provisional.
+func BuffAFCap(level int) int { return level * 2 }
+
+// BuffedStats is the stats a buff spell raises and by how much: its value on
+// each of the stats its type names.
+func BuffedStats(spellType string, value float64) map[Stat]int {
+	v := int(value)
+	switch spellType {
+	case SpellStrConBuff:
+		return map[Stat]int{STR: v, CON: v}
+	case SpellDexQuiBuff:
+		return map[Stat]int{DEX: v, QUI: v}
+	case SpellStrengthBuff:
+		return map[Stat]int{STR: v}
+	}
+	return nil
+}
 
 // ImplementedSpell says whether the server can cast a spell type.
 func ImplementedSpell(spellType string) bool {
@@ -102,6 +141,8 @@ func Healed(health, maxHealth, value int) int { return min(maxHealth, health+max
 func init() {
 	const c = "rules-spell-effects"
 	register(
+		Rule{ID: "spell.buff", Capability: "player-spellcasting", Requirement: "Spell types of the first slice",
+			Status: Provisional, Sources: []string{"data", "project"}},
 		Rule{ID: "spell.hit", Capability: c, Requirement: "A hostile spell lands by a hit roll",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Even levels", "A higher caster", "Far below"}},
 		Rule{ID: "spell.resist", Capability: c, Requirement: "Resists reduce spell damage",

@@ -198,6 +198,7 @@ type Catalog struct {
 	Unsafe         []UnsafeStart           // starts the start rule replaced, from checkStarts
 	StartEquip     map[int][]string        // class -> the items it starts with, in the table's order; nil when the store predates the table
 	Spells         map[int]*SpellDef       // spell id -> spell, those something in the world casts
+	LineSpells     map[string][]LineSpell  // spec -> the spells of its lines
 	TemplateSpells map[int][]int           // npc template id -> its spells, in order
 	StyleSpells    []StyleSpell            // spells styles fire when they land
 	replaced       map[int]UnsafeStart     // index in Starts -> its replacement

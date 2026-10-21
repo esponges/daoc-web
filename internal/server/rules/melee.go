@@ -74,6 +74,7 @@ type Shield struct {
 
 // Combatant is one side of a swing: a player or a creature.
 type Combatant struct {
+	BuffAF float64 // armour factor a spell adds, for a player, to every location
 	Player bool
 	Level  int
 	Stats  Stats
@@ -340,7 +341,7 @@ func LocationArmour(d *Combatant, loc Location) (af, absorb float64) {
 		return d.CreatureAF, d.CreatureAbsorb
 	}
 	l := float64(d.Level)
-	extra := 0.4 * l
+	extra := 0.4*l + d.BuffAF
 	if loc < 0 || d.Armour[loc] == nil {
 		return extra, 0
 	}

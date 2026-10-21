@@ -1,14 +1,14 @@
 ## ADDED Requirements
 
 ### Requirement: A spellbook per character
-A character of a casting class SHALL have a spellbook holding the spells of its spell lines up to its level, taken from the imported data. A spell SHALL appear in the book at the level the data gives it, and a level-up SHALL add the new spells and tell the player.
+A character of a casting class SHALL have a spellbook holding the spells of the spell lines of the specs it trains, taken from the imported data. A spell SHALL appear in the book when the spec reaches the level the data gives it, and training a spec SHALL add the new spells and tell the player.
 
 #### Scenario: A new Healer
 - **WHEN** a level 1 Healer enters the world
-- **THEN** the spellbook lists the spells of their lines whose level is 1 or less, and none above
+- **THEN** the spellbook lists the spells of their specs' lines whose level is 1 or less, and none above
 
 #### Scenario: Levelling
-- **WHEN** the Healer reaches the level of another spell in their lines
+- **WHEN** the Healer trains a spec to the level of another spell in its line
 - **THEN** the spell is added to the book and the chat log says so
 
 ### Requirement: Casting
@@ -38,7 +38,7 @@ A cast SHALL be interrupted when the caster takes damage from a melee blow or sp
 - **THEN** a second request is refused until the time passes
 
 ### Requirement: Spell types of the first slice
-The server SHALL apply these spell types from the data: direct damage, bolt, heal, damage over time, damage add, strength, constitution, dexterity and quickness buffs, base armour buff, speed decrease, mesmerize and stun. Spell types outside the list SHALL stay in the book marked as not yet working, and casting one SHALL say so and spend nothing.
+The server SHALL apply these spell types from the data: direct damage, bolt, heal, damage over time, damage add, strength, constitution, dexterity and quickness buffs, base armour buff, speed decrease, mesmerize, stun and life drain. Buffs of one kind do not stack: the strongest counts. Spell types outside the list SHALL stay in the book marked as not yet working, and casting one SHALL say so and spend nothing.
 
 #### Scenario: A heal on a group member
 - **WHEN** a Healer casts a heal on a group member in range

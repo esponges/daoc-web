@@ -288,6 +288,7 @@ func (z *Zone) join(p *Player) {
 	p.send(p.statsSent)
 	p.sendInv(w.Cat, c.Money)
 	p.sendBar(w.Cat)
+	w.refreshBook(p)
 	p.send(protocol.Clock{T: protocol.TClock, GS: w.gameSeconds()})
 	z.event(protocol.Event{K: "join", To: p.ID, Text: c.Name}, p.Body.X, p.Body.Y)
 	if p.notice != "" {

@@ -408,6 +408,13 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 		z.killNPC(n)
 		return
 	}
+	if add := p.damageAdd(); add > 0 {
+		z.event(protocol.Event{K: "spell", From: p.ID, To: n.ID, Text: "damage add", Amount: add}, n.Body.X, n.Body.Y)
+		z.hurt(n, p, add)
+		if n.dead() {
+			return
+		}
+	}
 	z.playerProcs(p, n, style)
 }
 
@@ -528,6 +535,7 @@ func ifSeen(seen bool, v float64) float64 {
 // killPlayer ends a player's life until they return to their bind point.
 func (z *Zone) killPlayer(p *Player, by *NPC) {
 	z.closeShop(p)
+	z.cancelPlayerCast(p, "")
 	p.hp = 0
 	p.dead = true
 	p.deadAt = z.now

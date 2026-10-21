@@ -23,9 +23,9 @@
 
 - [x] 4.1 No source gave the power pool or regeneration numbers (two searches, see findings), so `rules/power.go` is provisional with table tests for the `rules-power` scenarios and a registry entry.
 - [x] 4.2 Power is on the sheet (`mpw`), the snapshot (`pw`, `mpw`) and the HUD (stock summary power bar and a built-in bar for casters); `TestPlayerPower`.
-- [ ] 4.3 Build the spellbook from the imported lines by class and level, with level-up additions and messages.
-- [ ] 4.4 Add the cast request: checks, cast time, power spend, interrupts and recast, reusing the creature engine. Protocol and server tests.
-- [ ] 4.5 Implement the first slice of spell types: direct damage, bolt, heal, damage over time, damage add, stat and armour buffs, speed decrease, mesmerize, stun. Unsupported types are marked and refuse a cast. Update `cmd/parity` to count class spell types.
+- [x] 4.3 The import now carries the spell lines of the Midgard classes (`line_spell`) and each spell's power; the spellbook is built from the specs a class trains (shared lines plus lines made for the class), sent as `book`, with a "You learn ..." line for new spells.
+- [x] 4.4 `cast` request: checks (known, supported, ready, target, power, range), cast time, interrupts by damage and by moving, recast and power spent on landing (`internal/server/world/pcasting.go`, tests in `pcasting_test.go`).
+- [x] 4.5 First slice of spell types applied for players: the creature engine's (direct damage, bolt, heal, damage over time, slow, mesmerize, stun, life drain) plus stat and armour buffs and damage add; unsupported types stay in the book marked and refuse a cast. `cmd/parity` counts class spell types by what a player can cast.
 - [ ] 4.6 Build the SPELLS window from the stock layout, spells on the quickbar and a cast bar, with the built-in panel as the fallback. Check with `web/data/ui/` moved aside.
 - [ ] 4.7 Cast a heal, a bolt and a buff in the browser against a real creature and a group member.
 

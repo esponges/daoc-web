@@ -78,7 +78,9 @@ CREATE TABLE spell(
   id INTEGER PRIMARY KEY, name TEXT, type TEXT, target TEXT, range INTEGER, cast_time REAL, recast INTEGER,
   damage REAL, damage_type INTEGER, value REAL, duration INTEGER, frequency INTEGER, life_drain INTEGER,
   sub_spell INTEGER, uninterruptible INTEGER, icon INTEGER, radius INTEGER,
-  message1 TEXT, message2 TEXT, message3 TEXT, message4 TEXT);
+  message1 TEXT, message2 TEXT, message3 TEXT, message4 TEXT, power INTEGER);
+CREATE TABLE line_spell(spec TEXT, hint INTEGER, line TEXT, spell INTEGER, level INTEGER);
+CREATE INDEX line_spell_spec ON line_spell(spec);
 CREATE TABLE template_spell(template INTEGER, spell INTEGER, ord INTEGER);
 CREATE INDEX template_spell_template ON template_spell(template);
 CREATE TABLE style_spell(class INTEGER, style INTEGER, spell INTEGER, chance INTEGER);
@@ -483,7 +485,11 @@ func build(o Options) (*Report, error) {
 	}); err != nil {
 		return nil, err
 	}
+	midgardSpecs := map[string]bool{} // spec lines the Midgard classes (21 to 38) train
 	if err := read("classxspecialization", func(r *Row) (bool, error) {
+		if c := r.Int("ClassID"); c >= 21 && c <= 38 {
+			midgardSpecs[r.Str("SpecKeyName")] = true
+		}
 		return true, ins(`INSERT INTO class_spec VALUES(?,?,?)`, r.Int("ClassID"), r.Str("SpecKeyName"), r.Int("LevelAcquired"))
 	}); err != nil {
 		return nil, err
@@ -548,6 +554,36 @@ func build(o Options) (*Report, error) {
 			return nil, err
 		}
 	}
+	// The spells of the lines those classes train: a line belongs to a spec, and
+	// may be meant for one class (its hint) or for every class with the spec.
+	type lineSpell struct {
+		spec, line         string
+		hint, spell, level int
+	}
+	var lineSpells []lineSpell
+	if _, e1 := os.Stat(filepath.Join(o.Dump, "linexspell.sql")); e1 == nil && fileExists(filepath.Join(o.Dump, "spellline.sql")) {
+		lines := map[string]lineSpell{}
+		if err := read("spellline", func(r *Row) (bool, error) {
+			if sp := r.Str("Spec"); midgardSpecs[sp] {
+				lines[r.Str("KeyName")] = lineSpell{spec: sp, line: r.Str("KeyName"), hint: r.Int("ClassIDHint")}
+			}
+			return false, nil
+		}); err != nil {
+			return nil, err
+		}
+		if err := read("linexspell", func(r *Row) (bool, error) {
+			l, ok := lines[r.Str("LineName")]
+			if !ok || r.Int("SpellID") == 0 || r.Int("Level") < 1 || r.Int("Level") > 50 {
+				return false, nil
+			}
+			l.spell, l.level = r.Int("SpellID"), r.Int("Level")
+			lineSpells = append(lineSpells, l)
+			wantSpell[l.spell] = true
+			return true, nil
+		}); err != nil {
+			return nil, err
+		}
+	}
 	spells := map[int]*Row{}
 	if _, err := os.Stat(filepath.Join(o.Dump, "spell.sql")); err == nil {
 		if _, err := ReadTable(filepath.Join(o.Dump, "spell.sql"), func(r *Row) error {
@@ -582,10 +618,10 @@ func build(o Options) (*Report, error) {
 			continue
 		}
 		kept++
-		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
+		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
 			r.Int("Range"), r.Float("CastTime"), r.Int("RecastDelay"), r.Float("Damage"), r.Int("DamageType"), r.Float("Value"),
 			r.Int("Duration"), r.Int("Frequency"), r.Int("LifeDrainReturn"), r.Int("SubSpellID"), r.Int("Uninterruptible"),
-			r.Int("Icon"), r.Int("Radius"), r.Str("Message1"), r.Str("Message2"), r.Str("Message3"), r.Str("Message4")); err != nil {
+			r.Int("Icon"), r.Int("Radius"), r.Str("Message1"), r.Str("Message2"), r.Str("Message3"), r.Str("Message4"), r.Int("Power")); err != nil {
 			return nil, err
 		}
 	}
@@ -602,6 +638,15 @@ func build(o Options) (*Report, error) {
 			if err := ins(`INSERT INTO template_spell VALUES(?,?,?)`, t, sp, i); err != nil {
 				return nil, err
 			}
+		}
+	}
+	for _, l := range lineSpells {
+		if spells[l.spell] == nil {
+			rep.SpellLinksMissing++
+			continue
+		}
+		if err := ins(`INSERT INTO line_spell VALUES(?,?,?,?,?)`, l.spec, l.hint, l.line, l.spell, l.level); err != nil {
+			return nil, err
 		}
 	}
 	for _, s := range styleSpells {
@@ -838,3 +883,5 @@ func convertedZones(web string) map[int]bool {
 	}
 	return m
 }
+
+func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }

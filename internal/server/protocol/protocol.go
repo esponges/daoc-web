@@ -44,6 +44,7 @@ const (
 	TRestore  = "restore"  // pay a healer to restore lost constitution
 	TPray     = "pray"     // pray at the targeted gravestone
 	TGroupOp  = "groupop"  // invite, accept, decline, leave or remove from a group
+	TCast     = "cast"     // cast a spell from the spellbook
 )
 
 // Message types, server to client.
@@ -57,6 +58,7 @@ const (
 	TCorpse      = "corpse"
 	TPong        = "pong"
 	TStyleBar    = "bar"
+	TBook        = "book"        // the spellbook, sent when it changes
 	TShop        = "shop"        // a merchant's stock, sent when interaction opens it
 	TShopClose   = "shopclose"   // the open shop is closed (walked away, died, moved zone)
 	TSmith       = "smith"       // what a blacksmith can repair for the player, with prices
@@ -547,6 +549,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Restore{}
 	case TGroupOp:
 		v = &GroupOp{}
+	case TCast:
+		v = &Cast{}
 	case TPray:
 		return TPray, nil, nil
 	case TPing:
@@ -626,4 +630,40 @@ type GroupMember struct {
 type Group struct {
 	T       string        `json:"t"`
 	Members []GroupMember `json:"members"`
+}
+
+// Cast asks to cast a spell from the spellbook at an entity; without a target
+// the one the player holds is used, and a spell on the caster needs none.
+type Cast struct {
+	T      string `json:"t"`
+	Spell  int    `json:"sp"`
+	Target int64  `json:"tg,omitempty"`
+}
+
+// Book is the spellbook: the spells the character knows, by spec line.
+type Book struct {
+	T     string     `json:"t"`
+	Lines []BookLine `json:"lines"`
+}
+
+// BookLine is one spec line's spells, lowest level first.
+type BookLine struct {
+	Spec   string      `json:"spec"`
+	Name   string      `json:"nm"`
+	Spells []BookSpell `json:"sp"`
+}
+
+// BookSpell is one spell. OK is false for a type the server cannot cast yet.
+type BookSpell struct {
+	ID     int     `json:"id"`
+	Name   string  `json:"nm"`
+	Level  int     `json:"lv"`
+	Cost   int     `json:"pw"` // power it draws
+	Cast   float64 `json:"ct"` // seconds to cast
+	Range  int     `json:"rg"`
+	Type   string  `json:"tp"`
+	Target string  `json:"tg"`
+	OK     bool    `json:"ok"`
+	Icon   int     `json:"ic"`           // the data's number; not drawn
+	Recast int     `json:"rc,omitempty"` // seconds before it can be cast again
 }

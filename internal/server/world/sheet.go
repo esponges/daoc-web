@@ -21,6 +21,7 @@ type sheet struct {
 	skillBonus map[string]int // spec key -> item bonus, before the cap
 	abilities  map[string]int
 	maxHP      int
+	buffAF     int // armour factor spell buffs add
 	maxPower   int // 0 for a class that does not cast
 	unspent    int
 	half       bool
@@ -163,6 +164,11 @@ func (w *World) recalc(p *Player) {
 		}
 	}
 	sh.stats = rules.Modified(c.Stats, sh.class, c.Level, sh.itemStats, c.ConLost)
+	buffs, buffAF := p.buffBonuses()
+	for s := range sh.stats {
+		sh.stats[s] += min(buffs[s], rules.BuffStatCap(c.Level))
+	}
+	sh.buffAF = min(buffAF, rules.BuffAFCap(c.Level))
 	sh.maxHP = rules.MaxHP(sh.class, c.Level, sh.stats[rules.CON], sh.itemHP)
 	sh.maxPower = rules.MaxPower(sh.class, c.Level, sh.stats[sh.class.Acuity])
 	sh.half = c.Level >= 40 && c.XP >= rules.HalfLevel(c.Level)
@@ -173,6 +179,7 @@ func (w *World) recalc(p *Player) {
 	}
 	sh.abilities = rules.Abilities(w.Cat.Grants[c.Class], w.Cat.Careers(c.Class), c.Level, trained)
 	p.sh = sh
+	w.refreshBook(p)
 	if p.hp > float64(sh.maxHP) {
 		p.hp = float64(sh.maxHP)
 	}
@@ -257,7 +264,7 @@ var locationSlot = [rules.NumLocations]int{SlotTorso, SlotLegs, SlotArms, SlotHe
 func (p *Player) combatant(cat *Catalog) *rules.Combatant {
 	sh := p.sh
 	cb := &rules.Combatant{Player: true, Level: p.Char.Level, Stats: sh.stats, WeaponSkillBase: sh.class.WeaponSkillBase,
-		Weapon: weaponOf(p.weapon), EvadeLevel: sh.abilities[rules.AbEvade], StyleDefence: p.styleDefence}
+		Weapon: weaponOf(p.weapon), EvadeLevel: sh.abilities[rules.AbEvade], StyleDefence: p.styleDefence, BuffAF: float64(sh.buffAF)}
 	if p.weapon != nil {
 		cb.Weapon.Condition = p.condOf(SlotWeapon)
 	}

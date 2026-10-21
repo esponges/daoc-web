@@ -26,6 +26,8 @@ const (
 	effStun = "stun"
 	effMez  = "mez"
 	effProc = "proc"
+	effBuff = "buff"
+	effAdd  = "dmgadd"
 )
 
 // effectKind is the kind of lasting effect a spell type leaves, "" for none.
@@ -41,6 +43,10 @@ func effectKind(spellType string) string {
 		return effMez
 	case rules.SpellOffensiveProc:
 		return effProc
+	case rules.SpellStrConBuff, rules.SpellDexQuiBuff, rules.SpellStrengthBuff, rules.SpellArmourBuff:
+		return effBuff
+	case rules.SpellDamageAdd:
+		return effAdd
 	}
 	return ""
 }
@@ -157,6 +163,9 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		}
 	default:
 		if kind := effectKind(sp.Type); kind != "" {
+			if _, isPlayer := target.(*Player); !isPlayer && (kind == effBuff || kind == effAdd) {
+				return false
+			}
 			z.addEffect(target, caster, sp, kind)
 		}
 	}
@@ -250,6 +259,9 @@ func (z *Zone) hurt(target, by combatant, amount int) {
 
 // damaged ends whatever damage breaks on a combatant: a mesmerize.
 func (z *Zone) damaged(c combatant) {
+	if p, ok := c.(*Player); ok && p.casting != nil {
+		z.interruptPlayerCast(p, "You are interrupted.")
+	}
 	list := effectsOf(c)
 	kept := (*list)[:0]
 	changed := false
@@ -332,6 +344,10 @@ func (z *Zone) effectsChanged(c combatant) {
 	p, ok := c.(*Player)
 	if !ok {
 		return
+	}
+	if buffed := p.hasBuff(); buffed || p.buffed {
+		p.buffed = buffed
+		z.W.recalc(p) // buffs raise stats and armour
 	}
 	m := protocol.Effects{T: protocol.TEffects, List: []protocol.EffectView{}, Speed: speedFactor(p), Held: held(p)}
 	for _, e := range p.effects {

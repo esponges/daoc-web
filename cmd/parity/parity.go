@@ -53,9 +53,6 @@ type Report struct {
 	LevellingGear  []GearRow      `json:"levellingGear"`
 }
 
-// implementedClassSpellTypes are the spell types players can cast. None yet:
-// creatures cast (rules.ImplementedSpell), players do not.
-var implementedClassSpellTypes = map[string]bool{}
 
 // Run reads the dump and the registry.
 func Run(dump string) (*Report, error) {
@@ -151,7 +148,7 @@ func Run(dump string) (*Report, error) {
 		return nil, err
 	}
 	for k, n := range classSpells {
-		rep.ClassSpells = append(rep.ClassSpells, Item{Name: k, Uses: n, Classes: sorted(classSpellClasses[k]), Implemented: implementedClassSpellTypes[k]})
+		rep.ClassSpells = append(rep.ClassSpells, Item{Name: k, Uses: n, Classes: sorted(classSpellClasses[k]), Implemented: rules.ImplementedPlayerSpell(k)})
 	}
 	abilities, abilityClasses := map[string]int{}, map[string][]string{}
 	if err := read("specxability", func(r *importer.Row) error {
