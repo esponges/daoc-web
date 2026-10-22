@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -86,5 +87,59 @@ func TestParityDoesNotGoBackwards(t *testing.T) {
 	}
 	for _, r := range regressions(&base, fresh) {
 		t.Error(r)
+	}
+}
+
+// count says how many of items are implemented, as the README table writes it.
+func count(items []Item) (done, total, uses int) {
+	for _, it := range items {
+		total++
+		if it.Implemented {
+			done++
+			uses += it.Uses
+		}
+	}
+	return
+}
+
+// The README's status table is written by hand from docs/parity/parity.json;
+// this keeps it from going stale. It needs no dump, so -short runs it.
+func TestReadmeAgreesWithBaseline(t *testing.T) {
+	b, err := os.ReadFile(filepath.Join("..", "..", "docs", "parity", "parity.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var base Report
+	if err := json.Unmarshal(b, &base); err != nil {
+		t.Fatal(err)
+	}
+	readme, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(readme)
+	want := map[string][]Item{
+		"Creature spell types": base.CreatureSpells, "Class spell types": base.ClassSpells,
+		"Style features": base.StyleFeatures, "Abilities": base.Abilities, "Creature kinds": base.CreatureKinds,
+	}
+	for name, items := range want {
+		done, total, _ := count(items)
+		cell := fmt.Sprintf("| %s | %d of %d", name, done, total)
+		if !strings.Contains(text, cell) {
+			t.Errorf("README status table should have a row starting %q", cell)
+		}
+	}
+	for _, it := range base.Content {
+		if it.Implemented {
+			continue
+		}
+		if !strings.Contains(text, "0 of "+fmt.Sprint(it.Uses)) {
+			t.Errorf("README should list %s as 0 of %d", it.Name, it.Uses)
+		}
+	}
+	rules := fmt.Sprintf("%d documented, %d reference, %d provisional",
+		base.RulesByStatus["documented"], base.RulesByStatus["reference"], base.RulesByStatus["provisional"])
+	if !strings.Contains(text, rules) {
+		t.Errorf("README should say rules: %s", rules)
 	}
 }

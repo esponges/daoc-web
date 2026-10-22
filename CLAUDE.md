@@ -2,23 +2,24 @@
 
 # Most Importantly
 I trust you and your proposed work. Any work that can be verified by you, it should not be
-delegated to me for retest. I'll go with your suggestions 9 of 10 times. So unless you really
-need to hear about me is something you're not certain at all.
+delegated to me for validation. I'll go with your suggestions 9 of 10 times. So unless you really
+need to hear about me that would be when there's something you're not certain at all.
 
 # The GOAL
 This is not a POC anymore. We want to have the closest version to 1.65 version playable
 via web. For the moment this is just a close friend version. Don't worry about resources
 required to scale the application (servers, CDN's, replicas, etc). That's future work
 
+## About
 A fan project that rebuilds Dark Age of Camelot's Midgard in the browser. It
 started as a set of Go converters that read a local DAoC install and a WebGL2
 viewer for the result, and is now a multiplayer game: a Go server that owns the
 world, the viewer as its client, and the game's own interface drawn from the
 install's UI data. The repo is MIT and contains no game data.
 
-`README.md` is the long reference (file formats worked out from the install,
-how each converter works, the server's rules). Start there for detail; this file
-is only what you need to work here safely.
+`README.md` is the overview and the server's rules; `docs/formats.md` is the long reference
+(file formats worked out from the install, how each converter works). Start there
+for detail; this file is only what you need to work here safely.
 
 ## Layout
 
@@ -48,7 +49,7 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
 - **The built-in UI is the fallback.** Anything built from `web/data/ui/` must
   fall back to the plain panels when that folder is absent.
 - **A humanoid's `Head` skin in `monsters.csv` is its hair colour**; the face is the
-  `Face` column. `charconv -model` uses the Face skin (see the README, "Character
+  `Face` column. `charconv -model` uses the Face skin (see docs/formats.md, "Character
   textures").
 - **Icon numbers in the imported data do not match this install's sheets**, so
   styles and items are drawn by weapon line and kind. Do not "fix" this by
@@ -58,7 +59,7 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
 
 - **Art, models, zones, sounds, interface layouts:** your own DAoC install
   (path under "Running it"). The converters read it directly; the file formats
-  were worked out from the install's files and are documented in the README.
+  were worked out from the install's files and are documented in docs/formats.md.
   Nothing converted is committed.
 - **World population and numbers** (spawns, creature templates, levels, loot,
   items, styles): the [OpenDAoC database](https://github.com/OpenDAoC/OpenDAoC-Database),
@@ -129,7 +130,7 @@ not show that a window looks right. Check the fallback by temporarily moving
 - **Specs drive work.** Changes live in `openspec/changes/<name>/` (proposal,
   specs, design, tasks); `/opsx:propose`, `/opsx:apply` and `/opsx:archive`
   run them. Archived changes sync into `openspec/specs/`. Open now:
-  `next-midgard-classes-and-spells` (`midgard-playable` is complete and waits to be archived).
+  `readme-and-status-refresh`.
 - **Game rules have a rule book.** Every mechanic the server decides has a
   `rules-<mechanic>` spec giving the formula in our words, its sources, a status
   (documented, reference or provisional) and worked examples. Each numbered
@@ -146,6 +147,6 @@ not show that a window looks right. Check the fallback by temporarily moving
   the character by dispatching `keydown` and `keyup` events from page script
   with a delay between them. On a world store imported before templates were
   honoured, creatures near the Galplen start can kill a level 1 character in
-  two blows (re-import; see `midgard-playable` design 1a).
+  two blows (re-import; see `archive/2026-10-22-midgard-playable` design 1a).
 - Commit only when asked; end commit messages with the attribution lines the
   session gives.
