@@ -62,6 +62,17 @@ func effectsOf(c combatant) *[]*effect {
 	return nil
 }
 
+// maxHealthOf is a combatant's most health.
+func maxHealthOf(c combatant) int {
+	switch t := c.(type) {
+	case *Player:
+		return t.maxHP()
+	case *NPC:
+		return t.MaxHP
+	}
+	return 1
+}
+
 func levelOf(c combatant) int {
 	switch t := c.(type) {
 	case *Player:
@@ -120,6 +131,28 @@ func (z *Zone) spellResist(c combatant, damageType int) float64 {
 	return 0
 }
 
+// casterScale is what a player's casting stat and their spec in the spell's
+// line add to a spell they cast from their book.
+type casterScale struct{ stat, spec, spellLevel int }
+
+// scaleFor says how a player's stat and spec scale a spell. A creature, or a
+// spell outside the player's book (a weapon proc, a style's spell), is not
+// scaled.
+func (z *Zone) scaleFor(caster combatant, sp *SpellDef) (casterScale, bool) {
+	p, ok := caster.(*Player)
+	if !ok || !p.sh.class.Casts || z.W.Cat == nil {
+		return casterScale{}, false
+	}
+	for _, spec := range z.W.Cat.TrainableSpecs(p.Char.Class) {
+		for _, l := range z.W.Cat.SpellsFor(p.Char.Class, spec) {
+			if l.Spell == sp.ID {
+				return casterScale{stat: p.sh.stats[p.sh.class.Acuity], spec: p.specLevel(spec), spellLevel: l.Level}, true
+			}
+		}
+	}
+	return casterScale{}, false
+}
+
 // castSpell lands a spell from a caster on a target: a hostile one by the hit
 // roll, then its damage, heal or lasting effect, then any sub-spell. It
 // returns whether it landed.
@@ -143,8 +176,14 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 	}
 	switch sp.Type {
 	case rules.SpellHeal:
-		z.heal(target, int(sp.Value))
-		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: -int(sp.Value)}, tx, ty)
+		amount := int(sp.Value)
+		if sp.Value < 0 {
+			amount = rules.PercentHeal(sp.Value, maxHealthOf(caster))
+		} else if sc, ok := z.scaleFor(caster, sp); ok {
+			amount = rules.PlayerHeal(sp.Value, sc.spec, sc.spellLevel, z.rng.Float64())
+		}
+		z.heal(target, amount)
+		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: -amount}, tx, ty)
 	case rules.SpellDirectDamage, rules.SpellDDNoVariance, rules.SpellBolt, rules.SpellLifedrain:
 		if sp.Type == rules.SpellBolt {
 			if p, ok := target.(*Player); ok {
@@ -156,6 +195,9 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 			}
 		}
 		dmg := rules.SpellDamage(sp.Damage, rules.SpellVariance(sp.Type, z.rng.Float64()), z.spellResist(target, sp.DamageType))
+		if sc, ok := z.scaleFor(caster, sp); ok && sp.Type != rules.SpellDDNoVariance {
+			dmg = rules.PlayerSpellDamage(sp.Damage, sc.stat, sc.spec, levelOf(caster), levelOf(target), z.rng.Float64(), z.spellResist(target, sp.DamageType))
+		}
 		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: dmg}, tx, ty)
 		z.hurt(target, caster, dmg)
 		if sp.Type == rules.SpellLifedrain && caster.fightable(z) {

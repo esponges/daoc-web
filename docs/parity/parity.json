@@ -2075,8 +2075,12 @@
       "status": "reference"
     },
     {
+      "id": "power.cost",
+      "status": "reference"
+    },
+    {
       "id": "power.pool",
-      "status": "provisional"
+      "status": "reference"
     },
     {
       "id": "power.regen",
@@ -2112,7 +2116,7 @@
     },
     {
       "id": "spell.damage",
-      "status": "provisional"
+      "status": "reference"
     },
     {
       "id": "spell.damage-over-time",
@@ -2165,8 +2169,8 @@
   ],
   "rulesByStatus": {
     "documented": 25,
-    "provisional": 18,
-    "reference": 43
+    "provisional": 16,
+    "reference": 46
   },
   "placements": 29932,
   "levellingGear": [

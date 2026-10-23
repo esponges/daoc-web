@@ -62,6 +62,44 @@ func TestSpellEffects(t *testing.T) {
 			t.Errorf("damage %d heal %d, want 40 and 20", d, DrainHeal(d, 50))
 		}
 	})
+	vector(t, se, "A fully specced caster", func(t *testing.T) {
+		lo, hi := PlayerVarianceRange(20, 20, 20)
+		near(t, "low end", lo, 1.2, 1e-9)
+		near(t, "high end", hi, 1.25, 1e-9)
+		if d := PlayerSpellDamage(40, 100, 20, 20, 20, 0.5, 0); d != 53 {
+			t.Errorf("a 40-damage spell does %d, want 53", d)
+		}
+	})
+	vector(t, se, "A low spec", func(t *testing.T) {
+		if d := PlayerSpellDamage(40, 100, 5, 20, 20, 0, 0); d != 19 {
+			t.Errorf("the worst roll does %d, want 19", d)
+		}
+	})
+	vector(t, se, "The cap", func(t *testing.T) {
+		if d := PlayerSpellDamage(10, 300, 50, 50, 1, 0.5, 0); d != 30 {
+			t.Errorf("a 10-damage spell does %d, want the cap 30", d)
+		}
+	})
+	vector(t, se, "A player heal at spec", func(t *testing.T) {
+		lo, hi := PlayerHealRange(120, 20, 20)
+		if lo != 144 || hi != 150 {
+			t.Errorf("range %d to %d, want 144 to 150", lo, hi)
+		}
+		if h := PlayerHeal(120, 20, 20, 0.999); h != 150 {
+			t.Errorf("the best roll heals %d, want 150", h)
+		}
+	})
+	vector(t, se, "A player heal below spec", func(t *testing.T) {
+		lo, hi := PlayerHealRange(120, 5, 20)
+		if lo != 54 || hi != 150 {
+			t.Errorf("range %d to %d, want 54 to 150", lo, hi)
+		}
+	})
+	vector(t, se, "A percent heal", func(t *testing.T) {
+		if h := PercentHeal(-40, 720); h != 288 {
+			t.Errorf("a -40 heal from a caster of 720 restores %d, want 288", h)
+		}
+	})
 	vector(t, se, "A creature heals itself", func(t *testing.T) {
 		if h := Healed(100, 300, 120); h != 220 {
 			t.Errorf("%d, want 220", h)

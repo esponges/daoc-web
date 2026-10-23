@@ -173,31 +173,38 @@ func TestPower(t *testing.T) {
 	vector(t, rp, "Levelling", func(t *testing.T) {
 		healer := Classes[ClassHealer]
 		a, b := MaxPower(healer, 1, 70), MaxPower(healer, 2, 70)
-		if a != 16 || b != 22 {
-			t.Errorf("level 1 and 2 pools %d and %d, want 16 and 22", a, b)
+		if a != 25 || b != 30 {
+			t.Errorf("level 1 and 2 pools %d and %d, want 25 and 30", a, b)
 		}
-		if got := MaxPower(healer, 10, 150); got != 90 {
-			t.Errorf("level 10 with 150 piety: %d, want 90", got)
+		if got := MaxPower(healer, 10, 150); got != 150 {
+			t.Errorf("level 10 with 150 piety: %d, want 150", got)
+		}
+		if got := MaxPower(healer, 1, 10); got != 5 {
+			t.Errorf("the least pool is %d, want 5", got)
 		}
 	})
 	vector(t, rp, "Resting", func(t *testing.T) {
-		if r := PowerRegen(100, false); r != 2 {
-			t.Errorf("100 power regenerates %d a tick out of combat, want 2", r)
-		}
-		if r := PowerRegen(16, false); r != 1 {
-			t.Errorf("a small pool regenerates %d, want 1", r)
-		}
-		if r := PowerRegen(400, true); r != 2 {
-			t.Errorf("in combat 400 power regenerates %d, want 2", r)
-		}
+		near(t, "level 1 tick", PowerRegen(1), 5.3636, 1e-3)
+		near(t, "level 50 tick", PowerRegen(50), 23.1818, 1e-3)
 	})
 	vector(t, rp, "Interrupted cast", func(t *testing.T) {
-		// Cost is taken only when a spell lands; the cost itself is a share of the pool.
-		if c := SpellPowerCost(10, 90); c != 9 {
+		// Cost is taken only when a spell lands, which the world tests check; here, the cost
+		// of a spell that names none is nothing.
+		if c := SpellPowerCost(0, 90); c != 0 {
+			t.Errorf("a spell with no power costs %d", c)
+		}
+	})
+	vector(t, rp, "A fixed cost", func(t *testing.T) {
+		if c := SpellPowerCost(3, 90); c != 3 {
+			t.Errorf("a fixed 3 costs %d, want 3", c)
+		}
+	})
+	vector(t, rp, "A share of the pool", func(t *testing.T) {
+		if c := SpellPowerCost(-10, 90); c != 9 {
 			t.Errorf("10%% of 90 is %d, want 9", c)
 		}
-		if c := SpellPowerCost(1, 16); c != 1 {
-			t.Errorf("the least cost is %d, want 1", c)
+		if c := SpellPowerCost(-1, 16); c != 1 {
+			t.Errorf("the least share is %d, want 1", c)
 		}
 	})
 }

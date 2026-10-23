@@ -51,7 +51,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 32 gaps in 10 five-level bands |
-| Rules | 25 documented, 43 reference, 18 provisional |
+| Rules | 25 documented, 46 reference, 16 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for six of the twelve
 Midgard's classes (trainers teach those six). Not started: quests, pets and

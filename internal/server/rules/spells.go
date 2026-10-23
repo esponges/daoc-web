@@ -135,6 +135,12 @@ func BrokenByDamage(spellType string) bool { return spellType == SpellMesmerize 
 // times the spell's return, a percent.
 func DrainHeal(damage, lifeDrainReturn int) int { return damage * lifeDrainReturn / 100 }
 
+// PercentHeal is what a heal whose value is negative restores: that percent of
+// the caster's most health, as the community servers read it.
+func PercentHeal(value float64, casterMax int) int {
+	return int(-value / 100 * float64(casterMax))
+}
+
 // Healed is the health after a heal of value, up to the maximum.
 func Healed(health, maxHealth, value int) int { return min(maxHealth, health+max(0, value)) }
 
@@ -148,7 +154,7 @@ func init() {
 		Rule{ID: "spell.resist", Capability: c, Requirement: "Resists reduce spell damage",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"A resisted fraction"}},
 		Rule{ID: "spell.damage", Capability: c, Requirement: "Direct damage and bolts vary",
-			Status: Provisional, Sources: []string{"project"}, Scenarios: []string{"Middle of the range", "No variance"}},
+			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "grabbag"}, Scenarios: []string{"Middle of the range", "No variance", "A fully specced caster", "A low spec", "The cap"}},
 		Rule{ID: "spell.bolt-block", Capability: c, Requirement: "A bolt can be blocked",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Blocked bolt"}},
 		Rule{ID: "spell.damage-over-time", Capability: c, Requirement: "Damage over time ticks",
@@ -162,6 +168,62 @@ func init() {
 		Rule{ID: "spell.lifedrain", Capability: c, Requirement: "Life drain heals its caster",
 			Status: Reference, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Drain"}},
 		Rule{ID: "spell.heal", Capability: c, Requirement: "Heals restore health",
-			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"A creature heals itself"}},
+			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "grabbag"}, Scenarios: []string{"A creature heals itself", "A player heal at spec", "A player heal below spec", "A percent heal"}},
 	)
+}
+
+// CasterStatFactor is what a caster's casting stat does to a spell's damage:
+// 1 at a stat of 75, rising a little over a third of a percent a point.
+func CasterStatFactor(stat int) float64 { return float64(stat+200) / 275 }
+
+// PlayerVarianceRange is the damage multiplier range of a player's direct
+// damage spell. The low end rises with the caster's spec in the spell's line
+// against the target's level, the high end is 1.25; a spec above the target's
+// level and a caster above the target's level lift both ends.
+func PlayerVarianceRange(specLevel, casterLevel, targetLevel int) (lo, hi float64) {
+	lo, hi = 1.25, 1.25
+	if targetLevel > 0 {
+		lo = 0.25 + float64(specLevel-1)/float64(targetLevel)
+	}
+	if specLevel-1 > targetLevel {
+		over := float64(specLevel-1-targetLevel) * 0.005
+		lo, hi = lo+over, hi+over
+	}
+	diff := 0.02 * float64(casterLevel-targetLevel)
+	lo, hi = lo+diff, hi+diff
+	hi = math.Max(0.25, hi)
+	lo = math.Max(0, math.Min(lo, hi))
+	return lo, hi
+}
+
+// PlayerSpellCapFactor is the most a damage spell does, in times its base damage.
+const PlayerSpellCapFactor = 3.0
+
+// PlayerSpellDamage is a landed direct damage spell's damage from a player:
+// the base scaled by the casting stat, a roll r in [0, 1) within the variance
+// range, the resist, and the cap, rounded down.
+func PlayerSpellDamage(base float64, stat, specLevel, casterLevel, targetLevel int, r, resist float64) int {
+	lo, hi := PlayerVarianceRange(specLevel, casterLevel, targetLevel)
+	scaled := base * CasterStatFactor(stat)
+	dmg := (lo + (hi-lo)*r) * scaled * ResistFactor(resist)
+	return int(math.Floor(math.Min(dmg, base*PlayerSpellCapFactor)))
+}
+
+// PlayerHealRange is the least and most a player's heal of value restores. The
+// most is 1.25 times the value. The least rises with the caster's spec in the
+// spell's line toward the spell's own level, and is at most the most.
+func PlayerHealRange(value float64, specLevel, spellLevel int) (lo, hi int) {
+	hi = max(1, int(value*1.25))
+	eff := 0.25
+	if spellLevel > 0 {
+		eff = math.Min(1.25, eff+float64(max(1, specLevel)-1)/float64(spellLevel))
+	}
+	lo = min(hi, max(1, int(value*eff)))
+	return lo, hi
+}
+
+// PlayerHeal is what a player's heal restores for a roll r in [0, 1).
+func PlayerHeal(value float64, specLevel, spellLevel int, r float64) int {
+	lo, hi := PlayerHealRange(value, specLevel, spellLevel)
+	return lo + int(r*float64(hi-lo+1))
 }

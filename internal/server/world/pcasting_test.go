@@ -117,8 +117,10 @@ func TestCastAHeal(t *testing.T) {
 		t.Errorf("after one second of a two second cast: hp %v power %v", h.hp, h.power)
 	}
 	r.ticks(TickRate + 5)
-	if h.casting != nil || h.hp < 110 || h.hp > 120 {
-		t.Errorf("after the cast time: casting %v hp %v, want the heal of 60 on 50 (and a little regeneration)", h.casting != nil, h.hp)
+	// The roll is zero, so the heal is the least of its range for a spec of 1 in a level 1 spell.
+	least, _ := rules.PlayerHealRange(60, 1, 1)
+	if h.casting != nil || h.hp < float64(50+least) || h.hp > float64(50+least+10) {
+		t.Errorf("after the cast time: casting %v hp %v, want the least heal of %d on 50 (and a little regeneration)", h.casting != nil, h.hp, least)
 	}
 	if h.power != power-float64(cost) {
 		t.Errorf("power %v, want %v less %d", h.power, power, cost)
@@ -276,5 +278,42 @@ func TestGroupSpellReachesMembers(t *testing.T) {
 	}
 	if stranger.sh.buffAF != 0 {
 		t.Errorf("a stranger got the group spell: %d", stranger.sh.buffAF)
+	}
+}
+
+// A player's spell damage and heal depend on their casting stat and their spec
+// in the spell's line; a creature's do not.
+func TestSpellsScaleWithSpec(t *testing.T) {
+	r := casterWorld(t)
+	m := caster(r, "Rune", rules.ClassRunemaster, 20)
+	n := r.z.npcs[0]
+	stat := m.sh.stats[m.sh.class.Acuity]
+	hit := func(spec int) int {
+		m.Char.Specs = map[string]int{"Runecarving": spec}
+		n.HP = n.MaxHP
+		r.z.castSpell(m, n, r.w.Cat.Spells[5001])
+		return n.MaxHP - n.HP
+	}
+	low, high := hit(1), hit(30)
+	if want := rules.PlayerSpellDamage(40, stat, 1, 20, n.Level, 0, 0); low != want {
+		t.Errorf("a spec of 1 does %d, want %d", low, want)
+	}
+	if want := rules.PlayerSpellDamage(40, stat, 30, 20, n.Level, 0, 0); high != want {
+		t.Errorf("a spec of 30 does %d, want %d", high, want)
+	}
+	if high <= low {
+		t.Errorf("spec 30 did %d, not more than spec 1's %d", high, low)
+	}
+
+	h := caster(r, "Healer", rules.ClassHealer, 20)
+	h.hp = 1
+	for _, spec := range []int{1, 20} {
+		h.Char.Specs = map[string]int{"Mending": spec}
+		h.hp = 1
+		r.z.castSpell(h, h, r.w.Cat.Spells[3001])
+		least, _ := rules.PlayerHealRange(60, spec, 1)
+		if got := int(h.hp) - 1; got != least {
+			t.Errorf("a Mending spec of %d heals %d at the worst roll, want %d", spec, got, least)
+		}
 	}
 }

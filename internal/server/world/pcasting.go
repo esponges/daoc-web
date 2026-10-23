@@ -66,12 +66,9 @@ func (w *World) buildBook(p *Player) []bookSpell {
 	return out
 }
 
-// powerCost is what a spell draws from this caster's pool: a percentage of it,
-// or a fixed amount when the data gives a negative power.
+// powerCost is what a spell draws from this caster's pool: the spell's power
+// as it is, or a share of the pool when the data gives it negative.
 func (p *Player) powerCost(sp *SpellDef) int {
-	if sp.Power < 0 {
-		return -sp.Power
-	}
 	return rules.SpellPowerCost(sp.Power, p.sh.maxPower)
 }
 

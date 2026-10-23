@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"daocweb/internal/importer"
+	"daocweb/internal/server/rules"
 )
 
 // regressions lists what fresh has lost against the baseline: an item that was
@@ -142,4 +145,81 @@ func TestReadmeAgreesWithBaseline(t *testing.T) {
 	if !strings.Contains(text, rules) {
 		t.Errorf("README should say rules: %s", rules)
 	}
+}
+
+// spellProblem says what is wrong with the amount the server would deal or
+// restore for one imported spell, from a reference caster (level 20, 100 in the
+// casting stat, spec and target at 20, the middle of the range, 720 health), or
+// "" when it is as the rule gives. A type with no amount has no problem.
+func spellProblem(id int, typ string, damage, value float64) string {
+	const stat, level, health = 100, 20, 720
+	switch typ {
+	case rules.SpellDirectDamage, rules.SpellBolt, rules.SpellLifedrain:
+		got := rules.PlayerSpellDamage(damage, stat, level, level, level, 0.5, 0)
+		if damage > 0 && got > 0 && float64(got) <= damage*rules.PlayerSpellCapFactor {
+			return ""
+		}
+		return fmt.Sprintf("spell %d (%s): damage %v gives %d, want 1 to %v", id, typ, damage, got, damage*rules.PlayerSpellCapFactor)
+	case rules.SpellDDNoVariance:
+		if damage > 0 {
+			return ""
+		}
+		return fmt.Sprintf("spell %d (%s): damage %v gives nothing", id, typ, damage)
+	case rules.SpellHeal:
+		got := rules.PlayerHeal(value, level, level, 0.5)
+		if value < 0 {
+			got = rules.PercentHeal(value, health)
+			if got > 0 && got <= health {
+				return ""
+			}
+			return fmt.Sprintf("spell %d (%s): value %v gives %d, want 1 to %d", id, typ, value, got, health)
+		}
+		if got > 0 && float64(got) <= value*1.25 {
+			return ""
+		}
+		return fmt.Sprintf("spell %d (%s): value %v gives %d, want 1 to %v", id, typ, value, got, value*1.25)
+	}
+	return ""
+}
+
+func TestSpellCheckFlagsAMismatch(t *testing.T) {
+	if p := spellProblem(1, rules.SpellHeal, 0, 120); p != "" {
+		t.Errorf("a plain heal is flagged: %s", p)
+	}
+	if p := spellProblem(2, rules.SpellHeal, 0, 0); !strings.Contains(p, "spell 2") || !strings.Contains(p, "value 0") {
+		t.Errorf("a heal of nothing is not named: %q", p)
+	}
+	if p := spellProblem(3, rules.SpellBolt, -5, 0); !strings.Contains(p, "spell 3") {
+		t.Errorf("a bolt of negative damage is not named: %q", p)
+	}
+	if p := spellProblem(4, rules.SpellHeal, 0, -40); p != "" {
+		t.Errorf("a percent heal is flagged: %s", p)
+	}
+}
+
+// Every spell of an implemented type in the community database has an amount
+// the rules can give. Skipped with -short or without the dump.
+func TestSpellAmountsAgreeWithTheTable(t *testing.T) {
+	if testing.Short() {
+		t.Skip("reads the spell table")
+	}
+	dump := filepath.Join("..", "..", "server", "data", "community", "opendaoc-db-core", "spell.sql")
+	if _, err := os.Stat(dump); err != nil {
+		t.Skip("no community database checked out in server/data/community")
+	}
+	n := 0
+	if _, err := importer.ReadTable(dump, func(r *importer.Row) error {
+		typ := r.Str("Type")
+		if !rules.ImplementedSpell(typ) {
+			return nil
+		}
+		n++
+		if p := spellProblem(r.Int("SpellID"), typ, r.Float("Damage"), r.Float("Value")); p != "" {
+			t.Error(p)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("checked %d spells", n)
 }
