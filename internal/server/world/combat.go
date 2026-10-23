@@ -408,7 +408,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 		z.killNPC(n)
 		return
 	}
-	if add := p.damageAdd(); add > 0 {
+	if add := z.damageAdd(p, n, amount); add > 0 {
 		z.event(protocol.Event{K: "spell", From: p.ID, To: n.ID, Text: "damage add", Amount: add}, n.Body.X, n.Body.Y)
 		z.hurt(n, p, add)
 		if n.dead() {

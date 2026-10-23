@@ -160,6 +160,18 @@ func spellProblem(id int, typ string, damage, value float64) string {
 			return ""
 		}
 		return fmt.Sprintf("spell %d (%s): damage %v gives %d, want 1 to %v", id, typ, damage, got, damage*rules.PlayerSpellCapFactor)
+	case rules.SpellDamageOverTime:
+		got := rules.PlayerDoTDamage(damage, stat, level, level, 0.5, 0)
+		if damage > 0 && got > 0 && float64(got) <= damage*rules.PlayerSpellCapFactor {
+			return ""
+		}
+		return fmt.Sprintf("spell %d (%s): damage %v gives a tick of %d, want 1 to %v", id, typ, damage, got, damage*rules.PlayerSpellCapFactor)
+	case rules.SpellDamageAdd:
+		got := rules.DamageAdd(damage, level, 3, 40, 0.5, 0)
+		if damage != 0 && got > 0 && got <= 40+int(damage*3) {
+			return ""
+		}
+		return fmt.Sprintf("spell %d (%s): damage %v gives %d on a 3 second swing and a blow of 40", id, typ, damage, got)
 	case rules.SpellDDNoVariance:
 		if damage > 0 {
 			return ""
@@ -195,6 +207,18 @@ func TestSpellCheckFlagsAMismatch(t *testing.T) {
 	if p := spellProblem(4, rules.SpellHeal, 0, -40); p != "" {
 		t.Errorf("a percent heal is flagged: %s", p)
 	}
+	if p := spellProblem(5, rules.SpellDamageOverTime, 10, 0); p != "" {
+		t.Errorf("a damage over time is flagged: %s", p)
+	}
+	if p := spellProblem(6, rules.SpellDamageOverTime, 0, 0); !strings.Contains(p, "spell 6") {
+		t.Errorf("a damage over time of nothing is not named: %q", p)
+	}
+	if p := spellProblem(7, rules.SpellDamageAdd, 0, 0); !strings.Contains(p, "spell 7") {
+		t.Errorf("a damage add of nothing is not named: %q", p)
+	}
+	if p := spellProblem(8, rules.SpellDamageAdd, 4.5, 0); p != "" {
+		t.Errorf("a damage add is flagged: %s", p)
+	}
 }
 
 // Every spell of an implemented type in the community database has an amount
@@ -210,7 +234,7 @@ func TestSpellAmountsAgreeWithTheTable(t *testing.T) {
 	n := 0
 	if _, err := importer.ReadTable(dump, func(r *importer.Row) error {
 		typ := r.Str("Type")
-		if !rules.ImplementedSpell(typ) {
+		if !rules.ImplementedPlayerSpell(typ) {
 			return nil
 		}
 		n++

@@ -17,6 +17,10 @@ type effect struct {
 	ends        float64
 	next        float64 // the next damage-over-time tick
 	every       float64
+	// A player's damage over time ticks with the stat and spec the caster
+	// had when it landed.
+	scaled     bool
+	stat, spec int
 }
 
 // Effect kinds, as the client draws them.
@@ -235,6 +239,8 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 	if kind == effDoT {
 		_, e.every = rules.DoTTicks(sp.Duration, sp.Frequency)
 		e.next = z.now + e.every
+		sc, ok := z.scaleFor(caster, sp)
+		e.scaled, e.stat, e.spec = ok, sc.stat, sc.spec
 	}
 	tx, ty := target.position()
 	z.event(protocol.Event{K: "effect", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
@@ -357,6 +363,9 @@ func (z *Zone) tickEffectsOf(c combatant) {
 				e.caster = nil
 			}
 			dmg := rules.SpellDamage(e.spell.Damage, 1, z.spellResist(c, e.spell.DamageType))
+			if e.scaled {
+				dmg = rules.PlayerDoTDamage(e.spell.Damage, e.stat, e.spec, levelOf(c), z.rng.Float64(), z.spellResist(c, e.spell.DamageType))
+			}
 			x, y := c.position()
 			var from int64
 			if e.caster != nil {

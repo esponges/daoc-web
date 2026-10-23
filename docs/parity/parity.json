@@ -2112,10 +2112,18 @@
     },
     {
       "id": "spell.buff",
+      "status": "reference"
+    },
+    {
+      "id": "spell.buff-af",
       "status": "provisional"
     },
     {
       "id": "spell.damage",
+      "status": "reference"
+    },
+    {
+      "id": "spell.damage-add",
       "status": "reference"
     },
     {
@@ -2170,7 +2178,7 @@
   "rulesByStatus": {
     "documented": 25,
     "provisional": 16,
-    "reference": 46
+    "reference": 48
   },
   "placements": 29932,
   "levellingGear": [

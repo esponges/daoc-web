@@ -317,3 +317,55 @@ func TestSpellsScaleWithSpec(t *testing.T) {
 		}
 	}
 }
+
+func TestOverTimeSpellsScale(t *testing.T) {
+	r := casterWorld(t)
+	m := caster(r, "Rune", rules.ClassRunemaster, 20)
+	n := r.z.npcs[0]
+	n.MaxHP, n.HP = 100000, 100000
+	stat := m.sh.stats[m.sh.class.Acuity]
+	agony := &SpellDef{ID: 5002, Name: "Rune Agony", Type: rules.SpellDamageOverTime, Target: "Enemy", Damage: 10, DamageType: 15, Duration: 20, Frequency: 40}
+	add := &SpellDef{ID: 5003, Name: "Rune Edge", Type: rules.SpellDamageAdd, Target: "Self", Damage: 4.5, DamageType: 15, Duration: 60}
+	r.w.Cat.Spells[agony.ID], r.w.Cat.Spells[add.ID] = agony, add
+	r.w.Cat.LineSpells["Runecarving"] = append(r.w.Cat.LineSpells["Runecarving"],
+		LineSpell{Spec: "Runecarving", Line: "Runecarving", Spell: agony.ID, Level: 1})
+
+	tick := func(spec int) int {
+		m.Char.Specs = map[string]int{"Runecarving": spec}
+		n.effects, n.HP = nil, n.MaxHP
+		r.z.castSpell(m, n, agony)
+		r.z.now = n.effects[0].next
+		r.z.tickEffectsOf(n)
+		return n.MaxHP - n.HP
+	}
+	low, high := tick(1), tick(30)
+	if want := rules.PlayerDoTDamage(10, stat, 1, n.Level, 0, 0); low != want {
+		t.Errorf("a spec of 1 ticks for %d, want %d", low, want)
+	}
+	if want := rules.PlayerDoTDamage(10, stat, 30, n.Level, 0, 0); high != want {
+		t.Errorf("a spec of 30 ticks for %d, want %d", high, want)
+	}
+	if high <= low {
+		t.Errorf("spec 30 ticked for %d, not more than spec 1's %d", high, low)
+	}
+
+	t.Run("A tick keeps the stat of the cast", func(t *testing.T) {
+		m.Char.Specs = map[string]int{"Runecarving": 30}
+		n.effects, n.HP = nil, n.MaxHP
+		r.z.castSpell(m, n, agony)
+		m.sh.stats[m.sh.class.Acuity] = 0
+		r.z.now = n.effects[0].next
+		r.z.tickEffectsOf(n)
+		if got := n.MaxHP - n.HP; got != high {
+			t.Errorf("tick %d after the stat fell, want %d", got, high)
+		}
+	})
+
+	t.Run("A damage add is per second of the swing", func(t *testing.T) {
+		r.z.castSpell(m, m, add)
+		got := r.z.damageAdd(m, n, 40)
+		if want := rules.DamageAdd(4.5, 20, m.weaponSpeed(), 40, 0, 0); got != want || got <= 4 {
+			t.Errorf("damage add %d, want %d (more than the flat 4)", got, want)
+		}
+	})
+}

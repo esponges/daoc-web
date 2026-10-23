@@ -311,13 +311,13 @@ func (p *Player) buffBonuses() (stats rules.Stats, af int) {
 	return stats, af
 }
 
-// damageAdd is the damage the player's damage-add spells put on each landed
-// blow: the strongest one.
-func (p *Player) damageAdd() int {
+// damageAdd is the damage the player's damage-add spells put on a landed blow
+// of blow damage on a target: the strongest one, rolled for its swing.
+func (z *Zone) damageAdd(p *Player, target combatant, blow int) int {
 	add := 0
 	for _, e := range p.effects {
 		if e.kind == effAdd {
-			add = max(add, int(e.spell.Damage))
+			add = max(add, rules.DamageAdd(e.spell.Damage, p.Char.Level, p.weaponSpeed(), blow, z.rng.Float64(), z.spellResist(target, e.spell.DamageType)))
 		}
 	}
 	return add

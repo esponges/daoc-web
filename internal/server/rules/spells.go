@@ -37,7 +37,8 @@ func ImplementedPlayerSpell(spellType string) bool {
 // cap is separate. Provisional.
 func BuffStatCap(level int) int { return level * 5 / 4 }
 
-// BuffAFCap is the most armour factor buffs add, by level. Provisional.
+// BuffAFCap is the most armour factor buffs add, by level. Provisional: no
+// source states a flat cap (see spell.buff-af).
 func BuffAFCap(level int) int { return level * 2 }
 
 // BuffedStats is the stats a buff spell raises and by how much: its value on
@@ -148,7 +149,9 @@ func init() {
 	const c = "rules-spell-effects"
 	register(
 		Rule{ID: "spell.buff", Capability: "player-spellcasting", Requirement: "Spell types of the first slice",
-			Status: Provisional, Sources: []string{"data", "project"}},
+			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "data"}, Scenarios: []string{"A buff is capped by level", "A buff does not scale with the caster"}},
+		Rule{ID: "spell.buff-af", Capability: "player-spellcasting", Requirement: "The armour-factor buff cap",
+			Status: Provisional, Sources: []string{"project"}, Scenarios: []string{"A big armour buff"}},
 		Rule{ID: "spell.hit", Capability: c, Requirement: "A hostile spell lands by a hit roll",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Even levels", "A higher caster", "Far below"}},
 		Rule{ID: "spell.resist", Capability: c, Requirement: "Resists reduce spell damage",
@@ -158,7 +161,9 @@ func init() {
 		Rule{ID: "spell.bolt-block", Capability: c, Requirement: "A bolt can be blocked",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Blocked bolt"}},
 		Rule{ID: "spell.damage-over-time", Capability: c, Requirement: "Damage over time ticks",
-			Status: Reference, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Five ticks"}},
+			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "data"}, Scenarios: []string{"Five ticks", "A player's tick at spec", "A low spec tick", "The tick cap"}},
+		Rule{ID: "spell.damage-add", Capability: c, Requirement: "A damage add is a damage per second",
+			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "data"}, Scenarios: []string{"A slow weapon", "The damage add cap", "A percent add"}},
 		Rule{ID: "spell.slow", Capability: c, Requirement: "Slows lower speed",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"A 40% slow"}},
 		Rule{ID: "spell.mesmerize", Capability: c, Requirement: "Mesmerize holds until hurt",
@@ -226,4 +231,44 @@ func PlayerHealRange(value float64, specLevel, spellLevel int) (lo, hi int) {
 func PlayerHeal(value float64, specLevel, spellLevel int, r float64) int {
 	lo, hi := PlayerHealRange(value, specLevel, spellLevel)
 	return lo + int(r*float64(hi-lo+1))
+}
+
+// PlayerDoTRange is the damage multiplier range of one tick of a player's
+// damage-over-time spell: the low end rises with the caster's spec in the
+// spell's line against the target's level, the high end is 1.13, and the
+// level difference between them does not count.
+func PlayerDoTRange(specLevel, targetLevel int) (lo, hi float64) {
+	hi = 1.13
+	lo = 0.13
+	if targetLevel > 0 {
+		lo += float64(max(1, specLevel)-1) / float64(targetLevel)
+	}
+	return math.Max(0, math.Min(lo, hi)), hi
+}
+
+// PlayerDoTDamage is one tick of a player's damage-over-time spell for a roll
+// r in [0, 1): the base scaled by the casting stat and the range, after the
+// resist, at most three times the base, rounded down.
+func PlayerDoTDamage(base float64, stat, specLevel, targetLevel int, r, resist float64) int {
+	lo, hi := PlayerDoTRange(specLevel, targetLevel)
+	dmg := (lo + (hi-lo)*r) * base * CasterStatFactor(stat) * ResistFactor(resist)
+	return int(math.Floor(math.Min(dmg, base*PlayerSpellCapFactor)))
+}
+
+// DamageAddCap is the most damage per second a damage add counts for, by the
+// caster's level.
+func DamageAddCap(level int) float64 { return (1.2 + 0.3*float64(level)) * 0.7 }
+
+// DamageAdd is what a damage-add spell puts on one landed blow. A spell damage
+// above zero is a damage per second: the lesser of it and the cap, times the
+// swing in seconds, times a roll r in [0, 1) mapped to 0.5 to 1. Below zero it
+// is that percent of the blow's damage. The resist comes off either way.
+func DamageAdd(spellDamage float64, casterLevel int, swingSeconds float64, blow int, r, resist float64) int {
+	var dmg float64
+	if spellDamage < 0 {
+		dmg = float64(blow) * -spellDamage / 100
+	} else {
+		dmg = math.Min(spellDamage, DamageAddCap(casterLevel)) * swingSeconds * (0.5 + 0.5*r)
+	}
+	return int(math.Floor(dmg * ResistFactor(resist)))
 }

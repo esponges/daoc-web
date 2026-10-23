@@ -112,3 +112,58 @@ func TestSpellEffects(t *testing.T) {
 		t.Error("damage breaks a mesmerize and not a stun")
 	}
 }
+
+func TestSpellScalingOverTime(t *testing.T) {
+	const se = "rules-spell-effects"
+	vector(t, se, "A player's tick at spec", func(t *testing.T) {
+		lo, hi := PlayerDoTRange(20, 20)
+		near(t, "low end", lo, 1.08, 1e-9)
+		near(t, "high end", hi, 1.13, 1e-9)
+		if d := PlayerDoTDamage(10, 100, 20, 20, 0.5, 0); d != 12 {
+			t.Errorf("tick %d, want 12", d)
+		}
+	})
+	vector(t, se, "A low spec tick", func(t *testing.T) {
+		lo, _ := PlayerDoTRange(1, 20)
+		near(t, "low end", lo, 0.13, 1e-9)
+		if d := PlayerDoTDamage(10, 100, 1, 20, 0, 0); d != 1 {
+			t.Errorf("tick %d, want 1", d)
+		}
+	})
+	vector(t, se, "The tick cap", func(t *testing.T) {
+		if d := PlayerDoTDamage(5, 600, 50, 50, 1, 0); d != 15 {
+			t.Errorf("tick %d, want 15", d)
+		}
+	})
+	vector(t, se, "A slow weapon", func(t *testing.T) {
+		if d := DamageAdd(4.5, 20, 3.0, 40, 0.5, 0); d != 10 {
+			t.Errorf("add %d, want 10", d)
+		}
+	})
+	vector(t, se, "The damage add cap", func(t *testing.T) {
+		near(t, "cap at level 3", DamageAddCap(3), 1.47, 1e-9)
+		if d := DamageAdd(9, 3, 3.0, 40, 1, 0); d != 4 {
+			t.Errorf("add %d, want 4", d)
+		}
+	})
+	vector(t, se, "A percent add", func(t *testing.T) {
+		if d := DamageAdd(-20, 20, 3.0, 50, 0.5, 0); d != 10 {
+			t.Errorf("add %d, want 10", d)
+		}
+	})
+	vector(t, "player-spellcasting", "A buff is capped by level", func(t *testing.T) {
+		if c := BuffStatCap(10); c != 12 {
+			t.Errorf("stat cap %d, want 12", c)
+		}
+	})
+	vector(t, "player-spellcasting", "A buff does not scale with the caster", func(t *testing.T) {
+		if b := BuffedStats(SpellStrengthBuff, 20); b[STR] != 20 || len(b) != 1 {
+			t.Errorf("buff %v, want strength 20", b)
+		}
+	})
+	vector(t, "player-spellcasting", "A big armour buff", func(t *testing.T) {
+		if c := BuffAFCap(10); c != 20 {
+			t.Errorf("armour cap %d, want 20", c)
+		}
+	})
+}

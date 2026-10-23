@@ -51,7 +51,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 32 gaps in 10 five-level bands |
-| Rules | 25 documented, 46 reference, 16 provisional |
+| Rules | 25 documented, 48 reference, 16 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for six of the twelve
 Midgard's classes (trainers teach those six). Not started: quests, pets and
@@ -368,15 +368,19 @@ The current reading is the table at the top of this file.
 The creation page offers every race and class pair the data's start table lists
 for Warrior, Berserker, Savage, Healer, Shaman and Runemaster, each with a
 choice of male or female. A caster has a power pool (`rules/power.go`;
-provisional: no public source gave the numbers) and a spellbook built from the
-imported spell lines of the specs they train (`line_spell`, with each spell's
-power as a percentage of the pool). `cast` asks for a spell; the server checks
+reference: the community servers' numbers, no public 1.65 account) and a
+spellbook built from the imported spell lines of the specs they train
+(`line_spell`, with each spell's power a fixed cost or a percentage of the
+pool). `cast` asks for a spell; the server checks
 that it is known, ready, targeted, in range and paid for, runs the cast time,
 stops it on damage or movement, and applies it with the same engine creatures
 use. The stock SPELLS window (the `Stats_Spec_Abil` layout), a spell bar
 (Shift+1 to Shift+8) and a cast bar draw it; without `web/data/ui/` a plain
 panel (P) does. Not yet: line of sight, concentration, resurrection, pets and
-charm, spell scaling with the spec, and the other Midgard classes.
+charm, the focus bonus on power cost, scaling of buffs and debuffs by spec (the
+sources differ; buffs are flat here), and the other Midgard classes. Player
+damage, heals, damage over time and damage add follow the casting stat, the
+spec and the weapon's swing as the community servers do.
 
 ### The game's own interface
 
