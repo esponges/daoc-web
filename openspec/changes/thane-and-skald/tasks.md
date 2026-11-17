@@ -51,7 +51,7 @@
   - the effects list draws the `speed`, `regen` and `resist` kinds, both in the stock UI and in the plain fallback.
 
   Add `web/spells.test.mjs` cases, and verify that every `web/*.test.mjs` passes.
-- [ ] 6.2 Confirm that the creation page offers Thane and Skald for their races (it lists what the server allows). Verify in the browser: Norseman shows both, and Kobold shows Skald but not Thane.
+- [x] 6.2 Confirm that the creation page offers Thane and Skald for their races (it lists what the server allows). Verify in the browser: Norseman shows both, and Kobold shows Skald but not Thane.
 
 ## 7. Integration
 

@@ -70,3 +70,13 @@ All run 2026-11-16 as web searches.
 4. **Speed song:** value is percent of normal; multiplies with slows; does not take hold in combat and ends when the holder enters combat.
 5. **Regeneration song:** extra hit points on each tick; out of combat only under our rule.
 6. **Call of a thousand storms:** no source; it stays counted as not implemented and is not marked not classic.
+
+## 7.1 What was seen in the browser (2026-11-16, scratch server)
+
+A scratch server with a fresh import (`pulse` columns present), two characters set to level 10 through the scratch player database: a Norseman Thane (Stormcalling 5) and a Norseman Skald (Battlesongs 5).
+
+- **Creation page:** 29 character types; Thane for Norseman, Troll and Dwarf, Skald for those and Kobold, no Kobold Thane.
+- **Stock SPELLS window, Thane at Stormcalling 5:** exactly Thor's Minor Bolt, Thor's Vigor, Thor's Lesser Bolt, Thunder's Bash, Thunder Shout (4 pw, instant) and Toothgrinder's Hoof. Skald at Battlesongs 5: Simple Song of Rest, Warcry, Simple Song of Travel, Battle Whoop, Chant of the Brawl.
+- **Thunder Shout** with no target held: the cast bar ran, power went 73 to 69, and standing among three level 6 army ant workers it hit two (16 and 19 damage) while the third resisted; all three turned on the Thane. An earlier try at a camp with aggressive soldiers killed the Thane, which is the game working as designed.
+- **Group and song:** a Skald and a Thane joined a group; Simple Song of Travel showed the green speed badge on both clients, still on after more than one effect lifetime (the pulse kept it), and casting the song again printed "You cancel your effect." and removed the badge from both.
+- **Not observed:** running at 1.44 times without rubber-banding (covered by the shared movement vector and the JS prediction test only), the effect lapsing on a member who walks out of range (covered by a world test), and a Song of Rest tick.
