@@ -92,11 +92,13 @@
 .stylebar.spellbar { bottom: 112px; }
 .stylebar.spellbar .style.empty { opacity: .45; }
 .stylebar.spellbar .style .key { color: #3ec7c1; }
+.stylebar.spellbar .style.on { outline: 2px solid #3ec7c1; background: rgba(62,199,193,.22); }
 .panel.spells { right: 12px; top: 160px; width: 300px; max-height: 60vh; overflow-y: auto; }
 .panel.spells h3 { margin: 8px 0 3px; font-size: 12px; color: #ffd76a; }
 .panel.spells .spell { padding: 2px 4px; cursor: pointer; color: #dbe6f2; }
 .panel.spells .spell:hover { background: rgba(120,170,220,.18); }
 .panel.spells .spell.off { color: #8a929c; cursor: default; }
+.panel.spells .spell.playing { color: #3ec7c1; }
 .castbar { position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%); z-index: 12; width: 240px; height: 16px; border-radius: 4px;
   background: rgba(8,14,22,.85); border: 1px solid rgba(120,170,220,.45); overflow: hidden; }
 .castbar .fill { height: 100%; width: 0; background: #3ec7c1; }

@@ -6,7 +6,7 @@
 // spellsView is the spells window's content: for each spec line a header and
 // its spells, each with its level, power and cast time. A spell the server
 // cannot cast yet is greyed (on: false) and cannot be dragged.
-export function spellsView(book) {
+export function spellsView(book, song = 0) {
   const rows = [];
   for (const line of (book && book.lines) || []) {
     rows.push({ header: line.nm });
@@ -14,8 +14,9 @@ export function spellsView(book) {
       const cast = s.ct ? s.ct + 's' : 'instant';
       rows.push({
         id: s.id,
-        text: s.nm + '  ' + s.lv + ', ' + s.pw + ' pw, ' + cast + (s.ok ? '' : ' (not yet)'),
+        text: s.nm + '  ' + s.lv + ', ' + s.pw + ' pw, ' + cast + (s.ok ? '' : ' (not yet)') + (song && s.id === song ? '  (playing)' : ''),
         on: !!s.ok,
+        playing: !!song && s.id === song,
         draggable: !!s.ok,
         drag: 'spell:' + s.id,
         spell: s,
@@ -111,13 +112,13 @@ export function createSpellPanel(doc, { onCast, onAssign } = {}) {
     el: panel,
     toggle(on = !panel.classList.contains('open')) { panel.classList.toggle('open', on); },
     isOpen: () => panel.classList.contains('open'),
-    render(book) {
+    render(book, song = 0) {
       list.replaceChildren();
-      const rows = spellsView(book);
+      const rows = spellsView(book, song);
       if (!rows.length) list.appendChild(el(doc, 'div', 'empty', 'You have no spells.'));
       for (const r of rows) {
         if (r.header) { list.appendChild(el(doc, 'h3', '', r.header)); continue; }
-        const d = el(doc, 'div', 'spell' + (r.on ? '' : ' off'), r.text);
+        const d = el(doc, 'div', 'spell' + (r.on ? '' : ' off') + (r.playing ? ' playing' : ''), r.text);
         if (r.on) {
           d.draggable = true;
           d.title = 'Click to cast at your target · shift-click or drag onto the spell bar';
@@ -138,17 +139,17 @@ export function createSpellBar(doc, { onCast, onAssign, onClear } = {}) {
   const bar = el(doc, 'div', 'stylebar spellbar');
   return {
     el: bar,
-    set(slots, book) {
+    set(slots, book, song = 0) {
       bar.replaceChildren();
       const any = slots.some(Boolean);
       bar.style.display = any ? '' : 'none';
       slots.forEach((id, i) => {
         const s = id ? findSpell(book, id) : null;
-        const b = el(doc, 'button', 'style' + (s ? '' : ' empty'));
+        const b = el(doc, 'button', 'style' + (s ? '' : ' empty') + (s && song && s.id === song ? ' on' : ''));
         b.dataset.slot = i;
         b.append(el(doc, 'span', 'key', '⇧' + (i + 1)), el(doc, 'span', 'nm', s ? s.nm : ''), el(doc, 'span', 'cost', s ? s.pw + ' pw' : ''));
         if (s) {
-          b.title = s.nm + ' (level ' + s.lv + ') · right-click to remove';
+          b.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + ' · right-click to remove';
           b.addEventListener('click', () => onCast?.(id));
           b.addEventListener('contextmenu', (e) => { e.preventDefault(); onClear?.(i); });
         }

@@ -46,7 +46,7 @@
 
 ## 6. Client
 
-- [ ] 6.1 Make the client show songs:
+- [x] 6.1 Make the client show songs:
   - the spell bar and SPELLS window mark a song that is on;
   - the effects list draws the `speed`, `regen` and `resist` kinds, both in the stock UI and in the plain fallback.
 

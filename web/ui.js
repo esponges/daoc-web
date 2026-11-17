@@ -152,7 +152,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       bar.appendChild(b);
     });
   };
-  net.on.bar = (slots) => { barSlots = slots; renderBar(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book); };
+  net.on.bar = (slots) => { barSlots = slots; renderBar(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song); };
   // --- spells ---
   // The spell bar (Shift+1 to Shift+8) and the cast bar; the plain panel stands in
   // for the stock SPELLS window when the converted interface is absent.
@@ -177,7 +177,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   root.appendChild(castBox.el);
   const saveSlots = () => {
     try { localStorage.setItem(slotKey(), JSON.stringify(spellSlots)); } catch { /* not remembered */ }
-    spellBar.set(spellSlots, net.book);
+    spellBar.set(spellSlots, net.book, net.song);
   };
   function setSpellSlot(id, slot) {
     if (!findSpell(net.book, id)) return;
@@ -192,13 +192,19 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const toggleSpells = () => {
     if (charWins) { charWins.toggle('spells'); return; }
     plainSpells.toggle();
-    plainSpells.render(net.book);
+    plainSpells.render(net.book, net.song);
   };
   net.on.book = () => {
     loadSlots();
-    spellBar.set(spellSlots, net.book);
-    if (plainSpells) plainSpells.render(net.book);
-    if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book);
+    spellBar.set(spellSlots, net.book, net.song);
+    if (plainSpells) plainSpells.render(net.book, net.song);
+    if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song);
+  };
+  // A song or chant coming on or going off is marked on the bar and in the window.
+  net.on.song = () => {
+    spellBar.set(spellSlots, net.book, net.song);
+    if (plainSpells) plainSpells.render(net.book, net.song);
+    if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song);
   };
   let cast = null; // the spell being cast: { name, start, dur }, in seconds of the page's clock
   const castEvent = (ev) => {
@@ -461,7 +467,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     }
     sheetPanel.append(closeButton(sheetPanel));
   };
-  net.on.stats = () => { renderAbilities(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book); if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
+  net.on.stats = () => { renderAbilities(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song); if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
   // C opens the stock attributes window when the converted interface is there, the plain sheet when not.
   const toggleSheet = () => {
     if (charWins) { charWins.toggle('attributes'); return; }

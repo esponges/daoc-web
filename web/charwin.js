@@ -124,7 +124,7 @@ export function createStockCharWindows(doc, data, { onCast, onAssign } = {}) {
   let last = {};
 
   function render() {
-    const { me, st, bar, also, book } = last;
+    const { me, st, bar, also, book, song } = last;
     const a = attributesView(me, st);
     cap(attrib, 'stats_name', a.name);
     cap(attrib, 'stats_level', a.level);
@@ -152,7 +152,7 @@ export function createStockCharWindows(doc, data, { onCast, onAssign } = {}) {
     // The spells: the book by spec line; a click casts at the target, shift-click or a drag puts it on the spell bar.
     cap(spells, 'stats_spec_points', '');
     for (const old of spells.el.querySelectorAll('.listrows')) old.remove();
-    const sv = spellsView(book).map((r) => (r.id ? { ...r, onClick: (e) => (e.shiftKey ? onAssign?.(r.id) : onCast?.(r.id)) } : r));
+    const sv = spellsView(book, song).map((r) => (r.id ? { ...r, onClick: (e) => (e.shiftKey ? onAssign?.(r.id) : onCast?.(r.id)) } : r));
     listRows(doc, data, spells, '1000', sv.length ? sv : [{ header: 'You have no spells.' }]);
   }
 
@@ -181,8 +181,8 @@ export function createStockCharWindows(doc, data, { onCast, onAssign } = {}) {
       wins[name].el.style.display = on ? 'block' : 'none';
       if (on) render();
     },
-    update(me, st, bar, also, book) {
-      last = { me, st, bar, also, book };
+    update(me, st, bar, also, book, song = 0) {
+      last = { me, st, bar, also, book, song };
       if (Object.values(open).some(Boolean)) render();
     },
   };

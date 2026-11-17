@@ -142,6 +142,20 @@ function makeSim({ latency = 0.1, ground = planeGround } = {}) {
   ok(Math.hypot(c.me.x - sim.srv.x, c.me.y - sim.srv.y) < 0.5, 'prediction under a speed song agrees with the server');
 }
 
+// --- the song that is on is remembered, and a change is announced once ---
+{
+  const sim = makeSim({ latency: 0.05 });
+  const c = sim.client;
+  const told = [];
+  c.on.song = (id) => told.push(id);
+  const fx = (song) => ({ t: 'effects', list: [], speed: 1, ...(song ? { song } : {}) });
+  sim.toClient(fx(3601)); sim.advance(0.06);
+  sim.toClient(fx(3601)); sim.advance(0.06);
+  ok(c.song === 3601 && told.join() === '3601', 'a song coming on is announced once');
+  sim.toClient(fx(0)); sim.advance(0.06);
+  ok(c.song === 0 && told.join() === '3601,0', 'turning it off is announced');
+}
+
 // --- a correction snaps ---
 {
   const sim = makeSim({ latency: 0.05 });

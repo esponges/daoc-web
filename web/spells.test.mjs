@@ -21,6 +21,9 @@ ok(rows.length === 5 && rows[0].header === 'Mending' && rows[3].header === 'Smit
 ok(rows[1].text === 'Minor Mending  1, 1 pw, 2.2s' && rows[1].draggable && rows[1].drag === 'spell:3001', 'a spell row shows level, power and cast time');
 ok(rows[2].on === false && !rows[2].draggable && rows[2].text.endsWith('(not yet)') && rows[2].text.includes('instant'), 'a spell the server cannot cast is greyed and cannot be dragged');
 ok(spellsView(null).length === 0 && spellsView({ lines: [] }).length === 0, 'no book, no rows');
+const playing = spellsView({ lines: [{ spec: 'Battlesongs', nm: 'Battlesongs', sp: [{ id: 3601, nm: 'Chant of the Brawl', lv: 5, pw: 0, ct: 0, ok: true, pl: true }, { id: 3620, nm: 'Warcry', lv: 2, pw: 2, ct: 0, ok: true }] }] }, 3601);
+ok(playing[1].playing && playing[1].text.endsWith('(playing)') && !playing[2].playing && !playing[2].text.includes('playing'), 'the song that is on is marked in the window');
+ok(!spellsView(book)[1].playing && !spellsView(book, 0)[1].text.includes('playing'), 'nothing is marked when no song is on');
 ok(findSpell(book, 5001).nm === 'Smite Bolt' && findSpell(book, 1) === null, 'a spell is found by id');
 ok(spellDragId('spell:3001') === 3001 && spellDragId('style:12') === null && spellDragId('') === null, 'a dragged spell id is read, a style is not');
 

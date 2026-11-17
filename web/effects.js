@@ -11,6 +11,11 @@ export const EFFECT_KINDS = {
   stun: { label: '!', colour: '#c9a227', title: 'stunned' },
   mez: { label: 'Z', colour: '#8a4fbf', title: 'mesmerized' },
   proc: { label: '+', colour: '#3f8f4a', title: 'weapon charged' },
+  buff: { label: 'B', colour: '#2f8f8f', title: 'strengthened' },
+  dmgadd: { label: 'A', colour: '#c07a2a', title: 'extra damage' },
+  speed: { label: '>', colour: '#2a9d8f', title: 'quickened' },
+  regen: { label: 'H', colour: '#4a9a5c', title: 'recovering faster' },
+  resist: { label: 'R', colour: '#6a7fb5', title: 'resistant' },
 };
 
 // What starting to suffer an effect of a kind says.

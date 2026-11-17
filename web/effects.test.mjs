@@ -15,6 +15,14 @@ assert.equal(effectRows({ list: [{ nm: 'X', k: 'odd', left: 1 }], at: 0 }, 0)[0]
 assert.equal(clock(59.2), '1:00');
 console.log('ok: effect rows count down and draw by kind');
 
+// Songs and buffs have badges of their own, not the "?" of an unknown kind.
+for (const k of ['buff', 'dmgadd', 'speed', 'regen', 'resist']) {
+  const r = effectRows({ at: 0, list: [{ nm: 'Song', k, left: 4 }] }, 0)[0];
+  assert.notEqual(r.label, '?', k + ' has a badge');
+  assert.match(r.title, /^Song \(/);
+}
+console.log('ok: the song and buff kinds draw');
+
 // Change lines.
 const stun = { list: [{ nm: 'Stunning Yell', k: 'stun', left: 3 }] };
 assert.deepEqual(effectChangeLines({ list: [] }, stun).map((l) => l.text), ['You are stunned!']);

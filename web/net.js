@@ -50,6 +50,7 @@ export class NetClient {
     this.sent = 0;             // steps sent so far
     this.history = [];         // steps sent and not yet acknowledged: { seq, k }
     this.effects = { list: [], at: 0 }; // our lasting spells, as last sent, and when
+    this.song = 0;            // the id of the song or chant we have on, or 0
     this.group = []; // our group, leader first, as last sent; empty when not grouped
     this.slow = 0;             // the share of speed they take away; 1 is held
     this.pendingRuns = [];     // runs not yet sent
@@ -143,6 +144,11 @@ export class NetClient {
         this.effects = { list: m.list || [], at: this.now() };
         this.slow = 1 - (m.speed ?? 1);
         this.held = !!m.held;
+        {
+          const song = m.song || 0, changed = song !== this.song;
+          this.song = song;
+          if (changed) this.on.song?.(song);
+        }
         this.on.effects?.(this.effects);
         break;
       default: break; // an unknown message is ignored
