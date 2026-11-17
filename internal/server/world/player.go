@@ -108,6 +108,7 @@ type Player struct {
 	buffed     bool            // a spell buff was on at the last sheet
 	casting    *playerCast     // the spell being cast, or nil
 	spellReady map[int]float64 // spell id -> when its recast has passed
+	song       *songState      // the song or chant they have on, nil when none
 	ride       *ride           // the horse route they are on, nil when walking
 	ab         abilityState    // Guard, Protect, Intercept and Engage in force
 	gearSent   map[int64]bool  // NPCs whose equipment this player has been sent while they stayed in view

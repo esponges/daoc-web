@@ -569,7 +569,7 @@ func Decode(data []byte) (string, interface{}, error) {
 // EffectView is one lasting effect on the character.
 type EffectView struct {
 	Name string  `json:"nm"`
-	Kind string  `json:"k"`    // "dot", "slow", "stun", "mez", "proc": what it does, which picks its icon
+	Kind string  `json:"k"`    // "dot", "slow", "stun", "mez", "proc", "buff", "dmgadd", "speed", "regen", "resist": what it does, which picks its icon
 	Icon int     `json:"ic"`   // the spell's icon number in the data; not drawn, as icon numbers do not match this install
 	Left float64 `json:"left"` // seconds to run
 	Of   float64 `json:"of"`   // seconds it lasts in all
@@ -583,6 +583,7 @@ type Effects struct {
 	List  []EffectView `json:"list"`
 	Speed float64      `json:"speed"`
 	Held  bool         `json:"held,omitempty"` // stunned or mesmerized: no moving, swinging or styles
+	Song  int          `json:"song,omitempty"` // the spell id of the song or chant you have on; absent when none
 }
 
 // Group operations a client may ask for.
@@ -666,4 +667,5 @@ type BookSpell struct {
 	OK     bool    `json:"ok"`
 	Icon   int     `json:"ic"`           // the data's number; not drawn
 	Recast int     `json:"rc,omitempty"` // seconds before it can be cast again
+	Pulse  bool    `json:"pl,omitempty"` // a song or chant: casting it turns it on, and casting it again off
 }

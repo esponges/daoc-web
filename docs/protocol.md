@@ -126,6 +126,10 @@ The numbers follow the rule book (`openspec/specs/rules-*`).
 
 `effects` is your own lasting spells, sent only to you whenever they change: `list`, each with `nm` (the spell), `k` (what it does: `dot`, `slow`, `stun`, `mez`, `proc`), `ic` (the imported icon number, which does not match this install's sheets: draw by `k`), `left` and `of` (seconds to run, and in all); `speed`, the share of normal speed you may move at (the strongest slow, 0 while held); and `held`, true while stunned or mesmerized, when you cannot move, swing or use styles. Predicted movement uses `speed` (see Movement). Effects end at death and are not kept over a logout.
 
+The kinds also include `buff` (a stat or armour buff), `dmgadd` (a damage add), `speed` (a speed song), `regen` (a health regeneration song) and `resist` (a resist buff or chant). `song` is the id of the song or chant you have on (absent when none): casting a pulsing spell turns it on, it pulses on your group every few seconds, and casting it again turns it off. Only one song is on at a time, and a new one ends the first. `speed` can be above 1 while a speed song is on you; predicted movement applies it as it does a slow.
+
+`book` is the spellbook, sent when it changes: `lines`, one per spec line, each with `spec`, `nm` and `sp`, its spells lowest level first. A spell has `id`, `nm`, `lv`, `pw` (power), `ct` (seconds to cast), `rg` (range), `tp` (the data's spell type), `tg` (its target), `ok` (false for a type the server cannot cast yet), `ic`, `rc` (recast seconds) and `pl` (true for a song or chant). A spell cast around the caster (range 0, an area) needs no target: send `cast` with `sp` (the spell `id`) and no `tg`.
+
 `inv` (pack, worn items and money), `bar` (styles), `corpse` (a corpse's
 loot), `shop`, `shopclose`, `chatmsg`, `err`, and `zone`: the character has moved to another zone,
 so the client reloads at `?zone=N&play=<id>` and joins again. Crossing an

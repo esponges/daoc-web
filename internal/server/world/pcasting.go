@@ -82,7 +82,7 @@ func (p *Player) bookMsg(cat *Catalog) protocol.Book {
 		l := &m.Lines[len(m.Lines)-1]
 		l.Spells = append(l.Spells, protocol.BookSpell{ID: b.Spell.ID, Name: b.Spell.Name, Level: b.Level, Cost: p.powerCost(b.Spell),
 			Cast: b.Spell.CastTime, Range: int(b.Spell.Range), Type: b.Spell.Type, Target: b.Spell.Target, OK: spellSupported(b.Spell),
-			Icon: b.Spell.Icon, Recast: int(b.Spell.Recast)})
+			Icon: b.Spell.Icon, Recast: int(b.Spell.Recast), Pulse: b.Spell.pulsing()})
 	}
 	return m
 }
@@ -129,6 +129,10 @@ func (p *Player) bookHas(id int) *SpellDef {
 // they name (or the one they hold, or themselves for a spell on the caster).
 func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 	if p.dead || p.ride != nil {
+		return
+	}
+	if sp := p.bookHas(spellID); sp != nil && p.songPlaying(sp) {
+		z.stopSong(p, "You cancel your effect.") // casting a song that is on turns it off
 		return
 	}
 	if held(p) {
@@ -300,6 +304,9 @@ func (z *Zone) continuePlayerCast(p *Player) {
 	}
 	for _, t := range targets {
 		z.castSpell(p, t, sp)
+	}
+	if sp.pulsing() {
+		z.startSong(p, sp)
 	}
 }
 

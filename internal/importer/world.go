@@ -78,7 +78,7 @@ CREATE TABLE spell(
   id INTEGER PRIMARY KEY, name TEXT, type TEXT, target TEXT, range INTEGER, cast_time REAL, recast INTEGER,
   damage REAL, damage_type INTEGER, value REAL, duration INTEGER, frequency INTEGER, life_drain INTEGER,
   sub_spell INTEGER, uninterruptible INTEGER, icon INTEGER, radius INTEGER,
-  message1 TEXT, message2 TEXT, message3 TEXT, message4 TEXT, power INTEGER);
+  message1 TEXT, message2 TEXT, message3 TEXT, message4 TEXT, power INTEGER, pulse INTEGER, pulse_power INTEGER);
 CREATE TABLE line_spell(spec TEXT, hint INTEGER, line TEXT, spell INTEGER, level INTEGER);
 CREATE INDEX line_spell_spec ON line_spell(spec);
 CREATE TABLE template_spell(template INTEGER, spell INTEGER, ord INTEGER);
@@ -618,10 +618,10 @@ func build(o Options) (*Report, error) {
 			continue
 		}
 		kept++
-		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
+		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
 			r.Int("Range"), r.Float("CastTime"), r.Int("RecastDelay"), r.Float("Damage"), r.Int("DamageType"), r.Float("Value"),
 			r.Int("Duration"), r.Int("Frequency"), r.Int("LifeDrainReturn"), r.Int("SubSpellID"), r.Int("Uninterruptible"),
-			r.Int("Icon"), r.Int("Radius"), r.Str("Message1"), r.Str("Message2"), r.Str("Message3"), r.Str("Message4"), r.Int("Power")); err != nil {
+			r.Int("Icon"), r.Int("Radius"), r.Str("Message1"), r.Str("Message2"), r.Str("Message3"), r.Str("Message4"), r.Int("Power"), r.Int("Pulse"), r.Int("PulsePower")); err != nil {
 			return nil, err
 		}
 	}

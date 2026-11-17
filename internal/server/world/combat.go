@@ -536,6 +536,7 @@ func ifSeen(seen bool, v float64) float64 {
 func (z *Zone) killPlayer(p *Player, by *NPC) {
 	z.closeShop(p)
 	z.cancelPlayerCast(p, "")
+	p.song = nil // a dead caster plays nothing
 	p.hp = 0
 	p.dead = true
 	p.deadAt = z.now

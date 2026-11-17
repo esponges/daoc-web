@@ -216,6 +216,7 @@ func (z *Zone) tickPlayer(p *Player) {
 	z.checkVault(p)
 	z.checkSmith(p)
 	z.continuePlayerCast(p)
+	z.tickSong(p)
 	if !held(p) {
 		z.combatPlayer(p)
 	}

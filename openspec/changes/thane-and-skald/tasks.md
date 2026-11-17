@@ -29,14 +29,14 @@
 
 ## 4. Pulsing songs and chants
 
-- [ ] 4.1 Import `Pulse` and `PulsePower` into the `spell` table (additive columns), and load them with a fallback for an older store. Verify with an importer test and a catalog test.
-- [ ] 4.2 Add songs:
+- [x] 4.1 Import `Pulse` and `PulsePower` into the `spell` table (additive columns), and load them with a fallback for an older store. Verify with an importer test and a catalog test.
+- [x] 4.2 Add songs:
   - a pulsing spell toggles on and off, and while on, re-applies to the group in range every `Frequency` tenths of a second;
   - the limit and the stopping conditions are those of the findings;
   - power per pulse is spent if the data asks for it.
 
   Add world tests for the song, leaving range, toggling off and death scenarios. Verify with `go test -short ./internal/server/world`.
-- [ ] 4.3 Add the protocol fields: the `pulse` flag on book entries, the `song` field on the effects message, and the `speed`, `regen` and `resist` effect kinds. Document them in `docs/protocol.md` and add a protocol test. Verify with `go test ./internal/server/protocol`.
+- [x] 4.3 Add the protocol fields: the `pulse` flag on book entries, the `song` field on the effects message, and the `speed`, `regen` and `resist` effect kinds. Document them in `docs/protocol.md` and add a protocol test. Verify with `go test ./internal/server/protocol`.
 
 ## 5. Speed, regeneration and resist buffs
 

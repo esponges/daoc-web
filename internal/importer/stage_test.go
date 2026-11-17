@@ -222,6 +222,30 @@ func TestImportStartEquipment(t *testing.T) {
 	}
 }
 
+// A song's pulse and what each pulse costs come in with the spell.
+func TestImportSpellPulse(t *testing.T) {
+	dir := minimalDump(t)
+	dumpTable(t, dir, "stylexspell", "`SpellID`, `ClassID`, `StyleID`, `Chance`", "3613, 0, 164, 100", "3501, 0, 165, 100")
+	dumpTable(t, dir, "spell", "`SpellID`, `Name`, `Type`, `Target`, `Range`, `Duration`, `Frequency`, `Pulse`, `PulsePower`",
+		"3613, 'Simple Song of Rest', 'HealthRegenBuff', 'Group', 1500, 5, 50, 1, 3",
+		"3501, 'Thor''s Minor Bolt', 'DirectDamage', 'Enemy', 1500, 0, 0, 0, 0")
+	out := filepath.Join(t.TempDir(), "world.db")
+	if _, err := Run(Options{Dump: dir, Out: out}); err != nil {
+		t.Fatal(err)
+	}
+	db, _ := sql.Open("sqlite", out)
+	defer db.Close()
+	var pulse, pp int
+	db.QueryRow(`SELECT pulse, pulse_power FROM spell WHERE id=3613`).Scan(&pulse, &pp)
+	if pulse != 1 || pp != 3 {
+		t.Errorf("the song has pulse %d and pulse power %d, want 1 and 3", pulse, pp)
+	}
+	db.QueryRow(`SELECT pulse, pulse_power FROM spell WHERE id=3501`).Scan(&pulse, &pp)
+	if pulse != 0 || pp != 0 {
+		t.Errorf("the bolt has pulse %d and pulse power %d", pulse, pp)
+	}
+}
+
 // Spells come in with what names them: a template's list, a style's spell,
 // an item's proc, and the spells those fire in turn. A link to a spell the
 // dump lacks is dropped and counted.

@@ -230,12 +230,17 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 			e = o
 		}
 	}
+	refresh := e != nil
 	if e == nil {
 		e = &effect{spell: sp, kind: kind}
 		*list = append(*list, e)
 	}
 	e.caster, e.casterLevel = caster, levelOf(caster)
-	e.ends = z.now + float64(sp.Duration)
+	dur := float64(sp.Duration)
+	if sp.pulsing() {
+		dur = sp.effectSeconds()
+	}
+	e.ends = z.now + dur
 	if kind == effDoT {
 		_, e.every = rules.DoTTicks(sp.Duration, sp.Frequency)
 		e.next = z.now + e.every
@@ -243,7 +248,9 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 		e.scaled, e.stat, e.spec = ok, sc.stat, sc.spec
 	}
 	tx, ty := target.position()
-	z.event(protocol.Event{K: "effect", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+	if !(refresh && sp.pulsing()) { // a song pulsing on a member again is not news
+		z.event(protocol.Event{K: "effect", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+	}
 	if kind == effStun || kind == effMez {
 		z.stopActing(target)
 	}
@@ -401,9 +408,12 @@ func (z *Zone) effectsChanged(c combatant) {
 		z.W.recalc(p) // buffs raise stats and armour
 	}
 	m := protocol.Effects{T: protocol.TEffects, List: []protocol.EffectView{}, Speed: speedFactor(p), Held: held(p)}
+	if p.song != nil {
+		m.Song = p.song.spell.ID
+	}
 	for _, e := range p.effects {
 		m.List = append(m.List, protocol.EffectView{Name: e.spell.Name, Kind: e.kind, Icon: e.spell.Icon,
-			Left: math.Max(0, e.ends-z.now), Of: float64(e.spell.Duration)})
+			Left: math.Max(0, e.ends-z.now), Of: e.spell.effectSeconds()})
 	}
 	p.send(m)
 }

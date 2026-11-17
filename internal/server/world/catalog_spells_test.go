@@ -26,9 +26,11 @@ func buildSpellStore(t *testing.T, old bool) *Catalog {
 		`INSERT INTO spell(id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,sub_spell,uninterruptible,icon,radius,power)
 		 VALUES(3521,'Thunder Shout','DirectDamage','Enemy',0,0,20,15,12,0,0,0,0,0,0,1,300,4),
 		       (3501,'Thor''s Minor Bolt','DirectDamage','Enemy',1500,3,0,4,12,0,0,0,0,0,0,2,0,2)`,
+		`INSERT INTO spell(id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,sub_spell,uninterruptible,icon,pulse,pulse_power)
+		 VALUES(3613,'Simple Song of Rest','HealthRegenBuff','Group',1500,0,8,0,0,2,5,50,0,0,0,3,1,3)`,
 	}
 	if old {
-		stmts = append([]string{`ALTER TABLE spell DROP COLUMN radius`}, stmts[0],
+		stmts = append([]string{`ALTER TABLE spell DROP COLUMN radius`, `ALTER TABLE spell DROP COLUMN pulse`, `ALTER TABLE spell DROP COLUMN pulse_power`}, stmts[0],
 			`INSERT INTO spell(id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,sub_spell,uninterruptible,icon,power)
 			 VALUES(3521,'Thunder Shout','DirectDamage','Enemy',0,0,20,15,12,0,0,0,0,0,0,1,4)`)
 	}
@@ -58,6 +60,22 @@ func TestCatalogLoadsSpellRadius(t *testing.T) {
 	old := buildSpellStore(t, true)
 	if sp := old.Spells[3521]; sp == nil || sp.Radius != 0 || sp.Power != 4 {
 		t.Errorf("an old store's Thunder Shout %+v, want no radius and its power", sp)
+	}
+}
+
+// A song's pulse and pulse power are loaded; a store without the columns
+// loads with none, so its songs are single casts rather than toggles.
+func TestCatalogLoadsSpellPulse(t *testing.T) {
+	c := buildSpellStore(t, false)
+	if sp := c.Spells[3613]; sp == nil || sp.Pulse != 1 || sp.PulsePower != 3 || sp.Frequency != 50 {
+		t.Errorf("the song %+v, want pulse 1, pulse power 3, frequency 50", sp)
+	}
+	if sp := c.Spells[3501]; sp == nil || sp.Pulse != 0 {
+		t.Errorf("the bolt %+v, want no pulse", sp)
+	}
+	old := buildSpellStore(t, true)
+	if sp := old.Spells[3521]; sp == nil || sp.Pulse != 0 || sp.PulsePower != 0 {
+		t.Errorf("an old store's spell %+v, want no pulse", sp)
 	}
 }
 

@@ -237,3 +237,34 @@ func TestGroupMessages(t *testing.T) {
 		t.Errorf("groupinv: %s", b)
 	}
 }
+
+// A song is marked in the book, and the effects message names the one that is
+// on; both are absent otherwise, so an older client sees nothing new.
+func TestSongFieldsAreAdditive(t *testing.T) {
+	b, _ := json.Marshal(BookSpell{ID: 3613, Name: "Simple Song of Rest", Level: 1, Type: "HealthRegenBuff", Target: "Group", OK: true, Pulse: true})
+	if !strings.Contains(string(b), `"pl":true`) {
+		t.Errorf("a song is not marked in the book: %s", b)
+	}
+	b, _ = json.Marshal(BookSpell{ID: 3501, Name: "Thor's Minor Bolt", Level: 1, OK: true})
+	if strings.Contains(string(b), `"pl"`) {
+		t.Errorf("an ordinary spell is marked as a song: %s", b)
+	}
+	b, _ = json.Marshal(Effects{T: TEffects, List: []EffectView{{Name: "Simple Song of Travel", Kind: "speed", Left: 6, Of: 6}}, Speed: 1.44, Song: 3608})
+	for _, want := range []string{`"k":"speed"`, `"speed":1.44`, `"song":3608`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("effects lacks %s: %s", want, b)
+		}
+	}
+	b, _ = json.Marshal(Effects{T: TEffects, List: []EffectView{}, Speed: 1})
+	if strings.Contains(string(b), "song") {
+		t.Errorf("song is sent when none is on: %s", b)
+	}
+	var older struct {
+		T     string  `json:"t"`
+		Speed float64 `json:"speed"`
+	}
+	b, _ = json.Marshal(Effects{T: TEffects, Speed: 1.44, Song: 3608})
+	if err := json.Unmarshal(b, &older); err != nil || older.Speed != 1.44 {
+		t.Errorf("an older client reads %+v, %v", older, err)
+	}
+}
