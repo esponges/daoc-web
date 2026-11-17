@@ -61,7 +61,7 @@
   - a Song of Rest raises the health tick.
 
   Record what was seen in `findings.md`.
-- [ ] 7.2 Bring the docs and checks up to date:
+- [x] 7.2 Bring the docs and checks up to date:
   - regenerate `docs/parity`;
   - update the README (class list, counts, "Not yet" text) and CLAUDE.md ("Open now");
   - run all Go and JS tests and `openspec validate thane-and-skald --strict`.

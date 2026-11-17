@@ -15,15 +15,17 @@ imported at build time into `server/data/` (gitignored).
 ## What you can do today
 
 - Log in, make a character from the start table (Warrior, Berserker, Savage,
-  Healer, Shaman or Runemaster, each with its races, male or female) and walk
+  Healer, Shaman, Runemaster, Thane or Skald, each with its races, male or female) and walk
   Midgard: all 25 outdoor zones, its dungeons and Jordheim, with day and night,
   collision and the neighbouring-zone borders.
 - Fight the zone's creatures: swing speed, hit, evade, parry and block,
   styles, specialization, damage types, armour, death, experience and levels,
   loot and release, repair.
 - Cast: direct damage, bolts, heals, damage over time, slows, mesmerize, stun,
-  life drain, stat and armour buffs, damage add. A SPELLS window, spell bar and
-  cast bar; power regenerates and is spent.
+  life drain, stat and armour buffs, damage add, area spells, and the Skald's
+  songs and chants (speed, regeneration, resists, damage add), which pulse on
+  the group until turned off. A SPELLS window, spell bar and cast bar; power
+  regenerates and is spent.
 - Trade with merchants, keep things in the vault, talk in chat channels, group up,
   ride the horse routes.
 - See other players and creatures move and fight, a few hundred milliseconds
@@ -53,8 +55,8 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Levelling gear | 32 gaps in 10 five-level bands |
 | Rules | 25 documented, 50 reference, 19 provisional |
 
-So: the solo-and-small-group player-versus-environment loop works, for six of the twelve
-Midgard's classes (trainers teach those six). Not started: quests, pets and
+So: the solo-and-small-group player-versus-environment loop works, for eight of the twelve
+Midgard's classes (trainers teach those eight). Not started: quests, pets and
 charm, resurrection,
 line of sight, concentration, crafting, housing, keeps, relics, battlegrounds
 and every realm but Midgard. Armour and weapons stop at level 30 in the data the
@@ -372,7 +374,7 @@ The current reading is the table at the top of this file.
 ### Classes, spells and power
 
 The creation page offers every race and class pair the data's start table lists
-for Warrior, Berserker, Savage, Healer, Shaman and Runemaster, each with a
+for Warrior, Berserker, Savage, Healer, Shaman, Runemaster, Thane and Skald, each with a
 choice of male or female. A caster has a power pool (`rules/power.go`;
 reference: the community servers' numbers, no public 1.65 account) and a
 spellbook built from the imported spell lines of the specs they train
@@ -384,7 +386,11 @@ use. The stock SPELLS window (the `Stats_Spec_Abil` layout), a spell bar
 (Shift+1 to Shift+8) and a cast bar draw it; without `web/data/ui/` a plain
 panel (P) does. Not yet: line of sight, concentration, resurrection, pets and
 charm, the focus bonus on power cost, scaling of buffs and debuffs by spec (the
-sources differ; buffs are flat here), and the other Midgard classes. Player
+sources differ; buffs are flat here), and the other Midgard classes.
+An area spell hits every creature inside its radius with no falloff, around the
+caster when its range is 0 and around the target otherwise. A song or chant is a
+toggle that lands on the group and pulses on it every few seconds; only one is
+on at a time. A speed song does not take hold in combat. Player
 damage, heals, damage over time and damage add follow the casting stat, the
 spec and the weapon's swing as the community servers do.
 
