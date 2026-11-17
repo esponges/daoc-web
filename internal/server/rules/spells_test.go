@@ -1,6 +1,9 @@
 package rules
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 const se = "rules-spell-effects"
 
@@ -179,6 +182,72 @@ func TestSpellScalingOverTime(t *testing.T) {
 	vector(t, "player-spellcasting", "A big armour buff", func(t *testing.T) {
 		if c := BuffAFCap(10); c != 20 {
 			t.Errorf("armour cap %d, want 20", c)
+		}
+	})
+}
+
+func TestSongEffects(t *testing.T) {
+	vector(t, se, "Simple Song of Travel", func(t *testing.T) {
+		near(t, "a 144 song", WithBoost(SpeedFactor(false), BoostFactor(144)), 1.44, 1e-9)
+		near(t, "a value under 100 does not slow", BoostFactor(80), 1, 1e-9)
+	})
+	vector(t, se, "The strongest counts", func(t *testing.T) {
+		best := math.Max(BoostFactor(144), BoostFactor(159))
+		near(t, "a 144 and a 159", WithBoost(1, best), 1.59, 1e-9)
+	})
+	vector(t, se, "With a slow", func(t *testing.T) {
+		slow := SpeedFactor(false, SlowFactor(40))
+		near(t, "1.44 × 0.6", WithBoost(slow, BoostFactor(144)), 0.864, 1e-9)
+		if WithBoost(SpeedFactor(true), BoostFactor(144)) != 0 {
+			t.Error("a held body ran faster with a song")
+		}
+	})
+	vector(t, se, "Combat", func(t *testing.T) {
+		if !BoostActive(false) || BoostActive(true) {
+			t.Error("a speed song holds only out of combat")
+		}
+	})
+	vector(t, se, "Song of Rest out of combat", func(t *testing.T) {
+		// Level 20 returns int(2.5 + 0.25 × 20) = 7 on its own.
+		if got := HealthRegenBuffed(20, false, 10); got != 17 {
+			t.Errorf("a 10-point song returns %d, want 17", got)
+		}
+		if got := HealthRegenBuffed(20, false, 0); got != HealthRegen(20, false) {
+			t.Errorf("no song returns %d", got)
+		}
+	})
+	vector(t, se, "In combat", func(t *testing.T) {
+		if got := HealthRegenBuffed(20, true, 10); got != 0 {
+			t.Errorf("a song in combat returns %d, want 0", got)
+		}
+	})
+	heat, _ := ResistBuffType(SpellHeatResistBuff)
+	vector(t, se, "A heat chant against a fire bolt", func(t *testing.T) {
+		buffs := []ResistBuff{{DamageType: heat, Value: 10}}
+		race := 5.0
+		if got := race + ResistBuffBonus(DamageHeat, buffs); got != 15 {
+			t.Errorf("the spell meets %v%% heat resist, want 15", got)
+		}
+		if d := SpellDamage(100, 1, race+ResistBuffBonus(DamageHeat, buffs)); d != 85 {
+			t.Errorf("100 damage at 15%% resist is %d, want 85", d)
+		}
+	})
+	vector(t, se, "Another damage type is untouched", func(t *testing.T) {
+		buffs := []ResistBuff{{DamageType: heat, Value: 10}}
+		if got := ResistBuffBonus(DamageCold, buffs); got != 0 {
+			t.Errorf("a heat chant adds %v to cold resist", got)
+		}
+		if _, ok := ResistBuffType(SpellStrengthBuff); ok {
+			t.Error("a strength buff is a resist buff")
+		}
+	})
+	vector(t, se, "The buff cap", func(t *testing.T) {
+		body, _ := ResistBuffType(SpellBodyResistBuff)
+		if got := ResistBuffBonus(DamageBody, []ResistBuff{{body, 30}}); got != 24 {
+			t.Errorf("a 30-point body buff adds %v, want 24", got)
+		}
+		if got := ResistBuffBonus(DamageBody, []ResistBuff{{body, 10}, {body, 20}}); got != 20 {
+			t.Errorf("a 10 and a 20 add %v, want the strongest, 20", got)
 		}
 	})
 }

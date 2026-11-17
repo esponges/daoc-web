@@ -40,9 +40,9 @@
 
 ## 5. Speed, regeneration and resist buffs
 
-- [ ] 5.1 Add speed enhancement: a speed factor above 1, combined with slows and broken by combat as the findings say. Apply it in `world/move.go` and `web/move.js` through `Slow`, and add a shared movement vector with a factor of 1.44. Verify that the Go movement tests and `node web/move.test.mjs` both pass the new vector.
-- [ ] 5.2 Add the health regeneration buff to the health tick, and the six resist buffs to the resist a spell meets (strongest per type, capped). Add rules and registry entries with table tests for the `rules-spell-effects` scenarios, and world tests for Song of Rest and the heat chant. Verify with `go test -short ./internal/server/...`.
-- [ ] 5.3 Mark the eight types as player-castable in `rules.ImplementedPlayerSpell`, and extend the spell data check to them. Verify that `TestSpellAmountsAgreeWithTheTable` reports no spell, and that `cmd/parity` counts class spell types as 21 of 73.
+- [x] 5.1 Add speed enhancement: a speed factor above 1, combined with slows and broken by combat as the findings say. Apply it in `world/move.go` and `web/move.js` through `Slow`, and add a shared movement vector with a factor of 1.44. Verify that the Go movement tests and `node web/move.test.mjs` both pass the new vector.
+- [x] 5.2 Add the health regeneration buff to the health tick, and the six resist buffs to the resist a spell meets (strongest per type, capped). Add rules and registry entries with table tests for the `rules-spell-effects` scenarios, and world tests for Song of Rest and the heat chant. Verify with `go test -short ./internal/server/...`.
+- [x] 5.3 Mark the eight types as player-castable in `rules.ImplementedPlayerSpell`, and extend the spell data check to them. Verify that `TestSpellAmountsAgreeWithTheTable` reports no spell, and that `cmd/parity` counts class spell types as 21 of 73.
 
 ## 6. Client
 

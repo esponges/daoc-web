@@ -53,6 +53,7 @@ func vectors() []vector {
 		{Name: "stopped at the zone edge", Start: [4]float64{100, 100, 0, -math.Pi / 2}, Runs: [][5]int{{120, 1, 0, 0, 1}}},
 		{Name: "clamped input", Start: [4]float64{30000, 30000, 0, 0}, Runs: [][5]int{{10, 7, -9, 5, 3}}},
 		{Name: "run under a 40% slow", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 0, 0, 1}, {20, 1, 0, 1, 1}}, Slow: 0.4},
+		{Name: "run under a 144 speed song", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 0, 0, 1}, {20, 1, 0, 1, 1}}, Slow: -0.44},
 		{Name: "held: no moving or turning", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 1, 1, 1}}, Slow: 1},
 		{Name: "free, the factor at 1", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 0, -1, 1}}, Slow: 0},
 	}

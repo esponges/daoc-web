@@ -126,6 +126,22 @@ function makeSim({ latency = 0.1, ground = planeGround } = {}) {
   ok(c.held && c.me.x === held.x && c.me.y === held.y && c.me.yaw === held.yaw, 'a held player neither moves nor turns');
 }
 
+// --- a speed song: prediction runs faster than normal, at the factor sent ---
+{
+  const sim = makeSim({ latency: 0.05 });
+  const c = sim.client;
+  sim.srvSlow = -0.44;
+  sim.toClient({ t: 'effects', list: [{ nm: 'Simple Song of Travel', k: 'speed', ic: 3608, left: 6, of: 6 }], speed: 1.44, song: 3608 });
+  sim.advance(0.06);
+  ok(Math.abs(c.slow + 0.44) < 1e-9 && c.effects.list[0].k === 'speed', 'the effects message sets a speed above normal');
+  const y0 = c.me.y;
+  for (let i = 0; i < 60; i++) { sim.advance(1 / 60); c.update(1 / 60, { fwd: 1, strafe: 0, turn: 0, run: true }); }
+  const ran = y0 - c.me.y;
+  ok(Math.abs(ran - 191 * 1.44) < 2, `a second's run under a 144 song covers ${ran.toFixed(1)} units, 144% of a run`);
+  for (let i = 0; i < 30; i++) { sim.advance(1 / 60); c.update(1 / 60, { fwd: 0, strafe: 0, turn: 0, run: false }); }
+  ok(Math.hypot(c.me.x - sim.srv.x, c.me.y - sim.srv.y) < 0.5, 'prediction under a speed song agrees with the server');
+}
+
 // --- a correction snaps ---
 {
   const sim = makeSim({ latency: 0.05 });

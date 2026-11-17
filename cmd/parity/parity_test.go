@@ -172,6 +172,23 @@ func spellProblem(id int, typ string, damage, value float64) string {
 			return ""
 		}
 		return fmt.Sprintf("spell %d (%s): damage %v gives %d on a 3 second swing and a blow of 40", id, typ, damage, got)
+	case rules.SpellSpeedEnhancement:
+		if rules.BoostFactor(value) > 1 {
+			return ""
+		}
+		return fmt.Sprintf("spell %d (%s): value %v does not raise speed above normal", id, typ, value)
+	case rules.SpellHealthRegenBuff:
+		if rules.HealthRegenBuffed(level, false, int(value)) > rules.HealthRegen(level, false) {
+			return ""
+		}
+		return fmt.Sprintf("spell %d (%s): value %v adds nothing to a health tick", id, typ, value)
+	case rules.SpellBodyResistBuff, rules.SpellColdResistBuff, rules.SpellEnergyResistBuff,
+		rules.SpellHeatResistBuff, rules.SpellMatterResistBuff, rules.SpellSpiritResistBuff:
+		dt, _ := rules.ResistBuffType(typ)
+		if got := rules.ResistBuffBonus(dt, []rules.ResistBuff{{DamageType: dt, Value: value}}); got > 0 && got <= rules.BuffResistCap {
+			return ""
+		}
+		return fmt.Sprintf("spell %d (%s): value %v adds no resist", id, typ, value)
 	case rules.SpellDDNoVariance:
 		if damage > 0 {
 			return ""
@@ -218,6 +235,23 @@ func TestSpellCheckFlagsAMismatch(t *testing.T) {
 	}
 	if p := spellProblem(8, rules.SpellDamageAdd, 4.5, 0); p != "" {
 		t.Errorf("a damage add is flagged: %s", p)
+	}
+	for _, c := range []struct {
+		typ   string
+		value float64
+		bad   bool
+	}{
+		{rules.SpellSpeedEnhancement, 144, false}, {rules.SpellSpeedEnhancement, 100, true},
+		{rules.SpellHealthRegenBuff, 10, false}, {rules.SpellHealthRegenBuff, 0, true},
+		{rules.SpellHeatResistBuff, 20, false}, {rules.SpellBodyResistBuff, 0, true},
+	} {
+		p := spellProblem(9, c.typ, 0, c.value)
+		if c.bad && (!strings.Contains(p, "spell 9") || !strings.Contains(p, c.typ)) {
+			t.Errorf("%s of %v is not named: %q", c.typ, c.value, p)
+		}
+		if !c.bad && p != "" {
+			t.Errorf("%s of %v is flagged: %s", c.typ, c.value, p)
+		}
 	}
 }
 

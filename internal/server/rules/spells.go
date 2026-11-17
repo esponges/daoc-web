@@ -21,13 +21,35 @@ const (
 	SpellStrengthBuff = "StrengthBuff"
 	SpellArmourBuff   = "BaseArmorFactorBuff"
 	SpellDamageAdd    = "DamageAdd"
+
+	// Songs and chants: speed, health regeneration and the six resist buffs.
+	SpellSpeedEnhancement = "SpeedEnhancement"
+	SpellHealthRegenBuff  = "HealthRegenBuff"
+	SpellBodyResistBuff   = "BodyResistBuff"
+	SpellColdResistBuff   = "ColdResistBuff"
+	SpellEnergyResistBuff = "EnergyResistBuff"
+	SpellHeatResistBuff   = "HeatResistBuff"
+	SpellMatterResistBuff = "MatterResistBuff"
+	SpellSpiritResistBuff = "SpiritResistBuff"
+)
+
+// The magic damage types, as the spell data numbers them.
+const (
+	DamageBody   = 10
+	DamageCold   = 11
+	DamageEnergy = 12
+	DamageHeat   = 13
+	DamageMatter = 14
+	DamageSpirit = 15
 )
 
 // ImplementedPlayerSpell says whether a player can cast a spell type: what a
 // creature casts, plus the buffs and the damage add.
 func ImplementedPlayerSpell(spellType string) bool {
 	switch spellType {
-	case SpellStrConBuff, SpellDexQuiBuff, SpellStrengthBuff, SpellArmourBuff, SpellDamageAdd:
+	case SpellStrConBuff, SpellDexQuiBuff, SpellStrengthBuff, SpellArmourBuff, SpellDamageAdd,
+		SpellSpeedEnhancement, SpellHealthRegenBuff, SpellBodyResistBuff, SpellColdResistBuff, SpellEnergyResistBuff,
+		SpellHeatResistBuff, SpellMatterResistBuff, SpellSpiritResistBuff:
 		return true
 	}
 	return ImplementedSpell(spellType) && spellType != SpellOffensiveProc
@@ -121,6 +143,74 @@ func DoTTicks(durationS, frequencyTenths int) (ticks int, every float64) {
 // leaves.
 func SlowFactor(value float64) float64 { return math.Max(0, math.Min(1, 1-value/100)) }
 
+// BoostFactor is the speed multiplier of a speed-enhancement spell: its value
+// read as a percent of normal speed (144 runs at 1.44 times), never below 1.
+func BoostFactor(value float64) float64 { return math.Max(1, value/100) }
+
+// WithBoost applies a speed enhancement to the speed factor the slows and
+// holds leave: they multiply, and a held body stays held.
+func WithBoost(factor, boost float64) float64 {
+	if factor <= 0 {
+		return 0
+	}
+	return factor * math.Max(1, boost)
+}
+
+// BoostActive says whether a speed enhancement holds: it does not take hold on
+// a body in combat, and ends when its holder enters combat.
+func BoostActive(inCombat bool) bool { return !inCombat }
+
+// HealthRegenBuffed is the hit points a health tick returns with a
+// regeneration buff of buff on: the tick's own amount plus the buff, none in
+// combat, where no tick returns anything.
+func HealthRegenBuffed(level int, inCombat bool, buff int) int {
+	if inCombat {
+		return 0
+	}
+	return HealthRegen(level, false) + max(0, buff)
+}
+
+// BuffResistCap is the most spell buffs add to one resist, in percent.
+const BuffResistCap = 24.0
+
+// ResistBuff is one resist buff's damage type and strength in percent.
+type ResistBuff struct {
+	DamageType int
+	Value      float64
+}
+
+// ResistBuffType is the damage type a resist-buff spell type raises.
+func ResistBuffType(spellType string) (int, bool) {
+	switch spellType {
+	case SpellBodyResistBuff:
+		return DamageBody, true
+	case SpellColdResistBuff:
+		return DamageCold, true
+	case SpellEnergyResistBuff:
+		return DamageEnergy, true
+	case SpellHeatResistBuff:
+		return DamageHeat, true
+	case SpellMatterResistBuff:
+		return DamageMatter, true
+	case SpellSpiritResistBuff:
+		return DamageSpirit, true
+	}
+	return 0, false
+}
+
+// ResistBuffBonus is what the buffs add to the resist to one damage type: the
+// strongest of that type, at most BuffResistCap. The caller adds it to the
+// race's and items' resist; the total is capped where damage is taken.
+func ResistBuffBonus(damageType int, buffs []ResistBuff) float64 {
+	best := 0.0
+	for _, b := range buffs {
+		if b.DamageType == damageType {
+			best = math.Max(best, b.Value)
+		}
+	}
+	return math.Min(best, BuffResistCap)
+}
+
 // SpeedFactor is a body's speed multiplier from what holds it: 0 while
 // stunned or mesmerized, else the strongest slow, else 1.
 func SpeedFactor(held bool, slows ...float64) float64 {
@@ -166,6 +256,12 @@ func init() {
 			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "grabbag"}, Scenarios: []string{"Middle of the range", "No variance", "A fully specced caster", "A low spec", "The cap"}},
 		Rule{ID: "spell.area", Capability: c, Requirement: "Area damage does not fall off",
 			Status: Provisional, Sources: []string{"dolsharp", "opendaoc"}, Scenarios: []string{"Centre and edge"}},
+		Rule{ID: "spell.speed-enhancement", Capability: c, Requirement: "Speed enhancement raises speed",
+			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "allakhazam"}, Scenarios: []string{"Simple Song of Travel", "The strongest counts", "With a slow", "Combat"}},
+		Rule{ID: "spell.health-regen", Capability: c, Requirement: "A health regeneration buff adds to health ticks",
+			Status: Provisional, Sources: []string{"dolsharp", "opendaoc", "project"}, Scenarios: []string{"Song of Rest out of combat", "In combat"}},
+		Rule{ID: "spell.resist-buff", Capability: c, Requirement: "Resist buffs raise a resist",
+			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "grabbag"}, Scenarios: []string{"A heat chant against a fire bolt", "Another damage type is untouched", "The buff cap"}},
 		Rule{ID: "spell.bolt-block", Capability: c, Requirement: "A bolt can be blocked",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Blocked bolt"}},
 		Rule{ID: "spell.damage-over-time", Capability: c, Requirement: "Damage over time ticks",

@@ -55,6 +55,7 @@ var Sources = map[string]string{
 	"opendaoc":      "OpenDAoC-Core, read to understand (GPL; nothing copied)",
 	"dolsharp":      "DOLSharp, read to understand (GPL; nothing copied)",
 	"forum2001":     "a 2001 forum thread on Guard, Protect, Intercept and Engage (outline only)",
+	"allakhazam":    "Allakhazam's song entries and the Camelot Herald class pages (one song at a time; a speed song does not work in combat)",
 	"data":          "the imported community database",
 	"project":       "this project's choice",
 }

@@ -1,5 +1,7 @@
 package world
 
+import "daocweb/internal/server/rules"
+
 // Songs and chants are spells with a pulse. Casting one turns it on: it lands
 // at once and again every pulse interval on the caster's group, and casting it
 // again turns it off. Only one is on at a time; the effect it leaves on a
@@ -83,4 +85,30 @@ func (z *Zone) tickSong(p *Player) {
 	for _, t := range targets {
 		z.castSpell(p, t, s.spell)
 	}
+}
+
+// regenBuff is the extra hit points a health tick returns while a regeneration
+// song is on the player: the strongest counts.
+func (p *Player) regenBuff() int {
+	best := 0
+	for _, e := range p.effects {
+		if e.kind == effRegen {
+			best = max(best, int(e.spell.Value))
+		}
+	}
+	return best
+}
+
+// resistBuffs lists the resist buffs on the player, by the damage type each
+// raises.
+func (p *Player) resistBuffs() []rules.ResistBuff {
+	var out []rules.ResistBuff
+	for _, e := range p.effects {
+		if e.kind == effResist {
+			if dt, ok := rules.ResistBuffType(e.spell.Type); ok {
+				out = append(out, rules.ResistBuff{DamageType: dt, Value: e.spell.Value})
+			}
+		}
+	}
+	return out
 }

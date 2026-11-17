@@ -32,6 +32,12 @@ const (
 	effProc = "proc"
 	effBuff = "buff"
 	effAdd  = "dmgadd"
+
+	// What songs and chants leave: a speed boost, extra health on each tick, a
+	// resist.
+	effSpeed  = "speed"
+	effRegen  = "regen"
+	effResist = "resist"
 )
 
 // effectKind is the kind of lasting effect a spell type leaves, "" for none.
@@ -51,6 +57,13 @@ func effectKind(spellType string) string {
 		return effBuff
 	case rules.SpellDamageAdd:
 		return effAdd
+	case rules.SpellSpeedEnhancement:
+		return effSpeed
+	case rules.SpellHealthRegenBuff:
+		return effRegen
+	case rules.SpellBodyResistBuff, rules.SpellColdResistBuff, rules.SpellEnergyResistBuff,
+		rules.SpellHeatResistBuff, rules.SpellMatterResistBuff, rules.SpellSpiritResistBuff:
+		return effResist
 	}
 	return ""
 }
@@ -100,12 +113,16 @@ func held(c combatant) bool {
 // speedFactor is the share of its speed a combatant may move at.
 func speedFactor(c combatant) float64 {
 	var slows []float64
+	boost := 1.0
 	for _, e := range *effectsOf(c) {
-		if e.kind == effSlow {
+		switch e.kind {
+		case effSlow:
 			slows = append(slows, rules.SlowFactor(e.spell.Value))
+		case effSpeed:
+			boost = math.Max(boost, rules.BoostFactor(e.spell.Value))
 		}
 	}
-	return rules.SpeedFactor(held(c), slows...)
+	return rules.WithBoost(rules.SpeedFactor(held(c), slows...), boost)
 }
 
 // resistBonus is the item bonus type that raises a resist, by damage type.
@@ -118,7 +135,7 @@ func (z *Zone) spellResist(c combatant, damageType int) float64 {
 	case *NPC:
 		return t.resists[damageType]
 	case *Player:
-		r := z.W.Cat.Resists[t.Char.Race][damageType]
+		r := z.W.Cat.Resists[t.Char.Race][damageType] + rules.ResistBuffBonus(damageType, t.resistBuffs())
 		for s := SlotWeapon; s < SlotCount; s++ {
 			if it := t.inv[s]; it != nil {
 				if x := z.W.Cat.Items[it.ID]; x != nil {
@@ -209,8 +226,12 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		}
 	default:
 		if kind := effectKind(sp.Type); kind != "" {
-			if _, isPlayer := target.(*Player); !isPlayer && (kind == effBuff || kind == effAdd) {
-				return false
+			tp, isPlayer := target.(*Player)
+			if !isPlayer && kind != effDoT && kind != effSlow && kind != effStun && kind != effMez && kind != effProc {
+				return false // buffs and songs are for players
+			}
+			if kind == effSpeed && !rules.BoostActive(z.now < tp.combatUntil) {
+				return false // a speed song does not take hold in combat
 			}
 			z.addEffect(target, caster, sp, kind)
 		}
@@ -383,9 +404,13 @@ func (z *Zone) tickEffectsOf(c combatant) {
 		}
 	}
 	list = effectsOf(c) // a death clears the list
+	inCombat := false
+	if p, ok := c.(*Player); ok {
+		inCombat = z.now < p.combatUntil
+	}
 	kept := (*list)[:0]
 	for _, e := range *list {
-		if z.now+1e-9 >= e.ends {
+		if z.now+1e-9 >= e.ends || e.kind == effSpeed && !rules.BoostActive(inCombat) {
 			changed = true
 			continue
 		}

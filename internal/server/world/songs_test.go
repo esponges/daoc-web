@@ -189,3 +189,131 @@ func TestSongIsOnTheWire(t *testing.T) {
 		t.Errorf("effects after turning it off: %+v", got)
 	}
 }
+
+var (
+	songTravel = &SpellDef{ID: 3608, Name: "Simple Song of Travel", Type: rules.SpellSpeedEnhancement, Target: "Group", Range: 2000,
+		Duration: 5, Frequency: 50, Pulse: 1, Recast: 8, Value: 144}
+	songTravel2 = &SpellDef{ID: 3609, Name: "Song of Travel", Type: rules.SpellSpeedEnhancement, Target: "Group", Range: 2000,
+		Duration: 5, Frequency: 50, Pulse: 1, Recast: 8, Value: 159}
+	songRest = &SpellDef{ID: 3613, Name: "Simple Song of Rest", Type: rules.SpellHealthRegenBuff, Target: "Group", Range: 1500,
+		Duration: 5, Frequency: 50, Pulse: 1, Recast: 8, Value: 10}
+	chantHeat = &SpellDef{ID: 3657, Name: "Heat Diminishing Chant", Type: rules.SpellHeatResistBuff, Target: "Group", Range: 1500,
+		Duration: 5, Frequency: 50, Pulse: 1, Recast: 8, Value: 10}
+	chantBody = &SpellDef{ID: 3651, Name: "Body Bolstering Chant", Type: rules.SpellBodyResistBuff, Target: "Group", Range: 1500,
+		Duration: 5, Frequency: 50, Pulse: 1, Recast: 8, Value: 30}
+	chantBody2 = &SpellDef{ID: 3652, Name: "Body Bolstering Song", Type: rules.SpellBodyResistBuff, Target: "Group", Range: 1500,
+		Duration: 5, Frequency: 50, Pulse: 1, Recast: 8, Value: 10}
+	slow40 = &SpellDef{ID: 9002, Name: "Slow", Type: rules.SpellSpeedDecrease, Target: "Enemy", Duration: 30, Value: 40}
+)
+
+// songBook adds the speed, regeneration and resist songs to the Skald's line,
+// and to the table.
+func songBook(r *rig, s *Player) {
+	for _, sp := range []*SpellDef{songTravel, songTravel2, songRest, chantHeat, chantBody, chantBody2, slow40} {
+		cp := *sp
+		r.w.Cat.Spells[sp.ID] = &cp
+	}
+	for _, id := range []int{3608, 3609, 3613, 3657, 3651, 3652} {
+		r.w.Cat.LineSpells["Battlesongs"] = append(r.w.Cat.LineSpells["Battlesongs"], LineSpell{Spec: "Battlesongs", Line: "Battlesongs", Spell: id, Level: 1})
+	}
+	r.w.refreshBook(s)
+}
+
+func TestSpeedSong(t *testing.T) {
+	near := func(t *testing.T, what string, got, want float64) {
+		t.Helper()
+		if d := got - want; d > 1e-9 || d < -1e-9 {
+			t.Errorf("%s: %v, want %v", what, got, want)
+		}
+	}
+	t.Run("Simple Song of Travel", func(t *testing.T) {
+		r, s, a, b := songWorld(t)
+		songBook(r, s)
+		r.z.Cast(s, 3608, 0)
+		for _, p := range []*Player{s, a, b} {
+			near(t, p.Char.Name+"'s speed", speedFactor(p), 1.44)
+		}
+		got := sentOf[protocol.Effects](a, protocol.TEffects)
+		if len(got) == 0 || got[len(got)-1].Speed != 1.44 || got[len(got)-1].List[0].Kind != "speed" {
+			t.Errorf("the group mate was sent %+v", got)
+		}
+	})
+	t.Run("The strongest counts", func(t *testing.T) {
+		r, s, a, _ := songWorld(t)
+		songBook(r, s)
+		r.z.castSpell(s, a, r.w.Cat.Spells[3608])
+		r.z.castSpell(s, a, r.w.Cat.Spells[3609])
+		near(t, "a 144 and a 159", speedFactor(a), 1.59)
+	})
+	t.Run("With a slow", func(t *testing.T) {
+		r, s, a, _ := songWorld(t)
+		songBook(r, s)
+		r.z.castSpell(s, a, r.w.Cat.Spells[3608])
+		r.z.addEffect(a, s, r.w.Cat.Spells[9002], effSlow)
+		near(t, "a 144 song and a 40% slow", speedFactor(a), 1.44*0.6)
+	})
+	t.Run("Combat", func(t *testing.T) {
+		r, s, a, _ := songWorld(t)
+		songBook(r, s)
+		r.z.Cast(s, 3608, 0)
+		a.combatUntil = r.z.now + 100
+		r.ticks(2)
+		if hasEffect(a, 3608) || speedFactor(a) != 1 {
+			t.Error("the song stayed on someone who entered combat")
+		}
+		r.ticks(seconds(6)) // a pulse falls due while they are still fighting
+		if hasEffect(a, 3608) {
+			t.Error("the song took hold in combat")
+		}
+		a.combatUntil = 0
+		r.ticks(seconds(6))
+		if !hasEffect(a, 3608) {
+			t.Error("the song did not return when the fight was over")
+		}
+	})
+}
+
+func TestRegenSongAddsToHealthTicks(t *testing.T) {
+	r, s, a, b := songWorld(t)
+	songBook(r, s)
+	r.z.castSpell(s, a, r.w.Cat.Spells[3613]) // Song of Rest on Alma only
+	tick := func(p *Player) float64 {
+		p.hp, p.healAt = 10, r.z.now
+		before := p.hp
+		r.ticks(1)
+		return p.hp - before
+	}
+	plain := tick(b)
+	if plain <= 0 {
+		t.Fatalf("a resting player regains %v", plain)
+	}
+	if got := tick(a); got != plain+10 {
+		t.Errorf("with the song a tick returns %v, want %v", got, plain+10)
+	}
+	a.combatUntil = r.z.now + 100
+	if got := tick(a); got != 0 {
+		t.Errorf("a tick in combat returns %v", got)
+	}
+}
+
+func TestResistChantsRaiseTheResist(t *testing.T) {
+	r, s, a, _ := songWorld(t)
+	songBook(r, s)
+	heat, cold, body := r.z.spellResist(a, rules.DamageHeat), r.z.spellResist(a, rules.DamageCold), r.z.spellResist(a, rules.DamageBody)
+	r.z.castSpell(s, a, r.w.Cat.Spells[3657])
+	if got := r.z.spellResist(a, rules.DamageHeat); got != heat+10 {
+		t.Errorf("heat resist %v, want %v", got, heat+10)
+	}
+	if got := r.z.spellResist(a, rules.DamageCold); got != cold {
+		t.Errorf("a heat chant moved the cold resist to %v", got)
+	}
+	r.z.castSpell(s, a, r.w.Cat.Spells[3651]) // a 30-point body chant
+	r.z.castSpell(s, a, r.w.Cat.Spells[3652]) // and a 10-point one
+	if got := r.z.spellResist(a, rules.DamageBody); got != body+24 {
+		t.Errorf("body resist %v, want %v (the buff cap)", got, body+24)
+	}
+	// The spell meets it: 100 damage of heat takes off the chant's share.
+	if want, got := rules.SpellDamage(100, 1, heat+10), rules.SpellDamage(100, 1, r.z.spellResist(a, rules.DamageHeat)); got != want {
+		t.Errorf("damage under the chant %d, want %d", got, want)
+	}
+}

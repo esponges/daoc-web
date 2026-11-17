@@ -7,17 +7,17 @@ How much of classic 1.65 Midgard the server implements, measured against the com
 ```
 Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    10 of  15 implemented (2316 of 2585 placements x spells)
-  Class spell types       13 of  73 implemented (529 of 987 spells)
+  Class spell types       21 of  73 implemented (595 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
   Abilities               15 of  30 implemented (66 of 100 grants)
-  Creature kinds          16 of 110 implemented (29067 of 29932 placements, 7 kinds not classic)
+  Creature kinds          18 of 110 implemented (29083 of 29932 placements, 7 kinds not classic)
   quests                 81, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         32 gaps in 10 bands
-  rules: 25 documented, 48 reference, 16 provisional
+  rules: 25 documented, 50 reference, 19 provisional
 ```
 
 ## Creature spell types
@@ -58,10 +58,10 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DamageShield (Healer, Seer, Shaman, Spiritmaster) | 26 |  |
 | DamageSpeedDecrease (Bonedancer, Mystic, Runemaster, Spiritmaster) | 24 |  |
 | Lifedrain (Bonedancer, Mystic, Runemaster, Spiritmaster) | 21 | yes |
-| SpeedEnhancement (Healer, Hunter, Runemaster, Seer, Shaman, Skald) | 20 |  |
+| SpeedEnhancement (Healer, Hunter, Runemaster, Seer, Shaman, Skald) | 20 | yes |
 | CombatSpeedBuff (Healer, Seer, Shaman, Spiritmaster) | 16 |  |
 | CombatSpeedDebuff (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 16 |  |
-| HealthRegenBuff (Healer, Seer, Shaman, Skald) | 16 |  |
+| HealthRegenBuff (Healer, Seer, Shaman, Skald) | 16 | yes |
 | DirectDamageWithDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 15 |  |
 | Stun (Healer) | 14 | yes |
 | Disease (Shadowblade, Shaman) | 13 |  |
@@ -89,16 +89,16 @@ Midgard (regions 100, 101, 151): 29932 placements
 | SavageThrustResistanceBuff (Savage) | 6 |  |
 | Amnesia (Healer) | 5 |  |
 | ArmorAbsorptionBuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 |  |
-| BodyResistBuff (Healer, Seer, Shaman, Skald) | 5 |  |
-| ColdResistBuff (Healer, Seer, Shaman, Skald) | 5 |  |
+| BodyResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
+| ColdResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | EnduranceRegenBuff (Healer, Seer, Shaman) | 5 |  |
-| EnergyResistBuff (Healer, Seer, Shaman, Skald) | 5 |  |
-| HeatResistBuff (Healer, Seer, Shaman, Skald) | 5 |  |
-| MatterResistBuff (Healer, Seer, Shaman, Skald) | 5 |  |
+| EnergyResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
+| HeatResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
+| MatterResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | Nearsight (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 |  |
 | PowerRegenBuff (Healer) | 5 |  |
 | SavageCombatSpeedBuff (Savage) | 5 |  |
-| SpiritResistBuff (Healer, Seer, Shaman, Skald) | 5 |  |
+| SpiritResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | SummonHunterPet (Hunter) | 5 |  |
 | SummonSpiritFighter (Spiritmaster) | 5 |  |
 | AcuityBuff (Healer, Seer, Shaman) | 4 |  |
@@ -207,9 +207,9 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Trainer.RunemasterTrainer | 8 | yes |
 | DOL.GS.Trainer.ShadowbladeTrainer | 8 |  |
 | DOL.GS.Trainer.ShamanTrainer | 8 | yes |
-| DOL.GS.Trainer.SkaldTrainer | 8 |  |
+| DOL.GS.Trainer.SkaldTrainer | 8 | yes |
 | DOL.GS.Trainer.SpiritmasterTrainer | 8 |  |
-| DOL.GS.Trainer.ThaneTrainer | 8 |  |
+| DOL.GS.Trainer.ThaneTrainer | 8 | yes |
 | DOL.GS.Trainer.WarriorTrainer | 8 | yes |
 | DOL.GS.Keeps.GuardCorpseSummoner | 7 |  |
 | DOL.GS.Keeps.GuardLord | 7 |  |
@@ -320,6 +320,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | cast.time | reference |
 | character.class | reference |
 | character.class-midgard | provisional |
+| character.class-thane-skald | provisional |
 | character.creation | documented |
 | character.endurance | provisional |
 | character.health-regen | provisional |
@@ -380,6 +381,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | spec.migration | documented |
 | spec.points | reference |
 | spec.training | documented |
+| spell.area | provisional |
 | spell.bolt-block | reference |
 | spell.buff | reference |
 | spell.buff-af | provisional |
@@ -387,11 +389,14 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | spell.damage-add | reference |
 | spell.damage-over-time | reference |
 | spell.heal | reference |
+| spell.health-regen | provisional |
 | spell.hit | reference |
 | spell.lifedrain | reference |
 | spell.mesmerize | reference |
 | spell.resist | reference |
+| spell.resist-buff | reference |
 | spell.slow | reference |
+| spell.speed-enhancement | reference |
 | spell.stun | reference |
 | start.town | documented |
 | start.unsafe | provisional |

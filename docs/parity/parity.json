@@ -271,7 +271,7 @@
         "Shaman",
         "Skald"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "CombatSpeedBuff",
@@ -306,7 +306,7 @@
         "Shaman",
         "Skald"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DirectDamageWithDebuff",
@@ -579,7 +579,7 @@
         "Shaman",
         "Skald"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "ColdResistBuff",
@@ -590,7 +590,7 @@
         "Shaman",
         "Skald"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "EnduranceRegenBuff",
@@ -611,7 +611,7 @@
         "Shaman",
         "Skald"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "HeatResistBuff",
@@ -622,7 +622,7 @@
         "Shaman",
         "Skald"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "MatterResistBuff",
@@ -633,7 +633,7 @@
         "Shaman",
         "Skald"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Nearsight",
@@ -671,7 +671,7 @@
         "Shaman",
         "Skald"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SummonHunterPet",
@@ -1394,7 +1394,7 @@
     {
       "name": "DOL.GS.Trainer.SkaldTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.SpiritmasterTrainer",
@@ -1404,7 +1404,7 @@
     {
       "name": "DOL.GS.Trainer.ThaneTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.WarriorTrainer",
@@ -1867,6 +1867,10 @@
       "status": "provisional"
     },
     {
+      "id": "character.class-thane-skald",
+      "status": "provisional"
+    },
+    {
       "id": "character.creation",
       "status": "documented"
     },
@@ -2107,6 +2111,10 @@
       "status": "documented"
     },
     {
+      "id": "spell.area",
+      "status": "provisional"
+    },
+    {
       "id": "spell.bolt-block",
       "status": "reference"
     },
@@ -2135,6 +2143,10 @@
       "status": "reference"
     },
     {
+      "id": "spell.health-regen",
+      "status": "provisional"
+    },
+    {
       "id": "spell.hit",
       "status": "reference"
     },
@@ -2151,7 +2163,15 @@
       "status": "reference"
     },
     {
+      "id": "spell.resist-buff",
+      "status": "reference"
+    },
+    {
       "id": "spell.slow",
+      "status": "reference"
+    },
+    {
+      "id": "spell.speed-enhancement",
       "status": "reference"
     },
     {
@@ -2177,8 +2197,8 @@
   ],
   "rulesByStatus": {
     "documented": 25,
-    "provisional": 16,
-    "reference": 48
+    "provisional": 19,
+    "reference": 50
   },
   "placements": 29932,
   "levellingGear": [

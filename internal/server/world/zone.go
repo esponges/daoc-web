@@ -240,7 +240,7 @@ func (z *Zone) tickPlayer(p *Player) {
 	if z.now >= p.healAt {
 		p.healAt = z.now + rules.HealthRegenPeriod
 		if p.hp < float64(p.maxHP()) {
-			p.hp = math.Min(float64(p.maxHP()), p.hp+float64(rules.HealthRegen(p.Char.Level, z.now < p.combatUntil)))
+			p.hp = math.Min(float64(p.maxHP()), p.hp+float64(rules.HealthRegenBuffed(p.Char.Level, z.now < p.combatUntil, p.regenBuff())))
 		}
 	}
 	// A character whose connection closed in a fight lingers, then goes.
