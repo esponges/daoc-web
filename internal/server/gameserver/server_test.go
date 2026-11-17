@@ -448,12 +448,12 @@ func TestCreateCharacterByClass(t *testing.T) {
 	for _, a := range world.Archetypes {
 		offered[a.ID] = true
 	}
-	for _, id := range []string{"troll-berserker", "dwarf-healer", "kobold-shaman", "norseman-runemaster", "kobold-savage"} {
+	for _, id := range []string{"troll-berserker", "dwarf-healer", "kobold-shaman", "norseman-runemaster", "kobold-savage", "troll-thane", "norseman-thane", "dwarf-thane", "kobold-skald", "dwarf-skald"} {
 		if !offered[id] {
 			t.Errorf("%s is not offered", id)
 		}
 	}
-	for _, id := range []string{"kobold-healer", "troll-runemaster", "troll-healer", "dwarf-shaman"} {
+	for _, id := range []string{"kobold-healer", "troll-runemaster", "troll-healer", "dwarf-shaman", "kobold-thane", "valkyn-thane", "valkyn-skald"} {
 		if offered[id] {
 			t.Errorf("%s is offered but its race may not take the class", id)
 		}
@@ -464,9 +464,15 @@ func TestCreateCharacterByClass(t *testing.T) {
 	if r := post(t, c, ts.URL+"/api/characters", map[string]string{"name": "Brunhild", "arch": "dwarf-healer"}); r.StatusCode != 201 {
 		t.Fatalf("a Dwarf Healer: %d", r.StatusCode)
 	}
+	if r := post(t, c, ts.URL+"/api/characters", map[string]string{"name": "Ragna", "arch": "kobold-skald"}); r.StatusCode != 201 {
+		t.Fatalf("a Kobold Skald: %d", r.StatusCode)
+	}
 	list, _ := w.Store.Characters(1)
-	if len(list) != 1 || list[0].Class != 26 || list[0].Race != 7 {
-		t.Errorf("stored %+v, want one Healer of race 7", list)
+	if len(list) != 2 || list[1].Class != 24 || list[1].Race != 8 {
+		t.Errorf("stored %+v, want a Kobold Skald second", list)
+	}
+	if list[0].Class != 26 || list[0].Race != 7 {
+		t.Errorf("stored %+v, want a Healer of race 7 first", list)
 	}
 	if list[0].HP < 1 || !list[0].HasStats {
 		t.Errorf("the Healer has no hit points or stats: %+v", list[0])

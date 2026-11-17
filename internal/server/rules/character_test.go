@@ -123,6 +123,50 @@ func TestCharacterStats(t *testing.T) {
 	})
 }
 
+func TestThaneAndSkald(t *testing.T) {
+	thane, skald := Classes[ClassThane], Classes[ClassSkald]
+	vector(t, cs, "Thane definition", func(t *testing.T) {
+		if thane.ID != 21 || thane.Primary != STR || thane.Secondary != PIE || thane.Tertiary != CON ||
+			thane.BaseHP != 720 || thane.WeaponSkillBase != 360 || thane.SpecMultiplier != 20 ||
+			thane.Base != "Viking" || !thane.Casts || thane.Acuity != PIE {
+			t.Errorf("Thane is %+v", thane)
+		}
+		for race, want := range map[int]bool{5: true, 6: true, 7: true, 8: false, 14: false} {
+			if thane.MayBe(race) != want {
+				t.Errorf("race %d may be a Thane: %v, want %v", race, thane.MayBe(race), want)
+			}
+		}
+	})
+	vector(t, cs, "Skald definition", func(t *testing.T) {
+		if skald.ID != 24 || skald.Primary != CHA || skald.Secondary != STR || skald.Tertiary != CON ||
+			skald.BaseHP != 760 || skald.WeaponSkillBase != 380 || skald.SpecMultiplier != 15 ||
+			skald.Base != "Viking" || !skald.Casts || skald.Acuity != CHA {
+			t.Errorf("Skald is %+v", skald)
+		}
+		for race, want := range map[int]bool{5: true, 6: true, 7: true, 8: true, 14: false} {
+			if skald.MayBe(race) != want {
+				t.Errorf("race %d may be a Skald: %v, want %v", race, skald.MayBe(race), want)
+			}
+		}
+	})
+	vector(t, cs, "Levels raise the class stats", func(t *testing.T) {
+		// Level 6 gives a Skald one of each of charisma, strength and constitution;
+		// level 7 only charisma.
+		if g := LevelGains(skald, 6); g[CHA] != 1 || g[STR] != 1 || g[CON] != 1 || g[PIE] != 0 {
+			t.Errorf("Skald gains at 6: %v", g)
+		}
+		a, b := LevelGains(skald, 6), LevelGains(skald, 7)
+		if b[CHA]-a[CHA] != 1 || b[STR] != a[STR] || b[CON] != a[CON] {
+			t.Errorf("level 6 %v, level 7 %v", a, b)
+		}
+	})
+	t.Run("a Thane's pool rises with piety, a Skald's with charisma", func(t *testing.T) {
+		if MaxPower(thane, 10, 80) <= MaxPower(thane, 10, 60) || MaxPower(skald, 10, 80) <= MaxPower(skald, 10, 60) {
+			t.Error("the pool does not grow with the casting stat")
+		}
+	})
+}
+
 const mc = "midgard-classes"
 
 func TestMidgardClasses(t *testing.T) {
@@ -137,14 +181,14 @@ func TestMidgardClasses(t *testing.T) {
 	})
 	vector(t, mc, "Class list", func(t *testing.T) {
 		// The classes a Troll may be: the data's start table gives the Warrior,
-		// Berserker, Savage and Shaman, and not the Healer or Runemaster.
+		// Berserker, Savage, Shaman, Thane and Skald, and not the Healer or Runemaster.
 		var got []string
-		for _, id := range []int{ClassWarrior, ClassBerserker, ClassSavage, ClassHealer, ClassShaman, ClassRunemaster} {
+		for _, id := range []int{ClassWarrior, ClassBerserker, ClassSavage, ClassHealer, ClassShaman, ClassRunemaster, ClassThane, ClassSkald} {
 			if Classes[id].MayBe(6) {
 				got = append(got, Classes[id].Name)
 			}
 		}
-		if want := "Warrior Berserker Savage Shaman"; strings.Join(got, " ") != want {
+		if want := "Warrior Berserker Savage Shaman Thane Skald"; strings.Join(got, " ") != want {
 			t.Errorf("a Troll may be %v, want %s", got, want)
 		}
 	})

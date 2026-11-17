@@ -48,7 +48,7 @@ The server today:
 
    Each goes in `findings.md` with project, file and search, and the rule's status follows. *Alternative:* take the community servers' behaviour wholesale. Rejected because the rule book wants each rule in our words with a status.
 2. **Area targeting lives in player casting.** `continuePlayerCast` already fans a group spell out to targets. An area spell fans out to the creatures in the radius around the centre: the caster for range 0, else the target as the spell lands. A range-0 hostile spell skips `castTarget` and the range check. Each target goes through `castSpell` as now, so hit, resist, scaling and aggro are unchanged. *Alternative:* a separate area engine shared with creatures. Rejected for now; the decision on creature area spells is recorded for its own change.
-3. **A pulsing spell is a song on the caster, not a long effect on the targets.** The player holds `song` (spell, next pulse). The zone tick re-casts it on the group targets each `Frequency` tenths of a second, and each landing is an ordinary effect lasting `Duration` and refreshed by `addEffect`. Leaving range or turning it off simply stops the refreshes, and the effect lapses. This reuses effect expiry and the effects message. How many songs a caster may keep on (one, or one song plus one chant) and what stops one come from the findings. Until those are read, the plan is one at a time, stopped by death, mesmerize, stun or turning it off.
+3. **A pulsing spell is a song on the caster, not a long effect on the targets.** The player holds `song` (spell, next pulse). The zone tick re-casts it on the group targets each `Frequency` tenths of a second, and each landing is an ordinary effect lasting `Duration` and refreshed by `addEffect`. Leaving range or turning it off simply stops the refreshes, and the effect lapses. This reuses effect expiry and the effects message. How many songs a caster may keep on (one, or one song plus one chant) and what stops one come from the findings. The findings settle it: one song at a time, death turns it off, a held caster skips pulses, and each application lasts a pulse interval plus one second.
 4. **Speed above 1 goes through the existing `Slow` field.** A negative `Slow` (0.44 below zero for 1.44 times) already scales the step in Go (`speed * (1 - Slow)`). JS must do the same, and the held check stays `Slow >= 1`. A shared vector with a factor above 1 is added to the movement vectors both sides run. The wire already carries `speed` in the effects message, so no protocol field is needed for it.
 5. **New effect kinds are additive values of `EffectView.Kind`:** `speed`, `regen`, `resist`. The book entry gains an additive `pulse` flag, and the effects message an additive `song` field (the spell id on, or absent). Both are documented in `docs/protocol.md` with a protocol test.
 6. **Resists and regeneration read the strongest buff of each kind**, as stat buffs do:
@@ -56,7 +56,7 @@ The server today:
    - the health tick adds the strongest regeneration buff;
    - both are capped as the rules say.
 7. **Class numbers are provisional entries in the class table** with a table test, following the five classes before them. Races and base class come from the data.
-8. **"Call of a thousand storms" is marked not classic** in `cmd/parity`, with the reason, as creature kinds are, if the search confirms it is a later realm ability. Otherwise it stays counted as not implemented.
+8. **"Call of a thousand storms" stays counted as not implemented**: the searches found no source for it, so it is not marked not classic.
 
 ## Risks / Trade-offs
 
@@ -75,10 +75,4 @@ Existing characters are unchanged. A store without the new columns loads with no
 
 ## Open Questions
 
-Each is settled in `findings.md` before code that depends on it:
-- What are the hit points, weapon skill base and spec multiplier of the Thane and Skald?
-- Does area damage fall off toward the edge in 1.65?
-- How many songs or chants may a Skald keep on at once, and what stops one?
-- Does a speed song break in combat, and how does it combine with a slow?
-- Is the regeneration buff's `Value` hit points per tick, and does it work in combat?
-- Is "Call of a thousand storms" a 1.65 ability?
+All settled in `findings.md` (section 1.3): the class numbers (provisional), no area falloff (provisional), one song at a time, a speed song that does not take hold in combat, a regeneration song that works only out of combat under our rule, and no source for "Call of a thousand storms".

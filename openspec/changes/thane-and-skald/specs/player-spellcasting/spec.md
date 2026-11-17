@@ -45,7 +45,7 @@ A player's hostile spell with a radius SHALL land on every living, hostile creat
 - **THEN** the spell is cast, and hits whatever is in range or nothing
 
 ### Requirement: Songs and chants pulse while on
-A spell with a pulse SHALL be a toggle. Casting it SHALL turn it on and apply it at once to the caster's group in range. While it is on, it SHALL apply again every `Frequency` tenths of a second. Each application SHALL last the spell's `Duration`, so the effect lapses on a member who leaves range. Casting it again SHALL turn it off. The number a caster may keep on at once, and what turns one off, SHALL follow the sources recorded in the findings.
+A spell with a pulse SHALL be a toggle. Casting it SHALL turn it on and apply it at once to the caster's group in range, and again every pulse interval after (the spell's frequency). Each application SHALL last a pulse interval plus one second, so the effect lapses on a member who leaves range. Casting it again SHALL turn it off. Only one song may be on at a time: starting another SHALL end the first. Death SHALL turn it off; a held caster SHALL skip pulses and keep the song. Status: reference.
 
 #### Scenario: A Song of Travel
 - **WHEN** a Skald in a group of three turns on Simple Song of Travel
@@ -53,12 +53,20 @@ A spell with a pulse SHALL be a toggle. Casting it SHALL turn it on and apply it
 
 #### Scenario: Leaving range
 - **WHEN** a group member walks 3000 units away from a Skald whose song is on
-- **THEN** within the spell's duration the effect leaves that member, and returns when they come back in range
+- **THEN** within six seconds the effect leaves that member, and returns when they come back in range
 
 #### Scenario: Toggling off
 - **WHEN** the Skald casts the same song again
-- **THEN** the song stops pulsing, its effect ends on everyone within its duration, and the spell bar no longer shows it as on
+- **THEN** the song stops pulsing, its effect ends on everyone within six seconds, and the spell bar no longer shows it as on
+
+#### Scenario: A second song
+- **WHEN** a Skald with Chant of the Brawl on casts Song of Rest
+- **THEN** the chant is off and the song is on
 
 #### Scenario: The caster dies
 - **WHEN** a Skald dies with a chant on
 - **THEN** the chant is off
+
+#### Scenario: A held caster
+- **WHEN** a Skald is mesmerized for 12 seconds with a song on
+- **THEN** no pulse reaches the group while they are held, and the song is still on when they are free

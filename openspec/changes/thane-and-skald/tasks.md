@@ -1,6 +1,6 @@
 ## 1. Sources
 
-- [ ] 1.1 Clone DOLSharp and OpenDAoC-Core into the scratch directory. Read how they handle each design open question:
+- [x] 1.1 Clone DOLSharp and OpenDAoC-Core into the scratch directory. Read how they handle each design open question:
   - the Thane and Skald class numbers;
   - area falloff;
   - pulsing spells: how many are on at once, what stops one, power per pulse;
@@ -9,13 +9,13 @@
   - the resist buff cap.
 
   Record each in `findings.md` in our own words with project and file, and where the two disagree. Verify that every open question in `design.md` has an entry.
-- [ ] 1.2 Run one search per question for a published 1.65 account (Camelot Herald, disorder.dk, Grab Bag), including whether "Call of a thousand storms" is a 1.65 ability. Verify that `findings.md` records each query and its result, empty results included, and add any adopted source to CLAUDE.md and the README.
-- [ ] 1.3 Update the spec deltas where the findings settle a rule left open (song limit, falloff, speed and combat, regeneration in combat). Verify `openspec validate thane-and-skald --strict` passes.
+- [x] 1.2 Run one search per question for a published 1.65 account (Camelot Herald, disorder.dk, Grab Bag), including whether "Call of a thousand storms" is a 1.65 ability. Verify that `findings.md` records each query and its result, empty results included, and add any adopted source to CLAUDE.md and the README.
+- [x] 1.3 Update the spec deltas where the findings settle a rule left open (song limit, falloff, speed and combat, regeneration in combat). Verify `openspec validate thane-and-skald --strict` passes.
 
 ## 2. Classes
 
-- [ ] 2.1 Add the Thane (21) and Skald (24) to `rules.Classes` with the findings' numbers, piety and charisma as casting stats, Viking base and the data's races. Add table tests for the `rules-character-stats` scenarios and a registry entry. Verify with `go test ./internal/server/rules`.
-- [ ] 2.2 Add world tests on the real data:
+- [x] 2.1 Add the Thane (21) and Skald (24) to `rules.Classes` with the findings' numbers, piety and charisma as casting stats, Viking base and the data's races. Add table tests for the `rules-character-stats` scenarios and a registry entry. Verify with `go test ./internal/server/rules`.
+- [x] 2.2 Add world tests on the real data:
   - a Kobold Thane is refused and a Kobold Skald is made with the class kit;
   - Thane and Skald trainers teach their class and not a Warrior;
   - a Thane at Stormcalling 5 has the six spells the spec names.
@@ -24,8 +24,8 @@
 
 ## 3. Area spells
 
-- [ ] 3.1 Load the spell `radius` into `SpellDef`, and fall back to 0 for a store without the column. Verify with a catalog test.
-- [ ] 3.2 Make a range-0 hostile spell castable with no target. Make an area spell land on every living hostile creature within the radius of its centre (the caster or the target), never on players, applying the falloff rule from the findings. Add the area rule to `rules/spells.go` with its registry entry and table tests, and add world tests for the Thunder Shout, Mjollnir and no-target scenarios. Verify with `go test -short ./internal/server/...`.
+- [x] 3.1 Load the spell `radius` into `SpellDef`, and fall back to 0 for a store without the column. Verify with a catalog test.
+- [x] 3.2 Make a range-0 hostile spell castable with no target. Make an area spell land on every living hostile creature within the radius of its centre (the caster or the target), never on players, applying the falloff rule from the findings. Add the area rule to `rules/spells.go` with its registry entry and table tests, and add world tests for the Thunder Shout, Mjollnir and no-target scenarios. Verify with `go test -short ./internal/server/...`.
 
 ## 4. Pulsing songs and chants
 
@@ -72,7 +72,7 @@
   - re-import the world store;
   - rebuild and restart `gameserver`.
 
-  Verify that existing characters load unchanged and that the creation page lists 31 race and class pairs.
+  Verify that existing characters load unchanged and that the creation page lists 29 race and class pairs (22 now, plus 3 Thane and 4 Skald).
 
 ## Workflow follow-up
 

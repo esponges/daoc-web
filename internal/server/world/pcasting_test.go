@@ -369,3 +369,99 @@ func TestOverTimeSpellsScale(t *testing.T) {
 		}
 	})
 }
+
+var (
+	thunderShout = &SpellDef{ID: 3521, Name: "Thunder Shout", Type: rules.SpellDirectDamage, Target: "Enemy", Range: 0, Radius: 300, Recast: 20, Damage: 15, DamageType: 12, Power: 4}
+	mjollnir     = &SpellDef{ID: 3538, Name: "Call Mjollnir", Type: rules.SpellDirectDamage, Target: "Enemy", Range: 1500, Radius: 350, CastTime: 1, Damage: 60, DamageType: 12, Power: 10}
+)
+
+// areaWorld is a zone with four wolves around 30000,30000: at 200, 200 and 150
+// units, and one at 400, and a Thane's line holding the two area spells.
+func areaWorld(t *testing.T) *rig {
+	r := newRig(t, wolf(1, 30200, 30000, 8), wolf(2, 30000, 30200, 8), wolf(3, 29850, 30000, 8), wolf(4, 30400, 30000, 8))
+	r.z.rng = rand.New(zeroSource{})
+	for _, n := range r.z.npcs {
+		n.Aggro, n.Roam = 0, 0
+	}
+	c := r.w.Cat
+	c.Spells = map[int]*SpellDef{}
+	for _, s := range []*SpellDef{thunderShout, mjollnir} {
+		cp := *s
+		c.Spells[s.ID] = &cp
+	}
+	c.LineSpells = map[string][]LineSpell{"Stormcalling": {
+		{Spec: "Stormcalling", Line: "Stormcalling", Spell: 3521, Level: 1},
+		{Spec: "Stormcalling", Line: "Stormcalling", Spell: 3538, Level: 1}}}
+	c.ClassSpecs[rules.ClassThane] = []string{"ThaneCareer", "Stormcalling"}
+	return r
+}
+
+func TestAreaSpellsHitEveryCreatureInTheRadius(t *testing.T) {
+	t.Run("Thunder Shout", func(t *testing.T) {
+		r := areaWorld(t)
+		p := caster(r, "Thane", rules.ClassThane, 5)
+		full := [4]int{}
+		for i, n := range r.z.npcs {
+			full[i] = n.HP
+		}
+		r.z.Cast(p, 3521, 0) // no target held
+		if errs := errsOf(p); len(errs) > 0 {
+			t.Fatalf("a spell around the caster needs no target: %v", errs)
+		}
+		for i, n := range r.z.npcs[:3] {
+			if n.HP >= full[i] {
+				t.Errorf("wolf %d inside the radius has %d of %d", n.ID, n.HP, full[i])
+			}
+			if n.target != combatant(p) {
+				t.Errorf("wolf %d did not turn on the caster", n.ID)
+			}
+		}
+		// (It may still come to help its neighbours, as any creature does.)
+		if n := r.z.npcs[3]; n.HP != full[3] {
+			t.Errorf("the wolf at 400 units was touched: %d of %d", n.HP, full[3])
+		}
+		if p.spellReady[3521] <= r.z.now {
+			t.Error("the spell has no recast time")
+		}
+	})
+	t.Run("Mjollnir around the target", func(t *testing.T) {
+		r := areaWorld(t)
+		p := caster(r, "Thane", rules.ClassThane, 5)
+		friend := r.player("Friend", 5, 30390, 30000, false) // beside the far wolf
+		p.target = r.z.npcs[3].ID
+		r.z.Cast(p, 3538, 0)
+		r.ticks(TickRate + 5)
+		hit := 0
+		for _, n := range r.z.npcs {
+			if n.HP < n.MaxHP {
+				hit++
+			}
+		}
+		// The far wolf at 30400 is the target; the circle of 350 around it
+		// reaches 30200 (200 away) and 30000,30200 is 447 away, so two wolves.
+		if hit != 2 || r.z.npcs[3].HP >= r.z.npcs[3].MaxHP || r.z.npcs[0].HP >= r.z.npcs[0].MaxHP {
+			t.Errorf("%d creatures hurt: %v", hit, [4]int{r.z.npcs[0].HP, r.z.npcs[1].HP, r.z.npcs[2].HP, r.z.npcs[3].HP})
+		}
+		if friend.hp < float64(friend.maxHP()) {
+			t.Errorf("a player beside the target took damage: %v of %d", friend.hp, friend.maxHP())
+		}
+	})
+	t.Run("Nothing in range", func(t *testing.T) {
+		r := areaWorld(t)
+		p := caster(r, "Thane", rules.ClassThane, 5)
+		p.Body.X, p.Body.Y = 20000, 20000
+		power := p.power
+		r.z.Cast(p, 3521, 0)
+		if errs := errsOf(p); len(errs) > 0 {
+			t.Errorf("errors %v", errs)
+		}
+		if p.power >= power {
+			t.Error("a spell that hit nothing cost nothing")
+		}
+		for _, n := range r.z.npcs {
+			if n.HP != n.MaxHP {
+				t.Errorf("wolf %d was hurt from far away", n.ID)
+			}
+		}
+	})
+}

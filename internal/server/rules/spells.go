@@ -81,6 +81,12 @@ func ResistFactor(resist float64) float64 {
 	return 1 - math.Max(0, math.Min(SpellResistCap, resist))/100
 }
 
+// AreaHits says whether a creature dist units from the centre of an area
+// spell is inside its radius. There is no falloff: whoever is inside takes the
+// spell's full roll, resisted by its own resist, at the centre and at the edge
+// alike (the community servers differ; provisional).
+func AreaHits(dist, radius float64) bool { return radius > 0 && dist <= radius }
+
 // SpellVariance is the damage multiplier for a roll r in [0, 1): uniform
 // between 0.75 and 1.25, or 1 for a spell of the no-variance type.
 func SpellVariance(spellType string, r float64) float64 {
@@ -158,6 +164,8 @@ func init() {
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"A resisted fraction"}},
 		Rule{ID: "spell.damage", Capability: c, Requirement: "Direct damage and bolts vary",
 			Status: Reference, Sources: []string{"dolsharp", "opendaoc", "grabbag"}, Scenarios: []string{"Middle of the range", "No variance", "A fully specced caster", "A low spec", "The cap"}},
+		Rule{ID: "spell.area", Capability: c, Requirement: "Area damage does not fall off",
+			Status: Provisional, Sources: []string{"dolsharp", "opendaoc"}, Scenarios: []string{"Centre and edge"}},
 		Rule{ID: "spell.bolt-block", Capability: c, Requirement: "A bolt can be blocked",
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Blocked bolt"}},
 		Rule{ID: "spell.damage-over-time", Capability: c, Requirement: "Damage over time ticks",

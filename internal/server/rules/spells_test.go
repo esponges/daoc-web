@@ -23,6 +23,21 @@ func TestSpellEffects(t *testing.T) {
 			t.Errorf("a 95%% resist: %d, want 30 (capped at 70%%)", d)
 		}
 	})
+	vector(t, se, "Centre and edge", func(t *testing.T) {
+		// A radius-300 spell hits at the centre and at the edge, not beyond, and
+		// the damage does not depend on where inside the circle the creature stands.
+		if !AreaHits(0, 300) || !AreaHits(300, 300) || AreaHits(300.5, 300) {
+			t.Error("the radius does not bound the area")
+		}
+		if AreaHits(0, 0) {
+			t.Error("a spell with no radius is an area")
+		}
+		centre := SpellDamage(40, SpellVariance(SpellDirectDamage, 0.5), 10)
+		edge := SpellDamage(40, SpellVariance(SpellDirectDamage, 0.5), 10)
+		if centre != edge || centre != 36 {
+			t.Errorf("centre %d edge %d, want 36 each", centre, edge)
+		}
+	})
 	vector(t, se, "Middle of the range", func(t *testing.T) {
 		v := SpellVariance(SpellDirectDamage, 0.5)
 		if d := SpellDamage(40, v, 10); v != 1 || d != 36 {

@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"daocweb/internal/server/protocol"
 	"daocweb/internal/server/rules"
 	"daocweb/internal/server/store"
 )
@@ -26,7 +27,7 @@ func TestOfferedClassesOnRealData(t *testing.T) {
 			t.Errorf("%s: no spec lines to train", a.Label)
 		}
 	}
-	for _, id := range []int{rules.ClassBerserker, rules.ClassSavage, rules.ClassHealer, rules.ClassShaman, rules.ClassRunemaster} {
+	for _, id := range []int{rules.ClassBerserker, rules.ClassSavage, rules.ClassHealer, rules.ClassShaman, rules.ClassRunemaster, rules.ClassThane, rules.ClassSkald} {
 		st, _ := store.Open(":memory:")
 		w := New(Config{Cat: cat, Store: st, Log: t.Logf})
 		acct, _ := st.AccountFor("d:k", "k", false)
@@ -68,6 +69,10 @@ func TestNewClassesTrainAndGainStyles(t *testing.T) {
 		{rules.ClassHealer, "DOL.GS.Trainer.SeerTrainer", "Mending", false},
 		{rules.ClassShaman, "DOL.GS.Trainer.ShamanTrainer", "Subterranean", false},
 		{rules.ClassRunemaster, "DOL.GS.Trainer.MysticTrainer", "Runecarving", false},
+		{rules.ClassThane, "DOL.GS.Trainer.ThaneTrainer", "Hammer", true},
+		{rules.ClassThane, "DOL.GS.Trainer.VikingTrainer", "Stormcalling", false},
+		{rules.ClassSkald, "DOL.GS.Trainer.SkaldTrainer", "Sword", true},
+		{rules.ClassSkald, "DOL.GS.Trainer.VikingTrainer", "Battlesongs", false},
 	} {
 		name := rules.Classes[c.class].Name
 		r := newRig(t, npcAt(1, "Trainer", c.trainerType, 30050, 30000))
@@ -216,4 +221,76 @@ func TestRealCasterCreatureHurts(t *testing.T) {
 		t.Errorf("the Healer lost no health: %v of %v", p.hp, hp)
 	}
 	t.Logf("the chanter's spells: %d; the Healer is at %.0f of %.0f", len(n.spells), p.hp, hp)
+}
+
+// A Thane and a Skald are taught by their own trainers and the Viking's, not by
+// a Warrior's or each other's, and a Thane at Stormcalling 5 holds the six
+// spells of the data's first five levels. On the imported data.
+func TestThaneAndSkaldTrainersAndBooks(t *testing.T) {
+	cat, err := LoadCatalog(filepath.Join("..", "..", "..", "server", "data", "world.db"))
+	if err != nil {
+		t.Skip("no world store: run go run ./cmd/dbimport")
+	}
+	r := newRig(t, npcAt(1, "Thane trainer", "DOL.GS.Trainer.ThaneTrainer", 30050, 30000),
+		npcAt(2, "Skald trainer", "DOL.GS.Trainer.SkaldTrainer", 30000, 30050),
+		npcAt(3, "Warrior trainer", "DOL.GS.Trainer.WarriorTrainer", 29950, 30000))
+	r.w.Cat = cat
+	for _, c := range []struct {
+		class         int
+		mine, notMine int64
+		spec, notLine string
+	}{{rules.ClassThane, 1, 2, "Stormcalling", "Battlesongs"}, {rules.ClassSkald, 2, 1, "Battlesongs", "Stormcalling"}} {
+		name := rules.Classes[c.class].Name
+		p := r.player(name, 10, 30000, 30000, false)
+		p.Char.Class = c.class
+		r.w.recalc(p)
+		if !contains(cat.TrainableSpecs(c.class), c.spec) || contains(cat.TrainableSpecs(c.class), c.notLine) {
+			t.Errorf("%s trains %v, want %s and not %s", name, cat.TrainableSpecs(c.class), c.spec, c.notLine)
+		}
+		r.z.openTrainer(p, r.z.byID[c.mine])
+		if got := sentOf[protocol.Trainer](p, protocol.TTrainer); len(got) != 1 || len(got[0].Specs) == 0 {
+			t.Errorf("%s: their own trainer sent %v", name, got)
+		}
+		for _, other := range []int64{c.notMine, 3} {
+			r.z.openTrainer(p, r.z.byID[other])
+			if errs := errsOf(p); len(errs) == 0 {
+				t.Errorf("%s was taught by trainer %d", name, other)
+			}
+			snaps(p)
+		}
+	}
+	// A Warrior is not taught by the Skald's trainer.
+	w := r.player("Warrior", 10, 30000, 30000, false)
+	r.z.openTrainer(w, r.z.byID[2])
+	if len(errsOf(w)) == 0 {
+		t.Error("a Warrior was taught by a Skald trainer")
+	}
+
+	thane := r.player("Bookish", 5, 30000, 30000, false)
+	thane.Char.Class = rules.ClassThane
+	thane.Char.Specs = map[string]int{"Stormcalling": 5}
+	r.w.recalc(thane)
+	r.w.refreshBook(thane)
+	var names []string
+	for _, b := range thane.book {
+		names = append(names, b.Spell.Name)
+	}
+	want := []string{"Thor's Minor Bolt", "Thor's Vigor", "Thor's Lesser Bolt", "Thunder's Bash", "Thunder Shout", "Toothgrinder's Hoof"}
+	if len(names) != len(want) {
+		t.Fatalf("book %v, want %v", names, want)
+	}
+	for _, n := range want {
+		if !contains(names, n) {
+			t.Errorf("book %v lacks %s", names, n)
+		}
+	}
+}
+
+func contains(list []string, s string) bool {
+	for _, x := range list {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }

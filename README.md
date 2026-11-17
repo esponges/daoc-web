@@ -337,6 +337,12 @@ Sources the rules come from:
   OpenDAoC's (Guard 256 units and +5% a level, Intercept 128 units at 50% with
   a 60 s reuse, Protect 10% a level moved to the protector within 1,000 units,
   Engage +65% block for 5 endurance a blow), read to understand them.
+- The Camelot Herald class library pages for the Skald and the Bard, and Allakhazam's
+  spell entries for the songs ([camelot.allakhazam.com](https://camelot.allakhazam.com/db/spelldb.html?cspell=553)):
+  only one song can be sung at a time, a speed song does not work in combat, and
+  the Song of Travel values by level. Friday's Grab Bag answer on resist caps
+  ([story 736](https://camelot.allakhazam.com/story.html?story=736)): buff and item
+  resist caps are separate.
 - [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
   understand rules that no public page gives a number for. Nothing is copied
   from it.

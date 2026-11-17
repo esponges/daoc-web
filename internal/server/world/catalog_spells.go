@@ -23,6 +23,7 @@ type SpellDef struct {
 	Duration        int
 	Frequency       int
 	LifeDrain       int
+	Radius          int // the area a spell covers, units; 0 for a single target
 	SubSpell        int
 	Uninterruptible bool
 	Icon            int
@@ -75,18 +76,22 @@ func (c *Catalog) loadSpells(db *sql.DB, q func(string, func(*sql.Rows) error) e
 	if has != 3 {
 		return nil
 	}
-	powerCol := "0"
-	var hasPower int
-	db.QueryRow(`SELECT count(*) FROM pragma_table_info('spell') WHERE name='power'`).Scan(&hasPower)
-	if hasPower > 0 {
-		powerCol = "COALESCE(power,0)"
+	// Columns a store imported before they existed lacks read as 0.
+	col := func(name string) string {
+		var has int
+		db.QueryRow(`SELECT count(*) FROM pragma_table_info('spell') WHERE name=?`, name).Scan(&has)
+		if has == 0 {
+			return "0"
+		}
+		return "COALESCE(" + name + ",0)"
 	}
+	powerCol, radiusCol := col("power"), col("radius")
 	if err := q(`SELECT id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,
-		sub_spell,uninterruptible,icon,COALESCE(message1,''),COALESCE(message2,''),COALESCE(message3,''),COALESCE(message4,''),`+powerCol+` FROM spell`, func(r *sql.Rows) error {
+		sub_spell,uninterruptible,icon,COALESCE(message1,''),COALESCE(message2,''),COALESCE(message3,''),COALESCE(message4,''),`+powerCol+`,`+radiusCol+` FROM spell`, func(r *sql.Rows) error {
 		s := &SpellDef{}
 		var unint int
 		if err := r.Scan(&s.ID, &s.Name, &s.Type, &s.Target, &s.Range, &s.CastTime, &s.Recast, &s.Damage, &s.DamageType, &s.Value,
-			&s.Duration, &s.Frequency, &s.LifeDrain, &s.SubSpell, &unint, &s.Icon, &s.Messages[0], &s.Messages[1], &s.Messages[2], &s.Messages[3], &s.Power); err != nil {
+			&s.Duration, &s.Frequency, &s.LifeDrain, &s.SubSpell, &unint, &s.Icon, &s.Messages[0], &s.Messages[1], &s.Messages[2], &s.Messages[3], &s.Power, &s.Radius); err != nil {
 			return err
 		}
 		s.Uninterruptible = unint != 0

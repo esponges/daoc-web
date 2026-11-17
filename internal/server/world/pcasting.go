@@ -177,6 +177,9 @@ func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 // returns nil. A spell on an enemy needs a living creature; one on the realm
 // takes a player or the caster; the rest fall on the caster (and their group).
 func (z *Zone) castTarget(p *Player, sp *SpellDef, id int64) combatant {
+	if isPBAoE(sp) {
+		return p // an area around the caster needs no target
+	}
 	if id == 0 {
 		id = p.target
 	}
@@ -199,6 +202,34 @@ func (z *Zone) castTarget(p *Player, sp *SpellDef, id int64) combatant {
 		return p
 	}
 	return p
+}
+
+// isArea says whether a hostile spell covers a radius: it hits every creature
+// inside it, not only the one aimed at.
+func isArea(sp *SpellDef) bool { return sp.Target == "Enemy" && sp.Radius > 0 }
+
+// isPBAoE is an area spell centred on its caster (its range is 0): it needs no
+// target.
+func isPBAoE(sp *SpellDef) bool { return isArea(sp) && sp.Range == 0 }
+
+// castAreaTargets is every creature the spell reaches: those the caster may
+// attack within its radius of the centre, which is the caster for a spell of
+// range 0 and the target otherwise. Players are never hit. No falloff.
+func (z *Zone) castAreaTargets(p *Player, sp *SpellDef, aimed combatant) []combatant {
+	cx, cy := p.Body.X, p.Body.Y
+	if !isPBAoE(sp) {
+		cx, cy = aimed.position()
+	}
+	var out []combatant
+	for _, n := range z.npcs {
+		if n.dead() || n.gone || n.Friendly || !n.fightable(z) {
+			continue
+		}
+		if rules.AreaHits(math.Hypot(n.Body.X-cx, n.Body.Y-cy), float64(sp.Radius)) {
+			out = append(out, n)
+		}
+	}
+	return out
 }
 
 // castGroupTargets is who a group spell reaches: the caster and the members of
@@ -261,8 +292,11 @@ func (z *Zone) continuePlayerCast(p *Player) {
 		p.combatUntil = z.now + CombatLinger
 	}
 	targets := []combatant{c.target}
-	if sp.Target == "Group" {
+	switch {
+	case sp.Target == "Group":
 		targets = z.castGroupTargets(p, sp)
+	case isArea(sp):
+		targets = z.castAreaTargets(p, sp, c.target)
 	}
 	for _, t := range targets {
 		z.castSpell(p, t, sp)

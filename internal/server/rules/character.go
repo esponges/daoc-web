@@ -67,6 +67,8 @@ const (
 	ClassRunemaster = 29
 	ClassBerserker  = 31
 	ClassSavage     = 32
+	ClassThane      = 21
+	ClassSkald      = 24
 )
 
 // Classes are the classes the rules cover.
@@ -86,6 +88,13 @@ var Classes = map[int]Class{
 		BaseHP: 720, WeaponSkillBase: 340, SpecMultiplier: 10, Base: "Seer", Races: []int{5, 8, 6}, Casts: true, Acuity: PIE},
 	ClassRunemaster: {ID: ClassRunemaster, Name: "Runemaster", Primary: PIE, Secondary: DEX, Tertiary: CON,
 		BaseHP: 560, WeaponSkillBase: 280, SpecMultiplier: 10, Base: "Mystic", Races: []int{8, 7, 5}, Casts: true, Acuity: PIE},
+	// The Viking hybrids. Their numbers, and the Skald's charisma-first stat
+	// order, are OpenDAoC's (provisional: one source); races are the data's
+	// start table.
+	ClassThane: {ID: ClassThane, Name: "Thane", Primary: STR, Secondary: PIE, Tertiary: CON,
+		BaseHP: 720, WeaponSkillBase: 360, SpecMultiplier: 20, Base: "Viking", Races: []int{5, 6, 7}, Casts: true, Acuity: PIE},
+	ClassSkald: {ID: ClassSkald, Name: "Skald", Primary: CHA, Secondary: STR, Tertiary: CON,
+		BaseHP: 760, WeaponSkillBase: 380, SpecMultiplier: 15, Base: "Viking", Races: []int{5, 6, 7, 8}, Casts: true, Acuity: CHA},
 }
 
 // TaughtBy says whether a trainer of the named class can teach this one: its
@@ -236,6 +245,8 @@ func init() {
 			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Warrior definition"}},
 		Rule{ID: "character.class-midgard", Capability: "midgard-classes", Requirement: "Five more classes",
 			Status: Provisional, Sources: []string{"data", "herald", "project"}, Scenarios: []string{"A race that may not", "Class list"}},
+		Rule{ID: "character.class-thane-skald", Capability: "rules-character-stats", Requirement: "The Thane and Skald definitions",
+			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Thane definition", "Skald definition", "Levels raise the class stats"}},
 		Rule{ID: "character.creation", Capability: "rules-character-stats", Requirement: "Creation spends exactly 30 points",
 			Status: Documented, Sources: []string{"disorder", "opendaoc"}, Scenarios: []string{"Cost of a stat", "Default build", "Overspent build"}},
 		Rule{ID: "character.level-stats", Capability: "rules-character-stats", Requirement: "Levels from 6 raise the class stats",

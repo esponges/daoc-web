@@ -83,6 +83,9 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
     start town of each race and class;
   - A 2001 forum thread on Guard, Protect, Intercept and Engage
     (quartertothree.com/boards/messages/17/1030.shtml): outline only, no numbers;
+  - The Camelot Herald class pages for the Skald and Bard and Allakhazam's song
+    entries (one song at a time; a speed song does not work in combat), and the
+    Grab Bag answer that buff and item resist caps are separate;
   - OpenDAoC-Core, for reference-status rules only.
 
   If you use another source (a wiki, a format write-up, a community table), add
