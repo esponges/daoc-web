@@ -55,7 +55,7 @@
 
 ## 7. Integration
 
-- [ ] 7.1 On a scratch server, play both classes in the browser and check each result against the spec:
+- [x] 7.1 On a scratch server, play both classes in the browser and check each result against the spec:
   - a Thane at level 10 casts Thunder Shout into a pair of creatures and both take damage;
   - a Skald in a two-client group turns on Song of Travel, both characters run faster without rubber-banding, and the effect lapses on the member who walks away;
   - a Song of Rest raises the health tick.
@@ -67,7 +67,7 @@
   - run all Go and JS tests and `openspec validate thane-and-skald --strict`.
 
   Verify that everything passes and `go test ./cmd/parity` agrees with the README.
-- [ ] 7.3 Switch the live server:
+- [x] 7.3 Switch the live server:
   - back up `players.db`;
   - re-import the world store;
   - rebuild and restart `gameserver`.
