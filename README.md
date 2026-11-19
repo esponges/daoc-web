@@ -43,7 +43,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | | implemented |
 | --- | --- |
 | Creature spell types | 10 of 15 |
-| Class spell types | 21 of 73 (595 of 987 spells) |
+| Class spell types | 34 of 73 (683 of 987 spells) |
 | Style features | 12 of 14 (1,379 of 1,383 styles) |
 | Abilities | 15 of 30 (66 of 100 grants) |
 | Creature kinds | 18 of 110 (29,083 of 29,932 placements; 7 kinds left out as not classic) |
@@ -53,12 +53,11 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 32 gaps in 10 five-level bands |
-| Rules | 25 documented, 50 reference, 19 provisional |
+| Rules | 26 documented, 58 reference, 23 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for eight of the twelve
 Midgard's classes (trainers teach those eight). Not started: quests, pets and
-charm, resurrection,
-line of sight, concentration, crafting, housing, keeps, relics, battlegrounds
+charm, crafting, housing, keeps, relics, battlegrounds
 and every realm but Midgard. Armour and weapons stop at level 30 in the data the
 merchants sell from. [Known limitations](#known-limitations) has the rest.
 
@@ -221,9 +220,14 @@ interpolated.
     or two-handed swords, axes and hammers.
   - Every item change is saved in one transaction with the character.
 - **Death.** From level 6, a death to a creature costs experience at once.
-  Releasing (by choice or after five seconds) costs as much again, into a
-  gravestone where you fell, and costs constitution. You come back at your
-  bind point whole, with creatures sent home. Target your gravestone and
+  Releasing costs as much again, into a gravestone where you fell, and costs
+  constitution; you may release ten seconds after dying, and are released
+  after fifteen minutes. You come back at your bind point whole, with creatures
+  sent home. A Healer, Shaman or Spiritmaster's resurrection spell offers to raise
+  a dead player of their realm who has not released (fifteen seconds to accept):
+  the raised character skips the release stage (no second loss, no constitution
+  loss, no gravestone) but carries resurrection sickness for a minute, doing 30
+  percent less damage. Target your gravestone and
   `/pray` there to win its experience back; a healer restores constitution
   for money.
 - **Binding.** A character is bound at their start, and `/bind` beside a
@@ -392,7 +396,14 @@ that it is known, ready, targeted, in range and paid for, runs the cast time,
 stops it on damage or movement, and applies it with the same engine creatures
 use. The stock SPELLS window (the `Stats_Spec_Abil` layout), a spell bar
 (Shift+1 to Shift+8) and a cast bar draw it; without `web/data/ui/` a plain
-panel (P) does. Not yet: line of sight, concentration, resurrection, pets and
+panel (P) does. A spell aimed at another needs line of sight at the start and at
+landing ("You can't see your target!"): the server walks the segment between the
+two eye points through the zone's collision bins and heightmap, for players and
+creatures alike (a creature without sight closes in instead of casting). A
+lasting buff with a `Concentration` cost holds that much of the caster's pool
+while it is on, with no timer, until it is cancelled (the K list), the caster
+dies or leaves, the target leaves, or the target stays more than 5,000 units
+away for 20 seconds. Not yet: pets and
 charm, the focus bonus on power cost, scaling of buffs and debuffs by spec (the
 sources differ; buffs are flat here), and the other Midgard classes.
 An area spell hits every creature inside its radius with no falloff, around the
@@ -511,9 +522,10 @@ look at them (`/uidemo.html` on the running server).
   realm-versus-realm or housing, and only six of Midgard's twelve classes. A creature
   type with no converted character is left out, and style icons are not
   converted. The table at the top says how much of each is done.
-- **Spells ignore line of sight.** There is no world line-of-sight model, so a
-  creature casts at anything within its spell's range: through a dungeon wall,
-  or over a hill. Melee needs the creature to reach you; a spell does not.
+- **Line of sight is provisional.** Hulls and trunks block, terrain is sampled every
+  128 units, and floors and ceilings count only between storeys; eye height and the
+  storey rule are this project's choice, to be tuned in play. Melee needs the creature
+  to reach you, and a ranged shot does not exist yet.
 - **1 of 633 figures does not parse** — see [Parsing the rest of
   figures/](docs/formats.md#parsing-the-rest-of-figures).
 - **Some of what is read is not drawn.** Projected and environment textures,

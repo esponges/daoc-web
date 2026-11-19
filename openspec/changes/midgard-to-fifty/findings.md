@@ -57,3 +57,12 @@ All run 2026-11-19 as web searches.
 4. **Pool:** 4.4 × level, adjusted by the casting stat as above. Reference.
 5. **Concentration range 5,000 units, grace 20 seconds.** Reference for the range, provisional for the grace time.
 6. **Line of sight:** checked at start and landing; not for self, group or caster-centred area spells; provisional geometry.
+
+## 2.4 and 4.5 What was seen in the browser (2026-11-19, scratch server)
+
+A scratch server with the new build and a fresh import (the concentration, resurrection and focus columns present), a level 10 Healer and a level 6 Dwarf Warrior in Myrkwood Forest near an isolated haunt, and a second Healer.
+
+- **Release window:** a Healer killed by a creature saw the stock Release window with "You will be released in 15 minutes" and its bar and buttons; a dead character is no longer stood up after 5 seconds.
+- **Concentration window:** the K key opens the list on the stock dialog frame; with no buffs held it reads "Concentration 0 / 49" for the level 10 Healer once the pool has been sent, and "You hold no buffs." Before the first stats message it read 0 / 0: the pool is now sent with the welcome, so the first look is right (fixed; checked by the world test of the stats message, not seen again).
+- **Not observed:** casting a concentration buff and cancelling it from the list; the buff ending out of range; a Healer dying with buffs; the resurrection prompt and the raise; casting through a wall, past a tree and over a hill; a dungeon caster coming round a corner. Every attempt was lost to the setup rather than the game: a creature killed the first Healer before it could cast (the character's saved hit points were those of level 1, so it was frail), and with two clients in one Chrome window the background tab runs at about one frame a second, so a second character cannot be walked or aimed (the game has no command to target a fallen player, and Tab only cycles creatures). Covered meanwhile by the world tests of each rule, by the real-zone tests of line of sight (Mularn: 121 of 4,000 lines of 600 units blocked, 2 microseconds each; Spindelhalla: walls and floors block, a ledge is seen over) and by the node tests of the windows.
+- **Found:** an offer prompt, a plain release button and the concentration list have no way to be driven from outside the page, so a visual check of the resurrection prompt needs a second real browser window; tasks 2.4 and 4.5 stay open for it.

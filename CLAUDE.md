@@ -138,7 +138,8 @@ not show that a window looks right. Check the fallback by temporarily moving
 - **Specs drive work.** Changes live in `openspec/changes/<name>/` (proposal,
   specs, design, tasks); `/opsx:propose`, `/opsx:apply` and `/opsx:archive`
   run them. Archived changes sync into `openspec/specs/`. Open now:
-  `midgard-to-fifty`.
+  `midgard-to-fifty` (Part A: line of sight, resurrection and concentration are in; the
+  browser checks 2.4 and 4.5 are still open).
 - **Game rules have a rule book.** Every mechanic the server decides has a
   `rules-<mechanic>` spec giving the formula in our words, its sources, a status
   (documented, reference or provisional) and worked examples. Each numbered

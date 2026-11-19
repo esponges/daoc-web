@@ -236,7 +236,7 @@
         "Shaman",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DamageSpeedDecrease",
@@ -282,7 +282,7 @@
         "Shaman",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "CombatSpeedDebuff",
@@ -436,7 +436,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DexterityQuicknessDebuff",
@@ -490,7 +490,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Resurrect",
@@ -501,7 +501,7 @@
         "Shaman",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SavageCrushResistanceBuff",
@@ -600,7 +600,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "EnergyResistBuff",
@@ -652,7 +652,7 @@
       "classes": [
         "Healer"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SavageCombatSpeedBuff",
@@ -697,7 +697,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "CureNearsightCustom",
@@ -707,7 +707,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SummonCommander",
@@ -787,7 +787,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "CureDisease",
@@ -797,7 +797,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "CureMezz",
@@ -809,7 +809,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "CurePoison",
@@ -819,7 +819,7 @@
         "Seer",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "FatigueConsumptionDebuff",
@@ -1899,6 +1899,18 @@
       "status": "documented"
     },
     {
+      "id": "conc.end",
+      "status": "provisional"
+    },
+    {
+      "id": "conc.hold",
+      "status": "reference"
+    },
+    {
+      "id": "conc.pool",
+      "status": "reference"
+    },
+    {
       "id": "condition.effectiveness",
       "status": "reference"
     },
@@ -2011,6 +2023,22 @@
       "status": "provisional"
     },
     {
+      "id": "los.cast",
+      "status": "reference"
+    },
+    {
+      "id": "los.cost",
+      "status": "provisional"
+    },
+    {
+      "id": "los.creature",
+      "status": "reference"
+    },
+    {
+      "id": "los.visible",
+      "status": "provisional"
+    },
+    {
       "id": "melee.armour",
       "status": "documented"
     },
@@ -2091,6 +2119,18 @@
       "status": "provisional"
     },
     {
+      "id": "rez.sickness",
+      "status": "reference"
+    },
+    {
+      "id": "rez.spare",
+      "status": "documented"
+    },
+    {
+      "id": "rez.wait",
+      "status": "reference"
+    },
+    {
       "id": "spec.abilities",
       "status": "documented"
     },
@@ -2127,6 +2167,10 @@
       "status": "provisional"
     },
     {
+      "id": "spell.buff-cda",
+      "status": "reference"
+    },
+    {
       "id": "spell.damage",
       "status": "reference"
     },
@@ -2137,6 +2181,10 @@
     {
       "id": "spell.damage-over-time",
       "status": "reference"
+    },
+    {
+      "id": "spell.haste",
+      "status": "provisional"
     },
     {
       "id": "spell.heal",
@@ -2156,6 +2204,10 @@
     },
     {
       "id": "spell.mesmerize",
+      "status": "reference"
+    },
+    {
+      "id": "spell.regen-buffs",
       "status": "reference"
     },
     {
@@ -2196,9 +2248,9 @@
     }
   ],
   "rulesByStatus": {
-    "documented": 25,
-    "provisional": 19,
-    "reference": 50
+    "documented": 26,
+    "provisional": 23,
+    "reference": 58
   },
   "placements": 29932,
   "levellingGear": [

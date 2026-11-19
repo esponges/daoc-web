@@ -196,6 +196,9 @@ func (w *World) recalc(p *Player) {
 		p.statsSent = m
 		p.send(m)
 	}
+	if p.sh.maxConc > 0 && p.Zone != nil {
+		p.Zone.concChanged(p) // a caster sees their pool as soon as they have one
+	}
 }
 
 // statsMsg is the character sheet as the protocol carries it.

@@ -286,6 +286,9 @@ func (z *Zone) join(p *Player) {
 	p.welcomed = true
 	p.statsSent = p.statsMsg(w.Cat)
 	p.send(p.statsSent)
+	if p.sh.maxConc > 0 {
+		z.concChanged(p) // a caster sees their concentration pool from the start
+	}
 	p.sendInv(w.Cat, c.Money)
 	p.sendBar(w.Cat)
 	w.refreshBook(p)
