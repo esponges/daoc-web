@@ -48,7 +48,7 @@
   - resurrect the Warrior after a death.
 
   Record what was seen.
-- [ ] 4.6 Part A close:
+- [x] 4.6 Part A close:
   - regenerate `docs/parity` and update the README and CLAUDE.md;
   - run all Go and JS tests and `openspec validate midgard-to-fifty --strict`;
   - commit, then switch the live server (back up `players.db`, re-import, rebuild, restart).
