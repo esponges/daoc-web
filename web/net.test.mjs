@@ -172,6 +172,21 @@ function makeSim({ latency = 0.1, ground = planeGround } = {}) {
   ok(JSON.stringify(sent.filter((m) => m.t === 'rez-answer')) === JSON.stringify([{ t: 'rez-answer', accept: true }, { t: 'rez-answer', accept: false }]), 'the answers are sent as the protocol names them');
 }
 
+// --- the concentration a caster holds is kept and cancelled by id ---
+{
+  const sim = makeSim({ latency: 0.05 });
+  const c = sim.client;
+  const sent = [];
+  const send = sim.ws.send.bind(sim.ws);
+  sim.ws.send = (s) => { sent.push(JSON.parse(s)); send(s); };
+  let heard = null;
+  c.on.conc = (m) => { heard = m; };
+  sim.toClient({ t: 'conc', max: 92, used: 6, list: [{ id: 1, sp: 8001, nm: 'Blessing of Might', tg: 'Ragnar', cost: 6 }] }); sim.advance(0.06);
+  ok(heard && heard.used === 6 && c.conc.list[0].tg === 'Ragnar', 'the concentration list is kept and announced');
+  c.concCancel(1);
+  ok(JSON.stringify(sent.filter((m) => m.t === 'conc-cancel')) === JSON.stringify([{ t: 'conc-cancel', id: 1 }]), 'cancelling asks for the buff by id');
+}
+
 // --- a correction snaps ---
 {
   const sim = makeSim({ latency: 0.05 });

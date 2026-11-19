@@ -8,6 +8,7 @@ const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'D
 
 import { createStockChat, createStockSummary, createStockBar, createStockRelease, RESPAWN_SECONDS } from './hud.js';
 import { releaseLine } from './effects.js';
+import { createConcWindow, heldSpells } from './conc.js';
 import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
@@ -159,6 +160,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   // for the stock SPELLS window when the converted interface is absent.
   const slotKey = () => 'spellbar:' + (net.me && net.me.name);
   let spellSlots = new Array(SPELL_SLOTS).fill(0);
+  let heldBuffs = new Set(); // spell ids of the buffs held by concentration, marked on the bar
   const loadSlots = () => {
     let saved = [];
     try { saved = JSON.parse(localStorage.getItem(slotKey()) || '[]'); } catch { /* private window: no memory */ }
@@ -178,7 +180,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   root.appendChild(castBox.el);
   const saveSlots = () => {
     try { localStorage.setItem(slotKey(), JSON.stringify(spellSlots)); } catch { /* not remembered */ }
-    spellBar.set(spellSlots, net.book, net.song);
+    spellBar.set(spellSlots, net.book, net.song, heldBuffs);
   };
   function setSpellSlot(id, slot) {
     if (!findSpell(net.book, id)) return;
@@ -197,13 +199,13 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   };
   net.on.book = () => {
     loadSlots();
-    spellBar.set(spellSlots, net.book, net.song);
+    spellBar.set(spellSlots, net.book, net.song, heldBuffs);
     if (plainSpells) plainSpells.render(net.book, net.song);
     if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song);
   };
   // A song or chant coming on or going off is marked on the bar and in the window.
   net.on.song = () => {
-    spellBar.set(spellSlots, net.book, net.song);
+    spellBar.set(spellSlots, net.book, net.song, heldBuffs);
     if (plainSpells) plainSpells.render(net.book, net.song);
     if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song);
   };
@@ -527,6 +529,15 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     grouped = members.length > 0;
   };
   net.on.groupinv = (m) => invite.show(m.from, m.secs);
+  // The buffs a caster holds by concentration: a list to open (K), marked on the spell bar.
+  const concWin = createConcWindow(document, stock, { onCancel: (id) => net.concCancel(id) });
+  if (stock) Object.assign(concWin.el.style, { left: '12px', top: '300px', zIndex: 14 });
+  root.appendChild(concWin.el);
+  net.on.conc = (m) => {
+    concWin.update(m);
+    heldBuffs = heldSpells(m);
+    spellBar.set(spellSlots, net.book, net.song, heldBuffs);
+  };
   // A resurrection offered to a dead character uses the same prompt.
   const rezPrompt = createInvitePrompt(document, stock, {
     onAccept: () => net.rezAnswer(true),
@@ -615,6 +626,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'Enter') { openChat(); e.preventDefault(); return true; }
     if (e.code === 'Slash') { openChat('/'); e.preventDefault(); return true; }
     if (e.code === 'KeyI' && !e.repeat) { togglePack(); return true; }
+    if (e.code === 'KeyK' && !e.repeat) { concWin.toggle(); return true; } // the buffs held by concentration
     if (e.code === 'KeyP' && !e.repeat) { toggleSpells(); return true; } // the spellbook
     if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera
     // Shift+1 to Shift+8 cast the spell on that slot of the spell bar.

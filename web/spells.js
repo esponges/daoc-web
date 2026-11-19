@@ -139,17 +139,17 @@ export function createSpellBar(doc, { onCast, onAssign, onClear } = {}) {
   const bar = el(doc, 'div', 'stylebar spellbar');
   return {
     el: bar,
-    set(slots, book, song = 0) {
+    set(slots, book, song = 0, held = null) {
       bar.replaceChildren();
       const any = slots.some(Boolean);
       bar.style.display = any ? '' : 'none';
       slots.forEach((id, i) => {
         const s = id ? findSpell(book, id) : null;
-        const b = el(doc, 'button', 'style' + (s ? '' : ' empty') + (s && song && s.id === song ? ' on' : ''));
+        const b = el(doc, 'button', 'style' + (s ? '' : ' empty') + (s && ((song && s.id === song) || (held && held.has(s.id))) ? ' on' : ''));
         b.dataset.slot = i;
         b.append(el(doc, 'span', 'key', '⇧' + (i + 1)), el(doc, 'span', 'nm', s ? s.nm : ''), el(doc, 'span', 'cost', s ? s.pw + ' pw' : ''));
         if (s) {
-          b.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + ' · right-click to remove';
+          b.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + (held && held.has(s.id) ? ' · you hold this buff' : '') + ' · right-click to remove';
           b.addEventListener('click', () => onCast?.(id));
           b.addEventListener('contextmenu', (e) => { e.preventDefault(); onClear?.(i); });
         }

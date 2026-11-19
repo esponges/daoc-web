@@ -256,6 +256,26 @@ func TestResurrectionMessages(t *testing.T) {
 	}
 }
 
+func TestConcentrationMessages(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"conc-cancel","id":3}`))
+	if err != nil || typ != TConcCancel || v.(*ConcCancel).ID != 3 {
+		t.Fatalf("conc-cancel: %v %v %v", typ, v, err)
+	}
+	b, _ := json.Marshal(Conc{T: TConc, Max: 92, Used: 6, List: []ConcView{{ID: 1, Spell: 8001, Name: "Blessing of Might", Target: "Ragnar", Cost: 6}}})
+	want := `{"t":"conc","max":92,"used":6,"list":[{"id":1,"sp":8001,"nm":"Blessing of Might","tg":"Ragnar","cost":6}]}`
+	if string(b) != want {
+		t.Errorf("conc: %s", b)
+	}
+	b, _ = json.Marshal(EffectView{Name: "Blessing of Might", Kind: "buff", Conc: true})
+	if !strings.Contains(string(b), `"cc":true`) {
+		t.Errorf("a concentration effect: %s", b)
+	}
+	b, _ = json.Marshal(EffectView{Name: "Mind Agony", Kind: "dot", Left: 5, Of: 10})
+	if strings.Contains(string(b), "cc") {
+		t.Errorf("cc appears on a timed effect: %s", b)
+	}
+}
+
 // A song is marked in the book, and the effects message names the one that is
 // on; both are absent otherwise, so an older client sees nothing new.
 func TestSongFieldsAreAdditive(t *testing.T) {

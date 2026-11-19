@@ -88,6 +88,8 @@ export class NetClient {
   cast(sp, tg = 0) { this._send({ t: 'cast', sp, ...(tg ? { tg } : {}) }); }
   release() { this._send({ t: 'release' }); }
   // rezAnswer accepts or declines the resurrection offered to a dead character.
+  // concCancel lets go of one of the buffs the character holds by concentration.
+  concCancel(id) { this._send({ t: 'conc-cancel', id }); }
   rezAnswer(accept) { this._send({ t: 'rez-answer', accept: !!accept }); }
   loot(corpse, index) { this._send({ t: 'loot', corpse, index }); }
   equip(from, to) { this._send({ t: 'equip', from, to }); }
@@ -141,6 +143,7 @@ export class NetClient {
       case 'group': this.group = m.members || []; this.on.group?.(this.group); break;
       case 'groupinv': this.on.groupinv?.(m); break;
       case 'rez-offer': this.on.rezoffer?.(m); break;
+      case 'conc': this.conc = m; this.on.conc?.(m); break;
       case 'effects':
         // Our lasting spells, and the speed they leave: prediction steps at
         // that factor from now on, as the server does.

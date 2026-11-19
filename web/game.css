@@ -108,3 +108,7 @@
 .stylebar.spellbar { flex-wrap: nowrap; gap: 3px; }
 .stylebar.spellbar .style { min-width: 0; width: 78px; padding: 3px 5px; gap: 0 4px; font-size: 10px; }
 .stylebar.spellbar .style .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 52px; }
+.conc { left: 12px; top: 300px; width: 280px; }
+.conc .conc-title { font-weight: bold; margin-bottom: 4px; }
+.conc .conc-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 2px 0; }
+.conc button { font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 1px 8px; cursor: pointer; }

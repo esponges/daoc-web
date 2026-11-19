@@ -627,6 +627,7 @@ type Conc struct {
 // it is on and what it costs.
 type ConcView struct {
 	ID     int    `json:"id"`
+	Spell  int    `json:"sp"` // the spell's id, to mark it on the spell bar
 	Name   string `json:"nm"`
 	Target string `json:"tg"`
 	Cost   int    `json:"cost"`

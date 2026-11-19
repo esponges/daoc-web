@@ -157,7 +157,7 @@ func (z *Zone) sweepConc() {
 func (p *Player) concMsg() protocol.Conc {
 	m := protocol.Conc{T: protocol.TConc, Max: p.sh.maxConc, Used: p.concUsed(), List: []protocol.ConcView{}}
 	for _, cb := range p.concs {
-		m.List = append(m.List, protocol.ConcView{ID: cb.id, Name: cb.spell.Name, Target: cb.target.Char.Name, Cost: cb.cost})
+		m.List = append(m.List, protocol.ConcView{ID: cb.id, Spell: cb.spell.ID, Name: cb.spell.Name, Target: cb.target.Char.Name, Cost: cb.cost})
 	}
 	return m
 }

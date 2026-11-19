@@ -40,7 +40,7 @@
   - spread heal.
 
   Each goes in `rules-spell-effects` with tests. Existing stat buffs that carry a concentration cost become concentration buffs.
-- [ ] 4.4 Protocol `conc` and `conc-cancel`. Client: the concentration list (stock or plain), with the spell bar marking held buffs. Add node tests.
+- [x] 4.4 Protocol `conc` and `conc-cancel`. Client: the concentration list (stock or plain), with the spell bar marking held buffs. Add node tests.
 - [ ] 4.5 Browser check with two clients, a Healer and a Warrior:
   - buff, run out of range and watch the buff end;
   - die holding buffs;
