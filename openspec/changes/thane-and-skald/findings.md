@@ -80,3 +80,9 @@ A scratch server with a fresh import (`pulse` columns present), two characters s
 - **Thunder Shout** with no target held: the cast bar ran, power went 73 to 69, and standing among three level 6 army ant workers it hit two (16 and 19 damage) while the third resisted; all three turned on the Thane. An earlier try at a camp with aggressive soldiers killed the Thane, which is the game working as designed.
 - **Group and song:** a Skald and a Thane joined a group; Simple Song of Travel showed the green speed badge on both clients, still on after more than one effect lifetime (the pulse kept it), and casting the song again printed "You cancel your effect." and removed the badge from both.
 - **Not observed:** running at 1.44 times without rubber-banding (covered by the shared movement vector and the JS prediction test only), the effect lapsing on a member who walks out of range (covered by a world test), and a Song of Rest tick.
+
+### 7.1 second pass (2026-11-19, scratch server)
+
+- A Skald and a Thane grouped with `/invite` and `/accept`; Simple Song of Travel took hold ("takes hold of the Thanerun").
+- **Found and fixed:** the cast bar of an instant spell (a song, Thunder Shout) never went away, because a cast time of 0 kept the fill at 1. `castBar` now shows no bar for an instant spell (`web/spells.js`, test in `web/spells.test.mjs`); confirmed in the browser.
+- **Still not observed:** the 1.44 times run speed without rubber-banding, the lapse on a member who walks away, and the Song of Rest tick. Two clients in one Chrome window throttle the background tab to about one frame a second, so movement across two tabs is not a valid test; the page shows no position or speed, and the scratch character's saved hit points were reset to full on login, so no tick could be seen. They stay covered by the shared movement vector, the JS prediction test and the world tests.

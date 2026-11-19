@@ -65,8 +65,8 @@ export function assignSlot(slots, id, slot = -1) {
 // on the player's own cast event and ends with its interrupt or failure, or
 // when its time has run.
 export function castBar(cast, nowS) {
-  if (!cast) return null;
-  const f = cast.dur > 0 ? (nowS - cast.start) / cast.dur : 1;
+  if (!cast || !(cast.dur > 0)) return null; // an instant spell has no bar
+  const f = (nowS - cast.start) / cast.dur;
   if (f >= 1.05) return null;
   return { name: cast.name, f: Math.max(0, Math.min(1, f)) };
 }

@@ -38,6 +38,7 @@ ok(castBar(null, 10) === null, 'no cast, no bar');
 const c = { name: 'Minor Mending', start: 10, dur: 2 };
 ok(castBar(c, 11).f === 0.5 && castBar(c, 10).f === 0 && castBar(c, 12).f === 1, 'the bar fills over the cast time');
 ok(castBar(c, 12.2) === null, 'the bar goes when the time has run');
+ok(castBar({ name: 'Thunder Shout', start: 10, dur: 0 }, 10) === null, 'an instant spell shows no bar, and none is left up');
 
 ok(castEventEffect({ k: 'cast', from: 7, x: 'Minor Mending', dur: 2.2 }, 7).what === 'start', 'my cast starts the bar');
 ok(castEventEffect({ k: 'cast', from: 8 }, 7) === null, 'another player\'s cast is not mine');
