@@ -69,13 +69,15 @@ func (z *Zone) releasePenalty(p *Player) {
 		return
 	}
 	p.creatureDeath = false
-	loss := min(p.lastLoss, max(0, c.XP-rules.XPToReach(c.Level)))
-	if loss > 0 {
+	loss, con, grave := rules.ReleaseStage(p.raised, p.lastLoss, c.XP, rules.XPToReach(c.Level), c.DeathCount)
+	if p.raised {
+		return
+	}
+	if grave {
 		c.XP -= loss
 		z.event(protocol.Event{K: "xploss", To: p.ID, Amount: int(loss), Text: fmt.Sprintf("You lose %d more experience; your gravestone holds it.", loss)}, p.Body.X, p.Body.Y)
 		z.W.placeGrave(z, p, loss)
 	}
-	con := rules.ConLoss(c.DeathCount)
 	c.ConLost += con
 	z.event(protocol.Event{K: "conloss", To: p.ID, Amount: con, Text: fmt.Sprintf("You lose %d constitution.", con)}, p.Body.X, p.Body.Y)
 	z.W.recalc(p)

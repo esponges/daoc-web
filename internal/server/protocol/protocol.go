@@ -23,28 +23,29 @@ const StepsPerSecond = 60
 
 // Message types, client to server.
 const (
-	THello    = "hello"  // first message: protocol version and the character to play
-	TInput    = "input"  // a run of fixed movement steps
-	TChat     = "chat"   // say or broadcast
-	TTarget   = "target" // select an entity
-	TAttack   = "attack" // auto-attack on or off
-	TStyle    = "style"  // use a style by its slot on the bar
-	TLoot     = "loot"   // take an item from a corpse
-	TEquip    = "equip"  // move an item between slots
-	TUse      = "use"    // use a zone exit, etc.
-	TGM       = "gm"     // an administrator's command
-	TPing     = "ping"
-	TRelease  = "release"  // a dead character asks to be stood up now rather than when the timer ends
-	TInteract = "interact" // ask an NPC to do what it does (open a merchant's shop)
-	TBuy      = "buy"      // buy an item from the open shop
-	TSell     = "sell"     // sell a pack item to the open shop
-	TBarSet   = "barset"   // put a style on a bar slot
-	TRepair   = "repair"   // ask the open blacksmith for a repair price, or accept it
-	TTrain    = "train"    // raise a spec at the trainer
-	TRestore  = "restore"  // pay a healer to restore lost constitution
-	TPray     = "pray"     // pray at the targeted gravestone
-	TGroupOp  = "groupop"  // invite, accept, decline, leave or remove from a group
-	TCast     = "cast"     // cast a spell from the spellbook
+	THello     = "hello"  // first message: protocol version and the character to play
+	TInput     = "input"  // a run of fixed movement steps
+	TChat      = "chat"   // say or broadcast
+	TTarget    = "target" // select an entity
+	TAttack    = "attack" // auto-attack on or off
+	TStyle     = "style"  // use a style by its slot on the bar
+	TLoot      = "loot"   // take an item from a corpse
+	TEquip     = "equip"  // move an item between slots
+	TUse       = "use"    // use a zone exit, etc.
+	TGM        = "gm"     // an administrator's command
+	TPing      = "ping"
+	TRelease   = "release"    // a dead character asks to be stood up now rather than when the timer ends
+	TInteract  = "interact"   // ask an NPC to do what it does (open a merchant's shop)
+	TBuy       = "buy"        // buy an item from the open shop
+	TSell      = "sell"       // sell a pack item to the open shop
+	TBarSet    = "barset"     // put a style on a bar slot
+	TRepair    = "repair"     // ask the open blacksmith for a repair price, or accept it
+	TTrain     = "train"      // raise a spec at the trainer
+	TRestore   = "restore"    // pay a healer to restore lost constitution
+	TPray      = "pray"       // pray at the targeted gravestone
+	TGroupOp   = "groupop"    // invite, accept, decline, leave or remove from a group
+	TCast      = "cast"       // cast a spell from the spellbook
+	TRezAnswer = "rez-answer" // accept or decline a resurrection offer
 )
 
 // Message types, server to client.
@@ -73,6 +74,7 @@ const (
 	TEffects     = "effects"     // the character's own lasting effects, and the speed they leave
 	TGroup       = "group"       // the character's group: its members and how they fare
 	TGroupInv    = "groupinv"    // an invitation to join a group
+	TRezOffer    = "rez-offer"   // a resurrection offered to a dead character, or withdrawn
 )
 
 // Envelope reads just the type of a message.
@@ -551,6 +553,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &GroupOp{}
 	case TCast:
 		v = &Cast{}
+	case TRezAnswer:
+		v = &RezAnswer{}
 	case TPray:
 		return TPray, nil, nil
 	case TPing:
@@ -601,6 +605,23 @@ type GroupOp struct {
 	Op   string `json:"op"`
 	ID   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
+}
+
+// RezOffer tells a dead character that a resurrection is offered, by whom and
+// with how many percent of their hit points and power, and for how many
+// seconds it stands. Secs 0 withdraws the offer (it lapsed, or they released).
+type RezOffer struct {
+	T      string  `json:"t"`
+	From   string  `json:"from,omitempty"`
+	Health int     `json:"health,omitempty"`
+	Power  int     `json:"power,omitempty"`
+	Secs   float64 `json:"secs"`
+}
+
+// RezAnswer accepts or declines the pending resurrection offer.
+type RezAnswer struct {
+	T      string `json:"t"`
+	Accept bool   `json:"accept"`
 }
 
 // GroupInv tells a player they are invited to a group, by whom, and how long

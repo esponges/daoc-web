@@ -89,6 +89,21 @@ assert.equal(accepted, 1);
 assert.equal(inv.isOpen, false);
 console.log('ok: plain invitation');
 
+// The resurrection offer uses the same prompt with a line of its own.
+let raised = 0, refused = 0;
+const rp = createInvitePrompt(doc, null, { onAccept: () => raised++, onDecline: () => refused++ });
+rp.show('Sigrid', 15, 'Sigrid offers to resurrect you with 30% of your health.');
+assert.equal(rp.isOpen, true);
+assert.match(texts(rp.el).join('|'), /Sigrid offers to resurrect you with 30% of your health/);
+assert.doesNotMatch(texts(rp.el).join('|'), /join a group/);
+const rb = [];
+walk(rp.el, (x) => { if (x.tag === 'button') rb.push(x); });
+rb[1].listeners.click();
+assert.equal(refused, 1);
+assert.equal(raised, 0);
+assert.equal(rp.isOpen, false);
+console.log('ok: resurrection prompt');
+
 // The stock windows, when the converter has been run.
 const real = 'web/data/ui/atlantis/layout.json';
 if (existsSync(real)) {

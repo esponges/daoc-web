@@ -201,6 +201,9 @@ func (z *Zone) tickPlayer(p *Player) {
 		return
 	}
 	if p.dead {
+		if o := p.rez; o != nil && rules.OfferLapsed(z.now-o.at) {
+			z.withdrawOffer(p, "The resurrection offer lapses.")
+		}
 		if z.now-p.deadAt >= PlayerRespawnS {
 			z.respawnPlayer(p)
 		}

@@ -83,7 +83,7 @@ func TestDeathCostsExperienceGravestoneAndConstitution(t *testing.T) {
 	if p.Char.XP != 300000-3328 {
 		t.Fatalf("after the first death xp %d, want %d", p.Char.XP, 300000-3328)
 	}
-	r.z.ReleasePlayer(p)
+	r.release(p)
 	if p.Char.XP != 300000-2*3328 {
 		t.Errorf("after release xp %d, want %d", p.Char.XP, 300000-2*3328)
 	}
@@ -101,7 +101,7 @@ func TestDeathCostsExperienceGravestoneAndConstitution(t *testing.T) {
 	p.Body.X, p.Body.Y = 31000, 31000
 	r.z.killPlayer(p, n)
 	second := int64(256000 * rules.LossPermille(10, 1) / 1000)
-	r.z.ReleasePlayer(p)
+	r.release(p)
 	g = r.z.graves[p.Char.ID]
 	if len(r.z.graves) != 1 || g.x != 31000 || g.xp != second {
 		t.Errorf("second grave %+v, want %d at 31000", g, second)
@@ -121,7 +121,7 @@ func TestLowLevelDeathsCostNothing(t *testing.T) {
 	xp := p.Char.XP + 100
 	p.Char.XP = xp
 	r.z.killPlayer(p, r.z.byID[1])
-	r.z.ReleasePlayer(p)
+	r.release(p)
 	if p.Char.XP != xp || p.Char.ConLost != 0 || len(r.z.graves) != 0 || p.dead {
 		t.Errorf("level 3 death: xp %d (was %d), con lost %d, graves %d", p.Char.XP, xp, p.Char.ConLost, len(r.z.graves))
 	}
@@ -133,7 +133,7 @@ func TestPrayingAtYourGrave(t *testing.T) {
 	other := r.player("Stranger", 10, 30100, 30000, true)
 	p.Char.XP = 300000
 	r.z.killPlayer(p, r.z.byID[1])
-	r.z.ReleasePlayer(p)
+	r.release(p)
 	gid := GraveIDBase + p.Char.ID
 	// Someone else's grave.
 	r.z.SetTarget(other, gid)
@@ -170,7 +170,7 @@ func TestGravesSurviveARestart(t *testing.T) {
 	p := r.player("Haunted", 10, 30000, 30000, true)
 	p.Char.XP = 300000
 	r.z.killPlayer(p, r.z.byID[1])
-	r.z.ReleasePlayer(p)
+	r.release(p)
 	z2 := NewZone(r.w, 100, "Test", flat{}, nil, nil)
 	g := z2.graves[p.Char.ID]
 	if g == nil || g.xp != 3328 || g.name != "Haunted" {

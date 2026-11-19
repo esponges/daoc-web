@@ -13,6 +13,7 @@ const (
 	SpellStun           = "Stun"
 	SpellLifedrain      = "Lifedrain"
 	SpellHeal           = "Heal"
+	SpellResurrect      = "Resurrect"
 	SpellOffensiveProc  = "OffensiveProc"
 
 	// Spells only players cast in this slice: buffs and damage added to blows.
@@ -47,7 +48,7 @@ const (
 // creature casts, plus the buffs and the damage add.
 func ImplementedPlayerSpell(spellType string) bool {
 	switch spellType {
-	case SpellStrConBuff, SpellDexQuiBuff, SpellStrengthBuff, SpellArmourBuff, SpellDamageAdd,
+	case SpellResurrect, SpellStrConBuff, SpellDexQuiBuff, SpellStrengthBuff, SpellArmourBuff, SpellDamageAdd,
 		SpellSpeedEnhancement, SpellHealthRegenBuff, SpellBodyResistBuff, SpellColdResistBuff, SpellEnergyResistBuff,
 		SpellHeatResistBuff, SpellMatterResistBuff, SpellSpiritResistBuff:
 		return true

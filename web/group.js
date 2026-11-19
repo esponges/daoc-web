@@ -153,7 +153,8 @@ export function createPlainGroup(doc, { onInvite, onDisband } = {}) {
 
 // createInvitePrompt asks whether to join a group: on the stock dialog frame
 // when the interface is there (data), a plain panel when not. show(from)
-// opens it; it closes itself on an answer or after secs.
+// opens it (with a line of its own if one is given: the resurrection offer
+// uses this prompt too); it closes itself on an answer or after secs.
 export function createInvitePrompt(doc, data, { onAccept, onDecline } = {}) {
   const root = doc.createElement('div');
   root.className = data ? '' : 'panel invite';
@@ -192,8 +193,8 @@ export function createInvitePrompt(doc, data, { onAccept, onDecline } = {}) {
   return {
     el: root,
     get isOpen() { return data ? root.style.display !== 'none' : root.classList.contains('open'); },
-    show(from, secs = 60) {
-      line.textContent = from + ' has invited you to join a group.';
+    show(from, secs = 60, text = '') {
+      line.textContent = text || from + ' has invited you to join a group.';
       if (data) root.style.display = 'block'; else root.classList.add('open');
       clearTimeout(timer);
       timer = setTimeout(hide, secs * 1000);

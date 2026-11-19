@@ -341,7 +341,7 @@ func TestPlayerCanReleaseEarly(t *testing.T) {
 	if !died {
 		t.Fatal("two level 25 wolves did not kill a level 2 fighter")
 	}
-	r.z.ReleasePlayer(p)
+	r.release(p)
 	if p.dead || p.hp <= 0 {
 		t.Errorf("release did not stand the player up: dead=%v hp=%v", p.dead, p.hp)
 	}

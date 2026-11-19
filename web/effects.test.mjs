@@ -1,6 +1,6 @@
 // node web/effects.test.mjs
 import assert from 'node:assert/strict';
-import { effectRows, effectChangeLines, spellLine, castLine, clock, EFFECT_KINDS } from './effects.js';
+import { effectRows, effectChangeLines, spellLine, castLine, clock, releaseLine, EFFECT_KINDS } from './effects.js';
 
 // Rows: drawn by kind, counting down from when the message arrived.
 const fx = { at: 10, list: [{ nm: 'Shroud of Doubt', k: 'slow', ic: 10082, left: 5, of: 5 }, { nm: 'Mind Agony', k: 'dot', ic: 4427, left: 70, of: 70 }] };
@@ -47,3 +47,12 @@ assert.equal(castLine({ k: 'cast', from: 5, to: 7, x: 'Spirit Bolt', dur: 3 }, t
 assert.equal(castLine({ k: 'interrupt', from: 5, x: 'Spirit Bolt' }, the).text, "The shaman's spell is interrupted!");
 assert.equal(castLine({ k: 'castfail', from: 5 }, the), null);
 console.log('ok: cast lines, with no bar');
+
+// Resurrection sickness is drawn, and the release timer speaks in minutes when it is long.
+assert.equal(EFFECT_KINDS.sick.label, 'X');
+assert.match(effectRows({ at: 0, list: [{ nm: 'Resurrection Sickness', k: 'sick', left: 60, of: 60 }] }, 0)[0].title, /weakened by resurrection/);
+assert.equal(releaseLine(900), 'You will be released in 15 minutes');
+assert.equal(releaseLine(121), 'You will be released in 3 minutes');
+assert.equal(releaseLine(90), 'You will be released in 90 seconds');
+assert.equal(releaseLine(0), 'Releasing...');
+console.log('ok: resurrection sickness and the release timer');

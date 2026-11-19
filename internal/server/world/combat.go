@@ -394,7 +394,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 		p.lastStyle = 0
 	}
 	z.wearItem(p, SlotWeapon)
-	amount := o.Damage
+	amount := sickened(o.Damage, p)
 	p.lastHit, p.lastHitAt = true, z.now
 	z.event(protocol.Event{K: "hit", From: p.ID, To: n.ID, Amount: amount, Crit: o.Critical > 0, Text: ev.Text}, n.Body.X, n.Body.Y)
 	n.HP -= amount
@@ -554,13 +554,19 @@ func (z *Zone) killPlayer(p *Player, by *NPC) {
 // ReleasePlayer stands a dead player up now, at their bind point, without
 // waiting for the respawn timer. It does nothing to a living one.
 func (z *Zone) ReleasePlayer(p *Player) {
-	if p.dead {
-		z.respawnPlayer(p)
+	if !p.dead {
+		return
 	}
+	if dead := z.now - p.deadAt; !rules.CanRelease(dead) {
+		sys(p, fmt.Sprintf("You must wait %d more seconds to release.", int(math.Ceil(rules.ReleaseAfter-dead))))
+		return
+	}
+	z.respawnPlayer(p)
 }
 
 // respawnPlayer stands a dead player up at their bind point.
 func (z *Zone) respawnPlayer(p *Player) {
+	z.withdrawOffer(p, "") // releasing ends any offer
 	z.releasePenalty(p)
 	bz, x, y, zz, yaw := z.W.bindFor(p)
 	p.dead = false

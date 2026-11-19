@@ -6,7 +6,8 @@ const SLOT_NAMES = { 40: 'Weapon', 41: 'Shield', 42: 'Torso', 43: 'Legs', 44: 'A
 const PACK = 40;
 const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];
 
-import { createStockChat, createStockSummary, createStockBar, createStockRelease } from './hud.js';
+import { createStockChat, createStockSummary, createStockBar, createStockRelease, RESPAWN_SECONDS } from './hud.js';
+import { releaseLine } from './effects.js';
 import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
@@ -526,11 +527,30 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     grouped = members.length > 0;
   };
   net.on.groupinv = (m) => invite.show(m.from, m.secs);
+  // A resurrection offered to a dead character uses the same prompt.
+  const rezPrompt = createInvitePrompt(document, stock, {
+    onAccept: () => net.rezAnswer(true),
+    onDecline: () => net.rezAnswer(false),
+  });
+  if (stock) Object.assign(rezPrompt.el.style, { position: 'fixed', left: '50%', top: '40%', marginLeft: '-130px', zIndex: 19 });
+  root.appendChild(rezPrompt.el);
+  net.on.rezoffer = (m) => {
+    if (m.secs > 0) rezPrompt.show(m.from, m.secs, `${m.from} offers to resurrect you with ${m.health || 0}% of your health.`);
+    else rezPrompt.hide();
+  };
   const toggleGroup = () => { groupWin.update(net.group); groupWin.toggle(); };
 
   // --- death ---
-  const dead = el('div', 'death', 'You have died.');
+  // The plain banner: a release button and the time left, since the server now
+  // waits for a resurrection and releases a dead character only after 15 minutes.
+  const dead = el('div', 'death');
+  const deadTimer = el('div', 'small', '');
+  const releaseBtn = document.createElement('button');
+  releaseBtn.textContent = 'Release';
+  releaseBtn.addEventListener('click', () => net.release());
+  dead.append(el('div', '', 'You have died.'), releaseBtn, deadTimer);
   root.appendChild(dead);
+  let deadSince = null;
   // The stock Release window replaces the banner when the interface is there.
   let release = null;
   if (stock) {
@@ -557,7 +577,15 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     fill(xpBar, me.xpNext ? me.xp / me.xpNext : 0);
     lvl.textContent = 'L' + me.level;
     if (release) release.update(me.dead, performance.now() / 1000);
-    else dead.classList.toggle('on', me.dead);
+    else {
+      dead.classList.toggle('on', me.dead);
+      const now = performance.now() / 1000;
+      if (!me.dead) deadSince = null;
+      else {
+        deadSince ??= now;
+        deadTimer.textContent = releaseLine(RESPAWN_SECONDS - (now - deadSince));
+      }
+    }
     if (stockBar) stockBar.update(me);
     castBox.update(cast, performance.now() / 1000);
     spellBar.el.querySelectorAll('.style').forEach((b) => {

@@ -67,7 +67,7 @@ func TestBindInTownAndReturnOnDeath(t *testing.T) {
 	// Dying far away returns them to the bind, not to the nearest bindstone.
 	p.Body.X, p.Body.Y = 30500, 30000
 	p.dead = true
-	r.z.ReleasePlayer(p)
+	r.release(p)
 	if d := math.Hypot(p.Body.X-50000, p.Body.Y-50000); d > 1 {
 		t.Errorf("released at %v,%v, want the bind at 50000,50000", p.Body.X, p.Body.Y)
 	}

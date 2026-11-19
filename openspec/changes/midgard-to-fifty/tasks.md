@@ -19,8 +19,8 @@
 
 - [x] 3.1 Importer: add the `resurrect_health`, `resurrect_mana`, `concentration` and `is_focus` spell columns, additively, with an importer test. Load them in `catalog_spells.go`. A store without them still loads.
 - [x] 3.2 Rules: the resurrection experience return, the sickness and the wait before release is forced, each in `rules-death` with registry entries and table tests.
-- [ ] 3.3 Server: a resurrection spell targets a dead, unreleased player. Add the offer, accept and decline, raising with the spell's health and power percent, sickness as an effect, and an offer that lapses on release. Add the protocol messages `rez-offer` and `rez-answer` to `docs/protocol.md`, with a protocol test.
-- [ ] 3.4 Client: the resurrection prompt, in a stock dialog and as a plain fallback. Add a node test.
+- [x] 3.3 Server: a resurrection spell targets a dead, unreleased player. Add the offer, accept and decline, raising with the spell's health and power percent, sickness as an effect, and an offer that lapses on release. Add the protocol messages `rez-offer` and `rez-answer` to `docs/protocol.md`, with a protocol test.
+- [x] 3.4 Client: the resurrection prompt, in a stock dialog and as a plain fallback. Add a node test.
 
 ## 4. Part A: concentration and the Healer and Shaman buffs
 

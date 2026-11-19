@@ -156,6 +156,22 @@ function makeSim({ latency = 0.1, ground = planeGround } = {}) {
   ok(c.song === 0 && told.join() === '3601,0', 'turning it off is announced');
 }
 
+// --- a resurrection offer is announced and answered ---
+{
+  const sim = makeSim({ latency: 0.05 });
+  const c = sim.client;
+  const sent = [];
+  const send = sim.ws.send.bind(sim.ws);
+  sim.ws.send = (s) => { sent.push(JSON.parse(s)); send(s); };
+  const offers = [];
+  c.on.rezoffer = (m) => offers.push(m);
+  sim.toClient({ t: 'rez-offer', from: 'Sigrid', health: 30, power: 10, secs: 15 }); sim.advance(0.06);
+  sim.toClient({ t: 'rez-offer', secs: 0 }); sim.advance(0.06);
+  ok(offers.length === 2 && offers[0].from === 'Sigrid' && offers[0].health === 30 && offers[1].secs === 0, 'an offer and its withdrawal reach the window');
+  c.rezAnswer(true); c.rezAnswer(false);
+  ok(JSON.stringify(sent.filter((m) => m.t === 'rez-answer')) === JSON.stringify([{ t: 'rez-answer', accept: true }, { t: 'rez-answer', accept: false }]), 'the answers are sent as the protocol names them');
+}
+
 // --- a correction snaps ---
 {
   const sim = makeSim({ latency: 0.05 });

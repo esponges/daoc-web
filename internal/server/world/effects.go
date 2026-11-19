@@ -203,6 +203,7 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		} else if sc, ok := z.scaleFor(caster, sp); ok {
 			amount = rules.PlayerHeal(sp.Value, sc.spec, sc.spellLevel, z.rng.Float64())
 		}
+		amount = sickened(amount, caster)
 		z.heal(target, amount)
 		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: -amount}, tx, ty)
 	case rules.SpellDirectDamage, rules.SpellDDNoVariance, rules.SpellBolt, rules.SpellLifedrain:
@@ -219,6 +220,7 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		if sc, ok := z.scaleFor(caster, sp); ok && sp.Type != rules.SpellDDNoVariance {
 			dmg = rules.PlayerSpellDamage(sp.Damage, sc.stat, sc.spec, levelOf(caster), levelOf(target), z.rng.Float64(), z.spellResist(target, sp.DamageType))
 		}
+		dmg = sickened(dmg, caster)
 		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: dmg}, tx, ty)
 		z.hurt(target, caster, dmg)
 		if sp.Type == rules.SpellLifedrain && caster.fightable(z) {

@@ -4,6 +4,7 @@
 // decides everything; these only display and ask.
 
 import { buildWindow, frame, fontFamily, child, num, str, pt, text, icon, styleIconNumber, hrButton } from './uiwin.js';
+import { releaseLine } from './effects.js';
 
 // Colours of chat lines by kind.
 const LINE_COLOR = {
@@ -264,7 +265,7 @@ export function createStockBar(doc, data, { onUse, onDrop, keys = [] } = {}) {
 
 // The server stands a dead character up after this many seconds unless they
 // release sooner (world.PlayerRespawnS).
-export const RESPAWN_SECONDS = 5;
+export const RESPAWN_SECONDS = 900;
 
 // createStockRelease builds the stock Release window: a timer bar, a line of
 // text and the release buttons. RELEASE and RELEASE BIND both stand the
@@ -301,7 +302,7 @@ export function createStockRelease(doc, data, { onRelease } = {}) {
       }
       const left = Math.max(0, RESPAWN_SECONDS - (now - since));
       win.setBar('release_timer_time', left / RESPAWN_SECONDS);
-      win.setText('release_timer_text', left > 0 ? `You will be released in ${Math.ceil(left)} seconds` : 'Releasing...');
+      win.setText('release_timer_text', releaseLine(left));
     },
   };
 }

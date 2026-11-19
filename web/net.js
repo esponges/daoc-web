@@ -87,6 +87,8 @@ export class NetClient {
   // cast casts a spell of the book at an entity (the held target when 0).
   cast(sp, tg = 0) { this._send({ t: 'cast', sp, ...(tg ? { tg } : {}) }); }
   release() { this._send({ t: 'release' }); }
+  // rezAnswer accepts or declines the resurrection offered to a dead character.
+  rezAnswer(accept) { this._send({ t: 'rez-answer', accept: !!accept }); }
   loot(corpse, index) { this._send({ t: 'loot', corpse, index }); }
   equip(from, to) { this._send({ t: 'equip', from, to }); }
   interact(id) { this._send({ t: 'interact', id }); }
@@ -138,6 +140,7 @@ export class NetClient {
       case 'healer': this.healer = m; this.on.healer?.(m); break;
       case 'group': this.group = m.members || []; this.on.group?.(this.group); break;
       case 'groupinv': this.on.groupinv?.(m); break;
+      case 'rez-offer': this.on.rezoffer?.(m); break;
       case 'effects':
         // Our lasting spells, and the speed they leave: prediction steps at
         // that factor from now on, as the server does.

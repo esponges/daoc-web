@@ -36,7 +36,7 @@ func spellSupported(sp *SpellDef) bool {
 		return false
 	}
 	switch sp.Target {
-	case "Enemy", "Self", "Realm", "Group":
+	case "Enemy", "Self", "Realm", "Group", "Corpse":
 		return true
 	}
 	return false
@@ -208,6 +208,12 @@ func (z *Zone) castTarget(p *Player, sp *SpellDef, id int64) combatant {
 			return o
 		}
 		return p
+	case "Corpse":
+		if o := z.players[id]; o != nil && o != p && o.Arch.Realm == p.Arch.Realm && z.corpseOK(o) {
+			return o
+		}
+		p.errMsg("cast", "You need a dead player of your realm.")
+		return nil
 	}
 	return p
 }
@@ -286,7 +292,11 @@ func (z *Zone) continuePlayerCast(p *Player) {
 	if c.target == combatant(p) {
 		dist = 0
 	}
-	if !rules.CastLands(c.target.fightable(z), dist, sp.Range) {
+	alive := c.target.fightable(z)
+	if sp.Type == rules.SpellResurrect {
+		alive = z.corpseOK(c.target)
+	}
+	if !rules.CastLands(alive, dist, sp.Range) {
 		z.event(protocol.Event{K: "castfail", From: p.ID, Text: sp.Name}, p.Body.X, p.Body.Y)
 		sys(p, "Your target is no longer there, and "+sp.Name+" fails.")
 		return
@@ -304,6 +314,10 @@ func (z *Zone) continuePlayerCast(p *Player) {
 	p.spellReady[sp.ID] = z.now + sp.Recast
 	if sp.Hostile() {
 		p.combatUntil = z.now + CombatLinger
+	}
+	if sp.Type == rules.SpellResurrect {
+		z.offerResurrection(p, c.target.(*Player), sp, float64(cost))
+		return
 	}
 	targets := []combatant{c.target}
 	switch {

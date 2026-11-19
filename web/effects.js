@@ -16,6 +16,7 @@ export const EFFECT_KINDS = {
   speed: { label: '>', colour: '#2a9d8f', title: 'quickened' },
   regen: { label: 'H', colour: '#4a9a5c', title: 'recovering faster' },
   resist: { label: 'R', colour: '#6a7fb5', title: 'resistant' },
+  sick: { label: 'X', colour: '#7a6a3a', title: 'weakened by resurrection' },
 };
 
 // What starting to suffer an effect of a kind says.
@@ -36,6 +37,14 @@ export function effectRows(effects, now) {
 export function clock(s) {
   s = Math.ceil(s);
   return s >= 60 ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : s + 's';
+}
+
+// releaseLine is what the Release window says of the time left before the
+// server releases a dead character: seconds under two minutes, minutes above.
+export function releaseLine(left) {
+  if (left <= 0) return 'Releasing...';
+  if (left > 120) return `You will be released in ${Math.ceil(left / 60)} minutes`;
+  return `You will be released in ${Math.ceil(left)} seconds`;
 }
 
 // effectChangeLines are the lines a new effects message brings: a hold, a

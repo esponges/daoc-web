@@ -79,6 +79,8 @@
 .death { position: fixed; inset: 0; z-index: 13; display: none; place-content: center; text-align: center; font-size: 28px; color: #ff6a6a;
   background: rgba(40,0,0,.35); text-shadow: 0 2px 6px #000; pointer-events: none; }
 .death.on { display: grid; }
+.death button { pointer-events: auto; justify-self: center; margin-top: 10px; font: 16px sans-serif; color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(220,150,150,.6); border-radius: 5px; padding: 4px 16px; cursor: pointer; }
+.death .small { font-size: 14px; margin-top: 8px; }
 .label { position: fixed; z-index: 9; transform: translate(-50%, -100%); pointer-events: none; font: 11px/1.2 ui-monospace, Menlo, Consolas, monospace;
   text-shadow: 0 1px 2px #000, 0 0 3px #000; white-space: nowrap; }
 .label.target { font-weight: bold; }

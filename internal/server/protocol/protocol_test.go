@@ -238,6 +238,24 @@ func TestGroupMessages(t *testing.T) {
 	}
 }
 
+func TestResurrectionMessages(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"rez-answer","accept":true}`))
+	if err != nil || typ != TRezAnswer {
+		t.Fatalf("rez-answer: %v %v", typ, err)
+	}
+	if a := v.(*RezAnswer); !a.Accept {
+		t.Errorf("rez-answer decoded as %+v", a)
+	}
+	b, _ := json.Marshal(RezOffer{T: TRezOffer, From: "Sigrid", Health: 30, Power: 10, Secs: 15})
+	if string(b) != `{"t":"rez-offer","from":"Sigrid","health":30,"power":10,"secs":15}` {
+		t.Errorf("rez-offer: %s", b)
+	}
+	b, _ = json.Marshal(RezOffer{T: TRezOffer})
+	if string(b) != `{"t":"rez-offer","secs":0}` {
+		t.Errorf("a withdrawn offer: %s", b)
+	}
+}
+
 // A song is marked in the book, and the effects message names the one that is
 // on; both are absent otherwise, so an older client sees nothing new.
 func TestSongFieldsAreAdditive(t *testing.T) {
