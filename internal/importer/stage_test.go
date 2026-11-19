@@ -310,3 +310,28 @@ func TestImportSpells(t *testing.T) {
 		t.Error("the heal lost its uninterruptible mark")
 	}
 }
+
+// A resurrection's health and power, a buff's concentration cost and the focus
+// flag come in with the spell.
+func TestImportSpellRezAndConcentration(t *testing.T) {
+	dir := minimalDump(t)
+	dumpTable(t, dir, "stylexspell", "`SpellID`, `ClassID`, `StyleID`, `Chance`", "1361, 0, 164, 100", "2001, 0, 165, 100")
+	dumpTable(t, dir, "spell", "`SpellID`, `Name`, `Type`, `Target`, `Range`, `ResurrectHealth`, `ResurrectMana`, `Concentration`, `IsFocus`",
+		"1361, 'Raise Fallen', 'Resurrect', 'Corpse', 1500, 30, 10, 0, 0",
+		"2001, 'Blessing of Health', 'ConstitutionBuff', 'Realm', 1000, 0, 0, 2, 1")
+	out := filepath.Join(t.TempDir(), "world.db")
+	if _, err := Run(Options{Dump: dir, Out: out}); err != nil {
+		t.Fatal(err)
+	}
+	db, _ := sql.Open("sqlite", out)
+	defer db.Close()
+	var rh, rm, conc, focus int
+	db.QueryRow(`SELECT resurrect_health, resurrect_mana, concentration, is_focus FROM spell WHERE id=1361`).Scan(&rh, &rm, &conc, &focus)
+	if rh != 30 || rm != 10 || conc != 0 || focus != 0 {
+		t.Errorf("Raise Fallen: health %d power %d concentration %d focus %d, want 30 10 0 0", rh, rm, conc, focus)
+	}
+	db.QueryRow(`SELECT resurrect_health, resurrect_mana, concentration, is_focus FROM spell WHERE id=2001`).Scan(&rh, &rm, &conc, &focus)
+	if rh != 0 || conc != 2 || focus != 1 {
+		t.Errorf("Blessing of Health: health %d concentration %d focus %d, want 0 2 1", rh, conc, focus)
+	}
+}

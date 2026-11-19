@@ -23,9 +23,13 @@ type SpellDef struct {
 	Duration        int
 	Frequency       int
 	LifeDrain       int
-	Radius          int // the area a spell covers, units; 0 for a single target
-	Pulse           int // nonzero for a song or chant: it pulses while on
-	PulsePower      int // the power each pulse draws after the first
+	Radius          int  // the area a spell covers, units; 0 for a single target
+	Pulse           int  // nonzero for a song or chant: it pulses while on
+	PulsePower      int  // the power each pulse draws after the first
+	ResurrectHealth int  // a resurrection: the percent of hit points the raised character gets
+	ResurrectMana   int  // and of power
+	Concentration   int  // above 0: a lasting buff that holds this much of the caster's concentration while it is on
+	Focus           bool // a focus spell: held by its caster's attention, ended when they act
 	SubSpell        int
 	Uninterruptible bool
 	Icon            int
@@ -88,14 +92,17 @@ func (c *Catalog) loadSpells(db *sql.DB, q func(string, func(*sql.Rows) error) e
 		return "COALESCE(" + name + ",0)"
 	}
 	powerCol, radiusCol, pulseCol, pulsePowerCol := col("power"), col("radius"), col("pulse"), col("pulse_power")
+	rezHCol, rezMCol, concCol, focusCol := col("resurrect_health"), col("resurrect_mana"), col("concentration"), col("is_focus")
 	if err := q(`SELECT id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,
-		sub_spell,uninterruptible,icon,COALESCE(message1,''),COALESCE(message2,''),COALESCE(message3,''),COALESCE(message4,''),`+powerCol+`,`+radiusCol+`,`+pulseCol+`,`+pulsePowerCol+` FROM spell`, func(r *sql.Rows) error {
+		sub_spell,uninterruptible,icon,COALESCE(message1,''),COALESCE(message2,''),COALESCE(message3,''),COALESCE(message4,''),`+powerCol+`,`+radiusCol+`,`+pulseCol+`,`+pulsePowerCol+`,`+rezHCol+`,`+rezMCol+`,`+concCol+`,`+focusCol+` FROM spell`, func(r *sql.Rows) error {
 		s := &SpellDef{}
-		var unint int
+		var unint, focus int
 		if err := r.Scan(&s.ID, &s.Name, &s.Type, &s.Target, &s.Range, &s.CastTime, &s.Recast, &s.Damage, &s.DamageType, &s.Value,
-			&s.Duration, &s.Frequency, &s.LifeDrain, &s.SubSpell, &unint, &s.Icon, &s.Messages[0], &s.Messages[1], &s.Messages[2], &s.Messages[3], &s.Power, &s.Radius, &s.Pulse, &s.PulsePower); err != nil {
+			&s.Duration, &s.Frequency, &s.LifeDrain, &s.SubSpell, &unint, &s.Icon, &s.Messages[0], &s.Messages[1], &s.Messages[2], &s.Messages[3], &s.Power, &s.Radius, &s.Pulse, &s.PulsePower,
+			&s.ResurrectHealth, &s.ResurrectMana, &s.Concentration, &focus); err != nil {
 			return err
 		}
+		s.Focus = focus != 0
 		s.Uninterruptible = unint != 0
 		c.Spells[s.ID] = s
 		return nil
