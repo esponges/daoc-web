@@ -54,8 +54,17 @@ func effectKind(spellType string) string {
 		return effMez
 	case rules.SpellOffensiveProc:
 		return effProc
-	case rules.SpellStrConBuff, rules.SpellDexQuiBuff, rules.SpellStrengthBuff, rules.SpellArmourBuff:
+	case rules.SpellStrConBuff, rules.SpellDexQuiBuff, rules.SpellStrengthBuff, rules.SpellArmourBuff,
+		rules.SpellConstitutionBuff, rules.SpellDexterityBuff, rules.SpellAcuityBuff:
 		return effBuff
+	case rules.SpellCombatSpeedBuff:
+		return effHaste
+	case rules.SpellDamageShield:
+		return effShield
+	case rules.SpellEnduranceRegen:
+		return effEndRegen
+	case rules.SpellPowerRegen:
+		return effPowRegen
 	case rules.SpellDamageAdd:
 		return effAdd
 	case rules.SpellSpeedEnhancement:
@@ -226,6 +235,12 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		z.hurt(target, caster, dmg)
 		if sp.Type == rules.SpellLifedrain && caster.fightable(z) {
 			z.heal(caster, rules.DrainHeal(dmg, sp.LifeDrain))
+		}
+	case rules.SpellCurePoison, rules.SpellCureDisease, rules.SpellCureMezz, rules.SpellCureNearsight:
+		z.cure(caster, target, sp)
+	case rules.SpellSpreadHeal:
+		if cp, ok := caster.(*Player); ok {
+			z.spreadHeal(cp, sp)
 		}
 	default:
 		if kind := effectKind(sp.Type); kind != "" {

@@ -17,6 +17,10 @@ export const EFFECT_KINDS = {
   regen: { label: 'H', colour: '#4a9a5c', title: 'recovering faster' },
   resist: { label: 'R', colour: '#6a7fb5', title: 'resistant' },
   sick: { label: 'X', colour: '#7a6a3a', title: 'weakened by resurrection' },
+  haste: { label: '»', colour: '#c07a2a', title: 'swinging faster' },
+  shield: { label: '^', colour: '#a0522d', title: 'damage shield' },
+  endregen: { label: 'E', colour: '#4a8f3a', title: 'recovering endurance faster' },
+  powregen: { label: 'P', colour: '#4a6fbf', title: 'recovering power faster' },
 };
 
 // What starting to suffer an effect of a kind says.

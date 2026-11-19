@@ -28,6 +28,13 @@ Status: set by the findings.
 - **WHEN** a Healer's amnesia lands on a creature fighting them
 - **THEN** the creature forgets its enemies and may turn on the nearest one again
 
+### Requirement: Constitution, dexterity and acuity buffs
+A constitution buff SHALL raise its holder's constitution by its value, a dexterity buff their dexterity, and an acuity buff the stat their class casts with (and nothing for a class that does not cast), each limited by the buff cap on stats. With a `Concentration` cost they are concentration buffs. Status: reference.
+
+#### Scenario: Acuity on a Healer
+- **WHEN** a level 20 Healer holds a 21-point acuity buff
+- **THEN** their piety is raised by 21, within the buff cap for their level (25)
+
 ### Requirement: Haste and the damage shield
 A haste (combat-speed buff) SHALL shorten its holder's swings by its percent. A damage shield SHALL deal its damage to each attacker who hits the holder in melee. Status: reference.
 
@@ -62,6 +69,14 @@ Status: reference.
 #### Scenario: Power regeneration
 - **WHEN** a Healer holding a power regeneration buff has a power tick
 - **THEN** it returns the buff's value more than without it
+
+#### Scenario: Cure of a mesmerize
+- **WHEN** a mesmerized player is cured of mezz
+- **THEN** the mesmerize ends and they can move again; a cure of poison, disease or nearsight finds nothing to end until those effects exist
+
+#### Scenario: Spread heal
+- **WHEN** a Healer's 187-point spread heal is cast with two group members missing 300 and 100 hit points
+- **THEN** they gain 141 and 46: shares in proportion to what each is missing, never more than that
 
 #### Scenario: Life transfer
 - **WHEN** a Spiritmaster transfers 50 to a group member

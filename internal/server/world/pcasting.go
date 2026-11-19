@@ -377,7 +377,7 @@ func (p *Player) buffBonuses() (stats rules.Stats, af int) {
 			af = max(af, int(e.spell.Value))
 			continue
 		}
-		for s, v := range rules.BuffedStats(e.spell.Type, e.spell.Value) {
+		for s, v := range rules.BuffedStatsFor(p.sh.class, e.spell.Type, e.spell.Value) {
 			stats[s] = max(stats[s], v)
 		}
 	}

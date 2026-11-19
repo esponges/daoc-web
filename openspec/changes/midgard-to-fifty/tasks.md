@@ -31,7 +31,7 @@
   - caster death, zoning, disconnect and cancel end them.
 
   Add a test that asserts nothing leaks.
-- [ ] 4.3 Add the buff types:
+- [x] 4.3 Add the buff types:
   - constitution, dexterity and acuity buffs;
   - haste;
   - damage shield;

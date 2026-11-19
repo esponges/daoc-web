@@ -48,7 +48,9 @@ const (
 // creature casts, plus the buffs and the damage add.
 func ImplementedPlayerSpell(spellType string) bool {
 	switch spellType {
-	case SpellResurrect, SpellStrConBuff, SpellDexQuiBuff, SpellStrengthBuff, SpellArmourBuff, SpellDamageAdd,
+	case SpellConstitutionBuff, SpellDexterityBuff, SpellAcuityBuff, SpellCombatSpeedBuff, SpellDamageShield,
+		SpellEnduranceRegen, SpellPowerRegen, SpellCurePoison, SpellCureDisease, SpellCureMezz, SpellCureNearsight, SpellSpreadHeal,
+		SpellResurrect, SpellStrConBuff, SpellDexQuiBuff, SpellStrengthBuff, SpellArmourBuff, SpellDamageAdd,
 		SpellSpeedEnhancement, SpellHealthRegenBuff, SpellBodyResistBuff, SpellColdResistBuff, SpellEnergyResistBuff,
 		SpellHeatResistBuff, SpellMatterResistBuff, SpellSpiritResistBuff:
 		return true

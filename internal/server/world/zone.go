@@ -234,12 +234,13 @@ func (z *Zone) tickPlayer(p *Player) {
 		if fighting {
 			gain = rules.EnduranceRegenIn
 		}
+		gain = rules.EnduranceRegenGain(gain, p.strongest(effEndRegen))
 		p.end = math.Min(float64(rules.MaxEndurance), p.end+gain)
 	}
 	if z.now >= p.powerAt {
 		p.powerAt = z.now + rules.PowerRegenPeriod
 		if mp := p.sh.maxPower; mp > 0 && p.power < float64(mp) {
-			p.power = math.Min(float64(mp), p.power+rules.PowerRegen(p.Char.Level))
+			p.power = math.Min(float64(mp), p.power+rules.PowerRegenGain(p.Char.Level, p.strongest(effPowRegen)))
 		}
 	}
 	if z.now >= p.healAt {

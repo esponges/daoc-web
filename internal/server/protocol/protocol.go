@@ -579,7 +579,7 @@ func Decode(data []byte) (string, interface{}, error) {
 // EffectView is one lasting effect on the character.
 type EffectView struct {
 	Name string  `json:"nm"`
-	Kind string  `json:"k"`            // "dot", "slow", "stun", "mez", "proc", "buff", "dmgadd", "speed", "regen", "resist": what it does, which picks its icon
+	Kind string  `json:"k"`            // "dot", "slow", "stun", "mez", "proc", "buff", "dmgadd", "speed", "regen", "resist", "sick", "haste", "shield", "endregen", "powregen": what it does, which picks its icon
 	Icon int     `json:"ic"`           // the spell's icon number in the data; not drawn, as icon numbers do not match this install
 	Left float64 `json:"left"`         // seconds to run
 	Of   float64 `json:"of"`           // seconds it lasts in all

@@ -37,7 +37,7 @@ func (p *Player) swingTime() float64 {
 	if p.weapon != nil && p.weapon.Speed > 0 {
 		speed = p.weapon.Speed
 	}
-	return rules.SwingTime(speed, p.sh.stats[rules.QUI])
+	return rules.HastenedSwing(rules.SwingTime(speed, p.sh.stats[rules.QUI]), p.haste())
 }
 
 // weaponSpeed is the held weapon's speed, for style costs.
@@ -519,6 +519,9 @@ func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	z.damaged(p)
 	if p.hp <= 0 {
 		z.killPlayer(p, n)
+	}
+	if !p.dead {
+		z.shieldHits(p, n)
 	}
 	if !p.dead {
 		z.creatureProcs(n, p)
