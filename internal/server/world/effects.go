@@ -21,6 +21,7 @@ type effect struct {
 	// had when it landed.
 	scaled     bool
 	stat, spec int
+	cb         *concBuff // set while a caster holds it by concentration
 }
 
 // Effect kinds, as the client draws them.
@@ -258,6 +259,10 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 		e = &effect{spell: sp, kind: kind}
 		*list = append(*list, e)
 	}
+	if cp, ok := caster.(*Player); ok && e.cb != nil && e.cb.caster != cp {
+		z.dropConc(e.cb) // another caster's cast takes the buff over
+		e.cb = nil
+	}
 	e.caster, e.casterLevel = caster, levelOf(caster)
 	dur := float64(sp.Duration)
 	if sp.pulsing() {
@@ -269,6 +274,11 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 		e.next = z.now + e.every
 		sc, ok := z.scaleFor(caster, sp)
 		e.scaled, e.stat, e.spec = ok, sc.stat, sc.spec
+	}
+	if cp, ok := caster.(*Player); ok && holdsConc(sp) {
+		if tp, ok := target.(*Player); ok {
+			z.noteConc(cp, tp, e)
+		}
 	}
 	tx, ty := target.position()
 	if !(refresh && sp.pulsing()) { // a song pulsing on a member again is not news
@@ -359,6 +369,11 @@ func (z *Zone) damaged(c combatant) {
 // clearEffects removes every effect, as death does.
 func (z *Zone) clearEffects(c combatant) {
 	if l := effectsOf(c); len(*l) > 0 {
+		for _, e := range *l {
+			if e.cb != nil {
+				z.dropConc(e.cb) // what a caster held on them is let go
+			}
+		}
 		*l = nil
 		z.effectsChanged(c)
 	}
@@ -439,8 +454,12 @@ func (z *Zone) effectsChanged(c combatant) {
 		m.Song = p.song.spell.ID
 	}
 	for _, e := range p.effects {
-		m.List = append(m.List, protocol.EffectView{Name: e.spell.Name, Kind: e.kind, Icon: e.spell.Icon,
-			Left: math.Max(0, e.ends-z.now), Of: e.spell.effectSeconds()})
+		v := protocol.EffectView{Name: e.spell.Name, Kind: e.kind, Icon: e.spell.Icon,
+			Left: math.Max(0, e.ends-z.now), Of: e.spell.effectSeconds()}
+		if e.cb != nil {
+			v.Left, v.Of, v.Conc = 0, 0, true
+		}
+		m.List = append(m.List, v)
 	}
 	p.send(m)
 }

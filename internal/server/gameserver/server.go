@@ -365,6 +365,8 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { z.Cast(p, m.Spell, m.Target) })
 	case *protocol.RezAnswer:
 		z.Do(func() { z.AnswerResurrection(p, m.Accept) })
+	case *protocol.ConcCancel:
+		z.Do(func() { z.CancelConc(p, m.ID) })
 	}
 	if typ == protocol.TPing {
 		z.Do(func() { p.Pong() })

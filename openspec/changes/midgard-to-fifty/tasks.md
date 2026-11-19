@@ -24,8 +24,8 @@
 
 ## 4. Part A: concentration and the Healer and Shaman buffs
 
-- [ ] 4.1 Rules: the concentration pool by level and the range and grace time (`rules-concentration`), with registry entries and table tests. Add the pool to the class table and the character sheet.
-- [ ] 4.2 Effects:
+- [x] 4.1 Rules: the concentration pool by level and the range and grace time (`rules-concentration`), with registry entries and table tests. Add the pool to the class table and the character sheet.
+- [x] 4.2 Effects:
   - effects gain a caster and a concentration cost, and concentration effects have no timer;
   - a once-a-second sweep ends them on range and grace time;
   - caster death, zoning, disconnect and cancel end them.

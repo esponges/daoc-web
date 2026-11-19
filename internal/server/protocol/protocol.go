@@ -23,29 +23,30 @@ const StepsPerSecond = 60
 
 // Message types, client to server.
 const (
-	THello     = "hello"  // first message: protocol version and the character to play
-	TInput     = "input"  // a run of fixed movement steps
-	TChat      = "chat"   // say or broadcast
-	TTarget    = "target" // select an entity
-	TAttack    = "attack" // auto-attack on or off
-	TStyle     = "style"  // use a style by its slot on the bar
-	TLoot      = "loot"   // take an item from a corpse
-	TEquip     = "equip"  // move an item between slots
-	TUse       = "use"    // use a zone exit, etc.
-	TGM        = "gm"     // an administrator's command
-	TPing      = "ping"
-	TRelease   = "release"    // a dead character asks to be stood up now rather than when the timer ends
-	TInteract  = "interact"   // ask an NPC to do what it does (open a merchant's shop)
-	TBuy       = "buy"        // buy an item from the open shop
-	TSell      = "sell"       // sell a pack item to the open shop
-	TBarSet    = "barset"     // put a style on a bar slot
-	TRepair    = "repair"     // ask the open blacksmith for a repair price, or accept it
-	TTrain     = "train"      // raise a spec at the trainer
-	TRestore   = "restore"    // pay a healer to restore lost constitution
-	TPray      = "pray"       // pray at the targeted gravestone
-	TGroupOp   = "groupop"    // invite, accept, decline, leave or remove from a group
-	TCast      = "cast"       // cast a spell from the spellbook
-	TRezAnswer = "rez-answer" // accept or decline a resurrection offer
+	THello      = "hello"  // first message: protocol version and the character to play
+	TInput      = "input"  // a run of fixed movement steps
+	TChat       = "chat"   // say or broadcast
+	TTarget     = "target" // select an entity
+	TAttack     = "attack" // auto-attack on or off
+	TStyle      = "style"  // use a style by its slot on the bar
+	TLoot       = "loot"   // take an item from a corpse
+	TEquip      = "equip"  // move an item between slots
+	TUse        = "use"    // use a zone exit, etc.
+	TGM         = "gm"     // an administrator's command
+	TPing       = "ping"
+	TRelease    = "release"     // a dead character asks to be stood up now rather than when the timer ends
+	TInteract   = "interact"    // ask an NPC to do what it does (open a merchant's shop)
+	TBuy        = "buy"         // buy an item from the open shop
+	TSell       = "sell"        // sell a pack item to the open shop
+	TBarSet     = "barset"      // put a style on a bar slot
+	TRepair     = "repair"      // ask the open blacksmith for a repair price, or accept it
+	TTrain      = "train"       // raise a spec at the trainer
+	TRestore    = "restore"     // pay a healer to restore lost constitution
+	TPray       = "pray"        // pray at the targeted gravestone
+	TGroupOp    = "groupop"     // invite, accept, decline, leave or remove from a group
+	TCast       = "cast"        // cast a spell from the spellbook
+	TRezAnswer  = "rez-answer"  // accept or decline a resurrection offer
+	TConcCancel = "conc-cancel" // let go of one of the buffs the caster holds
 )
 
 // Message types, server to client.
@@ -75,6 +76,7 @@ const (
 	TGroup       = "group"       // the character's group: its members and how they fare
 	TGroupInv    = "groupinv"    // an invitation to join a group
 	TRezOffer    = "rez-offer"   // a resurrection offered to a dead character, or withdrawn
+	TConc        = "conc"        // the concentration a caster holds: pool, use and the buffs
 )
 
 // Envelope reads just the type of a message.
@@ -463,6 +465,8 @@ type Stats struct {
 	MaxHP     int       `json:"mhp"`
 	MaxEnd    int       `json:"mend"`
 	MaxPower  int       `json:"mpw,omitempty"`
+	MaxConc   int       `json:"mcn,omitempty"` // the concentration pool, for a class that casts
+	ConcUsed  int       `json:"cnu,omitempty"` // and what the caster's buffs hold of it
 	Specs     []SpecRow `json:"specs"`
 	Unspent   int       `json:"pts"`
 	Abilities []Ability `json:"ab"`
@@ -555,6 +559,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Cast{}
 	case TRezAnswer:
 		v = &RezAnswer{}
+	case TConcCancel:
+		v = &ConcCancel{}
 	case TPray:
 		return TPray, nil, nil
 	case TPing:
@@ -573,10 +579,11 @@ func Decode(data []byte) (string, interface{}, error) {
 // EffectView is one lasting effect on the character.
 type EffectView struct {
 	Name string  `json:"nm"`
-	Kind string  `json:"k"`    // "dot", "slow", "stun", "mez", "proc", "buff", "dmgadd", "speed", "regen", "resist": what it does, which picks its icon
-	Icon int     `json:"ic"`   // the spell's icon number in the data; not drawn, as icon numbers do not match this install
-	Left float64 `json:"left"` // seconds to run
-	Of   float64 `json:"of"`   // seconds it lasts in all
+	Kind string  `json:"k"`            // "dot", "slow", "stun", "mez", "proc", "buff", "dmgadd", "speed", "regen", "resist": what it does, which picks its icon
+	Icon int     `json:"ic"`           // the spell's icon number in the data; not drawn, as icon numbers do not match this install
+	Left float64 `json:"left"`         // seconds to run
+	Of   float64 `json:"of"`           // seconds it lasts in all
+	Conc bool    `json:"cc,omitempty"` // a concentration buff: no timer, left and of are 0
 }
 
 // Effects is the character's own lasting effects, sent whenever they change,
@@ -605,6 +612,30 @@ type GroupOp struct {
 	Op   string `json:"op"`
 	ID   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
+}
+
+// Conc is a caster's concentration: the pool (max), what their buffs hold
+// (used) and each buff held, sent whenever any of it changes.
+type Conc struct {
+	T    string     `json:"t"`
+	Max  int        `json:"max"`
+	Used int        `json:"used"`
+	List []ConcView `json:"list"`
+}
+
+// ConcView is one buff a caster holds: its id (for cancelling), the spell, who
+// it is on and what it costs.
+type ConcView struct {
+	ID     int    `json:"id"`
+	Name   string `json:"nm"`
+	Target string `json:"tg"`
+	Cost   int    `json:"cost"`
+}
+
+// ConcCancel lets go of the buff with this id.
+type ConcCancel struct {
+	T  string `json:"t"`
+	ID int    `json:"id"`
 }
 
 // RezOffer tells a dead character that a resurrection is offered, by whom and

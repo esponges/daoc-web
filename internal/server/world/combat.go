@@ -537,6 +537,7 @@ func (z *Zone) killPlayer(p *Player, by *NPC) {
 	z.closeShop(p)
 	z.cancelPlayerCast(p, "")
 	p.song = nil // a dead caster plays nothing
+	z.endAllConc(p)
 	p.hp = 0
 	p.dead = true
 	p.deadAt = z.now

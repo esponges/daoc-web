@@ -162,6 +162,7 @@ func (z *Zone) Tick() {
 	if z.tick%TickRate == 0 {
 		z.groupTick()
 		z.checkTimed()
+		z.sweepConc()
 	}
 	if z.tick%(TickRate*clockEvery) == 0 {
 		z.sendClock()
@@ -169,6 +170,7 @@ func (z *Zone) Tick() {
 	z.snapshots()
 	for id, p := range z.players {
 		if p.closed.Load() {
+			z.endAllConc(p) // a caster who leaves lets go of what they held
 			delete(z.players, id)
 		}
 	}

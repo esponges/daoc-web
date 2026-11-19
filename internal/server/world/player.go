@@ -186,8 +186,11 @@ type Player struct {
 	deathAt       [3]float64
 	lastLoss      int64
 	creatureDeath bool
-	rez           *rezOffer // a resurrection offered to them while dead
-	raised        bool      // being raised: the release stage of their death is skipped
+	rez           *rezOffer   // a resurrection offered to them while dead
+	concs         []*concBuff // the lasting buffs they hold on others
+	concNext      int
+	concSent      protocol.Conc
+	raised        bool // being raised: the release stage of their death is skipped
 	prayUntil     float64
 	prayFrom      [2]float64
 	prayCombat    float64

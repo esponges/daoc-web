@@ -173,6 +173,10 @@ func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 		p.errMsg("cast", rules.SightMessage)
 		return
 	}
+	if msg := z.concRefusal(p, sp, target); msg != "" {
+		p.errMsg("cast", msg)
+		return
+	}
 	p.casting = &playerCast{spell: sp, target: target, ends: rules.CastEnds(z.now, sp.CastTime), x: p.Body.X, y: p.Body.Y}
 	p.pending = -1
 	z.event(protocol.Event{K: "cast", From: p.ID, To: target.entityID(), Text: sp.Name, Dur: sp.CastTime}, p.Body.X, p.Body.Y)
@@ -308,6 +312,10 @@ func (z *Zone) continuePlayerCast(p *Player) {
 	}
 	if p.power < float64(cost) {
 		sys(p, "You don't have enough power.")
+		return
+	}
+	if msg := z.concRefusal(p, sp, c.target); msg != "" {
+		sys(p, msg)
 		return
 	}
 	p.power -= float64(cost)
