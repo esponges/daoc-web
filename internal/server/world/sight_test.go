@@ -172,3 +172,20 @@ func TestCreatureWithoutSightClosesIn(t *testing.T) {
 	}
 	_ = protocol.Event{}
 }
+
+func TestFloorsBlockOnlyBetweenStoreys(t *testing.T) {
+	b := &builder{}
+	// A big level floor at z = 5200 across the whole grid.
+	b.add(newTri([3]float32{25500, 25500, 5200}, [3]float32{35500, 25500, 5200}, [3]float32{25500, 35500, 5200}), true)
+	b.add(newTri([3]float32{35500, 25500, 5200}, [3]float32{35500, 35500, 5200}, [3]float32{25500, 35500, 5200}), true)
+	c := b.build(25000, 25000, 36000, 36000)
+	if !c.hasFloor {
+		t.Fatal("the floor was not kept")
+	}
+	if !c.Sees([3]float64{30000, 30000, 5300}, [3]float64{30500, 30000, 5100}) {
+		t.Error("a ledge 100 below the eye is seen over on one level")
+	}
+	if c.Sees([3]float64{30000, 30000, 5600}, [3]float64{30500, 30000, 4800}) {
+		t.Error("a floor between two storeys should block")
+	}
+}

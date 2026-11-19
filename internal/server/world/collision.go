@@ -414,6 +414,11 @@ func OutdoorCollision(webData string, zone int) Mover {
 // that no bin the segment crosses is skipped, even at a corner.
 const sightStep = binSize / 8
 
+// storeySep is how far apart two eye points must stand, in height, before the
+// floors and ceilings between them count. On one level a ledge or a step is
+// seen over; only a different storey is closed off by its floor.
+const storeySep = 250.0
+
 // Sees says whether the segment between two eye points crosses no wall, floor,
 // ceiling or trunk. It reads only the bins the segment passes through, so a
 // zone-wide query costs a handful of triangle tests. A nil Collision, one
@@ -459,7 +464,7 @@ func (c *Collision) Sees(a, b [3]float64) bool {
 		}
 	}
 	gather(c.wallBins, false)
-	if c.hasFloor {
+	if c.hasFloor && math.Abs(a[2]-b[2]) > storeySep {
 		gather(c.floorBins, true)
 	}
 	return rules.Visible(a, b, s)
