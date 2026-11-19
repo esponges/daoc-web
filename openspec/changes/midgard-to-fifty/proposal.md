@@ -19,7 +19,7 @@ The work is in four parts. Each part is shippable on its own and goes to the liv
 - **Line of sight.** The server decides line of sight from what it already loads: the terrain heightmap, building and dungeon hulls, and tree trunks. A player's spell, a creature's spell and (from part C) an arrow all need a clear line from caster to target, checked at the start and at the end of the cast. A caster who can't see the target gets the 1.65 message, and a creature that can't see its target moves closer instead of casting.
 - **Resurrection.** The `Resurrect` spells of the Healer, Shaman and Spiritmaster (Seer and Mystic lines) target a dead player who has not released.
   - The raised player stands up with the spell's `ResurrectHealth` and `ResurrectMana` percent.
-  - They regain part of the experience the death cost, and take on resurrection sickness.
+  - They skip the second stage of a death (no second experience loss, no constitution loss, no gravestone), and take on resurrection sickness.
   - The dead player is asked to accept, and releasing still works while they wait.
 - **Concentration.** Every caster has a concentration pool that grows with level. A spell with `Concentration` > 0 is a concentration buff: it stays on its target until cancelled, until the caster is out of range, or until the caster dies, and its cost is held from the pool for as long as it is on. The buffs a Healer and a Shaman are known for come in with it:
   - the stat buffs (`ConstitutionBuff`, `DexterityBuff`, `AcuityBuff`) and the existing ones as concentration;

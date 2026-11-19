@@ -45,19 +45,20 @@ type Rule struct {
 
 // Sources are the places rules come from, by key.
 var Sources = map[string]string{
-	"disorder":      "disorder.dk, Dark Age of Camelot 1.65 mechanics pages",
-	"herald":        "Camelot Herald wiki (melee damage, weapon skill, styles)",
-	"grabbag":       "Mythic's Friday Grab Bag answers",
-	"kb-xpclamp":    "Mythic knowledge base: experience clamp raised to 1.25 times a same-level kill",
-	"silicondragon": "silicondragon.com 'XPs' tables: experience and constitution restore",
-	"mythic-con":    "Mythic's description of con colour bands (level / 10 + 1)",
-	"zam-starts":    "ZAM's starting-zones table (camelot.allakhazam.com/Start_Zones.html)",
-	"opendaoc":      "OpenDAoC-Core, read to understand (GPL; nothing copied)",
-	"dolsharp":      "DOLSharp, read to understand (GPL; nothing copied)",
-	"forum2001":     "a 2001 forum thread on Guard, Protect, Intercept and Engage (outline only)",
-	"allakhazam":    "Allakhazam's song entries and the Camelot Herald class pages (one song at a time; a speed song does not work in combat)",
-	"data":          "the imported community database",
-	"project":       "this project's choice",
+	"disorder":       "disorder.dk, Dark Age of Camelot 1.65 mechanics pages",
+	"herald":         "Camelot Herald wiki (melee damage, weapon skill, styles)",
+	"grabbag":        "Mythic's Friday Grab Bag answers",
+	"kb-xpclamp":     "Mythic knowledge base: experience clamp raised to 1.25 times a same-level kill",
+	"silicondragon":  "silicondragon.com 'XPs' tables: experience and constitution restore",
+	"mythic-con":     "Mythic's description of con colour bands (level / 10 + 1)",
+	"zam-starts":     "ZAM's starting-zones table (camelot.allakhazam.com/Start_Zones.html)",
+	"opendaoc":       "OpenDAoC-Core, read to understand (GPL; nothing copied)",
+	"dolsharp":       "DOLSharp, read to understand (GPL; nothing copied)",
+	"forum2001":      "a 2001 forum thread on Guard, Protect, Intercept and Engage (outline only)",
+	"herald-patches": "Camelot Herald patch notes (1.37c, 1.52, 1.65) and the spell texts of the community database, which are Mythic's",
+	"allakhazam":     "Allakhazam's song entries and the Camelot Herald class pages (one song at a time; a speed song does not work in combat)",
+	"data":           "the imported community database",
+	"project":        "this project's choice",
 }
 
 var registry []Rule

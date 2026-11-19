@@ -1,6 +1,6 @@
 ## 1. Part A: sources for the group essentials
 
-- [ ] 1.1 Read DOLSharp and OpenDAoC-Core for understanding only, and search for a published 1.65 account, on:
+- [x] 1.1 Read DOLSharp and OpenDAoC-Core for understanding only, and search for a published 1.65 account, on:
   - line-of-sight checks: when a cast is checked, and the message;
   - the concentration pool by level, concentration range and grace time;
   - resurrection: the experience returned, the sickness and its length, and the time before release is forced;

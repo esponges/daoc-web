@@ -345,6 +345,14 @@ Sources the rules come from:
   the Song of Travel values by level. Friday's Grab Bag answer on resist caps
   ([story 736](https://camelot.allakhazam.com/story.html?story=736)): buff and item
   resist caps are separate.
+- The Camelot Herald's patch notes (1.37c: a resurrection offer is answered within
+  15 seconds; [1.52](https://camelotherald.fandom.com/wiki/Patch_Notes:_Version_1.52):
+  concentration returns after resurrection sickness;
+  [1.65](https://camelotherald.fandom.com/wiki/Patch_Notes:_Version_1.65): a timer
+  shows the time to release) and the Grab Bag
+  answer that the concentration pool depends on level and casting stat, not spec.
+  The spell texts in the community database are Mythic's own, and say that a
+  resurrection spares the release penalty.
 - [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
   understand rules that no public page gives a number for. Nothing is copied
   from it.

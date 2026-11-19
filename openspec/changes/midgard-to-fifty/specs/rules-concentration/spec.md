@@ -5,7 +5,7 @@ Defines the concentration pool that limits a caster's long-lasting buffs, which 
 ## ADDED Requirements
 
 ### Requirement: Casters have a concentration pool
-Every class with a spell line SHALL have a concentration pool whose size grows with level, from the rule recorded in the rule book with its source. Classes without spells SHALL have no pool. Status: set by the findings (reference or provisional).
+Every class with a spell line SHALL have a concentration pool whose size grows with level, from the rule recorded in the rule book with its source. Classes without spells SHALL have no pool. The pool is 4.4 times the level, adjusted by the caster's casting stat: a stat over 50 adds (stat − 50) / 2 percent, one under 50 takes away (50 − stat) percent. Status: reference (DOLSharp and OpenDAoC agree).
 
 #### Scenario: A level 20 Healer
 - **WHEN** a level 20 Healer's character sheet is sent
@@ -24,7 +24,7 @@ A spell with `Concentration` greater than 0 SHALL be refused when its cost excee
 
 #### Scenario: No room
 - **WHEN** the same Shaman with 4 free concentration casts it
-- **THEN** the cast is refused with "You do not have enough concentration" and no power is spent
+- **THEN** the cast is refused with "This spell requires 6 concentration points to cast!" and no power is spent
 
 #### Scenario: Recasting on the same target
 - **WHEN** the Shaman casts the same buff again on the same target
@@ -35,9 +35,9 @@ A concentration buff SHALL end and return its cost when:
 - the caster cancels it;
 - the caster dies;
 - the caster or the target leaves the zone;
-- the target is out of the caster's concentration range for longer than the grace time the rule gives.
+- the target is out of the caster's concentration range (5,000 units) for longer than the grace time (20 seconds).
 
-A self-buff SHALL ignore range. Status: reference for range and grace time.
+A self-buff SHALL ignore range. The range is 5,000 units and the grace time 20 seconds. Status: reference for the range (OpenDAoC's default), provisional for the grace time.
 
 #### Scenario: The target runs off
 - **WHEN** a buffed group member stays beyond the concentration range past the grace time

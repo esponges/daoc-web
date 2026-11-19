@@ -86,7 +86,12 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
   - The Camelot Herald class pages for the Skald and Bard and Allakhazam's song
     entries (one song at a time; a speed song does not work in combat), and the
     Grab Bag answer that buff and item resist caps are separate;
-  - OpenDAoC-Core, for reference-status rules only.
+  - The Camelot Herald patch notes (1.37c: a resurrection offer is answered within
+    15 seconds; 1.52: concentration after resurrection sickness; 1.65: the release
+    timer) and Mythic's Grab Bag answer that concentration depends on level and the
+    casting stat, not the spec; the community database's own spell texts, which are
+    Mythic's (a resurrection "eliminates the experience penalty and con loss");
+  - OpenDAoC-Core and DOLSharp, for reference-status rules only.
 
   If you use another source (a wiki, a format write-up, a community table), add
   it here and to the README.
