@@ -7,6 +7,8 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+
+	"daocweb/internal/server/rules"
 )
 
 // How a walker meets the scenery. Hulls, and for an interior the visible
@@ -407,3 +409,60 @@ func OutdoorCollision(webData string, zone int) Mover {
 	}
 	return c
 }
+
+// sightStep is how far apart bins are sampled along a sight line: fine enough
+// that no bin the segment crosses is skipped, even at a corner.
+const sightStep = binSize / 8
+
+// Sees says whether the segment between two eye points crosses no wall, floor,
+// ceiling or trunk. It reads only the bins the segment passes through, so a
+// zone-wide query costs a handful of triangle tests. A nil Collision, one
+// with no data, sees everything.
+func (c *Collision) Sees(a, b [3]float64) bool {
+	if c == nil {
+		return true
+	}
+	var s rules.Scenery
+	seen := map[int32]bool{}
+	gather := func(bins [][]int32, floor bool) {
+		n := int(math.Ceil(math.Hypot(b[0]-a[0], b[1]-a[1])/sightStep)) + 1
+		last := -1
+		for k := 0; k <= n; k++ {
+			t := float64(k) / float64(n)
+			i := int(math.Floor((a[0] + t*(b[0]-a[0]) - c.x0) / binSize))
+			j := int(math.Floor((a[1] + t*(b[1]-a[1]) - c.y0) / binSize))
+			if i < 0 || j < 0 || i >= c.w || j >= c.h || j*c.w+i == last {
+				continue
+			}
+			last = j*c.w + i
+			for _, idx := range bins[last] {
+				key := idx
+				if floor {
+					key = -idx - 1 // floors and walls share indices, keep them apart
+				}
+				if seen[key] {
+					continue
+				}
+				seen[key] = true
+				switch {
+				case floor:
+					t := &c.floorTris[idx]
+					s.Tris = append(s.Tris, [3][3]float64{vec(t.a), vec(t.b), vec(t.c)})
+				case int(idx) >= len(c.tris):
+					k := c.cyls[int(idx)-len(c.tris)]
+					s.Cyls = append(s.Cyls, rules.Cylinder{X: float64(k.x), Y: float64(k.y), R: float64(k.r), ZMin: float64(k.zmin), ZMax: float64(k.zmax)})
+				default:
+					t := &c.tris[idx]
+					s.Tris = append(s.Tris, [3][3]float64{vec(t.a), vec(t.b), vec(t.c)})
+				}
+			}
+		}
+	}
+	gather(c.wallBins, false)
+	if c.hasFloor {
+		gather(c.floorBins, true)
+	}
+	return rules.Visible(a, b, s)
+}
+
+func vec(v [3]float32) [3]float64 { return [3]float64{float64(v[0]), float64(v[1]), float64(v[2])} }

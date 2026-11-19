@@ -128,3 +128,6 @@ func (in *Interior) SpawnAt() (x, y, z float64, ok bool) {
 	}
 	return cx, cy, box[0][2], false
 }
+
+// Sees is Collision.Sees over the interior's geometry.
+func (in *Interior) Sees(a, b [3]float64) bool { return in.col.Sees(a, b) }

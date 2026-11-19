@@ -10,9 +10,9 @@
 
 ## 2. Part A: line of sight
 
-- [ ] 2.1 Add the segment query to `world/collision.go`: a walk over the bins the segment crosses, testing blocking triangles, trunks and the heightmap, and passing when the zone has no collision data. Add `rules` entries `los.visible` and `los.cast` with table tests: open ground, a hill, a dungeon wall, a trunk, no data.
-- [ ] 2.2 Check a player's cast at its start and at landing in `pcasting.go`. Refuse the cast with the message, spend no power, and filter area-spell targets by line of sight from the centre. Add world tests.
-- [ ] 2.3 In `casting.go`, a creature without line of sight closes in instead of casting. Add a world test with a wall between them.
+- [x] 2.1 Add the segment query to `world/collision.go`: a walk over the bins the segment crosses, testing blocking triangles, trunks and the heightmap, and passing when the zone has no collision data. Add `rules` entries `los.visible` and `los.cast` with table tests: open ground, a hill, a dungeon wall, a trunk, no data.
+- [x] 2.2 Check a player's cast at its start and at landing in `pcasting.go`. Refuse the cast with the message, spend no power, and filter area-spell targets by line of sight from the centre. Add world tests.
+- [x] 2.3 In `casting.go`, a creature without line of sight closes in instead of casting. Add a world test with a wall between them.
 - [ ] 2.4 Browser check: cast through a Jordheim wall, past a tree and over a hill, and watch a dungeon caster creature come around a corner. Record what was seen.
 
 ## 3. Part A: resurrection

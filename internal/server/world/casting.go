@@ -35,9 +35,10 @@ func (z *Zone) startCasting(n *NPC) bool {
 	tx, ty := n.target.position()
 	dist := math.Hypot(tx-n.Body.X, ty-n.Body.Y)
 	hurt := z.hurtAlly(n, 0)
+	blind := !z.sees(n, n.target) // behind cover it closes in instead of casting
 	opts := make([]rules.CastOption, len(n.spells))
 	for i, s := range n.spells {
-		opts[i] = rules.CastOption{Heal: s.Type == rules.SpellHeal, Ready: z.now >= n.spellReady[s.ID], Range: s.Range}
+		opts[i] = rules.CastOption{Heal: s.Type == rules.SpellHeal, Ready: z.now >= n.spellReady[s.ID], Range: s.Range, Blind: blind}
 		if effectKind(s.Type) != "" {
 			opts[i].Already = hasEffect(n.target, s.ID)
 		}

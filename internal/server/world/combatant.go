@@ -5,18 +5,21 @@ package world
 type combatant interface {
 	entityID() int64
 	position() (x, y float64)
+	footZ() float64 // the height of its feet
 	// fightable says whether it can still be fought in a zone: alive, there,
 	// and for a player, still connected.
 	fightable(z *Zone) bool
 }
 
 func (p *Player) entityID() int64              { return p.ID }
+func (p *Player) footZ() float64               { return p.Body.Z }
 func (p *Player) position() (float64, float64) { return p.Body.X, p.Body.Y }
 func (p *Player) fightable(z *Zone) bool {
 	return !p.dead && !p.closed.Load() && p.Zone == z && p.ride == nil
 }
 
 func (n *NPC) entityID() int64              { return n.ID }
+func (n *NPC) footZ() float64                { return n.Body.Z }
 func (n *NPC) position() (float64, float64) { return n.Body.X, n.Body.Y }
 func (n *NPC) fightable(z *Zone) bool       { return !n.dead() && !n.hidden && z.byID[n.ID] == n }
 

@@ -169,6 +169,10 @@ func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 		p.errMsg("cast", "Your target is too far away.")
 		return
 	}
+	if z.needsSight(p, sp, target) && !z.sees(p, target) {
+		p.errMsg("cast", rules.SightMessage)
+		return
+	}
 	p.casting = &playerCast{spell: sp, target: target, ends: rules.CastEnds(z.now, sp.CastTime), x: p.Body.X, y: p.Body.Y}
 	p.pending = -1
 	z.event(protocol.Event{K: "cast", From: p.ID, To: target.entityID(), Text: sp.Name, Dur: sp.CastTime}, p.Body.X, p.Body.Y)
@@ -220,16 +224,17 @@ func isPBAoE(sp *SpellDef) bool { return isArea(sp) && sp.Range == 0 }
 // attack within its radius of the centre, which is the caster for a spell of
 // range 0 and the target otherwise. Players are never hit. No falloff.
 func (z *Zone) castAreaTargets(p *Player, sp *SpellDef, aimed combatant) []combatant {
-	cx, cy := p.Body.X, p.Body.Y
+	cx, cy, cz := p.Body.X, p.Body.Y, p.Body.Z
 	if !isPBAoE(sp) {
 		cx, cy = aimed.position()
+		cz = aimed.footZ()
 	}
 	var out []combatant
 	for _, n := range z.npcs {
 		if n.dead() || n.gone || n.Friendly || !n.fightable(z) {
 			continue
 		}
-		if rules.AreaHits(math.Hypot(n.Body.X-cx, n.Body.Y-cy), float64(sp.Radius)) {
+		if rules.AreaHits(math.Hypot(n.Body.X-cx, n.Body.Y-cy), float64(sp.Radius)) && z.canSee(cx, cy, cz, n.Body.X, n.Body.Y, n.Body.Z) {
 			out = append(out, n)
 		}
 	}
@@ -284,6 +289,11 @@ func (z *Zone) continuePlayerCast(p *Player) {
 	if !rules.CastLands(c.target.fightable(z), dist, sp.Range) {
 		z.event(protocol.Event{K: "castfail", From: p.ID, Text: sp.Name}, p.Body.X, p.Body.Y)
 		sys(p, "Your target is no longer there, and "+sp.Name+" fails.")
+		return
+	}
+	if z.needsSight(p, sp, c.target) && !z.sees(p, c.target) {
+		z.event(protocol.Event{K: "castfail", From: p.ID, Text: sp.Name}, p.Body.X, p.Body.Y)
+		sys(p, rules.SightMessage)
 		return
 	}
 	if p.power < float64(cost) {

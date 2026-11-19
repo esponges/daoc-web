@@ -12,6 +12,7 @@ type CastOption struct {
 	Ready   bool    // its recast delay has passed
 	Range   float64 // how far it reaches
 	Already bool    // a lasting effect of it is already on the target
+	Blind   bool    // the creature cannot see its target: a hostile spell cannot be aimed
 }
 
 // ChooseCast is a creature's combat decision: the spell to cast, or -1 to
@@ -27,7 +28,7 @@ func ChooseCast(spells []CastOption, targetDist float64, someoneHurt bool) int {
 		}
 	}
 	for i, s := range spells {
-		if !s.Heal && s.Ready && !s.Already && targetDist <= s.Range {
+		if !s.Heal && s.Ready && !s.Already && !s.Blind && targetDist <= s.Range {
 			return i
 		}
 	}
