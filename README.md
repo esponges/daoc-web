@@ -14,8 +14,9 @@ imported at build time into `server/data/` (gitignored).
 
 ## What you can do today
 
-- Log in, make a character from the start table (Warrior, Berserker, Savage,
-  Healer, Shaman, Runemaster, Thane or Skald, each with its races, male or female) and walk
+- Log in, make a character from the start table (any of Midgard's twelve
+  classes: Warrior, Berserker, Savage, Healer, Shaman, Runemaster, Thane, Skald,
+  Spiritmaster, Bonedancer, Hunter or Shadowblade, each with its races, male or female) and walk
   Midgard: all 25 outdoor zones, its dungeons and Jordheim, with day and night,
   collision and the neighbouring-zone borders.
 - Fight the zone's creatures: swing speed, hit, evade, parry and block,
@@ -44,22 +45,22 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | --- | --- |
 | Creature spell types | 15 of 15 |
 | Class spell types | 64 of 73 (939 of 987 spells) |
-| Style features | 12 of 14 (1,379 of 1,383 styles) |
-| Abilities | 18 of 30 (80 of 100 grants) |
-| Creature kinds | 22 of 110 (29,110 of 29,932 placements; 7 kinds left out as not classic) |
+| Style features | 13 of 14 (1,382 of 1,383 styles) |
+| Abilities | 21 of 30 (83 of 100 grants) |
+| Creature kinds | 23 of 110 (29,118 of 29,932 placements; 7 kinds left out as not classic) |
 | Quests | 0 of 81 |
 | Keep doors | 0 of 432 |
 | Keeps | 0 of 79 |
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 0 gaps in 10 five-level bands (31 to 50 is the project's added stock) |
-| Rules | 26 documented, 64 reference, 31 provisional |
+| Rules | 26 documented, 66 reference, 34 provisional |
 
-So: the solo-and-small-group player-versus-environment loop works, for eight of the twelve
-Midgard's classes (trainers teach those eight). Not started: quests, pets and
-charm, crafting, housing, keeps, relics, battlegrounds
-and every realm but Midgard. Armour and weapons stop at level 30 in the data the
-merchants sell from. [Known limitations](#known-limitations) has the rest.
+So: the solo-and-small-group player-versus-environment loop works, for all twelve of
+Midgard's classes (trainers teach them), with pets and charm, bows, stealth,
+poisons and the left hand. Not started: tasks and quests, crafting, housing,
+keeps, relics, battlegrounds and every realm but Midgard. Merchant armour and
+weapons run to level 50 with stock this project added above level 30. [Known limitations](#known-limitations) has the rest.
 
 ## Where things are
 
@@ -392,7 +393,7 @@ The current reading is the table at the top of this file.
 ### Classes, spells and power
 
 The creation page offers every race and class pair the data's start table lists
-for Warrior, Berserker, Savage, Healer, Shaman, Runemaster, Thane and Skald, each with a
+for all twelve Midgard classes, each with a
 choice of male or female. A caster has a power pool (`rules/power.go`;
 reference: the community servers' numbers, no public 1.65 account) and a
 spellbook built from the imported spell lines of the specs they train
@@ -409,9 +410,8 @@ creatures alike (a creature without sight closes in instead of casting). A
 lasting buff with a `Concentration` cost holds that much of the caster's pool
 while it is on, with no timer, until it is cancelled (the K list), the caster
 dies or leaves, the target leaves, or the target stays more than 5,000 units
-away for 20 seconds. Not yet: pets and
-charm, the focus bonus on power cost, scaling of buffs and debuffs by spec (the
-sources differ; buffs are flat here), and the other Midgard classes.
+away for 20 seconds. Not yet: the focus bonus on power cost and scaling of buffs and debuffs by spec (the
+sources differ; buffs are flat here).
 An area spell hits every creature inside its radius with no falloff, around the
 caster when its range is 0 and around the target otherwise. A song or chant is a
 toggle that lands on the group and pulses on it every few seconds; only one is
@@ -525,7 +525,7 @@ look at them (`/uidemo.html` on the running server).
   models patch 1.65; the hit points, damage, experience and weapon-skill
   numbers are this project's. Creatures and players cast, and styles and
   weapons fire their procs, but there are no quests, crafting,
-  realm-versus-realm or housing, and only six of Midgard's twelve classes. A creature
+  realm-versus-realm or housing. A creature
   type with no converted character is left out, and style icons are not
   converted. The table at the top says how much of each is done.
 - **Line of sight is provisional.** Hulls and trunks block, terrain is sampled every
@@ -557,7 +557,7 @@ look at them (`/uidemo.html` on the running server).
 - **Faces, not hair.** A humanoid's head wears the Face skin from
   `monsters.csv`; the hair is a separate style number that is not mapped, so
   a head shows only what its face texture paints.
-- **Character options are thin.** A character is one of the six playable
+- **Character options are thin.** A character is one of the twelve playable
   classes in the races the start table allows, male or female, with no face,
   hair or name-style choices beyond that. Repair is a plain panel; the stock
   frame has none. The clock has no plain window when the converted interface is

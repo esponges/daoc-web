@@ -204,6 +204,21 @@ func TestSpiritmasterAndBonedancer(t *testing.T) {
 	})
 }
 
+func TestShadowblade(t *testing.T) {
+	s := Classes[ClassShadowblade]
+	vector(t, cs, "Shadowblade numbers", func(t *testing.T) {
+		if s.ID != 23 || s.Primary != DEX || s.Secondary != QUI || s.Tertiary != STR || s.BaseHP != 760 ||
+			s.WeaponSkillBase != 360 || s.SpecMultiplier != 22 || s.Base != "Rogue" || s.Casts {
+			t.Errorf("Shadowblade is %+v", s)
+		}
+		for race, want := range map[int]bool{5: true, 6: false, 7: false, 8: true, 14: true} {
+			if s.MayBe(race) != want {
+				t.Errorf("race %d may be a Shadowblade: %v, want %v", race, s.MayBe(race), want)
+			}
+		}
+	})
+}
+
 func TestHunter(t *testing.T) {
 	h := Classes[ClassHunter]
 	vector(t, cs, "Hunter numbers", func(t *testing.T) {

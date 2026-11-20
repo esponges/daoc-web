@@ -217,3 +217,21 @@ Read from OpenDAoC-Core (`gameobjects/GamePlayer.cs`, `skillhandler/StealthSpecH
 - The item table's poison spell and charges are now imported (`poison_spell`, `poison_charges`). 142 items are poisons (object type 46); every one lists 1 charge (a few list 0), so a poison lasts one hit unless the stack is the unit. The poison spell is a damage over time, a strength or constitution debuff, an unbreakable slow, a disease, a combat-speed or fatigue debuff, or an offensive proc whose `Value` is the spell it fires; the server fires the inner spell for a proc.
 - 21 poison items name a spell that is not in the spell table (the "inhibiting" poisons); none of them is on sale. Of the poisons merchants sell (96 distinct items on 34 lists), all 96 have a castable spell, so no stock was added.
 - A poison is saved with the weapon in the player database (columns `poison` and `charges`, added on start), and moves with the item.
+
+## 10.5 What was seen in the browser (2026-11-20, scratch server on port 8778, two clients)
+
+A Norseman Shadowblade ("Shade", level 1) in one tab and a Norseman Warrior ("Watcher", level 1) in another, one account.
+
+- **Creation:** `norseman-shadowblade` is offered (Norseman, Kobold, Valkyn).
+- **Hiding:** H printed "You are now hidden." and an "h" badge showed in the effects area.
+- **Translucent self:** with the hider in an open field their figure was drawn translucent, blending with the ground (alpha 0.4, `web/character.js`).
+- **Creatures:** the hider stood about 300 units from four sveawolf cubs (aggro range 700, detection radius 126 for a level 1 against Stealth 1) and none came; a visible character there had been attacked at once in the Hunter check.
+- **Other players:** the hider was teleported ahead of the watcher: at 300 units the watcher's screen showed no "Shade"; at 80 units (inside the level 1 watcher's range of 125) the label "Shade 1" and the figure appeared.
+- **Poison:** a Minor Lethal Poison clicked in the pack went on the training sword ("You apply minor lethal poison to training sword."), the pack slot emptied, and the weapon's tooltip read "poisoned with Minor Lethal Poison (1)". The green charge number in the corner of the cell is drawn in the bitmap font and could not be told apart at the size the screenshot gave.
+- **Not observed:** the poison firing in a fight and the stealth opener (Backstab) in the browser; the Shadowblade's low level and the cubs made a fight a coin toss. Both are covered by world tests (a poisoned weapon fires and runs out; an opener needs stealth and ends it). The left hand in the browser was not seen either: no left axe was at hand; it is covered by world tests.
+
+## 10.6 Part C close (2026-11-20)
+
+- All twelve Midgard classes are in the class table, offered at creation for the races the data's start table gives, and taught by their trainers (and their base class's).
+- The census (`docs/parity`): class spell types 64 of 73 (939 of 987 spells), abilities 21 of 30, style features 13 of 14. Every gap has a stated reason (`cmd/parity` `gapReasons`, checked by `TestEveryClassGapHasAReason`): the nine Savage spell types and Taunt; Distraction, Danger Sense, Safe Fall and Climb Walls (the world has no ground target, nothing hidden from a player, no fall damage and no climbable walls); Berserk, Charge, Enhanced Evade, QuickCast and Call of a thousand storms (no source read yet); one style opening no source identifies.
+- Camouflage and Detect Hidden are implemented; stealth openers are implemented.

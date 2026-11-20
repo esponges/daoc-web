@@ -121,6 +121,8 @@ func readme(b *strings.Builder, rep *Report) {
 				mark = "yes"
 			} else if it.NotClassic != "" {
 				mark = "not classic: " + it.NotClassic
+			} else if it.Reason != "" {
+				mark = "no: " + it.Reason
 			}
 			name := it.Name
 			if len(it.Classes) > 0 {

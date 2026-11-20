@@ -83,6 +83,7 @@ uniform vec3 uDiffuse;
 uniform vec3 uFogColor;
 uniform float uFogStart;
 uniform float uFogEnd;
+uniform float uAlpha;
 ${LIGHT_GLSL}
 out vec4 outColor;
 void main() {
@@ -93,7 +94,7 @@ void main() {
   // light, which otherwise leaves whole limbs unlit.
   vec3 lit = base * lightAt(n, vWorld, true);
   float fog = clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
-  outColor = vec4(mix(lit, uFogColor, fog), 1.0);
+  outColor = vec4(mix(lit, uFogColor, fog), uAlpha);
 }
 `;
 
@@ -122,7 +123,7 @@ export async function createCharacter(gl, base, helpers) {
   const prog = program(gl, CHAR_VS, CHAR_FS, 'character');
   const U = uniforms(gl, prog, [
     'uViewProj', 'uModel', 'uCamPos', 'uBones', 'uTex', 'uHasTex',
-    'uDiffuse', 'uFogColor', 'uFogStart', 'uFogEnd', ...LIGHT_UNIFORMS,
+    'uDiffuse', 'uFogColor', 'uFogStart', 'uFogEnd', 'uAlpha', ...LIGHT_UNIFORMS,
   ]);
 
   const vao = gl.createVertexArray();
@@ -230,6 +231,13 @@ export async function createCharacter(gl, base, helpers) {
     gl.uniform3fv(U.uFogColor, ctx.fogColor);
     gl.uniform1f(U.uFogStart, ctx.fogStart);
     gl.uniform1f(U.uFogEnd, ctx.fogEnd);
+    // ctx.alpha under 1 draws the figure translucent (a hidden player's own view).
+    const alpha = ctx.alpha ?? 1;
+    gl.uniform1f(U.uAlpha, alpha);
+    if (alpha < 1) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    }
     bindLight(gl, U, ctx.light);
     gl.uniform1i(U.uTex, 0);
     gl.activeTexture(gl.TEXTURE0);
@@ -270,6 +278,7 @@ export async function createCharacter(gl, base, helpers) {
       gl.drawElements(gl.TRIANGLES, s.count, gl.UNSIGNED_INT, s.first * 4);
     }
     gl.enable(gl.CULL_FACE);
+    if (alpha < 1) gl.disable(gl.BLEND);
     gl.bindVertexArray(null);
 
     // Whatever is held follows its socket in the pose just drawn.

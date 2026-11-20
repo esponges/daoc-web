@@ -7,13 +7,13 @@ The class table SHALL give the Spiritmaster, Bonedancer, Hunter and Shadowblade 
 - **WHEN** the class table is read for the Spiritmaster (27) and the Bonedancer (30)
 - **THEN** each gives piety, dexterity and quickness as primary, secondary and tertiary stats, 560 base hit points, weapon skill base 280, a spec multiplier of 10 and the Mystic base, with the races the data's start table gives (Norseman and Kobold Spiritmasters; Troll, Kobold and Valkyn Bonedancers)
 
+#### Scenario: Shadowblade numbers
+- **WHEN** the class table is read for the Shadowblade (23)
+- **THEN** it gives dexterity, quickness and strength as primary, secondary and tertiary stats, 760 base hit points, weapon skill base 360, a spec multiplier of 22, the Rogue base, no power pool, and Norseman, Kobold and Valkyn as its races
+
 #### Scenario: Hunter numbers
 - **WHEN** the class table is read for the Hunter (25)
 - **THEN** it gives dexterity, quickness and strength as primary, secondary and tertiary stats, 720 base hit points, weapon skill base 380, a spec multiplier of 20, the Rogue base, a power pool from dexterity, and Norseman, Dwarf, Kobold and Valkyn as its races
-
-#### Scenario: Shadowblade numbers
-- **WHEN** the class table is read for the Shadowblade
-- **THEN** it gives the Shadowblade's stats, hit points, weapon skill base and spec multiplier as recorded in the rule book, with their status
 
 #### Scenario: Casting stat
 - **WHEN** the class table is read for the Spiritmaster and the Bonedancer

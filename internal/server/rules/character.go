@@ -69,6 +69,7 @@ const (
 	ClassSavage       = 32
 	ClassThane        = 21
 	ClassSkald        = 24
+	ClassShadowblade  = 23
 	ClassHunter       = 25
 	ClassSpiritmaster = 27
 	ClassBonedancer   = 30
@@ -101,6 +102,10 @@ var Classes = map[int]Class{
 	// The two Mystic pet casters. Numbers are OpenDAoC-Core's (provisional: one
 	// source), the same as the other Mystic; they cast from piety. Their
 	// tertiary stat is Core's quickness. Races are the data's start table.
+	// The Shadowblade: a Rogue-based assassin with no power pool. OpenDAoC-Core's
+	// numbers (provisional); races are the data's start table.
+	ClassShadowblade: {ID: ClassShadowblade, Name: "Shadowblade", Primary: DEX, Secondary: QUI, Tertiary: STR,
+		BaseHP: 760, WeaponSkillBase: 360, SpecMultiplier: 22, Base: "Rogue", Races: []int{5, 8, 14}},
 	// The Hunter: a Rogue-based archer and pet hybrid, casting from dexterity.
 	// OpenDAoC-Core's numbers (provisional); races are the data's start table.
 	ClassHunter: {ID: ClassHunter, Name: "Hunter", Primary: DEX, Secondary: QUI, Tertiary: STR,
@@ -263,6 +268,8 @@ func init() {
 			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Thane definition", "Skald definition", "Levels raise the class stats"}},
 		Rule{ID: "character.class-spiritmaster-bonedancer", Capability: "rules-character-stats", Requirement: "The class table holds the four new classes",
 			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Spiritmaster and Bonedancer numbers", "Casting stat"}},
+		Rule{ID: "character.class-shadowblade", Capability: "rules-character-stats", Requirement: "The class table holds the four new classes",
+			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Shadowblade numbers"}},
 		Rule{ID: "character.class-hunter", Capability: "rules-character-stats", Requirement: "The class table holds the four new classes",
 			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Hunter numbers"}},
 		Rule{ID: "character.creation", Capability: "rules-character-stats", Requirement: "Creation spends exactly 30 points",

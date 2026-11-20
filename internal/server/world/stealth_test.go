@@ -2,6 +2,7 @@ package world
 
 import (
 	"math/rand"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -180,5 +181,75 @@ func TestAStealthOpenerNeedsStealthAndEndsIt(t *testing.T) {
 	}
 	if p.hidden() {
 		t.Error("a swing from stealth did not end it")
+	}
+}
+
+// A Shadowblade on the imported data: the stealth abilities arrive at the data's
+// levels, the career grants the left axe, and the stealth openers are there.
+func TestAShadowbladeOnTheImportedData(t *testing.T) {
+	cat, err := LoadCatalog(filepath.Join("..", "..", "..", "server", "data", "world.db"))
+	if err != nil {
+		t.Skip("no world store: run go run ./cmd/dbimport")
+	}
+	if _, ok := cat.StartFor(2, 5, rules.ClassShadowblade); !ok {
+		t.Error("the data has no start for a Norseman Shadowblade")
+	}
+	specs := cat.TrainableSpecs(rules.ClassShadowblade)
+	for _, want := range []string{"Critical Strike", "Envenom", "Left Axe", "Stealth"} {
+		found := false
+		for _, s := range specs {
+			found = found || s == want
+		}
+		if !found {
+			t.Errorf("a Shadowblade does not train %s (trains %v)", want, specs)
+		}
+	}
+	trained := map[string]int{"Stealth": 30, "Envenom": 30, "Left Axe": 30, "Critical Strike": 30}
+	ab := rules.Abilities(cat.Grants[rules.ClassShadowblade], cat.Careers(rules.ClassShadowblade), 30, trained)
+	for _, name := range []string{"Distraction", "Danger Sense", "Detect Hidden", "Climb Walls", "Safe Fall", "Weaponry: Left Axes", "Weaponry: Axes"} {
+		if ab[name] == 0 {
+			t.Errorf("a level 30 Shadowblade lacks %s", name)
+		}
+	}
+	if ab["Safe Fall"] != 3 {
+		t.Errorf("Safe Fall %d, want 3 at Stealth 30", ab["Safe Fall"])
+	}
+	openers := 0
+	for _, s := range cat.Styles {
+		if s.Class == rules.ClassShadowblade && s.Stealth {
+			openers++
+		}
+	}
+	if openers < 3 {
+		t.Errorf("%d stealth openers for the Shadowblade, want Backstab, Backstab II and Perforate Artery", openers)
+	}
+}
+
+func TestCamouflageDefeatsDetectHidden(t *testing.T) {
+	r, h, _ := stealthRig(t, 36000)
+	viewer := r.player("Seer", 30, 30900, 30000, true)
+	r.z.Stealth(h)
+	viewer.sh.abilities["Detect Hidden"] = 1
+	r.ticks(3)
+	if !hasEntity(viewer, h.ID) {
+		t.Fatal("Detect Hidden did not show the hider at 900 (range 1250)")
+	}
+	r.z.Camouflage(h) // the hider has not learned it
+	if hasKind(h, effCamouflage) {
+		t.Fatal("camouflage without the ability")
+	}
+	h.sh.abilities["Camouflage"] = 1
+	r.z.Camouflage(h)
+	if !hasKind(h, effCamouflage) {
+		t.Fatalf("no camouflage: %v", errsOf(h))
+	}
+	r.ticks(3)
+	if hasEntity(viewer, h.ID) {
+		t.Error("Detect Hidden still found a camouflaged hider beyond the plain range of 525")
+	}
+	r.ticks(TickRate * 3)
+	r.z.Stealth(h)
+	if hasKind(h, effCamouflage) || h.hidden() {
+		t.Error("camouflage outlived stealth")
 	}
 }

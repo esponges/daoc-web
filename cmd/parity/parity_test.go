@@ -307,3 +307,23 @@ func TestLevellingGearHasNoGaps(t *testing.T) {
 		}
 	}
 }
+
+// Every spell type, ability and style feature the twelve classes use that the
+// server does not implement has a stated reason. It needs no dump.
+func TestEveryClassGapHasAReason(t *testing.T) {
+	b, err := os.ReadFile(filepath.Join("..", "..", "docs", "parity", "parity.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var base Report
+	if err := json.Unmarshal(b, &base); err != nil {
+		t.Fatal(err)
+	}
+	for name, items := range map[string][]Item{"class spell type": base.ClassSpells, "ability": base.Abilities, "style feature": base.StyleFeatures} {
+		for _, it := range items {
+			if !it.Implemented && it.Reason == "" {
+				t.Errorf("the %s %q is not implemented and has no reason in cmd/parity gapReasons", name, it.Name)
+			}
+		}
+	}
+}

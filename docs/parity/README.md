@@ -8,16 +8,16 @@ How much of classic 1.65 Midgard the server implements, measured against the com
 Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    15 of  15 implemented (2585 of 2585 placements x spells)
   Class spell types       64 of  73 implemented (939 of 987 spells)
-  Style features          12 of  14 implemented (1379 of 1383 styles)
-  Abilities               18 of  30 implemented (80 of 100 grants)
-  Creature kinds          22 of 110 implemented (29110 of 29932 placements, 7 kinds not classic)
+  Style features          13 of  14 implemented (1382 of 1383 styles)
+  Abilities               21 of  30 implemented (83 of 100 grants)
+  Creature kinds          23 of 110 implemented (29118 of 29932 placements, 7 kinds not classic)
   quests                 81, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         0 gaps in 10 bands
-  rules: 26 documented, 64 reference, 31 provisional
+  rules: 26 documented, 66 reference, 34 provisional
 ```
 
 ## Creature spell types
@@ -81,12 +81,12 @@ Midgard (regions 100, 101, 151): 29932 placements
 | BodyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 6 | yes |
 | DexterityBuff (Healer, Seer, Shaman) | 6 | yes |
 | Resurrect (Healer, Seer, Shaman, Spiritmaster) | 6 | yes |
-| SavageCrushResistanceBuff (Savage) | 6 |  |
-| SavageDPSBuff (Savage) | 6 |  |
-| SavageEvadeBuff (Savage) | 6 |  |
-| SavageParryBuff (Savage) | 6 |  |
-| SavageSlashResistanceBuff (Savage) | 6 |  |
-| SavageThrustResistanceBuff (Savage) | 6 |  |
+| SavageCrushResistanceBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
+| SavageDPSBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
+| SavageEvadeBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
+| SavageParryBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
+| SavageSlashResistanceBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
+| SavageThrustResistanceBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
 | Amnesia (Healer) | 5 | yes |
 | ArmorAbsorptionBuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 | yes |
 | BodyResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
@@ -97,19 +97,19 @@ Midgard (regions 100, 101, 151): 29932 placements
 | MatterResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | Nearsight (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 | yes |
 | PowerRegenBuff (Healer) | 5 | yes |
-| SavageCombatSpeedBuff (Savage) | 5 |  |
+| SavageCombatSpeedBuff (Savage) | 5 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
 | SpiritResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | SummonHunterPet (Hunter) | 5 | yes |
 | SummonSpiritFighter (Spiritmaster) | 5 | yes |
 | AcuityBuff (Healer, Seer, Shaman) | 4 | yes |
 | CureNearsightCustom (Healer, Seer, Shaman) | 4 | yes |
 | SummonCommander (Bonedancer) | 4 | yes |
-| Taunt (Savage) | 4 |  |
+| Taunt (Savage) | 4 | no: a Savage spell that makes a creature hate the caster; no source read for it yet |
 | ColdResistDebuff (Runemaster) | 3 | yes |
 | EnergyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 | yes |
 | HeatResistDebuff (Runemaster) | 3 | yes |
 | MatterResistDebuff (Runemaster) | 3 | yes |
-| SavageEnduranceHeal (Savage) | 3 |  |
+| SavageEnduranceHeal (Savage) | 3 | no: a Savage spell; no source read for it yet |
 | SpiritResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 | yes |
 | SpreadHeal (Healer, Seer, Shaman) | 3 | yes |
 | CureDisease (Healer, Seer, Shaman) | 2 | yes |
@@ -134,8 +134,8 @@ Midgard (regions 100, 101, 151): 29932 placements
 | opening: from the side | 25 | yes |
 | opening: after an evade | 18 | yes |
 | opening: from the front | 7 | yes |
-| stealth opener | 3 |  |
-| opening: after result 3 | 1 |  |
+| stealth opener | 3 | yes |
+| opening: after result 3 | 1 | no: one style whose opening result no source identifies |
 
 ## Abilities
 
@@ -146,29 +146,29 @@ Midgard (regions 100, 101, 151): 29932 placements
 | Critical Shot (Hunter) | 9 | yes |
 | Protect (Berserker, Skald, Thane, Warrior) | 8 | yes |
 | Shield (Berserker, Healer, Savage, Seer, Shadowblade, Shaman, Skald, Thane, Viking, Warrior) | 8 | yes |
-| Safe Fall (Shadowblade) | 5 |  |
-| Berserk (Berserker) | 4 |  |
+| Safe Fall (Shadowblade) | 5 | no: this world has no fall damage for it to reduce |
+| Berserk (Berserker) | 4 | no: a Berserker ability; no source read for it yet |
 | Guard (Thane, Warrior) | 4 | yes |
 | Weaponry: Staves (Berserker, Bonedancer, Healer, Hunter, Midgard Rogue, Mystic, Runemaster, Savage, Seer, Shadowblade, Shaman, Skald, Spiritmaster, Thane, Viking, Warrior) | 4 | yes |
 | Penetrating Arrow (Hunter) | 3 | yes |
 | Weaponry: Thrown (Berserker, Shadowblade, Warrior) | 3 | yes |
-| Charge (Berserker, Savage) | 2 |  |
+| Charge (Berserker, Savage) | 2 | no: a Berserker and Savage ability; no source read for it yet |
 | Intercept (Thane, Warrior) | 2 | yes |
 | Rapid Fire (Hunter) | 2 | yes |
 | Weaponry: Axes (Berserker, Savage, Shadowblade, Skald, Thane, Viking, Warrior) | 2 | yes |
 | Weaponry: Hammers (Berserker, Healer, Savage, Seer, Shaman, Skald, Thane, Viking, Warrior) | 2 | yes |
 | Weaponry: Swords (Berserker, Hunter, Midgard Rogue, Savage, Shadowblade, Skald, Thane, Viking, Warrior) | 2 | yes |
-| Call of a thousand storms (Thane) | 1 |  |
-| Camouflage (Hunter) | 1 |  |
-| Climb Walls (Shadowblade) | 1 |  |
-| Danger Sense (Shadowblade) | 1 |  |
-| Detect Hidden (Shadowblade) | 1 |  |
-| Distraction (Shadowblade) | 1 |  |
+| Call of a thousand storms (Thane) | 1 | no: no source for the name or its effect |
+| Camouflage (Hunter) | 1 | yes |
+| Climb Walls (Shadowblade) | 1 | no: this world has no climbable walls |
+| Danger Sense (Shadowblade) | 1 | no: it warns of enemies the player cannot see; nothing here hides from a player |
+| Detect Hidden (Shadowblade) | 1 | yes |
+| Distraction (Shadowblade) | 1 | no: it is aimed at a ground target, which this world has no way to aim |
 | Engage (Thane, Warrior) | 1 | yes |
-| Enhanced Evade (Berserker, Savage) | 1 |  |
-| QuickCast (Bonedancer, Runemaster, Spiritmaster) | 1 |  |
+| Enhanced Evade (Berserker, Savage) | 1 | no: a Berserker and Savage evade boost; no source read for it yet |
+| QuickCast (Bonedancer, Runemaster, Spiritmaster) | 1 | no: a casting-speed ability of the Mystic classes; no source read for it yet |
 | Weaponry: Composite Bows (Hunter) | 1 | yes |
-| Weaponry: Hand to Hand (Savage) | 1 |  |
+| Weaponry: Hand to Hand (Savage) | 1 | yes |
 | Weaponry: Left Axes (Shadowblade) | 1 | yes |
 | Weaponry: Spears (Hunter) | 1 | yes |
 
@@ -205,7 +205,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Trainer.HealerTrainer | 8 | yes |
 | DOL.GS.Trainer.HunterTrainer | 8 | yes |
 | DOL.GS.Trainer.RunemasterTrainer | 8 | yes |
-| DOL.GS.Trainer.ShadowbladeTrainer | 8 |  |
+| DOL.GS.Trainer.ShadowbladeTrainer | 8 | yes |
 | DOL.GS.Trainer.ShamanTrainer | 8 | yes |
 | DOL.GS.Trainer.SkaldTrainer | 8 | yes |
 | DOL.GS.Trainer.SpiritmasterTrainer | 8 | yes |
@@ -325,6 +325,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | character.class | reference |
 | character.class-hunter | provisional |
 | character.class-midgard | provisional |
+| character.class-shadowblade | provisional |
 | character.class-spiritmaster-bonedancer | provisional |
 | character.class-thane-skald | provisional |
 | character.creation | documented |
@@ -375,6 +376,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | melee.creature-proc | reference |
 | melee.critical | reference |
 | melee.evade | documented |
+| melee.left-hand | provisional |
 | melee.location | reference |
 | melee.miss | documented |
 | melee.miss-bonuses | reference |
@@ -389,6 +391,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | pet.charm | provisional |
 | pet.level | reference |
 | pet.minions | reference |
+| poison.apply | reference |
 | power.cost | reference |
 | power.pool | reference |
 | power.regen | provisional |
@@ -427,5 +430,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | spell.wards | reference |
 | start.town | documented |
 | start.unsafe | provisional |
+| stealth.detection | provisional |
+| stealth.speed | reference |
 | time.day-length | reference |
 | time.night | reference |

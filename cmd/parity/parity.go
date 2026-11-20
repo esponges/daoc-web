@@ -29,6 +29,7 @@ type Item struct {
 	Uses        int      `json:"uses"`
 	Classes     []string `json:"classes,omitempty"`
 	Implemented bool     `json:"implemented"`
+	Reason      string   `json:"reason,omitempty"`     // why a spell type, ability or style feature is not implemented
 	NotClassic  string   `json:"notClassic,omitempty"` // why 1.65 did not have it, for NPC kinds that are left out on purpose
 }
 
@@ -52,7 +53,6 @@ type Report struct {
 	Placements     int            `json:"placements"`
 	LevellingGear  []GearRow      `json:"levellingGear"`
 }
-
 
 // Run reads the dump and the registry.
 func Run(dump string) (*Report, error) {
@@ -148,7 +148,7 @@ func Run(dump string) (*Report, error) {
 		return nil, err
 	}
 	for k, n := range classSpells {
-		rep.ClassSpells = append(rep.ClassSpells, Item{Name: k, Uses: n, Classes: sorted(classSpellClasses[k]), Implemented: rules.ImplementedPlayerSpell(k)})
+		rep.ClassSpells = append(rep.ClassSpells, Item{Name: k, Uses: n, Classes: sorted(classSpellClasses[k]), Implemented: rules.ImplementedPlayerSpell(k), Reason: reasonIf(rules.ImplementedPlayerSpell(k), k)})
 	}
 	abilities, abilityClasses := map[string]int{}, map[string][]string{}
 	if err := read("specxability", func(r *importer.Row) error {
@@ -173,7 +173,7 @@ func Run(dump string) (*Report, error) {
 		return nil, err
 	}
 	for k, n := range abilities {
-		rep.Abilities = append(rep.Abilities, Item{Name: k, Uses: n, Classes: sorted(abilityClasses[k]), Implemented: rules.ActiveAbility(k)})
+		rep.Abilities = append(rep.Abilities, Item{Name: k, Uses: n, Classes: sorted(abilityClasses[k]), Implemented: rules.ActiveAbility(k), Reason: reasonIf(rules.ActiveAbility(k), k)})
 	}
 
 	// Styles: which features Midgard's styles use.
@@ -200,7 +200,7 @@ func Run(dump string) (*Report, error) {
 		return nil, err
 	}
 	for k, n := range features {
-		rep.StyleFeatures = append(rep.StyleFeatures, Item{Name: k, Uses: n, Implemented: styleFeatureImplemented[k]})
+		rep.StyleFeatures = append(rep.StyleFeatures, Item{Name: k, Uses: n, Implemented: styleFeatureImplemented[k], Reason: reasonIf(styleFeatureImplemented[k], k)})
 	}
 
 	// Content the world does not have yet.
@@ -296,13 +296,40 @@ func styleFeatures(r *importer.Row) []string {
 	return out
 }
 
+// gapReasons says why a spell type, ability or style feature is still not
+// implemented, for the census. Every gap has one.
+var gapReasons = map[string]string{
+	"Distraction":               "it is aimed at a ground target, which this world has no way to aim",
+	"Danger Sense":              "it warns of enemies the player cannot see; nothing here hides from a player",
+	"Safe Fall":                 "this world has no fall damage for it to reduce",
+	"Climb Walls":               "this world has no climbable walls",
+	"Berserk":                   "a Berserker ability; no source read for it yet",
+	"Charge":                    "a Berserker and Savage ability; no source read for it yet",
+	"Enhanced Evade":            "a Berserker and Savage evade boost; no source read for it yet",
+	"QuickCast":                 "a casting-speed ability of the Mystic classes; no source read for it yet",
+	"Call of a thousand storms": "no source for the name or its effect",
+	"Taunt":                     "a Savage spell that makes a creature hate the caster; no source read for it yet",
+	"SavageEnduranceHeal":       "a Savage spell; no source read for it yet",
+	"opening: after result 3":   "one style whose opening result no source identifies",
+}
+
+func reasonFor(name string) string {
+	if r, ok := gapReasons[name]; ok {
+		return r
+	}
+	if strings.HasPrefix(name, "Savage") {
+		return "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
+	}
+	return ""
+}
+
 // styleFeatureImplemented is what the server does with styles. A fixed hit
 // location only matters against players, which nothing fights yet.
 var styleFeatureImplemented = map[string]bool{
 	"opening: anytime": true, "opening: after a parry": true, "opening: after a block": true, "opening: after an evade": true,
 	"opening: from behind": true, "opening: from the side": true, "opening: from the front": true,
 	"opening: after a miss": true, "opening: after a hit": true, "chain: after a style": true,
-	"growth damage": true, "to-hit bonus": true, "defence bonus": true, "proc spell": true,
+	"stealth opener": true, "growth damage": true, "to-hit bonus": true, "defence bonus": true, "proc spell": true,
 }
 
 // kindImplemented says whether the server gives a creature class type its
@@ -344,4 +371,12 @@ func sortItems(l []Item) {
 		}
 		return l[i].Name < l[j].Name
 	})
+}
+
+// reasonIf is the reason for a gap, empty when the item is implemented.
+func reasonIf(implemented bool, name string) string {
+	if implemented {
+		return ""
+	}
+	return reasonFor(name)
 }

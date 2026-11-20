@@ -476,6 +476,8 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		z.PetCommand(p, strings.ToLower(f[1]))
 	case "stealth", "hide":
 		z.Stealth(p)
+	case "camouflage":
+		z.Camouflage(p)
 	case "shoot":
 		mode := ""
 		if len(f) > 1 {

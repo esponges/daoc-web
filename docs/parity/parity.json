@@ -509,7 +509,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
     },
     {
       "name": "SavageDPSBuff",
@@ -517,7 +518,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
     },
     {
       "name": "SavageEvadeBuff",
@@ -525,7 +527,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
     },
     {
       "name": "SavageParryBuff",
@@ -533,7 +536,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
     },
     {
       "name": "SavageSlashResistanceBuff",
@@ -541,7 +545,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
     },
     {
       "name": "SavageThrustResistanceBuff",
@@ -549,7 +554,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
     },
     {
       "name": "Amnesia",
@@ -660,7 +666,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
     },
     {
       "name": "SpiritResistBuff",
@@ -723,7 +730,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell that makes a creature hate the caster; no source read for it yet"
     },
     {
       "name": "ColdResistDebuff",
@@ -766,7 +774,8 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Savage spell; no source read for it yet"
     },
     {
       "name": "SpiritResistDebuff",
@@ -902,12 +911,13 @@
     {
       "name": "stealth opener",
       "uses": 3,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "opening: after result 3",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "one style whose opening result no source identifies"
     }
   ],
   "abilities": [
@@ -990,7 +1000,8 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "this world has no fall damage for it to reduce"
     },
     {
       "name": "Berserk",
@@ -998,7 +1009,8 @@
       "classes": [
         "Berserker"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Berserker ability; no source read for it yet"
     },
     {
       "name": "Guard",
@@ -1057,7 +1069,8 @@
         "Berserker",
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Berserker and Savage ability; no source read for it yet"
     },
     {
       "name": "Intercept",
@@ -1128,7 +1141,8 @@
       "classes": [
         "Thane"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "no source for the name or its effect"
     },
     {
       "name": "Camouflage",
@@ -1136,7 +1150,7 @@
       "classes": [
         "Hunter"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Climb Walls",
@@ -1144,7 +1158,8 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "this world has no climbable walls"
     },
     {
       "name": "Danger Sense",
@@ -1152,7 +1167,8 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "it warns of enemies the player cannot see; nothing here hides from a player"
     },
     {
       "name": "Detect Hidden",
@@ -1160,7 +1176,7 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Distraction",
@@ -1168,7 +1184,8 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "it is aimed at a ground target, which this world has no way to aim"
     },
     {
       "name": "Engage",
@@ -1186,7 +1203,8 @@
         "Berserker",
         "Savage"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a Berserker and Savage evade boost; no source read for it yet"
     },
     {
       "name": "QuickCast",
@@ -1196,7 +1214,8 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": false,
+      "reason": "a casting-speed ability of the Mystic classes; no source read for it yet"
     },
     {
       "name": "Weaponry: Composite Bows",
@@ -1212,7 +1231,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Weaponry: Left Axes",
@@ -1384,7 +1403,7 @@
     {
       "name": "DOL.GS.Trainer.ShadowbladeTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.ShamanTrainer",
@@ -1887,6 +1906,10 @@
       "status": "provisional"
     },
     {
+      "id": "character.class-shadowblade",
+      "status": "provisional"
+    },
+    {
       "id": "character.class-spiritmaster-bonedancer",
       "status": "provisional"
     },
@@ -2087,6 +2110,10 @@
       "status": "documented"
     },
     {
+      "id": "melee.left-hand",
+      "status": "provisional"
+    },
+    {
       "id": "melee.location",
       "status": "reference"
     },
@@ -2140,6 +2167,10 @@
     },
     {
       "id": "pet.minions",
+      "status": "reference"
+    },
+    {
+      "id": "poison.apply",
       "status": "reference"
     },
     {
@@ -2295,6 +2326,14 @@
       "status": "provisional"
     },
     {
+      "id": "stealth.detection",
+      "status": "provisional"
+    },
+    {
+      "id": "stealth.speed",
+      "status": "reference"
+    },
+    {
       "id": "time.day-length",
       "status": "reference"
     },
@@ -2305,8 +2344,8 @@
   ],
   "rulesByStatus": {
     "documented": 26,
-    "provisional": 31,
-    "reference": 64
+    "provisional": 34,
+    "reference": 66
   },
   "placements": 29932,
   "levellingGear": [

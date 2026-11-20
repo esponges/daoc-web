@@ -14,6 +14,8 @@ import (
 
 const effStealth = "stealth" // the holder is hidden
 
+const effCamouflage = "camouflage" // a hidden Hunter's Camouflage: Detect Hidden does not help against it
+
 // hidden says whether a player is in stealth.
 func (p *Player) hidden() bool { return hasKind(p, effStealth) }
 
@@ -100,6 +102,9 @@ func (z *Zone) unstealth(p *Player, text string) {
 	kept := (*list)[:0]
 	was := false
 	for _, e := range *list {
+		if e.kind == effCamouflage {
+			continue // camouflage ends with the stealth it hides in
+		}
 		if e.kind == effStealth {
 			was = true
 			continue
@@ -124,8 +129,7 @@ func (z *Zone) seesHidden(viewer, hider *Player) bool {
 		return true
 	}
 	d := math.Hypot(viewer.Body.X-hider.Body.X, viewer.Body.Y-hider.Body.Y)
-	r := rules.PlayerDetectRange(viewer.Char.Level, hider.stealthSpec(z.W.Cat), viewer.sh.abilities["Detect Hidden"] > 0,
-		hider.sh.abilities["Detect Hidden"] > 0)
+	r := rules.PlayerDetectRange(viewer.Char.Level, hider.stealthSpec(z.W.Cat), viewer.sh.abilities["Detect Hidden"] > 0, hider.counters())
 	return d <= r
 }
 
@@ -133,7 +137,7 @@ func (z *Zone) seesHidden(viewer, hider *Player) bool {
 // inside its detection radius.
 func (z *Zone) noticesHidden(n *NPC, p *Player) bool {
 	d := math.Hypot(n.Body.X-p.Body.X, n.Body.Y-p.Body.Y)
-	return d <= rules.CreatureDetectRadius(n.Level, p.stealthSpec(z.W.Cat), false, p.sh.abilities["Detect Hidden"] > 0)
+	return d <= rules.CreatureDetectRadius(n.Level, p.stealthSpec(z.W.Cat), false, p.counters())
 }
 
 // groupShares says whether two players are in one group (who see each other hidden).
@@ -144,4 +148,36 @@ func (w *World) groupShares(a, b *Player) bool {
 		}
 	}
 	return false
+}
+
+// counters says whether a hidden player has what defeats Detect Hidden: it
+// themselves, or Camouflage.
+func (p *Player) counters() bool {
+	return p.sh.abilities["Detect Hidden"] > 0 || hasKind(p, effCamouflage)
+}
+
+// Camouflage turns a hidden Hunter's camouflage on or off.
+func (z *Zone) Camouflage(p *Player) {
+	if p.sh.abilities["Camouflage"] == 0 {
+		p.errMsg("camouflage", "You have not learned Camouflage.")
+		return
+	}
+	if !p.hidden() {
+		p.errMsg("camouflage", "You must be hidden to use Camouflage.")
+		return
+	}
+	if hasKind(p, effCamouflage) {
+		kept := p.effects[:0]
+		for _, e := range p.effects {
+			if e.kind != effCamouflage {
+				kept = append(kept, e)
+			}
+		}
+		p.effects = kept
+		sys(p, "Your camouflage is gone.")
+	} else {
+		p.effects = append(p.effects, &effect{spell: &SpellDef{Name: "Camouflage", Type: "Camouflage"}, kind: effCamouflage, ends: math.Inf(1), caster: p})
+		sys(p, "You are camouflaged.")
+	}
+	z.effectsChanged(p)
 }

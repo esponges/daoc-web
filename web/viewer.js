@@ -1447,7 +1447,9 @@ async function main() {
       if (grass && grassOn && !shadowPass) grass.draw(ctx);
       // The character goes in before the water so a submerged figure is
       // tinted by the translucent surface rather than drawn over it.
-      const placed = { ...ctx, model: charModel };
+      // A hidden player sees themselves translucent, held items with them.
+      const hiddenSelf = net && net.effects && net.effects.list.some((e) => e.k === 'stealth');
+      const placed = { ...ctx, model: charModel, ...(hiddenSelf ? { alpha: 0.4 } : {}) };
       const eq = dressed && net && remote ? net.eq : null;
       const look = eq && eq.length ? remote.gear.lookFor(selfGear, eq, char) : null;
       char.draw(look ? { ...placed, look } : placed);
