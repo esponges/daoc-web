@@ -265,3 +265,23 @@ A Norseman Warrior (level 1) beside Dwarven Guard Eske, the one kill-task giver 
 - **Reconnect and expiry:** after a restart of the server and logging in, the money and the count were kept and a new task could be taken; with that task's time pushed 100 seconds into the past in the player database and another login, the task was gone and the window showed no task (the expiry line was sent before the chat window existed).
 - **Not observed:** a delivery task and its item (a trainer or merchant offers one only 35 percent of the time, with a five minute wait after a refusal; covered by a world test with a fixed roll) and the plain-panel version of the window (covered by the node test of its pure parts; the stock frame was seen).
 - **Found and fixed:** the "0 of 0" count above.
+
+## 2.4 What was seen in the browser: line of sight (2026-11-20, scratch server on port 8778)
+
+A level 1 Norseman Runemaster in East Svealand, casting Minor Dusk Dart at a tawny lynx cub. A throwaway probe over the real zone (terrain and collision loaded) found a pair 700 units apart that terrain alone blocks: the cub at (54875, 10427) and a spot at (54247, 10117); from (54427, 10206), on the same line a little nearer, it is visible.
+
+- **Over a hill:** from the blocked spot the cast was refused with "You can't see your target!" (twice: the double-click asked twice) and no power was spent.
+- **Open:** from the visible spot the cast began ("You begin casting Minor Dusk Dart.") and landed ("Your Minor Dusk Dart hits the tawny lynx cub for 2 damage!").
+- **Not observed in the browser:** a Jordheim wall, a tree trunk and a dungeon caster coming around a corner. The probe found no trunk or wall pair with a hostile creature at a spot a player could be placed at (the one candidate, an escaped thrall at (41713, 14974), was blocked from every side at 300 units, so it stands inside something), and a casting creature in a dungeon was not reached. Those are covered by the world tests (`TestCollisionSees`, `TestPlayerSpellsNeedLineOfSight`, `TestCreatureWithoutSightClosesIn`, `TestFloorsBlockOnlyBetweenStoreys`), which build the walls and trunks.
+
+## 4.5 What was seen in the browser: concentration and resurrection (2026-11-20, scratch server, two clients)
+
+A Norseman Healer (level 10) and a Norseman Warrior (level 10, later set to level 1 for the death steps) in one account, two tabs.
+
+- **Buff:** the Healer's Guardian's Lesser Ward on the Warrior: "Your Guardian's Lesser Ward takes hold of the Ward."; the Warrior's effects area showed a "B" badge with no timer, and the Healer's list (K) read "Concentration 1 / 49 - Guardian's Lesser Ward on Ward (1)".
+- **Out of range:** the Healer was teleported 6,700 units away (the limit is 5,000); the badge was still on after about 8 seconds and gone after about 18, and the Healer's chat said "Your Guardian's Lesser Ward fades from Ward: they are too far away."
+- **Cancel:** Cancel in the list printed "You cancel your Guardian's Lesser Ward.", the list went to "Concentration 0 / 49 - You hold no buffs" and the Warrior's badge was gone.
+- **Dying holding a buff:** with the ward recast, the Healer at level 1 (pool 4) fought sveawolf cubs and died ("You have been killed."); the list read "Concentration 0 / 4 - You hold no buffs". The order of the Warrior's badge going and the death could not be told apart: the Warrior's tab redraws slowly when it is not in front.
+- **Resurrection:** the Warrior (level 1) was killed by a level 7 hill cat; the Healer (Mending 10 set in the scratch database, since training it from level 10 costs more than the points) cast Arrival from Valhalla on the body: "You offer Ward a resurrection."; the Warrior's screen showed "Heal offers to resurrect you with 10% of your health." with Accept and Decline, and after Accept: "Heal resurrects you.", health back at 10 percent and the sickness badge ("X") in the effects area.
+- **Found and fixed:** the client never let a dead player be clicked, so a Healer could not target a body to raise it (the group window cannot target either). Dead players can now be clicked in the world (`web/viewer.js`); the targeting then worked ("You target Ward.", "Ward (dead)").
+- **Scratch aids used:** the GM commands (`level`, `tp`, `goto`, `kill`) and a direct edit of the scratch player database for the Healer's Mending 10.
