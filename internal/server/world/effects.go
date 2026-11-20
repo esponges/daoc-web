@@ -22,6 +22,7 @@ type effect struct {
 	scaled     bool
 	stat, spec int
 	cb         *concBuff // set while a caster holds it by concentration
+	pool       int       // what is left of an ablative armour
 }
 
 // Effect kinds, as the client draws them.
@@ -71,6 +72,29 @@ func effectKind(spellType string) string {
 		return effSpeed
 	case rules.SpellHealthRegenBuff:
 		return effRegen
+	case rules.SpellStrengthDebuff, rules.SpellDexterityDebuff, rules.SpellStrConDebuff, rules.SpellDexQuiDebuff:
+		return effDebuff
+	case rules.SpellBodyResistDebuff, rules.SpellColdResistDebuff, rules.SpellEnergyResistDebuff,
+		rules.SpellHeatResistDebuff, rules.SpellMatterResistDebuff, rules.SpellSpiritResistDebuff, rules.SpellDDWithDebuff:
+		return effResDebuff
+	case rules.SpellCombatSpeedDebuff:
+		return effCombatSlow
+	case rules.SpellDisease:
+		return effDisease
+	case rules.SpellNearsight:
+		return effNearsight
+	case rules.SpellFatigueDebuff:
+		return effFatigue
+	case rules.SpellBladeturn:
+		return effBlade
+	case rules.SpellAblativeArmor:
+		return effAblative
+	case rules.SpellArmorAbsorbBuff:
+		return effAbsorb
+	case rules.SpellMezDurationBuff:
+		return effMezDur
+	case rules.SpellUnbreakableSlow, rules.SpellDamageSpeedDecr:
+		return effSlow
 	case rules.SpellBodyResistBuff, rules.SpellColdResistBuff, rules.SpellEnergyResistBuff,
 		rules.SpellHeatResistBuff, rules.SpellMatterResistBuff, rules.SpellSpiritResistBuff:
 		return effResist
@@ -128,6 +152,8 @@ func speedFactor(c combatant) float64 {
 		switch e.kind {
 		case effSlow:
 			slows = append(slows, rules.SlowFactor(e.spell.Value))
+		case effDisease:
+			slows = append(slows, rules.SlowFactor(rules.DiseaseSlowPct))
 		case effSpeed:
 			boost = math.Max(boost, rules.BoostFactor(e.spell.Value))
 		}
@@ -143,7 +169,7 @@ var resistBonus = map[int]int{10: 11, 11: 12, rules.DamageCrush: 13, 12: 14, 13:
 func (z *Zone) spellResist(c combatant, damageType int) float64 {
 	switch t := c.(type) {
 	case *NPC:
-		return t.resists[damageType]
+		return t.resists[damageType] - resistDebuff(t, damageType)
 	case *Player:
 		r := z.W.Cat.Resists[t.Char.Race][damageType] + rules.ResistBuffBonus(damageType, t.resistBuffs())
 		for s := SlotWeapon; s < SlotCount; s++ {
@@ -205,6 +231,9 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 			return false
 		}
 	}
+	if handled, landed := z.castDebuffing(caster, target, sp); handled {
+		return landed
+	}
 	switch sp.Type {
 	case rules.SpellHeal:
 		amount := int(sp.Value)
@@ -216,7 +245,7 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		amount = sickened(amount, caster)
 		z.heal(target, amount)
 		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: -amount}, tx, ty)
-	case rules.SpellDirectDamage, rules.SpellDDNoVariance, rules.SpellBolt, rules.SpellLifedrain:
+	case rules.SpellDirectDamage, rules.SpellDDNoVariance, rules.SpellBolt, rules.SpellLifedrain, rules.SpellDDWithDebuff, rules.SpellDamageSpeedDecr:
 		if sp.Type == rules.SpellBolt {
 			if p, ok := target.(*Player); ok {
 				inFront := angleOff(p.Body.Yaw, angleTo(p.Body.X, p.Body.Y, cx, cy)) <= frontArc
@@ -236,6 +265,9 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		if sp.Type == rules.SpellLifedrain && caster.fightable(z) {
 			z.heal(caster, rules.DrainHeal(dmg, sp.LifeDrain))
 		}
+		if (sp.Type == rules.SpellDDWithDebuff || sp.Type == rules.SpellDamageSpeedDecr) && target.fightable(z) {
+			z.addEffect(target, caster, sp, effectKind(sp.Type))
+		}
 	case rules.SpellCurePoison, rules.SpellCureDisease, rules.SpellCureMezz, rules.SpellCureNearsight:
 		z.cure(caster, target, sp)
 	case rules.SpellSpreadHeal:
@@ -245,8 +277,14 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 	default:
 		if kind := effectKind(sp.Type); kind != "" {
 			tp, isPlayer := target.(*Player)
-			if !isPlayer && kind != effDoT && kind != effSlow && kind != effStun && kind != effMez && kind != effProc {
-				return false // buffs and songs are for players
+			if !isPlayer && !creatureTakes(kind) {
+				return false // songs and wards are for players
+			}
+			if kind == effNearsight && (hasKind(target, effNearsight) || hasKind(target, effNSImmune)) {
+				if cp, ok := caster.(*Player); ok {
+					sys(cp, "Your target is immune to that now.")
+				}
+				return false
 			}
 			if kind == effSpeed && !rules.BoostActive(z.now < tp.combatUntil) {
 				return false // a speed song does not take hold in combat
@@ -283,6 +321,15 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 	if sp.pulsing() {
 		dur = sp.effectSeconds()
 	}
+	if debuffKind(kind) {
+		dur = rules.DebuffDuration(dur, 0, z.spellResist(target, sp.DamageType))
+	}
+	if kind == effMez {
+		dur = rules.MezDuration(dur, strongestValue(caster, effMezDur))
+	}
+	if kind == effAblative {
+		e.pool = int(sp.Value)
+	}
 	e.ends = z.now + dur
 	if kind == effDoT {
 		_, e.every = rules.DoTTicks(sp.Duration, sp.Frequency)
@@ -302,6 +349,12 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 	if kind == effStun || kind == effMez {
 		z.stopActing(target)
 	}
+	if n, ok := target.(*NPC); ok {
+		refreshNPC(n)
+	}
+	if kind == effConfusion {
+		e.next = z.now + rules.ConfusionPulse
+	}
 	z.effectsChanged(target)
 }
 
@@ -319,6 +372,9 @@ func (z *Zone) stopActing(c combatant) {
 
 // heal restores health to a combatant, up to its maximum.
 func (z *Zone) heal(c combatant, amount int) {
+	if hasKind(c, effDisease) {
+		amount = rules.DiseasedHeal(amount)
+	}
 	switch t := c.(type) {
 	case *Player:
 		t.hp = math.Min(float64(t.maxHP()), t.hp+float64(max(0, amount)))
@@ -414,6 +470,10 @@ func (z *Zone) tickEffectsOf(c combatant) {
 	}
 	changed := false
 	for _, e := range *list {
+		if n, ok := c.(*NPC); ok && e.kind == effConfusion && z.now+1e-9 >= e.next && n.fightable(z) {
+			e.next += rules.ConfusionPulse
+			z.confuse(n, e)
+		}
 		if e.kind != effDoT {
 			continue
 		}
@@ -440,15 +500,22 @@ func (z *Zone) tickEffectsOf(c combatant) {
 	if p, ok := c.(*Player); ok {
 		inCombat = z.now < p.combatUntil
 	}
+	immune := false
 	kept := (*list)[:0]
 	for _, e := range *list {
 		if z.now+1e-9 >= e.ends || e.kind == effSpeed && !rules.BoostActive(inCombat) {
 			changed = true
+			if e.kind == effNearsight {
+				immune = true
+			}
 			continue
 		}
 		kept = append(kept, e)
 	}
 	*list = kept
+	if immune {
+		z.nsImmuneAfter(c)
+	}
 	if changed {
 		z.effectsChanged(c)
 	}
@@ -458,6 +525,9 @@ func (z *Zone) tickEffectsOf(c combatant) {
 func (z *Zone) effectsChanged(c combatant) {
 	p, ok := c.(*Player)
 	if !ok {
+		if n, ok := c.(*NPC); ok {
+			refreshNPC(n)
+		}
 		return
 	}
 	if buffed := p.hasBuff(); buffed || p.buffed {

@@ -6,8 +6,8 @@ How much of classic 1.65 Midgard the server implements, measured against the com
 
 ```
 Midgard (regions 100, 101, 151): 29932 placements
-  Creature spell types    10 of  15 implemented (2316 of 2585 placements x spells)
-  Class spell types       34 of  73 implemented (683 of 987 spells)
+  Creature spell types    15 of  15 implemented (2585 of 2585 placements x spells)
+  Class spell types       57 of  73 implemented (864 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
   Abilities               15 of  30 implemented (66 of 100 grants)
   Creature kinds          18 of 110 implemented (29083 of 29932 placements, 7 kinds not classic)
@@ -17,7 +17,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         0 gaps in 10 bands
-  rules: 26 documented, 58 reference, 23 provisional
+  rules: 26 documented, 62 reference, 23 provisional
 ```
 
 ## Creature spell types
@@ -29,15 +29,15 @@ Midgard (regions 100, 101, 151): 29932 placements
 | OffensiveProc | 334 | yes |
 | DamageOverTime | 307 | yes |
 | Mesmerize | 300 | yes |
-| BaseArmorFactorBuff | 155 |  |
+| BaseArmorFactorBuff | 155 | yes |
 | Bolt | 133 | yes |
 | Heal | 46 | yes |
-| StrengthConstitutionBuff | 44 |  |
-| StrengthBuff | 38 |  |
+| StrengthConstitutionBuff | 44 | yes |
+| StrengthBuff | 38 | yes |
 | Lifedrain | 37 | yes |
 | Stun | 37 | yes |
-| StrengthDebuff | 21 |  |
-| DexterityDebuff | 11 |  |
+| StrengthDebuff | 21 | yes |
+| DexterityDebuff | 11 | yes |
 | DirectDamageNoVariance | 6 | yes |
 
 ## Class spell types
@@ -56,29 +56,29 @@ Midgard (regions 100, 101, 151): 29932 placements
 | Bolt (Runemaster, Shaman) | 29 | yes |
 | BaseArmorFactorBuff (Bonedancer, Healer, Hunter, Mystic, Runemaster, Seer, Shaman, Spiritmaster) | 26 | yes |
 | DamageShield (Healer, Seer, Shaman, Spiritmaster) | 26 | yes |
-| DamageSpeedDecrease (Bonedancer, Mystic, Runemaster, Spiritmaster) | 24 |  |
+| DamageSpeedDecrease (Bonedancer, Mystic, Runemaster, Spiritmaster) | 24 | yes |
 | Lifedrain (Bonedancer, Mystic, Runemaster, Spiritmaster) | 21 | yes |
 | SpeedEnhancement (Healer, Hunter, Runemaster, Seer, Shaman, Skald) | 20 | yes |
 | CombatSpeedBuff (Healer, Seer, Shaman, Spiritmaster) | 16 | yes |
-| CombatSpeedDebuff (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 16 |  |
+| CombatSpeedDebuff (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 16 | yes |
 | HealthRegenBuff (Healer, Seer, Shaman, Skald) | 16 | yes |
-| DirectDamageWithDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 15 |  |
+| DirectDamageWithDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 15 | yes |
 | Stun (Healer) | 14 | yes |
-| Disease (Shadowblade, Shaman) | 13 |  |
+| Disease (Shadowblade, Shaman) | 13 | yes |
 | OffensiveProc (Shadowblade, Spiritmaster) | 13 |  |
-| StrengthConstitutionDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 |  |
-| StrengthDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 |  |
+| StrengthConstitutionDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 | yes |
+| StrengthDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 | yes |
 | Charm (Hunter) | 10 |  |
-| Bladeturn (Bonedancer, Mystic, Runemaster, Spiritmaster) | 8 |  |
-| DexterityDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 8 |  |
+| Bladeturn (Bonedancer, Mystic, Runemaster, Spiritmaster) | 8 | yes |
+| DexterityDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 8 | yes |
 | StrengthBuff (Healer, Seer, Shaman) | 8 | yes |
-| UnbreakableSpeedDecrease (Shadowblade) | 8 |  |
-| Confusion (Bonedancer, Mystic, Runemaster, Spiritmaster) | 7 |  |
+| UnbreakableSpeedDecrease (Shadowblade) | 8 | yes |
+| Confusion (Bonedancer, Mystic, Runemaster, Spiritmaster) | 7 | yes |
 | ConstitutionBuff (Healer, Seer, Shaman) | 7 | yes |
-| DexterityQuicknessDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 7 |  |
-| LifeTransfer (Bonedancer, Mystic, Runemaster, Spiritmaster) | 7 |  |
-| AblativeArmor (Bonedancer, Mystic, Runemaster, Spiritmaster) | 6 |  |
-| BodyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 6 |  |
+| DexterityQuicknessDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 7 | yes |
+| LifeTransfer (Bonedancer, Mystic, Runemaster, Spiritmaster) | 7 | yes |
+| AblativeArmor (Bonedancer, Mystic, Runemaster, Spiritmaster) | 6 | yes |
+| BodyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 6 | yes |
 | DexterityBuff (Healer, Seer, Shaman) | 6 | yes |
 | Resurrect (Healer, Seer, Shaman, Spiritmaster) | 6 | yes |
 | SavageCrushResistanceBuff (Savage) | 6 |  |
@@ -87,15 +87,15 @@ Midgard (regions 100, 101, 151): 29932 placements
 | SavageParryBuff (Savage) | 6 |  |
 | SavageSlashResistanceBuff (Savage) | 6 |  |
 | SavageThrustResistanceBuff (Savage) | 6 |  |
-| Amnesia (Healer) | 5 |  |
-| ArmorAbsorptionBuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 |  |
+| Amnesia (Healer) | 5 | yes |
+| ArmorAbsorptionBuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 | yes |
 | BodyResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | ColdResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | EnduranceRegenBuff (Healer, Seer, Shaman) | 5 | yes |
 | EnergyResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | HeatResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | MatterResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
-| Nearsight (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 |  |
+| Nearsight (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 | yes |
 | PowerRegenBuff (Healer) | 5 | yes |
 | SavageCombatSpeedBuff (Savage) | 5 |  |
 | SpiritResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
@@ -105,17 +105,17 @@ Midgard (regions 100, 101, 151): 29932 placements
 | CureNearsightCustom (Healer, Seer, Shaman) | 4 | yes |
 | SummonCommander (Bonedancer) | 4 |  |
 | Taunt (Savage) | 4 |  |
-| ColdResistDebuff (Runemaster) | 3 |  |
-| EnergyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 |  |
-| HeatResistDebuff (Runemaster) | 3 |  |
-| MatterResistDebuff (Runemaster) | 3 |  |
+| ColdResistDebuff (Runemaster) | 3 | yes |
+| EnergyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 | yes |
+| HeatResistDebuff (Runemaster) | 3 | yes |
+| MatterResistDebuff (Runemaster) | 3 | yes |
 | SavageEnduranceHeal (Savage) | 3 |  |
-| SpiritResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 |  |
+| SpiritResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 | yes |
 | SpreadHeal (Healer, Seer, Shaman) | 3 | yes |
 | CureDisease (Healer, Seer, Shaman) | 2 | yes |
 | CureMezz (Bonedancer, Healer, Mystic, Runemaster, Spiritmaster) | 2 | yes |
 | CurePoison (Healer, Seer, Shaman) | 2 | yes |
-| FatigueConsumptionDebuff (Shadowblade) | 2 |  |
+| FatigueConsumptionDebuff (Shadowblade) | 2 | yes |
 | MesmerizeDurationBuff (Spiritmaster) | 2 |  |
 
 ## Style features
@@ -396,13 +396,16 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | spell.buff | reference |
 | spell.buff-af | provisional |
 | spell.buff-cda | reference |
+| spell.control-debuffs | reference |
 | spell.damage | reference |
 | spell.damage-add | reference |
 | spell.damage-over-time | reference |
+| spell.debuffs | reference |
 | spell.haste | provisional |
 | spell.heal | reference |
 | spell.health-regen | provisional |
 | spell.hit | reference |
+| spell.life-transfer | reference |
 | spell.lifedrain | reference |
 | spell.mesmerize | reference |
 | spell.regen-buffs | reference |
@@ -411,6 +414,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | spell.slow | reference |
 | spell.speed-enhancement | reference |
 | spell.stun | reference |
+| spell.wards | reference |
 | start.town | documented |
 | start.unsafe | provisional |
 | time.day-length | reference |

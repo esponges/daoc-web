@@ -169,6 +169,12 @@ func (w *World) recalc(p *Player) {
 	for s := range sh.stats {
 		sh.stats[s] += min(buffs[s], rules.BuffStatCap(c.Level))
 	}
+	for s, v := range debuffStats(p) {
+		sh.stats[s] = max(1, sh.stats[s]-v)
+	}
+	if hasKind(p, effDisease) {
+		sh.stats[rules.STR] = rules.DiseasedStrength(sh.stats[rules.STR])
+	}
 	sh.buffAF = min(buffAF, rules.BuffAFCap(c.Level))
 	sh.maxHP = rules.MaxHP(sh.class, c.Level, sh.stats[rules.CON], sh.itemHP)
 	sh.maxPower = rules.MaxPower(sh.class, c.Level, sh.stats[sh.class.Acuity])
@@ -269,7 +275,7 @@ var locationSlot = [rules.NumLocations]int{SlotTorso, SlotLegs, SlotArms, SlotHe
 func (p *Player) combatant(cat *Catalog) *rules.Combatant {
 	sh := p.sh
 	cb := &rules.Combatant{Player: true, Level: p.Char.Level, Stats: sh.stats, WeaponSkillBase: sh.class.WeaponSkillBase,
-		Weapon: weaponOf(p.weapon), EvadeLevel: sh.abilities[rules.AbEvade], StyleDefence: p.styleDefence, BuffAF: float64(sh.buffAF)}
+		Weapon: weaponOf(p.weapon), EvadeLevel: sh.abilities[rules.AbEvade], StyleDefence: p.styleDefence, BuffAF: float64(sh.buffAF), BuffAbsorb: strongestValue(p, effAbsorb) / 100}
 	if p.weapon != nil {
 		cb.Weapon.Condition = p.condOf(SlotWeapon)
 	}

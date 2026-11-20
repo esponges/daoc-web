@@ -74,10 +74,11 @@ type Shield struct {
 
 // Combatant is one side of a swing: a player or a creature.
 type Combatant struct {
-	BuffAF float64 // armour factor a spell adds, for a player, to every location
-	Player bool
-	Level  int
-	Stats  Stats
+	BuffAF     float64 // armour factor a spell adds to every location
+	BuffAbsorb float64 // absorption a spell adds, 0 to 1
+	Player     bool
+	Level      int
+	Stats      Stats
 
 	// Offence.
 	WeaponSkillBase int // the class's (players) or 440 (creatures)
@@ -338,12 +339,12 @@ func Variance(a *Combatant, targetLevel int, r float64) float64 {
 // LocationArmour is the armour factor and absorption a blow meets.
 func LocationArmour(d *Combatant, loc Location) (af, absorb float64) {
 	if !d.Player {
-		return d.CreatureAF, d.CreatureAbsorb
+		return d.CreatureAF + d.BuffAF, d.CreatureAbsorb
 	}
 	l := float64(d.Level)
 	extra := 0.4*l + d.BuffAF
 	if loc < 0 || d.Armour[loc] == nil {
-		return extra, 0
+		return extra, math.Min(1, d.BuffAbsorb)
 	}
 	p := d.Armour[loc]
 	cap := 2 * l
@@ -351,7 +352,7 @@ func LocationArmour(d *Combatant, loc Location) (af, absorb float64) {
 		cap = l
 	}
 	af = math.Min(math.Min(p.AF, cap)*p.Quality*p.Condition, 2*l)
-	return af + extra, p.Absorb
+	return af + extra, math.Min(1, p.Absorb+d.BuffAbsorb)
 }
 
 // ArmourTerm is what weapon skill is divided by.

@@ -38,9 +38,12 @@ func (z *Zone) startCasting(n *NPC) bool {
 	blind := !z.sees(n, n.target) // behind cover it closes in instead of casting
 	opts := make([]rules.CastOption, len(n.spells))
 	for i, s := range n.spells {
-		opts[i] = rules.CastOption{Heal: s.Type == rules.SpellHeal, Ready: z.now >= n.spellReady[s.ID], Range: s.Range, Blind: blind}
+		opts[i] = rules.CastOption{Heal: s.Type == rules.SpellHeal, Ready: z.now >= n.spellReady[s.ID], Range: spellRange(n, s), Blind: blind, Buff: !s.Hostile() && s.Type != rules.SpellHeal}
 		if effectKind(s.Type) != "" {
 			opts[i].Already = hasEffect(n.target, s.ID)
+			if opts[i].Buff {
+				opts[i].Already = hasEffect(n, s.ID)
+			}
 		}
 	}
 	i := rules.ChooseCast(opts, dist, hurt != nil)
@@ -53,6 +56,9 @@ func (z *Zone) startCasting(n *NPC) bool {
 		if target = z.hurtAlly(n, sp.Range); target == nil {
 			return false
 		}
+	}
+	if opts[i].Buff {
+		target = n
 	}
 	n.casting = &castState{spell: sp, target: target, ends: rules.CastEnds(z.now, sp.CastTime)}
 	n.speedNow = 0
@@ -78,7 +84,7 @@ func (z *Zone) continueCasting(n *NPC) {
 	if c.target == combatant(n) {
 		dist = 0
 	}
-	if !rules.CastLands(c.target.fightable(z), dist, c.spell.Range) {
+	if !rules.CastLands(c.target.fightable(z), dist, spellRange(n, c.spell)) {
 		n.spellReady[c.spell.ID] = z.now + rules.CastRetry
 		z.event(protocol.Event{K: "castfail", From: n.ID, Text: c.spell.Name}, n.Body.X, n.Body.Y)
 		return

@@ -33,7 +33,7 @@
     {
       "name": "BaseArmorFactorBuff",
       "uses": 155,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Bolt",
@@ -48,12 +48,12 @@
     {
       "name": "StrengthConstitutionBuff",
       "uses": 44,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "StrengthBuff",
       "uses": 38,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Lifedrain",
@@ -68,12 +68,12 @@
     {
       "name": "StrengthDebuff",
       "uses": 21,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DexterityDebuff",
       "uses": 11,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DirectDamageNoVariance",
@@ -247,7 +247,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Lifedrain",
@@ -295,7 +295,7 @@
         "Shadowblade",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "HealthRegenBuff",
@@ -317,7 +317,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Stun",
@@ -334,7 +334,7 @@
         "Shadowblade",
         "Shaman"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "OffensiveProc",
@@ -355,7 +355,7 @@
         "Shadowblade",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "StrengthDebuff",
@@ -367,7 +367,7 @@
         "Shadowblade",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Charm",
@@ -386,7 +386,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DexterityDebuff",
@@ -397,7 +397,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "StrengthBuff",
@@ -415,7 +415,7 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Confusion",
@@ -426,7 +426,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "ConstitutionBuff",
@@ -447,7 +447,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "LifeTransfer",
@@ -458,7 +458,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "AblativeArmor",
@@ -469,7 +469,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "BodyResistDebuff",
@@ -480,7 +480,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DexterityBuff",
@@ -557,7 +557,7 @@
       "classes": [
         "Healer"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "ArmorAbsorptionBuff",
@@ -568,7 +568,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "BodyResistBuff",
@@ -644,7 +644,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "PowerRegenBuff",
@@ -731,7 +731,7 @@
       "classes": [
         "Runemaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "EnergyResistDebuff",
@@ -742,7 +742,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "HeatResistDebuff",
@@ -750,7 +750,7 @@
       "classes": [
         "Runemaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "MatterResistDebuff",
@@ -758,7 +758,7 @@
       "classes": [
         "Runemaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SavageEnduranceHeal",
@@ -777,7 +777,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SpreadHeal",
@@ -827,7 +827,7 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "MesmerizeDurationBuff",
@@ -2171,6 +2171,10 @@
       "status": "reference"
     },
     {
+      "id": "spell.control-debuffs",
+      "status": "reference"
+    },
+    {
       "id": "spell.damage",
       "status": "reference"
     },
@@ -2180,6 +2184,10 @@
     },
     {
       "id": "spell.damage-over-time",
+      "status": "reference"
+    },
+    {
+      "id": "spell.debuffs",
       "status": "reference"
     },
     {
@@ -2196,6 +2204,10 @@
     },
     {
       "id": "spell.hit",
+      "status": "reference"
+    },
+    {
+      "id": "spell.life-transfer",
       "status": "reference"
     },
     {
@@ -2231,6 +2243,10 @@
       "status": "reference"
     },
     {
+      "id": "spell.wards",
+      "status": "reference"
+    },
+    {
       "id": "start.town",
       "status": "documented"
     },
@@ -2250,7 +2266,7 @@
   "rulesByStatus": {
     "documented": 26,
     "provisional": 23,
-    "reference": 58
+    "reference": 62
   },
   "placements": 29932,
   "levellingGear": [

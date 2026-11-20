@@ -65,9 +65,9 @@
 ## 6. Part C: debuffs and creature buffs
 
 - [x] 6.1 Sources for the debuff, disease, nearsight, confusion, amnesia, bladeturn, ablative, absorption, life transfer and damage-with-debuff numbers. Record them in `findings.md`.
-- [ ] 6.2 Debuffs as negative buffs (stat, resist, combat speed), plus the disease, nearsight, confusion, amnesia, unbreakable slow, fatigue consumption, damage-with-debuff and damage-with-slow handlers. Add rule tests and world tests on creatures and players.
-- [ ] 6.3 Bladeturn, ablative armour, armour absorption, life transfer and mesmerize duration. Add rule and world tests.
-- [ ] 6.4 Creatures cast their template's buffs and debuffs. The creature spell types reach 15 of 15 in the census.
+- [x] 6.2 Debuffs as negative buffs (stat, resist, combat speed), plus the disease, nearsight, confusion, amnesia, unbreakable slow, fatigue consumption, damage-with-debuff and damage-with-slow handlers. Add rule tests and world tests on creatures and players.
+- [x] 6.3 Bladeturn, ablative armour, armour absorption, life transfer and mesmerize duration. Add rule and world tests.
+- [x] 6.4 Creatures cast their template's buffs and debuffs. The creature spell types reach 15 of 15 in the census.
 
 ## 7. Part C: pets and charm
 

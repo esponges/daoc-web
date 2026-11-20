@@ -13,7 +13,7 @@ A stat debuff (strength, dexterity, strength/constitution, dexterity/quickness) 
 
 ### Requirement: Disease, nearsight, confusion and amnesia
 The control debuffs SHALL each do one thing, by values recorded in the rule book:
-- disease halves healing received and stops health regeneration, and slows its holder;
+- disease halves healing received, lowers strength by 7.5 percent and slows its holder by 15 percent;
 - nearsight cuts its holder's spell range;
 - confusion makes a creature switch to a random nearby target;
 - amnesia wipes a creature's hate list, and interrupts a cast.
@@ -62,7 +62,7 @@ These buffs and heals SHALL do what their type names, by values recorded in the 
 - an endurance or power regeneration buff adds its value to each endurance or power tick;
 - a cure ends every effect of its kind on its target;
 - a spread heal heals the most hurt group members, sharing out its amount;
-- life transfer moves the caster's health to the target.
+- life transfer heals the target twice the spell's percent of the caster's maximum, the caster paying half of it (never below 1 hit point), and half of it on a diseased target.
 
 Status: reference.
 
@@ -79,8 +79,8 @@ Status: reference.
 - **THEN** they gain 141 and 46: shares in proportion to what each is missing, never more than that
 
 #### Scenario: Life transfer
-- **WHEN** a Spiritmaster transfers 50 to a group member
-- **THEN** the caster loses the amount the rule gives and the member gains 50
+- **WHEN** a Spiritmaster casts a 10 percent life transfer (maximum 1,000) on a group member
+- **THEN** the caster loses the amount the rule gives and the member gains twice that
 
 ### Requirement: Damage spells that also debuff or slow
 A direct damage spell with a sub-spell SHALL deal its damage and then apply the sub-spell when the damage is not resisted. A damage-and-slow spell SHALL do the same with its slow. Status: reference.

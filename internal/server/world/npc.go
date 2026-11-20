@@ -43,7 +43,8 @@ type NPC struct {
 	HP         int
 	MaxHP      int
 	Swing      float64
-	cb         rules.Combatant // its side of a swing, under the creature rules
+	cb         rules.Combatant // its side of a swing, under the creature rules, with its buffs and debuffs
+	baseCB     rules.Combatant // the same without them
 	Reach      float64
 	Parry      float64
 	Evade      float64
@@ -161,6 +162,7 @@ func newNPC(sp Spawn, cat *Catalog, rng *rand.Rand) *NPC {
 func (n *NPC) setLevel(level int) {
 	n.Level = level
 	n.cb = rules.Creature(level, n.Evade*100, n.Parry*100, n.Block*100, n.twoHanded, n.damageType, n.resists)
+	n.baseCB = n.cb
 	n.Swing = rules.CreatureSwing(&n.cb)
 	n.MaxHP = rules.CreatureHP(level)
 }
@@ -185,6 +187,7 @@ func (n *NPC) reset() {
 	n.target = nil
 	n.hate = nil
 	n.effects = nil
+	refreshNPC(n)
 	n.casting = nil
 	n.spellReady = map[int]float64{}
 	n.returning = false

@@ -165,7 +165,7 @@ func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 		return
 	}
 	tx, ty := target.position()
-	if target != combatant(p) && math.Hypot(tx-p.Body.X, ty-p.Body.Y) > sp.Range {
+	if target != combatant(p) && math.Hypot(tx-p.Body.X, ty-p.Body.Y) > spellRange(p, sp) {
 		p.errMsg("cast", "Your target is too far away.")
 		return
 	}
@@ -300,7 +300,7 @@ func (z *Zone) continuePlayerCast(p *Player) {
 	if sp.Type == rules.SpellResurrect {
 		alive = z.corpseOK(c.target)
 	}
-	if !rules.CastLands(alive, dist, sp.Range) {
+	if !rules.CastLands(alive, dist, spellRange(p, sp)) {
 		z.event(protocol.Event{K: "castfail", From: p.ID, Text: sp.Name}, p.Body.X, p.Body.Y)
 		sys(p, "Your target is no longer there, and "+sp.Name+" fails.")
 		return
@@ -399,7 +399,7 @@ func (z *Zone) damageAdd(p *Player, target combatant, blow int) int {
 // hasBuff says whether any spell buff is on the player.
 func (p *Player) hasBuff() bool {
 	for _, e := range p.effects {
-		if e.kind == effBuff {
+		if e.kind == effBuff || e.kind == effDebuff || e.kind == effDisease || e.kind == effAbsorb {
 			return true
 		}
 	}

@@ -42,8 +42,8 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 
 | | implemented |
 | --- | --- |
-| Creature spell types | 10 of 15 |
-| Class spell types | 34 of 73 (683 of 987 spells) |
+| Creature spell types | 15 of 15 |
+| Class spell types | 57 of 73 (864 of 987 spells) |
 | Style features | 12 of 14 (1,379 of 1,383 styles) |
 | Abilities | 15 of 30 (66 of 100 grants) |
 | Creature kinds | 18 of 110 (29,083 of 29,932 placements; 7 kinds left out as not classic) |
@@ -53,7 +53,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 0 gaps in 10 five-level bands (31 to 50 is the project's added stock) |
-| Rules | 26 documented, 58 reference, 23 provisional |
+| Rules | 26 documented, 62 reference, 23 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for eight of the twelve
 Midgard's classes (trainers teach those eight). Not started: quests, pets and

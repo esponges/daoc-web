@@ -52,7 +52,12 @@ func ImplementedPlayerSpell(spellType string) bool {
 		SpellEnduranceRegen, SpellPowerRegen, SpellCurePoison, SpellCureDisease, SpellCureMezz, SpellCureNearsight, SpellSpreadHeal,
 		SpellResurrect, SpellStrConBuff, SpellDexQuiBuff, SpellStrengthBuff, SpellArmourBuff, SpellDamageAdd,
 		SpellSpeedEnhancement, SpellHealthRegenBuff, SpellBodyResistBuff, SpellColdResistBuff, SpellEnergyResistBuff,
-		SpellHeatResistBuff, SpellMatterResistBuff, SpellSpiritResistBuff:
+		SpellHeatResistBuff, SpellMatterResistBuff, SpellSpiritResistBuff,
+		SpellStrengthDebuff, SpellDexterityDebuff, SpellStrConDebuff, SpellDexQuiDebuff, SpellCombatSpeedDebuff,
+		SpellBodyResistDebuff, SpellColdResistDebuff, SpellEnergyResistDebuff, SpellHeatResistDebuff, SpellMatterResistDebuff,
+		SpellSpiritResistDebuff, SpellDisease, SpellNearsight, SpellConfusion, SpellAmnesia, SpellBladeturn, SpellAblativeArmor,
+		SpellArmorAbsorbBuff, SpellLifeTransfer, SpellDDWithDebuff, SpellDamageSpeedDecr, SpellUnbreakableSlow,
+		SpellFatigueDebuff:
 		return true
 	}
 	return ImplementedSpell(spellType) && spellType != SpellOffensiveProc
@@ -85,7 +90,8 @@ func BuffedStats(spellType string, value float64) map[Stat]int {
 func ImplementedSpell(spellType string) bool {
 	switch spellType {
 	case SpellDirectDamage, SpellDDNoVariance, SpellBolt, SpellDamageOverTime, SpellSpeedDecrease,
-		SpellMesmerize, SpellStun, SpellLifedrain, SpellHeal, SpellOffensiveProc:
+		SpellMesmerize, SpellStun, SpellLifedrain, SpellHeal, SpellOffensiveProc,
+		SpellStrConBuff, SpellStrengthBuff, SpellArmourBuff, SpellStrengthDebuff, SpellDexterityDebuff:
 		return true
 	}
 	return false

@@ -21,10 +21,20 @@ export const EFFECT_KINDS = {
   shield: { label: '^', colour: '#a0522d', title: 'damage shield' },
   endregen: { label: 'E', colour: '#4a8f3a', title: 'recovering endurance faster' },
   powregen: { label: 'P', colour: '#4a6fbf', title: 'recovering power faster' },
+  debuff: { label: 'v', colour: '#a04040', title: 'weakened' },
+  resdebuff: { label: 'r', colour: '#a05a40', title: 'resists lowered' },
+  combatslow: { label: '<', colour: '#8a4a4a', title: 'swinging slower' },
+  disease: { label: 'd', colour: '#6a7a2a', title: 'diseased' },
+  nearsight: { label: 'n', colour: '#5a5a8a', title: 'nearsighted' },
+  fatigue: { label: 'f', colour: '#8a6a3a', title: 'tiring faster' },
+  bladeturn: { label: '|', colour: '#9aa0a8', title: 'the next blow is turned' },
+  ablative: { label: 'a', colour: '#b0a070', title: 'absorbing damage' },
+  absorb: { label: 'o', colour: '#7a8a5a', title: 'absorbing more' },
+  mezdur: { label: 'z', colour: '#6a4a8f', title: 'mesmerizes last longer' },
 };
 
 // What starting to suffer an effect of a kind says.
-const START = { stun: 'You are stunned!', mez: 'You are mesmerized!', slow: 'You are slowed!' };
+const START = { stun: 'You are stunned!', mez: 'You are mesmerized!', slow: 'You are slowed!', disease: 'You are diseased!', nearsight: 'You are nearsighted!', debuff: 'You feel weaker!' };
 
 // effectRows turns the last effects message into rows to draw, with the time
 // left counted down from when it arrived.
@@ -57,7 +67,7 @@ export function effectChangeLines(prev, next) {
   const had = new Set((prev.list || []).map((e) => e.k));
   const has = new Set((next.list || []).map((e) => e.k));
   const out = [];
-  for (const k of ['stun', 'mez', 'slow']) if (has.has(k) && !had.has(k)) out.push({ text: START[k], cls: 'spell-in' });
+  for (const k of ['stun', 'mez', 'slow', 'disease', 'nearsight', 'debuff']) if (has.has(k) && !had.has(k)) out.push({ text: START[k], cls: 'spell-in' });
   const heldBefore = had.has('stun') || had.has('mez'), heldNow = has.has('stun') || has.has('mez');
   if (heldBefore && !heldNow) out.push({ text: 'You can move again.', cls: 'sys' });
   else if (had.has('slow') && !has.has('slow') && !heldNow) out.push({ text: 'You can move at full speed again.', cls: 'sys' });

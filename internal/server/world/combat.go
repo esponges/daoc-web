@@ -37,7 +37,7 @@ func (p *Player) swingTime() float64 {
 	if p.weapon != nil && p.weapon.Speed > 0 {
 		speed = p.weapon.Speed
 	}
-	return rules.HastenedSwing(rules.SwingTime(speed, p.sh.stats[rules.QUI]), p.haste())
+	return rules.SlowedSwing(rules.HastenedSwing(rules.SwingTime(speed, p.sh.stats[rules.QUI]), p.haste()), int(strongestValue(p, effCombatSlow)))
 }
 
 // weaponSpeed is the held weapon's speed, for style costs.
@@ -49,7 +49,13 @@ func (p *Player) weaponSpeed() float64 {
 }
 
 // styleCost is a style's endurance with the weapon held.
-func (p *Player) styleCost(s *StyleDef) int { return rules.StyleCost(p.weaponSpeed(), s.Endurance) }
+func (p *Player) styleCost(s *StyleDef) int {
+	c := rules.StyleCost(p.weaponSpeed(), s.Endurance)
+	if f := strongestValue(p, effFatigue); f > 0 {
+		c = int(math.Ceil(float64(c) * rules.FatigueFactor(f)))
+	}
+	return c
+}
 
 // posOf is where the attacker stands relative to a defender's facing.
 func posOf(defender Body, ax, ay float64) int {
@@ -514,8 +520,13 @@ func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 		p.lastDef = defence{kind: kind, at: z.now}
 		return
 	}
-	z.event(protocol.Event{K: "hit", From: n.ID, To: p.ID, Amount: o.Damage}, p.Body.X, p.Body.Y)
-	p.hp -= float64(o.Damage)
+	dmg, turned := z.wardBlow(p, n, o.Damage)
+	if turned {
+		z.event(protocol.Event{K: "block", From: p.ID, To: n.ID, Text: "bladeturn"}, p.Body.X, p.Body.Y)
+		return
+	}
+	z.event(protocol.Event{K: "hit", From: n.ID, To: p.ID, Amount: dmg}, p.Body.X, p.Body.Y)
+	p.hp -= float64(dmg)
 	z.damaged(p)
 	if p.hp <= 0 {
 		z.killPlayer(p, n)
