@@ -127,7 +127,7 @@
   - the `task` table in `players.db`, added on start.
 
   Add world tests for each spec scenario, including a reconnect.
-- [ ] 11.5 Protocol `task`, `ask-task` and `abandon-task`. Client: the task window (the journal's layout if the converted UI has one, plain otherwise) and NPC dialogue. Add node tests.
+- [x] 11.5 Protocol `task`, `ask-task` and `abandon-task`. Client: the task window (the journal's layout if the converted UI has one, plain otherwise) and NPC dialogue. Add node tests.
 - [ ] 11.6 Browser check: take, finish, abandon and let a task expire. Then do the part close (as in 4.6).
 
 ## Workflow follow-up

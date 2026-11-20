@@ -112,6 +112,11 @@
 .conc .conc-title { font-weight: bold; margin-bottom: 4px; }
 .conc .conc-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 2px 0; }
 .conc button { font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 1px 8px; cursor: pointer; }
+.task { position: fixed; left: 320px; top: 80px; display: none; }
+.task.open { display: block; }
+.task .task-title { font-weight: bold; margin-bottom: 6px; }
+.task .task-text { margin-bottom: 4px; }
+.task .task-foot { color: #9ab; font-size: 11px; margin: 6px 0; }
 .pet { position: fixed; left: 12px; top: 420px; display: none; }
 .pet.open { display: block; }
 .pet .pet-title { font-weight: bold; margin-bottom: 4px; }

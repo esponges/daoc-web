@@ -86,6 +86,9 @@ export class NetClient {
   style(slot) { this._send({ t: 'style', slot }); }
   // cast casts a spell of the book at an entity (the held target when 0).
   cast(sp, tg = 0) { this._send({ t: 'cast', sp, ...(tg ? { tg } : {}) }); }
+  // askTask talks to an NPC about tasks; abandonTask gives up the held one.
+  askTask(id) { this._send({ t: 'ask-task', id }); }
+  abandonTask() { this._send({ t: 'abandon-task' }); }
   // useItem uses the item in a pack slot: a poison goes on a worn weapon.
   useItem(slot) { this._send({ t: 'use-item', slot }); }
   // shoot draws a bow at the held target; mode is '', 'critical', 'rapid' or 'stop'.
@@ -150,6 +153,7 @@ export class NetClient {
       case 'groupinv': this.on.groupinv?.(m); break;
       case 'rez-offer': this.on.rezoffer?.(m); break;
       case 'conc': this.conc = m; this.on.conc?.(m); break;
+      case 'task': this.task = m; this.on.task?.(m); break;
       case 'pet': this.pet = m.cl ? null : m; this.on.pet?.(m); break;
       case 'effects':
         // Our lasting spells, and the speed they leave: prediction steps at

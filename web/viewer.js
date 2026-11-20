@@ -892,7 +892,7 @@ async function main() {
     else console.info('stock interface not converted (go run ./cmd/uiconv); using the built-in one');
     ui = createUI(net, { log, stock, getTarget: () => combat.target });
     if (stock) { chatOut = (t, k) => ui.say(t, k); logEl.style.display = 'none'; }
-    log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack, ` shows developer info.', 'info');
+    log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack, J your task, ` shows developer info.', 'info');
     // Lasting spells: a row of badges by kind under the vitals, counting down,
     // and a line when a hold or slow begins or ends.
     const fxEl = document.createElement('div');
@@ -1074,6 +1074,7 @@ async function main() {
       log('You target the ' + hit.name + '.', 'info');
     }
     if (e.button === 2 && hit && hit.kind && net) net.interact(hit.id);
+    else if (e.button === 2 && hit && hit.friendly && net) net.askTask(hit.id); // a guard or townsman may have a task
   });
   addEventListener('mousemove', (e) => {
     if (!dragging) return;

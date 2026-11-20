@@ -10,6 +10,7 @@ import { createStockChat, createStockSummary, createStockBar, createStockRelease
 import { releaseLine } from './effects.js';
 import { createConcWindow, heldSpells } from './conc.js';
 import { createPetWindow } from './pet.js';
+import { createTaskWindow } from './task.js';
 import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
@@ -109,7 +110,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     // the separate experience window is not needed.
     charWins = createStockCharWindows(document, stock, { onCast: (id) => castSpell(id), onAssign: (id) => setSpellSlot(id, -1) });
     root.appendChild(charWins.el);
-    menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); else charWins.toggle(a); } });
+    menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); else if (a === 'journal') toggleTasks(); else charWins.toggle(a); } });
     Object.assign(menuBar.el.style, { position: 'fixed', left: '50%', top: '0px', marginLeft: '-400px', zIndex: 12 });
     root.appendChild(menuBar.el);
     summary.el.style.top = '34px';
@@ -298,6 +299,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     cash.textContent = 'Money: ' + money(net.inv.mo || 0);
   };
   net.on.inv = renderInv;
+  let toggleTasks = () => {}; // set where the task window is built
   const togglePack = () => {
     if (stockPack) { stockPack.toggle(); renderInv(); return; }
     pack.classList.toggle('open');
@@ -548,6 +550,13 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   if (stock) Object.assign(petWin.el.style, { left: '12px', top: '420px', zIndex: 14 });
   root.appendChild(petWin.el);
   net.on.pet = (m) => petWin.update(m);
+  // The task window opens from the journal button; the converted interface has no window of its own for it.
+  const taskWin = createTaskWindow(document, stock, { onAbandon: () => net.abandonTask() });
+  if (stock) Object.assign(taskWin.el.style, { left: '320px', top: '80px', zIndex: 14 });
+  root.appendChild(taskWin.el);
+  net.on.task = (m) => taskWin.update(m);
+  setInterval(() => taskWin.tick(), 1000);
+  toggleTasks = () => taskWin.toggle();
   // A resurrection offered to a dead character uses the same prompt.
   const rezPrompt = createInvitePrompt(document, stock, {
     onAccept: () => net.rezAnswer(true),
@@ -636,6 +645,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'Enter') { openChat(); e.preventDefault(); return true; }
     if (e.code === 'Slash') { openChat('/'); e.preventDefault(); return true; }
     if (e.code === 'KeyI' && !e.repeat) { togglePack(); return true; }
+    if (e.code === 'KeyJ' && !e.repeat) { toggleTasks(); return true; }
     if (e.code === 'KeyK' && !e.repeat) { concWin.toggle(); return true; } // the buffs held by concentration
     if (e.code === 'KeyP' && !e.repeat) { toggleSpells(); return true; } // the spellbook
     if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera
