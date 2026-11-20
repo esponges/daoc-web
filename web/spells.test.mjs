@@ -46,4 +46,14 @@ ok(castEventEffect({ k: 'interrupt', from: 7 }, 7).what === 'end' && castEventEf
 ok(ownCastLine({ k: 'cast', from: 7, x: 'Bolt' }, 7).text === 'You begin casting Bolt.', 'the log says when I begin');
 ok(ownCastLine({ k: 'interrupt', from: 7 }, 7).text === 'Your spell is interrupted.', 'and when I am interrupted');
 
+// Drawing a bow uses the cast bar.
+const draw = castEventEffect({ k: 'draw', from: 7, x: 'critical', dur: 6 }, 7);
+ok(draw.what === 'start' && draw.name === 'Critical Shot' && draw.dur === 6, 'my draw starts the bar, named for the shot');
+ok(castEventEffect({ k: 'draw', from: 7, x: 'normal', dur: 3 }, 7).name === 'Drawing', 'a plain draw is Drawing');
+ok(castEventEffect({ k: 'draw', from: 8, x: 'normal', dur: 3 }, 7) === null, 'a different archer draw is not mine');
+ok(castEventEffect({ k: 'drawstop', from: 7 }, 7).what === 'end' && !castEventEffect({ k: 'drawstop', from: 7 }, 7).failed, 'the end of a draw ends the bar quietly');
+ok(ownCastLine({ k: 'draw', from: 7, x: 'normal', dur: 3 }, 7) === null && ownCastLine({ k: 'drawstop', from: 7 }, 7) === null, 'a draw has no begin casting line');
+const bar = castBar({ name: 'Drawing', start: 10, dur: 4 }, 12);
+ok(bar && Math.abs(bar.f - 0.5) < 1e-9, 'the bar is half full halfway through the draw');
+
 if (failed) { console.log(`\n${failed} failed`); process.exit(1); }

@@ -71,12 +71,17 @@ export function castBar(cast, nowS) {
   return { name: cast.name, f: Math.max(0, Math.min(1, f)) };
 }
 
+// DRAW_NAMES are the labels on the cast bar while a bow is drawn.
+const DRAW_NAMES = { normal: 'Drawing', critical: 'Critical Shot', rapid: 'Rapid Fire' };
+
 // castEventEffect says what a cast-related event does to the player's own cast:
 // 'start' (with the spell's name and time), 'end', or null when it is not theirs.
 export function castEventEffect(ev, me) {
   if (ev.from !== me) return null;
   switch (ev.k) {
     case 'cast': return { what: 'start', name: ev.x, dur: ev.dur || 0 };
+    case 'draw': return { what: 'start', name: DRAW_NAMES[ev.x] || 'Drawing', dur: ev.dur || 0, draw: true };
+    case 'drawstop': return { what: 'end' };
     case 'interrupt': case 'castfail': return { what: 'end', failed: true };
   }
   return null;
@@ -86,7 +91,7 @@ export function castEventEffect(ev, me) {
 // being interrupted; null for anything else.
 export function ownCastLine(ev, me) {
   const e = castEventEffect(ev, me);
-  if (!e) return null;
+  if (!e || ev.k === 'draw' || ev.k === 'drawstop') return null;
   if (e.what === 'start') return { text: 'You begin casting ' + e.name + '.', cls: 'spell' };
   return ev.k === 'interrupt' ? { text: 'Your spell is interrupted.', cls: 'miss' } : { text: 'Your spell fails.', cls: 'miss' };
 }

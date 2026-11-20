@@ -86,6 +86,8 @@ export class NetClient {
   style(slot) { this._send({ t: 'style', slot }); }
   // cast casts a spell of the book at an entity (the held target when 0).
   cast(sp, tg = 0) { this._send({ t: 'cast', sp, ...(tg ? { tg } : {}) }); }
+  // shoot draws a bow at the held target; mode is '', 'critical', 'rapid' or 'stop'.
+  shoot(mode = '') { this._send({ t: 'shoot', ...(mode ? { mode } : {}) }); }
   release() { this._send({ t: 'release' }); }
   // rezAnswer accepts or declines the resurrection offered to a dead character.
   // concCancel lets go of one of the buffs the character holds by concentration.

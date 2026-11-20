@@ -69,6 +69,7 @@ const (
 	ClassSavage       = 32
 	ClassThane        = 21
 	ClassSkald        = 24
+	ClassHunter       = 25
 	ClassSpiritmaster = 27
 	ClassBonedancer   = 30
 )
@@ -100,6 +101,10 @@ var Classes = map[int]Class{
 	// The two Mystic pet casters. Numbers are OpenDAoC-Core's (provisional: one
 	// source), the same as the other Mystic; they cast from piety. Their
 	// tertiary stat is Core's quickness. Races are the data's start table.
+	// The Hunter: a Rogue-based archer and pet hybrid, casting from dexterity.
+	// OpenDAoC-Core's numbers (provisional); races are the data's start table.
+	ClassHunter: {ID: ClassHunter, Name: "Hunter", Primary: DEX, Secondary: QUI, Tertiary: STR,
+		BaseHP: 720, WeaponSkillBase: 380, SpecMultiplier: 20, Base: "Rogue", Races: []int{5, 7, 8, 14}, Casts: true, Acuity: DEX},
 	ClassSpiritmaster: {ID: ClassSpiritmaster, Name: "Spiritmaster", Primary: PIE, Secondary: DEX, Tertiary: QUI,
 		BaseHP: 560, WeaponSkillBase: 280, SpecMultiplier: 10, Base: "Mystic", Races: []int{5, 8}, Casts: true, Acuity: PIE},
 	ClassBonedancer: {ID: ClassBonedancer, Name: "Bonedancer", Primary: PIE, Secondary: DEX, Tertiary: QUI,
@@ -258,6 +263,8 @@ func init() {
 			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Thane definition", "Skald definition", "Levels raise the class stats"}},
 		Rule{ID: "character.class-spiritmaster-bonedancer", Capability: "rules-character-stats", Requirement: "The class table holds the four new classes",
 			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Spiritmaster and Bonedancer numbers", "Casting stat"}},
+		Rule{ID: "character.class-hunter", Capability: "rules-character-stats", Requirement: "The class table holds the four new classes",
+			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Hunter numbers"}},
 		Rule{ID: "character.creation", Capability: "rules-character-stats", Requirement: "Creation spends exactly 30 points",
 			Status: Documented, Sources: []string{"disorder", "opendaoc"}, Scenarios: []string{"Cost of a stat", "Default build", "Overspent build"}},
 		Rule{ID: "character.level-stats", Capability: "rules-character-stats", Requirement: "Levels from 6 raise the class stats",

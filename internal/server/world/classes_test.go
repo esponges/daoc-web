@@ -27,7 +27,7 @@ func TestOfferedClassesOnRealData(t *testing.T) {
 			t.Errorf("%s: no spec lines to train", a.Label)
 		}
 	}
-	for _, id := range []int{rules.ClassBerserker, rules.ClassSavage, rules.ClassHealer, rules.ClassShaman, rules.ClassRunemaster, rules.ClassThane, rules.ClassSkald} {
+	for _, id := range []int{rules.ClassBerserker, rules.ClassSavage, rules.ClassHealer, rules.ClassShaman, rules.ClassRunemaster, rules.ClassThane, rules.ClassSkald, rules.ClassHunter} {
 		st, _ := store.Open(":memory:")
 		w := New(Config{Cat: cat, Store: st, Log: t.Logf})
 		acct, _ := st.AccountFor("d:k", "k", false)
@@ -73,6 +73,8 @@ func TestNewClassesTrainAndGainStyles(t *testing.T) {
 		{rules.ClassThane, "DOL.GS.Trainer.VikingTrainer", "Stormcalling", false},
 		{rules.ClassSkald, "DOL.GS.Trainer.SkaldTrainer", "Sword", true},
 		{rules.ClassSkald, "DOL.GS.Trainer.VikingTrainer", "Battlesongs", false},
+		{rules.ClassHunter, "DOL.GS.Trainer.HunterTrainer", "Spear", true},
+		{rules.ClassHunter, "DOL.GS.Trainer.RogueTrainer", "Composite Bow", false},
 	} {
 		name := rules.Classes[c.class].Name
 		r := newRig(t, npcAt(1, "Trainer", c.trainerType, 30050, 30000))

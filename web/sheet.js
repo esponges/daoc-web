@@ -16,7 +16,7 @@ export function conColour(cc) {
 // sheetView is the character sheet's content: a title, stat rows (with what
 // items and levels changed from the base) and the spec and ability lists.
 // USABLE are the abilities a player uses on a target, by name (the server's /guard and so on).
-const USABLE = new Set(['Guard', 'Protect', 'Intercept', 'Engage']);
+const USABLE = new Set(['Guard', 'Protect', 'Intercept', 'Engage', 'Critical Shot', 'Rapid Fire']);
 
 export function sheetView(s) {
   if (!s) return null;

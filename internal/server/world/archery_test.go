@@ -3,6 +3,7 @@ package world
 import (
 	"math"
 	"math/rand"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -189,7 +190,7 @@ func TestShotsAreNeverParried(t *testing.T) {
 
 func TestAHunterKillsWithArrowsAndGetsTheExperience(t *testing.T) {
 	r, p, w := archerRig(t, 200)
-	w.setLevel(19) // a grey creature gives nothing
+	w.setLevel(19)                                                                                         // a grey creature gives nothing
 	r.z.addEffect(w, p, &SpellDef{ID: 9900, Name: "Stun", Type: rules.SpellStun, Duration: 1000}, effStun) // it cannot fight back
 	w.HP = 5
 	p.Char.Specs["Composite Bow"] = 20
@@ -259,5 +260,57 @@ func TestBowAndArrowsGoInTheirSlots(t *testing.T) {
 	r.z.MoveItem(p, 2, SlotWeapon)
 	if p.inv[SlotWeapon] != nil && p.inv[SlotWeapon].ID == "arrows" {
 		t.Error("arrows went in the weapon hand")
+	}
+}
+
+// A Hunter on the imported data: every spell their lines give to level 50 can
+// be cast, the Beastcraft summon makes a pet, the bow is theirs to use, and
+// the three bow abilities come with the Composite Bow spec at the data's levels.
+func TestAHunterOnTheImportedData(t *testing.T) {
+	cat, err := LoadCatalog(filepath.Join("..", "..", "..", "server", "data", "world.db"))
+	if err != nil {
+		t.Skip("no world store: run go run ./cmd/dbimport")
+	}
+	if _, ok := cat.StartFor(2, 5, rules.ClassHunter); !ok {
+		t.Error("the data has no start for a Norseman Hunter")
+	}
+	total := 0
+	for _, spec := range cat.TrainableSpecs(rules.ClassHunter) {
+		for _, l := range cat.SpellsFor(rules.ClassHunter, spec) {
+			sp := cat.Spells[l.Spell]
+			if sp == nil || l.Level > 50 {
+				continue
+			}
+			total++
+			if !spellSupported(sp) {
+				t.Errorf("a Hunter cannot cast %s %d %s (%s, %s)", spec, l.Level, sp.Name, sp.Type, sp.Target)
+			}
+		}
+	}
+	if total == 0 {
+		t.Error("a Hunter has no spells in the data")
+	}
+	trained := map[string]int{"Composite Bow": 50}
+	ab := rules.Abilities(cat.Grants[rules.ClassHunter], cat.Careers(rules.ClassHunter), 50, trained)
+	if ab[rules.AbCriticalShot] != 9 || ab[rules.AbPenetrating] != 3 || ab[rules.AbRapidFire] != 2 || ab["Weaponry: Composite Bows"] == 0 {
+		t.Errorf("a level 50 Hunter with Composite Bow 50: Critical Shot %d, Penetrating Arrow %d, Rapid Fire %d", ab[rules.AbCriticalShot], ab[rules.AbPenetrating], ab[rules.AbRapidFire])
+	}
+	r := newRig(t, wolf(1, 30400, 30000, 8))
+	r.w.Cat = cat
+	r.z.rng = rand.New(rand.NewSource(5))
+	p := r.player("Hunter", 20, 30000, 30000, false)
+	p.Char.Class = rules.ClassHunter
+	p.Char.Specs = map[string]int{"Beastcraft": 20}
+	r.w.recalc(p)
+	r.w.refreshBook(p)
+	p.power = 1e6
+	sp := bestOfType(p, rules.SpellSummonHunterPet)
+	if sp == nil {
+		t.Fatal("a Hunter has no pet summon")
+	}
+	r.z.Cast(p, sp.ID, p.ID)
+	r.ticks(int(sp.CastTime*TickRate) + 10)
+	if p.pet == nil || !p.pet.isPet() {
+		t.Errorf("%s made no pet", sp.Name)
 	}
 }

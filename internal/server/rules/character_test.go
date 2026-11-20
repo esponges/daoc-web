@@ -204,6 +204,21 @@ func TestSpiritmasterAndBonedancer(t *testing.T) {
 	})
 }
 
+func TestHunter(t *testing.T) {
+	h := Classes[ClassHunter]
+	vector(t, cs, "Hunter numbers", func(t *testing.T) {
+		if h.ID != 25 || h.Primary != DEX || h.Secondary != QUI || h.Tertiary != STR || h.BaseHP != 720 ||
+			h.WeaponSkillBase != 380 || h.SpecMultiplier != 20 || h.Base != "Rogue" || !h.Casts || h.Acuity != DEX {
+			t.Errorf("Hunter is %+v", h)
+		}
+		for race, want := range map[int]bool{5: true, 6: false, 7: true, 8: true, 14: true} {
+			if h.MayBe(race) != want {
+				t.Errorf("race %d may be a Hunter: %v, want %v", race, h.MayBe(race), want)
+			}
+		}
+	})
+}
+
 const mc = "midgard-classes"
 
 func TestMidgardClasses(t *testing.T) {

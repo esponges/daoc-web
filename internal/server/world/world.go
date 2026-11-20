@@ -474,6 +474,12 @@ func (w *World) command(z *Zone, p *Player, line string) {
 			return
 		}
 		z.PetCommand(p, strings.ToLower(f[1]))
+	case "shoot":
+		mode := ""
+		if len(f) > 1 {
+			mode = strings.ToLower(f[1])
+		}
+		z.Shoot(p, mode)
 	case "guard", "protect", "intercept", "engage":
 		z.UseAbility(p, f[0], f[1:]...)
 	case "accept":

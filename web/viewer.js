@@ -1009,6 +1009,8 @@ async function main() {
       if (t) log('You target ' + 'the ' + t.name + '.', 'info');
     }
     if (combat && e.code === 'Digit1' && !e.repeat) combat.toggleAttack(orbit.yaw);
+    if (net && e.code === 'KeyB' && !e.repeat) net.shoot(e.shiftKey ? 'critical' : (net.me && net.me.drawing ? 'stop' : ''));
+    if (net && e.code === 'KeyN' && !e.repeat) net.shoot('rapid');
     if (combat && e.code === 'Escape') combat.clearTarget();
     if (e.code === 'KeyC') {
       followMode = !followMode;
@@ -1177,6 +1179,11 @@ async function main() {
           if (l) log(l.text, l.cls);
           break;
         }
+        case 'draw': case 'drawstop':
+          if (mine) { ui?.castEvent(ev); if (net.me) net.me.drawing = ev.k === 'draw'; }
+          break;
+        case 'arrow':
+          break;
         case 'cast': case 'interrupt': case 'castfail': {
           if (mine) {
             ui?.castEvent(ev);

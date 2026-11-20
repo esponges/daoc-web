@@ -227,7 +227,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       if (!a.use) continue;
       const b = el('button', 'style', a.text);
       b.title = 'Use on your target (/' + a.use + ')';
-      b.addEventListener('click', () => net.chat('say', '/' + a.use));
+      const shot = { 'critical shot': 'critical', 'rapid fire': 'rapid' }[a.use];
+      b.title = shot ? 'Draw a ' + a.text + ' (shift+B for Critical Shot, N for Rapid Fire)' : b.title;
+      b.addEventListener('click', () => (shot ? net.shoot(shot) : net.chat('say', '/' + a.use)));
       abBar.appendChild(b);
     }
   };
