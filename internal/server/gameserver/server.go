@@ -363,6 +363,8 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { s.World.GroupOp(p, m) })
 	case *protocol.Cast:
 		z.Do(func() { z.Cast(p, m.Spell, m.Target) })
+	case *protocol.UseItem:
+		z.Do(func() { z.UseItem(p, m.Slot) })
 	case *protocol.Shoot:
 		z.Do(func() { z.Shoot(p, m.Mode) })
 	case *protocol.RezAnswer:

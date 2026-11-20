@@ -68,7 +68,7 @@ func (w *World) loadInventory(p *Player) {
 			p.vault[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count, Cond: it.Cond}
 			continue
 		}
-		p.inv[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count, Cond: it.Cond}
+		p.inv[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count, Cond: it.Cond, Poison: it.Poison, Charges: it.Charges}
 	}
 	w.recalc(p)
 }
@@ -135,6 +135,8 @@ func itemView(slot int, it *Item, count int) protocol.InvItem {
 		if s := wornSlot(it); s >= 0 {
 			v.Worn = s
 		}
+	case it.ObjectType == objPoison:
+		v.Kind, v.Detail = "poison", fmt.Sprintf("poison, level %d", it.Level)
 	default:
 		v.Kind = "misc"
 		if it.Level > 0 {
@@ -154,6 +156,14 @@ func (p *Player) sendInv(c *Catalog, money int64) {
 			v := itemView(slot, it, p.inv[slot].Count)
 			if repairable(it) {
 				v.Detail += ", " + conditionText(p.inv[slot].Cond)
+			}
+			if pz := p.inv[slot]; pz.Poison != 0 {
+				name := "poison"
+				if sp := c.Spells[pz.Poison]; sp != nil {
+					name = sp.Name
+				}
+				v.Detail += fmt.Sprintf(", poisoned with %s (%d)", name, pz.Charges)
+				v.Poison = pz.Charges
 			}
 			m.Items = append(m.Items, v)
 		}

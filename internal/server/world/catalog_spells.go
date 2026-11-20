@@ -147,6 +147,23 @@ func (c *Catalog) loadSpells(db *sql.DB, q func(string, func(*sql.Rows) error) e
 	}
 	var hasPack int
 	db.QueryRow(`SELECT count(*) FROM pragma_table_info('item') WHERE name='pack_size'`).Scan(&hasPack)
+	var hasPoison int
+	db.QueryRow(`SELECT count(*) FROM pragma_table_info('item') WHERE name='poison_spell'`).Scan(&hasPoison)
+	if hasPoison > 0 {
+		if err := q(`SELECT id,COALESCE(poison_spell,0),COALESCE(poison_charges,0) FROM item WHERE poison_spell<>0`, func(r *sql.Rows) error {
+			var id string
+			var sp, ch int
+			if err := r.Scan(&id, &sp, &ch); err != nil {
+				return err
+			}
+			if it := c.Items[id]; it != nil {
+				it.PoisonSpell, it.PoisonCharges = sp, ch
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
 	if hasPack > 0 {
 		if err := q(`SELECT id,COALESCE(pack_size,0),COALESCE(max_count,0) FROM item WHERE pack_size>1 OR max_count>1`, func(r *sql.Rows) error {
 			var id string

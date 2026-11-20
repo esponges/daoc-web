@@ -338,3 +338,14 @@ func TestShootMessage(t *testing.T) {
 		t.Fatalf("a plain shoot: %v %v %v", typ, v, err)
 	}
 }
+
+func TestUseItemMessage(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"use-item","slot":3}`))
+	if err != nil || typ != TUseItem || v.(*UseItem).Slot != 3 {
+		t.Fatalf("use-item: %v %v %v", typ, v, err)
+	}
+	b, _ := json.Marshal(InvItem{Slot: 40, ID: "axe", Name: "axe", Count: 1, Poison: 2})
+	if !strings.Contains(string(b), `"ps":2`) {
+		t.Errorf("a poisoned weapon is %s", b)
+	}
+}

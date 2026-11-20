@@ -48,6 +48,7 @@ const (
 	TRezAnswer  = "rez-answer"  // accept or decline a resurrection offer
 	TConcCancel = "conc-cancel" // let go of one of the buffs the caster holds
 	TPetCmd     = "pet-cmd"     // an order to your pet: attack, follow, stay, release, or a stance
+	TUseItem    = "use-item"    // use the item in a pack slot (a poison goes on a weapon)
 	TShoot      = "shoot"       // draw a bow at the held target, switch Critical Shot or Rapid Fire, or stop
 )
 
@@ -349,6 +350,7 @@ type InvItem struct {
 	Line   string `json:"line,omitempty"` // a weapon's line: Sword, Hammer, Axe
 	Detail string `json:"d,omitempty"`
 	Price  int64  `json:"pr,omitempty"` // in copper, on a shop's items
+	Poison int    `json:"ps,omitempty"` // a poisoned weapon: the hits the poison has left
 }
 
 // Inv is a full inventory.
@@ -569,6 +571,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &PetCmd{}
 	case TShoot:
 		v = &Shoot{}
+	case TUseItem:
+		v = &UseItem{}
 	case TPray:
 		return TPray, nil, nil
 	case TPing:
@@ -645,6 +649,12 @@ type ConcView struct {
 type ConcCancel struct {
 	T  string `json:"t"`
 	ID int    `json:"id"`
+}
+
+// UseItem uses the item in a pack slot; a poison is put on a worn weapon.
+type UseItem struct {
+	T    string `json:"t"`
+	Slot int    `json:"slot"`
 }
 
 // Shoot is the archer's bow order. Mode "" draws at the held target and keeps

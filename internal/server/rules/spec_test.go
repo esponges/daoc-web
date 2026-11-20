@@ -110,3 +110,19 @@ func TestMayUse(t *testing.T) {
 		t.Error("spear without training")
 	}
 }
+
+func TestPoisonRefusal(t *testing.T) {
+	vector(t, "rules-poisons", "Not enough Envenom", func(t *testing.T) {
+		if PoisonRefusal(5, 30, 20, false) == "" || PoisonRefusal(25, 10, 20, false) == "" {
+			t.Error("a poison above the Envenom spec or the level was allowed")
+		}
+		if PoisonRefusal(15, 20, 15, true) == "" {
+			t.Error("a poison was applied in combat")
+		}
+	})
+	vector(t, "rules-poisons", "Applying a poison", func(t *testing.T) {
+		if m := PoisonRefusal(15, 20, 15, false); m != "" {
+			t.Errorf("a level 15 poison with Envenom 15 was refused: %q", m)
+		}
+	})
+}

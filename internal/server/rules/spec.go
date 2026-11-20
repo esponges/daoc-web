@@ -198,6 +198,8 @@ func MayUse(abilities map[string]int, objectType, size int) error {
 
 func init() {
 	register(
+		Rule{ID: "poison.apply", Capability: "rules-poisons", Requirement: "A poison is applied to a weapon",
+			Status: Reference, Sources: []string{"opendaoc"}, Scenarios: []string{"Not enough Envenom", "Applying a poison"}},
 		Rule{ID: "spec.points", Capability: "rules-specialization", Requirement: "Levels grant specialisation points",
 			Status: Reference, Sources: []string{"opendaoc", "disorder"}, Scenarios: []string{"Level 6 Warrior", "Half-level", "Total at 50"}},
 		Rule{ID: "spec.training", Capability: "rules-specialization", Requirement: "Training a spec costs the level being bought",
@@ -209,4 +211,16 @@ func init() {
 		Rule{ID: "spec.migration", Capability: "rules-specialization", Requirement: "Spec state is kept and migrated",
 			Status: Documented, Sources: []string{"project"}, Scenarios: []string{"An existing level 20 Warrior"}},
 	)
+}
+
+// PoisonRefusal is why a character may not put a poison on a weapon, or "": it
+// needs Envenom and a level at least the poison's, and no combat or hold.
+func PoisonRefusal(envenom, level, poisonLevel int, busy bool) string {
+	switch {
+	case envenom < poisonLevel || level < poisonLevel:
+		return "Your skill with poisons is too low to use that one."
+	case busy:
+		return "You cannot apply a poison in combat."
+	}
+	return ""
 }

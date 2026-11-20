@@ -76,7 +76,11 @@ type Item struct {
 	Count  int
 	// Cond is the item's condition in hundredths of a percent, 10000 whole.
 	// Rows from before condition was kept load at 10000.
-	Cond    int
+	Cond int
+	// Poison is the world store's spell a poisoned weapon fires on a hit, and
+	// Charges how many hits it has left; 0 for no poison.
+	Poison  int
+	Charges int
 	Created time.Time
 }
 
@@ -165,6 +169,16 @@ func Open(path string) (*Store, error) {
 		if _, err := db.Exec(`ALTER TABLE item ADD COLUMN cond INTEGER NOT NULL DEFAULT 10000`); err != nil {
 			db.Close()
 			return nil, err
+		}
+	}
+	for _, col := range []string{"poison", "charges"} {
+		var has int
+		db.QueryRow(`SELECT count(*) FROM pragma_table_info('item') WHERE name=?`, col).Scan(&has)
+		if has == 0 {
+			if _, err := db.Exec(`ALTER TABLE item ADD COLUMN ` + col + ` INTEGER NOT NULL DEFAULT 0`); err != nil {
+				db.Close()
+				return nil, err
+			}
 		}
 	}
 	return &Store{db: db}, nil
@@ -345,7 +359,7 @@ func (s *Store) DeleteCharacter(accountID, id int64) error {
 
 // Items lists what a character carries and wears.
 func (s *Store) Items(charID int64) ([]Item, error) {
-	rows, err := s.db.Query(`SELECT id,char_id,item_id,slot,count,cond,created FROM item WHERE char_id=? ORDER BY slot`, charID)
+	rows, err := s.db.Query(`SELECT id,char_id,item_id,slot,count,cond,poison,charges,created FROM item WHERE char_id=? ORDER BY slot`, charID)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +368,7 @@ func (s *Store) Items(charID int64) ([]Item, error) {
 	for rows.Next() {
 		var it Item
 		var created int64
-		if err := rows.Scan(&it.ID, &it.CharID, &it.ItemID, &it.Slot, &it.Count, &it.Cond, &created); err != nil {
+		if err := rows.Scan(&it.ID, &it.CharID, &it.ItemID, &it.Slot, &it.Count, &it.Cond, &it.Poison, &it.Charges, &created); err != nil {
 			return nil, err
 		}
 		it.Created = time.Unix(created, 0)
@@ -413,6 +427,12 @@ func (t *Tx) AddItem(charID int64, itemID string, slot, count int) error {
 func (t *Tx) AddItemCond(charID int64, itemID string, slot, count, cond int) error {
 	_, err := t.tx.Exec(`INSERT INTO item(char_id,item_id,slot,count,cond,created) VALUES(?,?,?,?,?,?)`,
 		charID, itemID, slot, count, cond, time.Now().Unix())
+	return err
+}
+
+// SetPoison saves the poison on the weapon in a slot: a spell and its charges (0, 0 clears it).
+func (t *Tx) SetPoison(charID int64, slot, spell, charges int) error {
+	_, err := t.tx.Exec(`UPDATE item SET poison=?, charges=? WHERE char_id=? AND slot=?`, spell, charges, charID, slot)
 	return err
 }
 

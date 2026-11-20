@@ -211,3 +211,9 @@ Read from OpenDAoC-Core (`gameobjects/GamePlayer.cs`, `skillhandler/StealthSpecH
 - **Dual Wield** and Celtic Dual: the extra swing happens with chance `0.25 + 0.0068 * spec`. **Hand to Hand** (Savage): one extra blow with chance `0.5 * spec / 100`, a third a half as likely again, a fourth a quarter as likely as the third (at spec 50: 25, 12.5 and about 3 percent). Provisional.
 - **Shadowblade** (OpenDAoC-Core): hybrid on the Rogue base (see 8.1); numbers there. The Shadowblade's career grants Left Axes, Axes and Thrown weapon use at level 1 and a shield at 5.
 - **Searches that found nothing:** the 1.65 uncover timer interval and field-of-view numbers beyond Core's, and a poison's own chance (Core has none).
+
+## 10.3 Poisons in the data (2026-11-20)
+
+- The item table's poison spell and charges are now imported (`poison_spell`, `poison_charges`). 142 items are poisons (object type 46); every one lists 1 charge (a few list 0), so a poison lasts one hit unless the stack is the unit. The poison spell is a damage over time, a strength or constitution debuff, an unbreakable slow, a disease, a combat-speed or fatigue debuff, or an offensive proc whose `Value` is the spell it fires; the server fires the inner spell for a proc.
+- 21 poison items name a spell that is not in the spell table (the "inhibiting" poisons); none of them is on sale. Of the poisons merchants sell (96 distinct items on 34 lists), all 96 have a castable spell, so no stock was added.
+- A poison is saved with the weapon in the player database (columns `poison` and `charges`, added on start), and moves with the item.

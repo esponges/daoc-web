@@ -89,11 +89,13 @@ type defence struct {
 
 // invItem is one stack a player carries.
 type invItem struct {
-	DBID  int64
-	ID    string
-	Slot  int
-	Count int
-	Cond  int // condition in hundredths of a percent, store.FullCondition whole
+	DBID    int64
+	ID      string
+	Slot    int
+	Count   int
+	Cond    int // condition in hundredths of a percent, store.FullCondition whole
+	Poison  int // the poison on a weapon: a spell id, 0 for none
+	Charges int // and the hits it has left
 }
 
 // Player is a connected character in a zone. All fields belong to the zone's

@@ -426,6 +426,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 		}
 	}
 	z.playerProcs(p, n, style)
+	z.firePoison(p, n, SlotWeapon)
 }
 
 // provoke makes a creature hate the one who struck at it by the damage done,

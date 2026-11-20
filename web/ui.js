@@ -250,6 +250,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
         if (vaultOpen()) { toVault(slot); return; }
         const it = net.inv.items.find((i) => i.slot === slot);
         if (it && (it.k === 'weapon' || it.k === 'shield' || it.k === 'armour')) net.equip(slot, -2);
+        else if (it && it.k === 'poison') net.useItem(slot);
       },
       onDestroy: (slot) => net.equip(slot, -1),
       onUnequip: (slot) => {
@@ -289,6 +290,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
           if (shopOpen()) { net.sell(i); return; }
           if (vaultOpen()) { toVault(i); return; }
           if (it.k === 'weapon' || it.k === 'shield' || it.k === 'armour') net.equip(i, -2);
+          else if (it.k === 'poison') net.useItem(i);
         });
       }
       bag.appendChild(c);

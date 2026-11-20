@@ -172,6 +172,14 @@ export function createStockPack(doc, data, { onMove, onUse, onDestroy, onUnequip
       e.style.cursor = 'grab';
       e.title = it.nm + (it.d ? ' — ' + it.d : '') + (slot >= PACK_SLOTS ? '\nclick: take off' : '\nclick: equip · shift-click: destroy');
       e.appendChild(icon(doc, data, itemIconNumber(it)));
+      if (it.ps > 0) {
+        // A poisoned weapon: the hits its poison has left, in green in the corner.
+        const t = text(doc, data, 'arial9', String(it.ps), 'rgb(120,230,90)');
+        t.style.left = '20px';
+        t.style.top = '2px';
+        t.style.pointerEvents = 'none';
+        e.appendChild(t);
+      }
       if (it.n > 1) {
         const t = text(doc, data, 'arial9', String(it.n), 'rgb(255,255,255)');
         t.style.left = '2px';

@@ -179,3 +179,7 @@ Send `shoot` to use a bow (a bow in the ranged slot, arrows in a quiver slot). `
 ### Stealth
 
 A player with the Stealth spec hides and unhides with the chat command `/stealth` (or `/hide`). Hidden, the player has an effect of kind `stealth` (no end: `left` and `of` are 0) and `speed` in `effects` falls to the stealth speed, so predicted movement agrees. Other players are sent a hidden player in `ents` only while they are inside the detection range of the hider's Stealth spec against the viewer's level (a viewer with Detect Hidden sees further), and aggressive creatures take them as prey only inside theirs. Attacking, casting, shooting or taking damage ends stealth. Refusals are `err` with `code` `stealth`.
+
+### Poisons
+
+Send `use-item` with `slot` (a pack slot) to use an item; a poison item (`k` is `poison`) goes on the worn right-hand weapon when it has none, else the left, else replaces the right's. A poisoned weapon's `inv` item carries `ps`, the hits its poison has left, and says so in `d`. The poison fires on every hit and uses a charge; the last charge removes it ("Your weapon's poison is spent."). Refusals are `err` with `code` `use`.

@@ -18,30 +18,32 @@ import (
 
 // Item is an item template as the game rules use it.
 type Item struct {
-	ID         string
-	Name       string
-	Level      int
-	Quality    int
-	DPS        float64 // damage per second, from the table's tenths
-	Speed      float64 // seconds a swing, from tenths
-	AF         int     // armour factor, for armour
-	Hand       int
-	DamageType int
-	ObjectType int
-	ItemType   int
-	Model      int
-	Price      int64
-	Realm      int
-	Droppable  bool
-	LevelReq   int
-	Absorb     int         // armour absorption percent
-	Bonus      int         // enchantment percent
-	Condition  float64     // 0..1 of its maximum
-	Bonuses    []ItemBonus // stat and skill bonuses
-	ProcSpell  int         // the spell it fires on a landed blow, 0 for none
-	ProcChance int         // percent, 0 for the default
-	PackSize   int         // how many a merchant sells at the price (arrows come in packs), 0 for one
-	MaxCount   int         // the most a stack holds, 0 for the default
+	ID            string
+	Name          string
+	Level         int
+	Quality       int
+	DPS           float64 // damage per second, from the table's tenths
+	Speed         float64 // seconds a swing, from tenths
+	AF            int     // armour factor, for armour
+	Hand          int
+	DamageType    int
+	ObjectType    int
+	ItemType      int
+	Model         int
+	Price         int64
+	Realm         int
+	Droppable     bool
+	LevelReq      int
+	Absorb        int         // armour absorption percent
+	Bonus         int         // enchantment percent
+	Condition     float64     // 0..1 of its maximum
+	Bonuses       []ItemBonus // stat and skill bonuses
+	ProcSpell     int         // the spell it fires on a landed blow, 0 for none
+	ProcChance    int         // percent, 0 for the default
+	PackSize      int         // how many a merchant sells at the price (arrows come in packs), 0 for one
+	MaxCount      int         // the most a stack holds, 0 for the default
+	PoisonSpell   int         // a poison item: the spell it puts on a weapon
+	PoisonCharges int         // and how many hits it lasts
 }
 
 // ItemBonus is one bonus an item gives, by the item table's bonus type numbers.
