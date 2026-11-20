@@ -26,6 +26,14 @@ A hidden player SHALL NOT be sent to other players or noticed by creatures beyon
 - **WHEN** the Shadowblade comes inside the creature's detection range
 - **THEN** the creature notices them and attacks as an aggressive creature would
 
+#### Scenario: Creature detection
+- **WHEN** a level 10 creature looks for a hider with Stealth 5
+- **THEN** its detection radius is 225 units, 126 at least, and 125 more if it detects the hidden and the hider has no counter
+
+#### Scenario: Too close to hide
+- **WHEN** a player with Stealth 10 tries to hide with a level 40 enemy 500 units away
+- **THEN** it is refused, because the limit is 1024 less 896 times 10 over 40, which is 800 units
+
 #### Scenario: Another player
 - **WHEN** a second player stands beyond their detection range of a hidden Shadowblade
 - **THEN** the second client receives no position for the Shadowblade

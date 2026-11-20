@@ -1011,6 +1011,7 @@ async function main() {
     if (combat && e.code === 'Digit1' && !e.repeat) combat.toggleAttack(orbit.yaw);
     if (net && e.code === 'KeyB' && !e.repeat) net.shoot(e.shiftKey ? 'critical' : (net.me && net.me.drawing ? 'stop' : ''));
     if (net && e.code === 'KeyN' && !e.repeat) net.shoot('rapid');
+    if (net && e.code === 'KeyH' && !e.repeat) net.chat('say', '/stealth');
     if (combat && e.code === 'Escape') combat.clearTarget();
     if (e.code === 'KeyC') {
       followMode = !followMode;

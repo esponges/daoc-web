@@ -100,8 +100,8 @@
 
 ## 10. Part C: Shadowblade, stealth, poisons and the left hand
 
-- [ ] 10.1 Sources: stealth detection range and speed, what breaks stealth, Danger Sense, Detect Hidden, Distraction, Safe Fall, Climb Walls, the poison chance and charges, the left-hand chance and damage, and the Shadowblade class numbers. Record them in `findings.md`.
-- [ ] 10.2 Stealth:
+- [x] 10.1 Sources: stealth detection range and speed, what breaks stealth, Danger Sense, Detect Hidden, Distraction, Safe Fall, Climb Walls, the poison chance and charges, the left-hand chance and damage, and the Shadowblade class numbers. Record them in `findings.md`.
+- [x] 10.2 Stealth:
   - hiding and breaking;
   - visibility filtering in the broadcast;
   - creature aggro filtered by detection;

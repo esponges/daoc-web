@@ -207,6 +207,9 @@ func (z *Zone) styleReady(p *Player, s *StyleDef) (bool, string) {
 	if p.end < float64(p.styleCost(s)) {
 		return false, "not enough endurance"
 	}
+	if s.Stealth && !p.hidden() {
+		return false, "needs you to be hidden"
+	}
 	switch s.OpenType {
 	case openDef:
 		if p.lastDef.kind == "" || z.now-p.lastDef.at > DefensiveWindow || defCode(p.lastDef.kind) != s.ResultReq {
@@ -364,6 +367,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 		}
 	}
 	p.pending = -1
+	z.unstealth(p, "You are no longer hidden.") // any attack ends stealth, after the opener was chosen
 	p.combatUntil = z.now + CombatLinger
 	p.styleDefence = 0 // a style's defence bonus lasts until the next swing
 	ev := protocol.Event{K: "swing", From: p.ID, To: n.ID}

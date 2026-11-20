@@ -76,7 +76,8 @@ type StyleDef struct {
 	SpecLevel  int
 	Icon       int
 	Endurance  int
-	OpenType   int // 0 offensive/anytime, 1 defensive, 2 positional
+	Stealth    bool // may be used only from stealth (Backstab)
+	OpenType   int  // 0 offensive/anytime, 1 defensive, 2 positional
 	OpenValue  int
 	ResultReq  int // for offensive and defensive: what had to happen
 	WeaponReq  int
@@ -294,11 +295,13 @@ func LoadCatalog(path string) (*Catalog, error) {
 	}); err != nil {
 		return nil, err
 	}
-	if err := q(`SELECT id,class_id,name,spec,spec_level,icon,endurance,opening_type,opening_value,result_req,weapon_req,growth_rate,growth_offset,bonus_hit,bonus_def,anim FROM style`, func(r *sql.Rows) error {
+	if err := q(`SELECT id,class_id,name,spec,spec_level,icon,endurance,opening_type,opening_value,result_req,weapon_req,growth_rate,growth_offset,bonus_hit,bonus_def,anim,COALESCE(stealth,0) FROM style`, func(r *sql.Rows) error {
 		s := StyleDef{}
-		if err := r.Scan(&s.ID, &s.Class, &s.Name, &s.Spec, &s.SpecLevel, &s.Icon, &s.Endurance, &s.OpenType, &s.OpenValue, &s.ResultReq, &s.WeaponReq, &s.GrowthRate, &s.GrowthOff, &s.BonusToHit, &s.BonusToDef, &s.Anim); err != nil {
+		var stealth int
+		if err := r.Scan(&s.ID, &s.Class, &s.Name, &s.Spec, &s.SpecLevel, &s.Icon, &s.Endurance, &s.OpenType, &s.OpenValue, &s.ResultReq, &s.WeaponReq, &s.GrowthRate, &s.GrowthOff, &s.BonusToHit, &s.BonusToDef, &s.Anim, &stealth); err != nil {
 			return err
 		}
+		s.Stealth = stealth != 0
 		c.Styles = append(c.Styles, s)
 		return nil
 	}); err != nil {

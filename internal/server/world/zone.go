@@ -292,6 +292,9 @@ func (z *Zone) snapshots() {
 			if o == p || o.closed.Load() {
 				continue
 			}
+			if o.hidden() && !z.seesHidden(p, o) {
+				continue // a hider beyond the viewer's detection range is not sent
+			}
 			if math.Hypot(o.Body.X-p.Body.X, o.Body.Y-p.Body.Y) <= InterestRadius {
 				e := z.playerEntity(o)
 				// Like an NPC's, a player's gear goes out as they come into view,

@@ -16,7 +16,7 @@ assert.equal(clock(59.2), '1:00');
 console.log('ok: effect rows count down and draw by kind');
 
 // Songs and buffs have badges of their own, not the "?" of an unknown kind.
-for (const k of ['buff', 'dmgadd', 'speed', 'regen', 'resist']) {
+for (const k of ['buff', 'dmgadd', 'speed', 'regen', 'resist', 'stealth']) {
   const r = effectRows({ at: 0, list: [{ nm: 'Song', k, left: 4 }] }, 0)[0];
   assert.notEqual(r.label, '?', k + ' has a badge');
   assert.match(r.title, /^Song \(/);

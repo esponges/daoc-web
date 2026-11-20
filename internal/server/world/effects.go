@@ -158,7 +158,7 @@ func speedFactor(c combatant) float64 {
 			boost = math.Max(boost, rules.BoostFactor(e.spell.Value))
 		}
 	}
-	return rules.WithBoost(rules.SpeedFactor(held(c), slows...), boost)
+	return rules.WithBoost(rules.SpeedFactor(held(c), slows...), boost) * stealthFactor(c)
 }
 
 // resistBonus is the item bonus type that raises a resist, by damage type.
@@ -421,6 +421,9 @@ func (z *Zone) hurt(target, by combatant, amount int) {
 
 // damaged ends whatever damage breaks on a combatant: a mesmerize.
 func (z *Zone) damaged(c combatant) {
+	if p, ok := c.(*Player); ok && p.hidden() {
+		z.unstealth(p, "You are no longer hidden.")
+	}
 	if p, ok := c.(*Player); ok && p.casting != nil {
 		z.interruptPlayerCast(p, "You are interrupted.")
 	}
@@ -549,6 +552,8 @@ func (z *Zone) effectsChanged(c combatant) {
 			Left: math.Max(0, e.ends-z.now), Of: e.spell.effectSeconds()}
 		if e.cb != nil {
 			v.Left, v.Of, v.Conc = 0, 0, true
+		} else if math.IsInf(e.ends, 1) {
+			v.Left, v.Of = 0, 0 // an effect with no end, such as stealth
 		}
 		m.List = append(m.List, v)
 	}

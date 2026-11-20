@@ -113,6 +113,7 @@ type Player struct {
 	rapid      bool            // Rapid Fire is on
 	critical   bool            // the next shot is a Critical Shot
 	spellReady map[int]float64 // spell id -> when its recast has passed
+	stealthAt  float64         // when stealth last changed
 	song       *songState      // the song or chant they have on, nil when none
 	ride       *ride           // the horse route they are on, nil when walking
 	ab         abilityState    // Guard, Protect, Intercept and Engage in force

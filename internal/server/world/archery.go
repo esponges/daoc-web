@@ -126,6 +126,7 @@ func (z *Zone) beginDraw(p *Player) bool {
 	case p.rapid:
 		kind, dur = "rapid", rules.RapidDraw(base)
 	}
+	z.unstealth(p, "You are no longer hidden.")
 	p.draw = &playerDraw{target: n, kind: kind, base: base, ends: z.now + dur, x: p.Body.X, y: p.Body.Y, rangeCls: rc, accCls: ac}
 	p.combatUntil = z.now + CombatLinger
 	z.event(protocol.Event{K: "draw", From: p.ID, To: n.ID, Text: kind, Dur: dur}, p.Body.X, p.Body.Y)
