@@ -328,7 +328,7 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 		dur = rules.DebuffDuration(dur, 0, z.spellResist(target, sp.DamageType))
 	}
 	if kind == effMez {
-		dur = rules.MezDuration(dur, strongestValue(caster, effMezDur))
+		dur = rules.MezDuration(dur, strongestValue(target, effMezDur))
 	}
 	if kind == effAblative {
 		e.pool = int(sp.Value)

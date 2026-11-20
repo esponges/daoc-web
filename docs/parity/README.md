@@ -7,17 +7,17 @@ How much of classic 1.65 Midgard the server implements, measured against the com
 ```
 Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    15 of  15 implemented (2585 of 2585 placements x spells)
-  Class spell types       62 of  73 implemented (924 of 987 spells)
+  Class spell types       64 of  73 implemented (939 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
   Abilities               15 of  30 implemented (66 of 100 grants)
-  Creature kinds          18 of 110 implemented (29083 of 29932 placements, 7 kinds not classic)
+  Creature kinds          20 of 110 implemented (29099 of 29932 placements, 7 kinds not classic)
   quests                 81, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         0 gaps in 10 bands
-  rules: 26 documented, 64 reference, 24 provisional
+  rules: 26 documented, 64 reference, 26 provisional
 ```
 
 ## Creature spell types
@@ -65,7 +65,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DirectDamageWithDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 15 | yes |
 | Stun (Healer) | 14 | yes |
 | Disease (Shadowblade, Shaman) | 13 | yes |
-| OffensiveProc (Shadowblade, Spiritmaster) | 13 |  |
+| OffensiveProc (Shadowblade, Spiritmaster) | 13 | yes |
 | StrengthConstitutionDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 | yes |
 | StrengthDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 | yes |
 | Charm (Hunter) | 10 | yes |
@@ -116,7 +116,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | CureMezz (Bonedancer, Healer, Mystic, Runemaster, Spiritmaster) | 2 | yes |
 | CurePoison (Healer, Seer, Shaman) | 2 | yes |
 | FatigueConsumptionDebuff (Shadowblade) | 2 | yes |
-| MesmerizeDurationBuff (Spiritmaster) | 2 |  |
+| MesmerizeDurationBuff (Spiritmaster) | 2 | yes |
 
 ## Style features
 
@@ -201,14 +201,14 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Keeps.GuardStaticArcher | 8 |  |
 | DOL.GS.RainbowSpriteWhite | 8 |  |
 | DOL.GS.Trainer.BerserkerTrainer | 8 | yes |
-| DOL.GS.Trainer.BonedancerTrainer | 8 |  |
+| DOL.GS.Trainer.BonedancerTrainer | 8 | yes |
 | DOL.GS.Trainer.HealerTrainer | 8 | yes |
 | DOL.GS.Trainer.HunterTrainer | 8 |  |
 | DOL.GS.Trainer.RunemasterTrainer | 8 | yes |
 | DOL.GS.Trainer.ShadowbladeTrainer | 8 |  |
 | DOL.GS.Trainer.ShamanTrainer | 8 | yes |
 | DOL.GS.Trainer.SkaldTrainer | 8 | yes |
-| DOL.GS.Trainer.SpiritmasterTrainer | 8 |  |
+| DOL.GS.Trainer.SpiritmasterTrainer | 8 | yes |
 | DOL.GS.Trainer.ThaneTrainer | 8 | yes |
 | DOL.GS.Trainer.WarriorTrainer | 8 | yes |
 | DOL.GS.Keeps.GuardCorpseSummoner | 7 |  |
@@ -320,6 +320,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | cast.time | reference |
 | character.class | reference |
 | character.class-midgard | provisional |
+| character.class-spiritmaster-bonedancer | provisional |
 | character.class-thane-skald | provisional |
 | character.creation | documented |
 | character.endurance | provisional |
@@ -411,6 +412,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | spell.life-transfer | reference |
 | spell.lifedrain | reference |
 | spell.mesmerize | reference |
+| spell.mez-duration | provisional |
 | spell.regen-buffs | reference |
 | spell.resist | reference |
 | spell.resist-buff | reference |

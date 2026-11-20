@@ -36,6 +36,17 @@ Summon spells SHALL create a pet, and charm spells SHALL take a creature as a pe
 - **WHEN** a Hunter casts their Beastcraft summon
 - **THEN** their pet appears and the pet window opens
 
+### Requirement: Spells aimed at the caster's pet can be cast
+A spell whose target is the pet SHALL fall on the caster's own pet (a Bonedancer's commander; never a minion), and be refused with "You must have a pet to cast that." when there is none. Every lasting effect a creature can hold (strength and constitution, dexterity and quickness, combat speed, damage add, damage shield, ablative armour, mesmerize duration, an offensive proc) SHALL work on a pet in its own fights, and a heal SHALL raise it.
+
+#### Scenario: Pet spell without a pet
+- **WHEN** a Spiritmaster with no pet casts a buff aimed at their pet
+- **THEN** the cast is refused and no power is spent
+
+#### Scenario: A pet proc
+- **WHEN** a pet holding an offensive proc strikes a creature and the proc's chance comes up
+- **THEN** the proc's spell is cast on the creature by the pet
+
 ### Requirement: Debuffs, cures and the remaining Midgard buffs can be cast
 Every spell type that the twelve Midgard classes' lines use SHALL be castable by a player, under the effects in `rules-spell-effects`: the remaining buffs, the debuffs and control debuffs, the cures and spread heal, life transfer, and damage with a debuff or slow. Any type left over SHALL be counted in the census with a reason.
 

@@ -145,12 +145,20 @@ func hasEffect(c combatant, spellID int) bool {
 // lands: each with its chance (the proc spell's frequency, a percent), casting
 // the spell it carries on the target.
 func (z *Zone) creatureProcs(n *NPC, target combatant) {
-	for _, p := range n.procs {
+	procs := n.procs
+	for _, e := range n.effects { // procs a caster has put on it, as a Spiritmaster's on a pet
+		if e.kind == effProc {
+			procs = append(procs[:len(procs):len(procs)], e.spell)
+		}
+	}
+	for _, p := range procs {
 		sp := z.W.Cat.Spells[int(p.Value)]
 		if sp == nil || z.rng.Float64()*100 >= float64(p.Frequency) {
 			continue
 		}
-		z.castSpell(n, target, sp)
+		if target.fightable(z) {
+			z.castSpell(n, target, sp)
+		}
 	}
 }
 

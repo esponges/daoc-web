@@ -30,7 +30,7 @@ export const EFFECT_KINDS = {
   bladeturn: { label: '|', colour: '#9aa0a8', title: 'the next blow is turned' },
   ablative: { label: 'a', colour: '#b0a070', title: 'absorbing damage' },
   absorb: { label: 'o', colour: '#7a8a5a', title: 'absorbing more' },
-  mezdur: { label: 'z', colour: '#6a4a8f', title: 'mesmerizes last longer' },
+  mezdur: { label: 'z', colour: '#6a4a8f', title: 'mesmerizes are shorter' },
 };
 
 // What starting to suffer an effect of a kind says.

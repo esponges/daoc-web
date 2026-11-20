@@ -61,14 +61,16 @@ type Class struct {
 
 // The Midgard classes the rules cover, by the class numbers the data uses.
 const (
-	ClassWarrior    = 22
-	ClassHealer     = 26
-	ClassShaman     = 28
-	ClassRunemaster = 29
-	ClassBerserker  = 31
-	ClassSavage     = 32
-	ClassThane      = 21
-	ClassSkald      = 24
+	ClassWarrior      = 22
+	ClassHealer       = 26
+	ClassShaman       = 28
+	ClassRunemaster   = 29
+	ClassBerserker    = 31
+	ClassSavage       = 32
+	ClassThane        = 21
+	ClassSkald        = 24
+	ClassSpiritmaster = 27
+	ClassBonedancer   = 30
 )
 
 // Classes are the classes the rules cover.
@@ -95,6 +97,13 @@ var Classes = map[int]Class{
 		BaseHP: 720, WeaponSkillBase: 360, SpecMultiplier: 20, Base: "Viking", Races: []int{5, 6, 7}, Casts: true, Acuity: PIE},
 	ClassSkald: {ID: ClassSkald, Name: "Skald", Primary: CHA, Secondary: STR, Tertiary: CON,
 		BaseHP: 760, WeaponSkillBase: 380, SpecMultiplier: 15, Base: "Viking", Races: []int{5, 6, 7, 8}, Casts: true, Acuity: CHA},
+	// The two Mystic pet casters. Numbers are OpenDAoC-Core's (provisional: one
+	// source), the same as the other Mystic; they cast from piety. Their
+	// tertiary stat is Core's quickness. Races are the data's start table.
+	ClassSpiritmaster: {ID: ClassSpiritmaster, Name: "Spiritmaster", Primary: PIE, Secondary: DEX, Tertiary: QUI,
+		BaseHP: 560, WeaponSkillBase: 280, SpecMultiplier: 10, Base: "Mystic", Races: []int{5, 8}, Casts: true, Acuity: PIE},
+	ClassBonedancer: {ID: ClassBonedancer, Name: "Bonedancer", Primary: PIE, Secondary: DEX, Tertiary: QUI,
+		BaseHP: 560, WeaponSkillBase: 280, SpecMultiplier: 10, Base: "Mystic", Races: []int{6, 8, 14}, Casts: true, Acuity: PIE},
 }
 
 // TaughtBy says whether a trainer of the named class can teach this one: its
@@ -247,6 +256,8 @@ func init() {
 			Status: Provisional, Sources: []string{"data", "herald", "project"}, Scenarios: []string{"A race that may not", "Class list"}},
 		Rule{ID: "character.class-thane-skald", Capability: "rules-character-stats", Requirement: "The Thane and Skald definitions",
 			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Thane definition", "Skald definition", "Levels raise the class stats"}},
+		Rule{ID: "character.class-spiritmaster-bonedancer", Capability: "rules-character-stats", Requirement: "The class table holds the four new classes",
+			Status: Provisional, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Spiritmaster and Bonedancer numbers", "Casting stat"}},
 		Rule{ID: "character.creation", Capability: "rules-character-stats", Requirement: "Creation spends exactly 30 points",
 			Status: Documented, Sources: []string{"disorder", "opendaoc"}, Scenarios: []string{"Cost of a stat", "Default build", "Overspent build"}},
 		Rule{ID: "character.level-stats", Capability: "rules-character-stats", Requirement: "Levels from 6 raise the class stats",

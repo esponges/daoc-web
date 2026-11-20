@@ -343,7 +343,7 @@
         "Shadowblade",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "StrengthConstitutionDebuff",
@@ -835,7 +835,7 @@
       "classes": [
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     }
   ],
   "styleFeatures": [
@@ -1364,7 +1364,7 @@
     {
       "name": "DOL.GS.Trainer.BonedancerTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.HealerTrainer",
@@ -1399,7 +1399,7 @@
     {
       "name": "DOL.GS.Trainer.SpiritmasterTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.ThaneTrainer",
@@ -1867,6 +1867,10 @@
       "status": "provisional"
     },
     {
+      "id": "character.class-spiritmaster-bonedancer",
+      "status": "provisional"
+    },
+    {
       "id": "character.class-thane-skald",
       "status": "provisional"
     },
@@ -2231,6 +2235,10 @@
       "status": "reference"
     },
     {
+      "id": "spell.mez-duration",
+      "status": "provisional"
+    },
+    {
       "id": "spell.regen-buffs",
       "status": "reference"
     },
@@ -2277,7 +2285,7 @@
   ],
   "rulesByStatus": {
     "documented": 26,
-    "provisional": 24,
+    "provisional": 26,
     "reference": 64
   },
   "placements": 29932,

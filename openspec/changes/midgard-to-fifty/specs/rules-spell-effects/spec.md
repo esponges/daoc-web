@@ -57,6 +57,13 @@ Bladeturn SHALL stop the next melee or ranged hit completely and then end, unles
 - **WHEN** a player with a 25%, 100-point ablative takes a 120-damage hit
 - **THEN** 30 is absorbed and 70 of the pool remains
 
+### Requirement: A mesmerize duration buff shortens mesmerizes on its holder
+A mesmerize duration buff of N percent SHALL shorten every mesmerize that lands on its holder by N percent, never to under one second. The Spiritmaster casts it on their pet. Status: provisional.
+
+#### Scenario: Shorter mesmerize
+- **WHEN** a pet holding a 50 percent mesmerize duration buff is mesmerized for 10 seconds
+- **THEN** the mesmerize lasts 5 seconds, and never less than one
+
 ### Requirement: Regeneration buffs, cures, spread heal and life transfer
 These buffs and heals SHALL do what their type names, by values recorded in the rule book:
 - an endurance or power regeneration buff adds its value to each endurance or power tick;

@@ -167,6 +167,43 @@ func TestThaneAndSkald(t *testing.T) {
 	})
 }
 
+func TestSpiritmasterAndBonedancer(t *testing.T) {
+	sm, bd := Classes[ClassSpiritmaster], Classes[ClassBonedancer]
+	vector(t, cs, "Spiritmaster and Bonedancer numbers", func(t *testing.T) {
+		for _, c := range []Class{sm, bd} {
+			if c.Primary != PIE || c.Secondary != DEX || c.Tertiary != QUI ||
+				c.BaseHP != 560 || c.WeaponSkillBase != 280 || c.SpecMultiplier != 10 || c.Base != "Mystic" {
+				t.Errorf("%s is %+v", c.Name, c)
+			}
+		}
+		if sm.ID != 27 || bd.ID != 30 {
+			t.Errorf("class numbers %d and %d, want 27 and 30", sm.ID, bd.ID)
+		}
+		// The data's start table: Norseman and Kobold Spiritmasters; Troll,
+		// Kobold and Valkyn Bonedancers.
+		for race, want := range map[int]bool{5: true, 6: false, 7: false, 8: true, 14: false} {
+			if sm.MayBe(race) != want {
+				t.Errorf("race %d may be a Spiritmaster: %v, want %v", race, sm.MayBe(race), want)
+			}
+		}
+		for race, want := range map[int]bool{5: false, 6: true, 7: false, 8: true, 14: true} {
+			if bd.MayBe(race) != want {
+				t.Errorf("race %d may be a Bonedancer: %v, want %v", race, bd.MayBe(race), want)
+			}
+		}
+	})
+	vector(t, cs, "Casting stat", func(t *testing.T) {
+		for _, c := range []Class{sm, bd} {
+			if !c.Casts || c.Acuity != PIE {
+				t.Errorf("%s casts from %v, want piety", c.Name, c.Acuity)
+			}
+			if MaxPower(c, 10, 80) <= MaxPower(c, 10, 60) {
+				t.Errorf("%s's pool does not grow with piety", c.Name)
+			}
+		}
+	})
+}
+
 const mc = "midgard-classes"
 
 func TestMidgardClasses(t *testing.T) {

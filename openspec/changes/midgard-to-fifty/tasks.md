@@ -87,8 +87,8 @@
 
 ## 8. Part C: Spiritmaster and Bonedancer
 
-- [ ] 8.1 Sources for their class numbers. Add them to the class table with status. They cast from piety, from base class Mystic.
-- [ ] 8.2 Add both classes to the creation page and trainers. Check every spell their lines give at levels 1 to 50 against the census, with world tests for a summon, a damage-with-debuff, a bladeturn and a life transfer.
+- [x] 8.1 Sources for their class numbers. Add them to the class table with status. They cast from piety, from base class Mystic.
+- [x] 8.2 Add both classes to the creation page and trainers. Check every spell their lines give at levels 1 to 50 against the census, with world tests for a summon, a damage-with-debuff, a bladeturn and a life transfer.
 - [ ] 8.3 Browser check: make each class, summon, command the pet against a camp, and kill with the pet. Record what was seen.
 
 ## 9. Part C: Hunter and archery

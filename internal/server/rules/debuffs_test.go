@@ -90,8 +90,14 @@ func TestDebuffsAndWards(t *testing.T) {
 		if abs != 100 || left != 0 {
 			t.Errorf("the pool is all there is: absorbed %d, left %d", abs, left)
 		}
-		if FatigueFactor(-30) != 1.3 || MezDuration(10, 50) != 15 {
+		if FatigueFactor(-30) != 1.3 || MezDuration(10, 50) != 5 || MezDuration(10, 99) != 1 || MezDuration(10, 0) != 10 {
 			t.Error("fatigue and mesmerize duration factors")
+		}
+	})
+	vector(t, se, "Shorter mesmerize", func(t *testing.T) {
+		if MezDuration(10, 50) != 5 || MezDuration(10, 0) != 10 || MezDuration(10, 99) != 1 || MezDuration(10, 100) != 1 || MezDuration(10, -20) != 10 {
+			t.Errorf("a 10 second mesmerize under 50, 0, 99, 100 and -20 percent lasts %v %v %v %v %v, want 5 10 1 1 10",
+				MezDuration(10, 50), MezDuration(10, 0), MezDuration(10, 99), MezDuration(10, 100), MezDuration(10, -20))
 		}
 	})
 	vector(t, se, "Life transfer", func(t *testing.T) {

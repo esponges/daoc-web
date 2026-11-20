@@ -97,8 +97,10 @@ func CharmLevelOK(spellValue float64, casterLevel, mobLevel int) bool {
 // rule leaves.
 func CharmResistChance(hitChance float64) float64 { return 1 - hitChance }
 
-// MinionLimit is how many minions a commander summon controls (its pulse column).
-func MinionLimit(pulse int) int { return max(0, pulse) }
+// MinionLimit is how many minions a commander summon controls: the number in the
+// spell's resurrect-health column, which its text states ("Controls 3 additional
+// pets").
+func MinionLimit(n int) int { return max(0, n) }
 
 func init() {
 	const c = "pets"

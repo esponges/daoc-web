@@ -27,6 +27,7 @@ type petState struct {
 	leader     *NPC   // a minion's commander
 	minions    []*NPC // a commander's minions
 	maxMinions int
+	commander  bool // it was summoned as a commander, which may take minions
 	mode       string
 	stance     string
 	goal       *NPC
@@ -116,7 +117,7 @@ func (z *Zone) summonPet(p *Player, sp *SpellDef) bool {
 	switch sp.Type {
 	case rules.SpellSummonMinion:
 		commander = p.pet
-		if commander == nil || !commander.isPet() || commander.pet.maxMinions == 0 && len(commander.pet.minions) == 0 || commander.pet.leader != nil {
+		if commander == nil || !commander.isPet() || !commander.pet.commander || commander.pet.leader != nil {
 			sys(p, "You need a commander to summon this minion.")
 			return false
 		}
@@ -143,7 +144,8 @@ func (z *Zone) summonPet(p *Player, sp *SpellDef) bool {
 	n.Aggro, n.Roam = 0, 0
 	n.pet = &petState{owner: p, mode: modeFollow, stance: rules.StanceDefensive}
 	if sp.Type == rules.SpellSummonCommander {
-		n.pet.maxMinions = rules.MinionLimit(sp.Pulse)
+		n.pet.commander = true
+		n.pet.maxMinions = rules.MinionLimit(sp.ResurrectHealth)
 	}
 	x, y := p.Body.X+math.Sin(p.Body.Yaw)*64, p.Body.Y-math.Cos(p.Body.Yaw)*64
 	x, y = z.G.Clamp(x, y)

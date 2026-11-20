@@ -57,10 +57,11 @@ func ImplementedPlayerSpell(spellType string) bool {
 		SpellBodyResistDebuff, SpellColdResistDebuff, SpellEnergyResistDebuff, SpellHeatResistDebuff, SpellMatterResistDebuff,
 		SpellSpiritResistDebuff, SpellDisease, SpellNearsight, SpellConfusion, SpellAmnesia, SpellBladeturn, SpellAblativeArmor,
 		SpellArmorAbsorbBuff, SpellLifeTransfer, SpellDDWithDebuff, SpellDamageSpeedDecr, SpellUnbreakableSlow,
-		SpellFatigueDebuff, SpellSummonMinion, SpellSummonCommander, SpellSummonSpirit, SpellSummonHunterPet, SpellCharm:
+		SpellFatigueDebuff, SpellSummonMinion, SpellSummonCommander, SpellSummonSpirit, SpellSummonHunterPet, SpellCharm,
+		SpellMezDurationBuff, SpellOffensiveProc:
 		return true
 	}
-	return ImplementedSpell(spellType) && spellType != SpellOffensiveProc
+	return ImplementedSpell(spellType)
 }
 
 // BuffStatCap is the most spell buffs add to one stat, by level; the items'

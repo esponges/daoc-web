@@ -35,8 +35,11 @@ func spellSupported(sp *SpellDef) bool {
 	if !rules.ImplementedPlayerSpell(sp.Type) {
 		return false
 	}
+	if sp.Type == rules.SpellOffensiveProc && sp.Target != "Pet" {
+		return false // a poison on a weapon is another mechanism
+	}
 	switch sp.Target {
-	case "Enemy", "Self", "Realm", "Group", "Corpse":
+	case "Enemy", "Self", "Realm", "Group", "Corpse", "Pet":
 		return true
 	}
 	return false
@@ -212,6 +215,12 @@ func (z *Zone) castTarget(p *Player, sp *SpellDef, id int64) combatant {
 			return o
 		}
 		return p
+	case "Pet":
+		if p.pet == nil || !p.pet.isPet() || p.pet.dead() {
+			p.errMsg("cast", "You must have a pet to cast that.")
+			return nil
+		}
+		return p.pet
 	case "Corpse":
 		if o := z.players[id]; o != nil && o != p && o.Arch.Realm == p.Arch.Realm && z.corpseOK(o) {
 			return o

@@ -166,9 +166,12 @@ func AblativeAbsorb(hit int, pct float64, pool int) (absorbed, left int) {
 // consumption debuff of value (the data stores it negative).
 func FatigueFactor(value float64) float64 { return 1 + math.Abs(value)/100 }
 
-// MezDuration is a mesmerize's length for a caster with a mesmerize duration buff
-// of pct percent. Provisional.
-func MezDuration(base, pct float64) float64 { return base * (1 + math.Max(0, pct)/100) }
+// MezDuration is a mesmerize's length on a holder of a mesmerize duration buff
+// of pct percent: the spell's text says the effect of mesmerizes is reduced by
+// that much. Never under a second. Provisional: no number for the floor.
+func MezDuration(base, pct float64) float64 {
+	return math.Max(1, base*(1-math.Min(100, math.Max(0, pct))/100))
+}
 
 // StrongestOf is the largest of the values: debuffs of one kind do not stack.
 func StrongestOf(values ...float64) float64 {
@@ -190,5 +193,7 @@ func init() {
 			Status: Reference, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Bladeturn", "Ablative pool"}},
 		Rule{ID: "spell.life-transfer", Capability: c, Requirement: "Regeneration buffs, cures, spread heal and life transfer",
 			Status: Reference, Sources: []string{"opendaoc", "data"}, Scenarios: []string{"Life transfer"}},
+		Rule{ID: "spell.mez-duration", Capability: c, Requirement: "A mesmerize duration buff shortens mesmerizes on its holder",
+			Status: Provisional, Sources: []string{"opendaoc", "data", "project"}, Scenarios: []string{"Shorter mesmerize"}},
 	)
 }

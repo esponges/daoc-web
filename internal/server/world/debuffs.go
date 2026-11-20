@@ -20,7 +20,7 @@ const (
 	effBlade      = "bladeturn"
 	effAblative   = "ablative"
 	effAbsorb     = "absorb" // armour absorption raised
-	effMezDur     = "mezdur" // the holder's mesmerizes last longer
+	effMezDur     = "mezdur" // mesmerizes on the holder are shorter
 )
 
 // debuffKinds are the kinds whose duration the target's resist shortens.
@@ -36,7 +36,7 @@ func debuffKind(kind string) bool {
 func creatureTakes(kind string) bool {
 	switch kind {
 	case effDoT, effSlow, effStun, effMez, effProc, effBuff, effDebuff, effResDebuff, effCombatSlow,
-		effDisease, effNearsight, effNSImmune:
+		effDisease, effNearsight, effNSImmune, effHaste, effShield, effAdd, effAblative, effMezDur:
 		return true
 	}
 	return false
@@ -134,7 +134,7 @@ func refreshNPC(n *NPC) {
 	cb.Stats = stats
 	cb.BuffAF = float64(min(af, rules.BuffAFCap(n.Level)))
 	n.cb = cb
-	n.Swing = rules.SlowedSwing(rules.CreatureSwing(&n.cb), int(strongestValue(n, effCombatSlow)))
+	n.Swing = rules.SlowedSwing(rules.HastenedSwing(rules.CreatureSwing(&n.cb), int(strongestValue(n, effHaste))), int(strongestValue(n, effCombatSlow)))
 }
 
 // nsImmuneAfter notes that a nearsight has ended on a combatant.

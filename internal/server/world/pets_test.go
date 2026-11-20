@@ -292,7 +292,7 @@ func TestCharmTakesAnAnimalAndRefusesTheRest(t *testing.T) {
 
 func TestCommanderAndMinions(t *testing.T) {
 	r, h, _, _ := petRig(t)
-	comm := buffSpell(r, h, &SpellDef{ID: 9320, Name: "Summon Bone Master", Type: rules.SpellSummonCommander, Target: "Self", CastTime: 1, Damage: 50, Pulse: 3, LifeDrain: 801})
+	comm := buffSpell(r, h, &SpellDef{ID: 9320, Name: "Summon Bone Master", Type: rules.SpellSummonCommander, Target: "Self", CastTime: 1, Damage: 50, ResurrectHealth: 3, LifeDrain: 801})
 	minion := buffSpell(r, h, &SpellDef{ID: 9321, Name: "Summon Bonemage", Type: rules.SpellSummonMinion, Target: "Self", CastTime: 1, Damage: 40, LifeDrain: 801})
 	castAndLand(r, h, minion, h)
 	if len(petsOf(r.z, h)) != 0 || !said(h, "need a commander") {

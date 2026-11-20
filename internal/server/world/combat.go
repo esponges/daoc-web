@@ -480,18 +480,22 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 		z.provoke(t, n, 0)
 		return
 	}
-	z.event(protocol.Event{K: "hit", From: n.ID, To: t.ID, Amount: o.Damage}, t.Body.X, t.Body.Y)
+	dmg := creatureWard(t, o.Damage+z.creatureDamageAdd(n, t, o.Damage))
+	z.event(protocol.Event{K: "hit", From: n.ID, To: t.ID, Amount: dmg}, t.Body.X, t.Body.Y)
 	if t.isPet() {
 		t.pet.attacker = n
 	}
-	t.HP -= o.Damage
-	unsharedDamage(n, t, o.Damage)
+	t.HP -= dmg
+	unsharedDamage(n, t, dmg)
 	z.damaged(t)
-	z.provoke(t, n, float64(o.Damage))
+	z.provoke(t, n, float64(dmg))
 	if t.HP <= 0 {
 		z.killNPC(t)
 	}
 	if !t.dead() {
+		z.creatureShieldHits(t, n)
+	}
+	if !t.dead() && !n.dead() {
 		z.creatureProcs(n, t)
 	}
 }
