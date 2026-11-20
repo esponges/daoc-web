@@ -101,9 +101,10 @@ func SpellHitChance(casterLevel, targetLevel int) float64 {
 // SpellResistCap is the most of a spell's damage a resist takes away.
 const SpellResistCap = 70.0
 
-// ResistFactor is what is left of spell damage after a resist, in percent.
+// ResistFactor is what is left of spell damage after a resist, in percent. A
+// resist a debuff has taken below nothing makes the damage larger (to -100).
 func ResistFactor(resist float64) float64 {
-	return 1 - math.Max(0, math.Min(SpellResistCap, resist))/100
+	return 1 - math.Max(-100, math.Min(SpellResistCap, resist))/100
 }
 
 // AreaHits says whether a creature dist units from the centre of an area

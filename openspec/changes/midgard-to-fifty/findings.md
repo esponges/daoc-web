@@ -87,3 +87,29 @@ What the community data shows (queried in the imported world store, not copied):
 2. **Where:** each object type is added to one of Jordheim's existing merchant lists (`importer.AddedList`), after the list's last page. The lists Jordheim shares with other towns (shields) carry the stock to them.
 3. **Marked:** each added row has `merchant_stock.added` set to the reason; the census prints a star beside a count that only the project's stock fills.
 4. **Result:** 520 rows added; the census gap count goes from 32 to 0.
+
+# Part C: debuffs, creature buffs, wards (read 2026-11-19)
+
+Read from OpenDAoC-Core's spell handlers and effects through the GitHub API (`GameServer/spells/*`, `GameServer/ECS-Effects/*`), kept in the session scratchpad and not in this repo. Restated in our own words; no code carried over.
+
+## 6.1 What each spell type does
+
+- **Stat, armour and resist debuffs** (`StrengthDebuff`, `DexterityDebuff`, `StrengthConstitutionDebuff`, `DexterityQuicknessDebuff`, `*ResistDebuff`, `BaseArmorFactor` and armour absorption): a negative buff of `Value` points (a percent for the resist, absorption and speed kinds). Duration is the spell's, lengthened by the caster's spell-duration bonus, shortened by the target's resist to the spell's damage type, never under 1 second and never over 4 times the spell's. Debuffs do not stack with another of the same kind. Status: reference.
+- **Combat speed debuff:** the target's attack speed is slowed by `Value` percent (their swing takes longer). Reference.
+- **Disease:** the spell's text says it all: slows the target by 15 percent, lowers its strength by 7.5 percent and halves healing it receives (`inhibits healing by 50%`). Duration is shortened by the target's resist. Reference (numbers from the spell text).
+- **Nearsight:** lowers the target's spell and archery range by `Value` percent. A target that already has it, or has just had it end, is immune for a time; the spell also interrupts the target. Reference; the immunity time is provisional (no number found).
+- **Confusion:** against a creature, `Value` percent chance on landing to take hold (a negative value is a 100 percent chance, with `|Value|` percent to attack an ally); every 6 seconds the creature drops its target and picks a random enemy within 750 units. Against a player it interrupts the cast or shot in progress and does nothing more. Reference.
+- **Amnesia:** against a creature, the creature forgets who it was attacking, and any spell a player is casting at it is negated. The chance is the spell's own column. Reference.
+- **Bladeturn:** a bubble that absorbs the next melee hit, then ends. Reference.
+- **Ablative armour:** a health buffer that takes `Damage` percent (25 if absent, capped at 100) of each physical hit until `Value` damage total is spent. The magic and both-kinds variants do the same for spell or all damage. Reference.
+- **Life transfer:** the heal is twice `Value` percent of the caster's maximum hit points; the caster pays half of it, and the heal is halved on a diseased target. The caster is never taken below 1 hit point. Reference.
+- **Damage with debuff** (`DirectDamageWithDebuff`, `DamageSpeedDecrease`): the damage of the spell plus the debuff or slow of `Value` percent. Reference.
+- **Unbreakable slow** (`UnbreakableSpeedDecrease`): a speed decrease that damage does not remove. Reference.
+- **Fatigue consumption debuff:** the target's endurance costs in combat rise by `Value` percent. Reference.
+- **Mesmerize duration buff:** lengthens the caster's mesmerizes by `Value` percent (Spiritmaster). Provisional: no source for the cap.
+
+## 6.1 Settled
+
+1. One mechanism: the debuffs are negative buffs on an effect, with the duration rule above; stat ones lower the stat, resist ones the resist, combat speed lengthens the swing, armour absorption lowers absorption.
+2. Creatures cast their template's `StrengthBuff`, `StrengthConstitutionBuff`, `BaseArmorFactorBuff`, `StrengthDebuff` and `DexterityDebuff`; the census creature types reach 15 of 15.
+3. Nearsight immunity after it ends: 10 seconds, provisional.
