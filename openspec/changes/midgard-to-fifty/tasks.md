@@ -93,8 +93,8 @@
 
 ## 9. Part C: Hunter and archery
 
-- [ ] 9.1 Sources: bow draw and damage, Critical Shot, Rapid Fire, Penetrating Arrow, the Hunter class numbers, and Camouflage. Record them in `findings.md`.
-- [ ] 9.2 Inventory gains the quiver slots, and merchants sell arrows. Add rules for the draw time and ranged damage with table tests. The server draw state, release, arrow use, line of sight at release, parry turned off, and the three abilities. Add world tests.
+- [x] 9.1 Sources: bow draw and damage, Critical Shot, Rapid Fire, Penetrating Arrow, the Hunter class numbers, and Camouflage. Record them in `findings.md`.
+- [x] 9.2 Inventory gains the quiver slots, and merchants sell arrows. Add rules for the draw time and ranged damage with table tests. The server draw state, release, arrow use, line of sight at release, parry turned off, and the three abilities. Add world tests.
 - [ ] 9.3 Protocol `shoot` and the draw event. Client: the bow attack key, the draw on the cast bar, and an arrow trail if the effect data allows. Add node tests.
 - [ ] 9.4 Add the Hunter class (Beastcraft pet and charm, Spear, Sword, Stealth), the creation page and trainers. Browser check: pull with a bow, fight with the pet, and test charm. Record what was seen.
 

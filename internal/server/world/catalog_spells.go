@@ -145,6 +145,23 @@ func (c *Catalog) loadSpells(db *sql.DB, q func(string, func(*sql.Rows) error) e
 	}); err != nil {
 		return err
 	}
+	var hasPack int
+	db.QueryRow(`SELECT count(*) FROM pragma_table_info('item') WHERE name='pack_size'`).Scan(&hasPack)
+	if hasPack > 0 {
+		if err := q(`SELECT id,COALESCE(pack_size,0),COALESCE(max_count,0) FROM item WHERE pack_size>1 OR max_count>1`, func(r *sql.Rows) error {
+			var id string
+			var pk, mx int
+			if err := r.Scan(&id, &pk, &mx); err != nil {
+				return err
+			}
+			if it := c.Items[id]; it != nil {
+				it.PackSize, it.MaxCount = pk, mx
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
 	return q(`SELECT id,proc_spell,COALESCE(proc_chance,0) FROM item WHERE proc_spell<>0`, func(r *sql.Rows) error {
 		var id string
 		var sp, ch int

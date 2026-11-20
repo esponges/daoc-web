@@ -106,6 +106,8 @@ func weaponSpec(objectType int) string {
 		return "Spear"
 	case rules.ObjThrown:
 		return "Thrown Weapons"
+	case rules.ObjCompBow:
+		return "Composite Bow"
 	case rules.ObjStaff:
 		return "Staff"
 	case ObjShield:

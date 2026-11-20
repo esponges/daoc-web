@@ -107,6 +107,11 @@ type Player struct {
 	bookSent   protocol.Book   // what the client was last told
 	buffed     bool            // a spell buff was on at the last sheet
 	casting    *playerCast     // the spell being cast, or nil
+	bow        *Item           // the bow in the ranged slot, or nil
+	draw       *playerDraw     // the shot being drawn, or nil
+	shooting   bool            // keep drawing shots at the target until told to stop
+	rapid      bool            // Rapid Fire is on
+	critical   bool            // the next shot is a Critical Shot
 	spellReady map[int]float64 // spell id -> when its recast has passed
 	song       *songState      // the song or chant they have on, nil when none
 	ride       *ride           // the horse route they are on, nil when walking

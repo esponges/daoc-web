@@ -327,3 +327,14 @@ func TestPetMessages(t *testing.T) {
 		t.Errorf("an entity does not carry its owner: %s", b)
 	}
 }
+
+func TestShootMessage(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"shoot","mode":"critical"}`))
+	if err != nil || typ != TShoot || v.(*Shoot).Mode != "critical" {
+		t.Fatalf("shoot: %v %v %v", typ, v, err)
+	}
+	typ, v, err = Decode([]byte(`{"t":"shoot"}`))
+	if err != nil || typ != TShoot || v.(*Shoot).Mode != "" {
+		t.Fatalf("a plain shoot: %v %v %v", typ, v, err)
+	}
+}

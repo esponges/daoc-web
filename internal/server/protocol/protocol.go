@@ -48,6 +48,7 @@ const (
 	TRezAnswer  = "rez-answer"  // accept or decline a resurrection offer
 	TConcCancel = "conc-cancel" // let go of one of the buffs the caster holds
 	TPetCmd     = "pet-cmd"     // an order to your pet: attack, follow, stay, release, or a stance
+	TShoot      = "shoot"       // draw a bow at the held target, switch Critical Shot or Rapid Fire, or stop
 )
 
 // Message types, server to client.
@@ -566,6 +567,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &ConcCancel{}
 	case TPetCmd:
 		v = &PetCmd{}
+	case TShoot:
+		v = &Shoot{}
 	case TPray:
 		return TPray, nil, nil
 	case TPing:
@@ -642,6 +645,14 @@ type ConcView struct {
 type ConcCancel struct {
 	T  string `json:"t"`
 	ID int    `json:"id"`
+}
+
+// Shoot is the archer's bow order. Mode "" draws at the held target and keeps
+// shooting until told to stop; "critical" draws one Critical Shot; "rapid"
+// turns Rapid Fire on or off; "stop" lowers the bow.
+type Shoot struct {
+	T    string `json:"t"`
+	Mode string `json:"mode,omitempty"`
 }
 
 // PetCmd is an order to the sender's pet: "attack" (their target), "follow",

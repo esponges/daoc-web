@@ -36,7 +36,7 @@ An arrow SHALL roll hit, evade and block (no parry) against the target as a swin
 
 #### Scenario: A worked example
 - **WHEN** a level 20 Hunter with composite bow 20 hits a level 20 creature with a 12.0 DPS, 4.5-speed bow
-- **THEN** the damage equals the rule book's worked example for those numbers
+- **THEN** the damage equals the rule book's worked example for those numbers: 52 at the middle of the variance, as the same blow in melee does (dexterity 80, quickness 70, a plain creature)
 
 #### Scenario: Parry does not apply
 - **WHEN** an arrow is shot at a creature with a parry chance
@@ -57,3 +57,18 @@ Each SHALL be learned at the composite bow levels the data grants, by the rule i
 #### Scenario: Rapid Fire
 - **WHEN** a Hunter with Rapid Fire turns it on
 - **THEN** each draw is shorter and each hit does less damage, by the rule book's numbers
+
+### Requirement: Arrows are sold in packs and kept in the quiver
+Arrows SHALL be bought in the pack size the item data gives (a merchant sells the pack at its price, and a pack sells back at its price, not once per arrow), and SHALL be held in four quiver slots; the first quiver slot holding any is the one fired from.
+
+#### Scenario: Buying arrows
+- **WHEN** a player buys arrows from a merchant that lists them
+- **THEN** they receive one stack of the pack size and pay the item's price once
+
+#### Scenario: Range by bow
+- **WHEN** the range of a longbow, a recurve bow and a composite bow is read with plain and flight arrows
+- **THEN** they give 1760, 1680 and 1600 units, and 25 percent more with flight arrows
+
+#### Scenario: Penetrating Arrow
+- **WHEN** an arrow meets a bladeturn and the archer has Penetrating Arrow rank 2
+- **THEN** it does 75 percent of its damage, and none when the archer cast the bladeturn themselves. (Only players can hold a bladeturn at present, and nothing shoots players, so this is a rule and a function, not yet an event in the world.)

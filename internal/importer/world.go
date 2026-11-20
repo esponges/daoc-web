@@ -49,7 +49,7 @@ CREATE TABLE item(
   hand INTEGER, damage_type INTEGER, object_type INTEGER, item_type INTEGER, model INTEGER,
   weight INTEGER, price INTEGER, realm INTEGER, allowed_classes TEXT, droppable INTEGER, level_req INTEGER,
   bonus INTEGER, condition INTEGER, max_condition INTEGER, durability INTEGER,
-  proc_spell INTEGER, proc_chance INTEGER);
+  proc_spell INTEGER, proc_chance INTEGER, pack_size INTEGER, max_count INTEGER);
 CREATE TABLE item_bonus(item TEXT, type INTEGER, amount INTEGER);
 CREATE INDEX item_bonus_item ON item_bonus(item);
 CREATE TABLE style(
@@ -476,11 +476,11 @@ func build(o Options) (*Report, error) {
 				}
 			}
 		}
-		return true, ins(`INSERT OR REPLACE INTO item VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		return true, ins(`INSERT OR REPLACE INTO item VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			r.Str("Id_nb"), r.Str("Name"), r.Int("Level"), r.Int("Quality"), r.Int("DPS_AF"), r.Int("SPD_ABS"),
 			r.Int("Hand"), r.Int("Type_Damage"), r.Int("Object_Type"), r.Int("Item_Type"), r.Int("Model"),
 			r.Int("Weight"), r.Int("Price"), r.Int("Realm"), r.Str("AllowedClasses"), r.Int("CanDropAsLoot"), r.Int("LevelRequirement"),
-			r.Int("Bonus"), r.Int("Condition"), r.Int("MaxCondition"), r.Int("Durability"), r.Int("ProcSpellID"), r.Int("ProcChance"))
+			r.Int("Bonus"), r.Int("Condition"), r.Int("MaxCondition"), r.Int("Durability"), r.Int("ProcSpellID"), r.Int("ProcChance"), r.Int("PackSize"), r.Int("MaxCount"))
 	}); err != nil {
 		return nil, err
 	}

@@ -21,7 +21,9 @@ const (
 	SlotFeet   = 45
 	SlotHands  = 46
 	SlotHead   = 47
-	SlotCount  = 48
+	SlotRanged = 48 // the bow
+	SlotQuiver = 49 // four quiver slots, 49 to 52, for arrows
+	SlotCount  = 53
 )
 
 // MaxLevel is the highest level a character reaches.

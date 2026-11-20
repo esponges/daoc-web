@@ -424,6 +424,9 @@ func (z *Zone) damaged(c combatant) {
 	if p, ok := c.(*Player); ok && p.casting != nil {
 		z.interruptPlayerCast(p, "You are interrupted.")
 	}
+	if p, ok := c.(*Player); ok && p.draw != nil {
+		z.cancelDraw(p, "You are hit and lose your aim.")
+	}
 	list := effectsOf(c)
 	kept := (*list)[:0]
 	changed := false

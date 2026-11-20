@@ -514,3 +514,9 @@ func (s *Store) GravesIn(zone int) ([]GraveRow, error) {
 	}
 	return out, rows.Err()
 }
+
+// SetCount saves the size of the stack in a slot.
+func (t *Tx) SetCount(charID int64, slot, count int) error {
+	_, err := t.tx.Exec(`UPDATE item SET count=? WHERE char_id=? AND slot=?`, count, charID, slot)
+	return err
+}

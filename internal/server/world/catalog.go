@@ -40,6 +40,8 @@ type Item struct {
 	Bonuses    []ItemBonus // stat and skill bonuses
 	ProcSpell  int         // the spell it fires on a landed blow, 0 for none
 	ProcChance int         // percent, 0 for the default
+	PackSize   int         // how many a merchant sells at the price (arrows come in packs), 0 for one
+	MaxCount   int         // the most a stack holds, 0 for the default
 }
 
 // ItemBonus is one bonus an item gives, by the item table's bonus type numbers.
@@ -561,3 +563,6 @@ func (c *Catalog) CloseDB() {
 		c.db.Close()
 	}
 }
+
+// Pack is how many of an item one purchase gives and one price covers.
+func (i *Item) Pack() int { return max(1, i.PackSize) }

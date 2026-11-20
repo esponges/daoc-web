@@ -120,9 +120,12 @@ type Style struct {
 type Swing struct {
 	Attacker, Defender *Combatant
 	Style              *Style
-	InFront            bool // the attacker is within 60 degrees of the defender's facing
-	Attackers          int  // how many are attacking the defender, at least 1
-	NoDefence          bool // the blow cannot be evaded, parried, blocked or missed (an intercepted one)
+	InFront            bool    // the attacker is within 60 degrees of the defender's facing
+	Attackers          int     // how many are attacking the defender, at least 1
+	NoDefence          bool    // the blow cannot be evaded, parried, blocked or missed (an intercepted one)
+	Ranged             bool    // an arrow: it cannot be parried
+	Effectiveness      float64 // the share of its damage a ranged shot does; 0 means all
+	MissScale          float64 // what the shot does to the miss chance (an arrow's accuracy); 0 means none
 }
 
 // Result is how a swing ended.
@@ -163,6 +166,9 @@ func Resolve(s Swing, r Rolls) Outcome {
 	o.Location = LocNone
 	o.Chance.Evade = EvadeChance(d, s.InFront, s.Attackers)
 	o.Chance.Parry = ParryChance(d, s.InFront, s.Attackers, a.Weapon.TwoHanded)
+	if s.Ranged {
+		o.Chance.Parry = 0
+	}
 	o.Chance.Block = BlockChance(d, s.InFront)
 	switch {
 	case s.NoDefence:
@@ -183,6 +189,9 @@ func Resolve(s Swing, r Rolls) Outcome {
 		}
 	}
 	o.Chance.Miss = MissChance(s, o.Location)
+	if s.MissScale > 0 {
+		o.Chance.Miss = math.Min(1, o.Chance.Miss*s.MissScale)
+	}
 	if !s.NoDefence && dice[4] < o.Chance.Miss {
 		o.Result = Missed
 		return o
@@ -191,6 +200,9 @@ func Resolve(s Swing, r Rolls) Outcome {
 	raw, styled, fired := HitDamage(s, o.Location, dice[5])
 	o.StyleFired = fired
 	o.Damage = int(raw + styled)
+	if s.Effectiveness > 0 {
+		o.Damage = max(1, int(float64(o.Damage)*s.Effectiveness))
+	}
 	if a.Player && dice[6] < CriticalChance {
 		top := 1.0
 		if d.Player {

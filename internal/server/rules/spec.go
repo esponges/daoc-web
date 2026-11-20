@@ -99,16 +99,19 @@ func Abilities(grants []Grant, careers map[string]bool, level int, specs map[str
 
 // Ability keys the rules act on.
 const (
-	AbEvade    = "Evade"
-	AbShield   = "Shield"
-	AbMidArmor = "MidArmor"
+	AbEvade        = "Evade"
+	AbShield       = "Shield"
+	AbMidArmor     = "MidArmor"
+	AbCriticalShot = "Critical Shot"
+	AbRapidFire    = "Rapid Fire"
+	AbPenetrating  = "Penetrating Arrow"
 )
 
 // ActiveAbility reports whether the server implements an ability; the others
 // are known but have no effect yet.
 func ActiveAbility(key string) bool {
 	switch key {
-	case AbEvade, AbShield, AbMidArmor, AbGuard, AbProtect, AbIntercept, AbEngage:
+	case AbEvade, AbShield, AbMidArmor, AbGuard, AbProtect, AbIntercept, AbEngage, AbCriticalShot, AbRapidFire, AbPenetrating:
 		return true
 	}
 	_, weapon := weaponryAbility[key]
@@ -177,6 +180,9 @@ func MayUse(abilities map[string]int, objectType, size int) error {
 			return fmt.Errorf("you cannot wear %s armour yet", armourName[objectType])
 		}
 		return nil
+	}
+	if objectType == ObjArrow {
+		return nil // arrows are held by anyone; the bow decides what is fired
 	}
 	if objectType == ObjShield {
 		if have := abilities[AbShield]; have < max(1, size) {

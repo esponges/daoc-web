@@ -76,6 +76,7 @@ drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the 
 - `effect`: a lasting spell (damage over time, slow, stun, mesmerize) took hold on `to`; `x` is its name. A `block` event with `x` set is a bolt blocked.
 - `cast`: a creature began casting: `from` the caster, `to` its target, `x` the spell, `dur` the cast time in seconds. As on a 1.65 server, a client shows the line and the caster's cast animation, not a cast bar;
 - `interrupt`: the caster `from` was interrupted (`x` the spell), and `castfail`: its spell failed because the target left its range or died.
+- `draw`: the archer `from` began drawing a bow at `to`; `x` is `normal`, `critical` or `rapid`, `dur` the draw time in seconds. `drawstop` follows when the draw ends, by release or interruption. `arrow`: an arrow left `from` for `to` and takes `dur` seconds to arrive; the `hit`, `miss`, `block` or `evade` event for it follows at once. A shot is never parried.
 
 A `level` event's `x` says what the level brought (stats, hit points, specialisation points), and it is also sent for a half-level from 40.
 
@@ -170,3 +171,7 @@ characters a chat line, one line a second with a burst of four.
 ### Pets
 
 `pet` is your own pet, sent when it appears, changes or is lost: `id` (its entity id), `nm`, `lv`, `hp` (0 to 1), `st` (its stance: `passive`, `defensive` or `aggressive`), `md` (what it does: `follow`, `stay` or `attack`) and `mn`, the minions of a Bonedancer's commander (`id`, `nm`, `lv`, `hp`). `cl` true means you no longer have one and the pet window closes. A pet is also a creature in `ents`, friendly, with `ow` set to its owner's name. Send `pet-cmd` with `cmd` set to `attack` (your current target), `follow`, `stay`, `release`, `passive`, `defensive` or `aggressive`; an order from someone who has no pet is answered with a system line. A pet is released when its owner dies, logs out, leaves the zone or stays more than 10,000 units away for 10 seconds, and a pet that dies leaves no corpse.
+
+### Archery
+
+Send `shoot` to use a bow (a bow in the ranged slot, arrows in a quiver slot). `mode` empty draws at the held target and keeps shooting until it dies, the arrows run out, the archer moves or you send `stop`; `critical` draws one Critical Shot; `rapid` turns Rapid Fire on or off (no shot); `stop` lowers the bow. A refused shot is answered with an `err` whose `code` is `shoot` ("You have no ammunition.", "That target is too far away!", and so on). The draw, release and hit are `draw`, `arrow` and the ordinary combat events (see Events). The ranged slot is inventory slot 48 and the four quiver slots are 49 to 52; arrows are sold in packs and stack. A draw stops when the archer moves or is hit.

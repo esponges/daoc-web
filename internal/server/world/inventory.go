@@ -33,6 +33,12 @@ func wornSlot(it *Item) int {
 		return SlotHands
 	case 21:
 		return SlotHead
+	case 13:
+		return SlotRanged
+	case 40:
+		if it.ObjectType == rules.ObjArrow {
+			return SlotQuiver
+		}
 	}
 	return -1
 }
@@ -69,12 +75,16 @@ func (w *World) loadInventory(p *Player) {
 
 // recalcGear derives what a player holds and wears from their inventory.
 func (w *World) recalcGear(p *Player) {
+	p.bow = nil
 	p.weapon, p.shield = nil, nil
 	if it := p.inv[SlotWeapon]; it != nil {
 		p.weapon = w.Cat.Items[it.ID]
 	}
 	if it := p.inv[SlotShield]; it != nil {
 		p.shield = w.Cat.Items[it.ID]
+	}
+	if it := p.inv[SlotRanged]; it != nil {
+		p.bow = w.Cat.Items[it.ID]
 	}
 	if gear := gearOf(p.inv, w.Cat.Items); !sameGear(gear, p.gear) {
 		p.gear = gear
@@ -93,7 +103,7 @@ func gearOf(inv map[int]*invItem, items map[string]*Item) [][4]int {
 		if it == nil {
 			continue
 		}
-		if x := items[it.ID]; x != nil && x.Model > 0 && wornSlot(x) == s {
+		if x := items[it.ID]; x != nil && x.Model > 0 && s < SlotRanged && wornSlot(x) == s {
 			out = append(out, [4]int{x.ItemType, x.Model, 0, 0})
 		}
 	}
@@ -216,7 +226,7 @@ func (z *Zone) MoveItem(p *Player, from, to int) {
 		if x == nil {
 			return errors.New("unknown item")
 		}
-		if wornSlot(x) != slot {
+		if !slotFits(x, slot) {
 			return errors.New("that does not go there")
 		}
 		return canUse(p, x)
@@ -381,4 +391,14 @@ func (z *Zone) AutoEquip(p *Player, from int) {
 		return
 	}
 	z.MoveItem(p, from, wornSlot(x))
+}
+
+// slotFits says whether an item goes in a worn slot: where wornSlot puts it,
+// or any of the four quiver slots for arrows.
+func slotFits(x *Item, slot int) bool {
+	w := wornSlot(x)
+	if w == SlotQuiver {
+		return slot >= SlotQuiver && slot < SlotQuiver+4
+	}
+	return w == slot
 }
