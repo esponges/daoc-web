@@ -6,7 +6,8 @@
 import { text, icon, itemIconNumber } from './uiwin.js';
 
 // The server's worn slots: 40 weapon, 41 shield, 42 torso, 43 legs, 44 arms,
-// 45 feet, 46 hands, 47 head.
+// 45 feet, 46 hands, 47 head, 48 the bow, 49 to 52 the quiver. The art has a cell
+// for the bow; the quiver slots sit in a row across the empty middle of the doll.
 export const WORN_SLOTS = {
   40: { x: 15, y: 235, w: 32, h: 32, name: 'Right hand' },
   41: { x: 58, y: 235, w: 32, h: 32, name: 'Left hand' },
@@ -16,6 +17,11 @@ export const WORN_SLOTS = {
   45: { x: 155, y: 195, w: 32, h: 32, name: 'Feet' },
   46: { x: 155, y: 76, w: 32, h: 32, name: 'Hands' },
   47: { x: 155, y: 36, w: 32, h: 32, name: 'Helm' },
+  48: { x: 148, y: 235, w: 32, h: 32, name: 'Ranged' },
+  49: { x: 24, y: 130, w: 30, h: 30, name: 'Quiver 1' },
+  50: { x: 60, y: 130, w: 30, h: 30, name: 'Quiver 2' },
+  51: { x: 96, y: 130, w: 30, h: 30, name: 'Quiver 3' },
+  52: { x: 132, y: 130, w: 30, h: 30, name: 'Quiver 4' },
 };
 // The pack is forty slots in five pages of eight, one page per sack tab.
 export const PACK_SLOTS = 40;

@@ -2,7 +2,7 @@
 // and the loot window. Plain DOM over the canvas; the server decides
 // everything these show, so they only display state and send requests.
 
-const SLOT_NAMES = { 40: 'Weapon', 41: 'Shield', 42: 'Torso', 43: 'Legs', 44: 'Arms', 45: 'Feet', 46: 'Hands', 47: 'Head' };
+const SLOT_NAMES = { 40: 'Weapon', 41: 'Shield', 42: 'Torso', 43: 'Legs', 44: 'Arms', 45: 'Feet', 46: 'Hands', 47: 'Head', 48: 'Bow', 49: 'Quiver 1', 50: 'Quiver 2', 51: 'Quiver 3', 52: 'Quiver 4' };
 const PACK = 40;
 const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];
 

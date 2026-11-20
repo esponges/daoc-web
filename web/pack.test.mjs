@@ -22,7 +22,7 @@ const cellsOnPage = [...Array(PACK_SLOTS).keys()].map(bagCell).filter((c) => c.p
 check('a page holds eight distinct cells', cellsOnPage.length === 8 && new Set(cellsOnPage.map((c) => c.x + ',' + c.y)).size === 8);
 check('every cell fits the doll', [...Array(PACK_SLOTS).keys()].every((i) => { const c = bagCell(i); return c.x + 32 <= 172 && c.y + 32 <= 416; }));
 
-check('worn slots are the servers', eq(Object.keys(WORN_SLOTS).map(Number).sort(), [40, 41, 42, 43, 44, 45, 46, 47]));
+check('worn slots are the servers', eq(Object.keys(WORN_SLOTS).map(Number).sort(), [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52]));
 const rects = Object.values(WORN_SLOTS);
 const overlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 check('worn slots do not overlap', rects.every((a, i) => rects.every((b, j) => i === j || !overlap(a, b))));

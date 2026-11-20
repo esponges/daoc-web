@@ -9,15 +9,15 @@ Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    15 of  15 implemented (2585 of 2585 placements x spells)
   Class spell types       64 of  73 implemented (939 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
-  Abilities               15 of  30 implemented (66 of 100 grants)
-  Creature kinds          20 of 110 implemented (29099 of 29932 placements, 7 kinds not classic)
+  Abilities               18 of  30 implemented (80 of 100 grants)
+  Creature kinds          22 of 110 implemented (29110 of 29932 placements, 7 kinds not classic)
   quests                 81, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         0 gaps in 10 bands
-  rules: 26 documented, 64 reference, 26 provisional
+  rules: 26 documented, 64 reference, 31 provisional
 ```
 
 ## Creature spell types
@@ -143,18 +143,18 @@ Midgard (regions 100, 101, 151): 29932 placements
 | --- | --- | --- |
 | Evade (Berserker, Hunter, Midgard Rogue, Savage, Shadowblade, Skald, Warrior) | 17 | yes |
 | MidArmor (Berserker, Bonedancer, Healer, Hunter, Midgard Rogue, Mystic, Runemaster, Savage, Seer, Shadowblade, Shaman, Skald, Spiritmaster, Thane, Viking, Warrior) | 10 | yes |
-| Critical Shot (Hunter) | 9 |  |
+| Critical Shot (Hunter) | 9 | yes |
 | Protect (Berserker, Skald, Thane, Warrior) | 8 | yes |
 | Shield (Berserker, Healer, Savage, Seer, Shadowblade, Shaman, Skald, Thane, Viking, Warrior) | 8 | yes |
 | Safe Fall (Shadowblade) | 5 |  |
 | Berserk (Berserker) | 4 |  |
 | Guard (Thane, Warrior) | 4 | yes |
 | Weaponry: Staves (Berserker, Bonedancer, Healer, Hunter, Midgard Rogue, Mystic, Runemaster, Savage, Seer, Shadowblade, Shaman, Skald, Spiritmaster, Thane, Viking, Warrior) | 4 | yes |
-| Penetrating Arrow (Hunter) | 3 |  |
+| Penetrating Arrow (Hunter) | 3 | yes |
 | Weaponry: Thrown (Berserker, Shadowblade, Warrior) | 3 | yes |
 | Charge (Berserker, Savage) | 2 |  |
 | Intercept (Thane, Warrior) | 2 | yes |
-| Rapid Fire (Hunter) | 2 |  |
+| Rapid Fire (Hunter) | 2 | yes |
 | Weaponry: Axes (Berserker, Savage, Shadowblade, Skald, Thane, Viking, Warrior) | 2 | yes |
 | Weaponry: Hammers (Berserker, Healer, Savage, Seer, Shaman, Skald, Thane, Viking, Warrior) | 2 | yes |
 | Weaponry: Swords (Berserker, Hunter, Midgard Rogue, Savage, Shadowblade, Skald, Thane, Viking, Warrior) | 2 | yes |
@@ -203,7 +203,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Trainer.BerserkerTrainer | 8 | yes |
 | DOL.GS.Trainer.BonedancerTrainer | 8 | yes |
 | DOL.GS.Trainer.HealerTrainer | 8 | yes |
-| DOL.GS.Trainer.HunterTrainer | 8 |  |
+| DOL.GS.Trainer.HunterTrainer | 8 | yes |
 | DOL.GS.Trainer.RunemasterTrainer | 8 | yes |
 | DOL.GS.Trainer.ShadowbladeTrainer | 8 |  |
 | DOL.GS.Trainer.ShamanTrainer | 8 | yes |
@@ -226,7 +226,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.MidgardSITeleporter | 3 |  |
 | DOL.GS.Scripts.OFTeleporter | 3 | not classic: a teleporter: Origin Fantasy convenience travel |
 | DOL.GS.SnarlsAdd | 3 |  |
-| DOL.GS.Trainer.RogueTrainer | 3 |  |
+| DOL.GS.Trainer.RogueTrainer | 3 | yes |
 | DOL.GS.AlchemistsMaster | 2 |  |
 | DOL.GS.ArmorCraftingMaster | 2 |  |
 | DOL.GS.EmblemNPC | 2 |  |
@@ -314,11 +314,16 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | ability.intercept | reference |
 | ability.protect | reference |
 | ability.target | reference |
+| archery.abilities | provisional |
+| archery.damage | provisional |
+| archery.draw | provisional |
+| archery.range | provisional |
 | cast.decision | provisional |
 | cast.heal | provisional |
 | cast.interrupt | reference |
 | cast.time | reference |
 | character.class | reference |
+| character.class-hunter | provisional |
 | character.class-midgard | provisional |
 | character.class-spiritmaster-bonedancer | provisional |
 | character.class-thane-skald | provisional |

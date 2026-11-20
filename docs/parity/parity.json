@@ -954,7 +954,7 @@
       "classes": [
         "Hunter"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Protect",
@@ -1038,7 +1038,7 @@
       "classes": [
         "Hunter"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Weaponry: Thrown",
@@ -1074,7 +1074,7 @@
       "classes": [
         "Hunter"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Weaponry: Axes",
@@ -1374,7 +1374,7 @@
     {
       "name": "DOL.GS.Trainer.HunterTrainer",
       "uses": 8,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Trainer.RunemasterTrainer",
@@ -1491,7 +1491,7 @@
     {
       "name": "DOL.GS.Trainer.RogueTrainer",
       "uses": 3,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.AlchemistsMaster",
@@ -1843,6 +1843,22 @@
       "status": "reference"
     },
     {
+      "id": "archery.abilities",
+      "status": "provisional"
+    },
+    {
+      "id": "archery.damage",
+      "status": "provisional"
+    },
+    {
+      "id": "archery.draw",
+      "status": "provisional"
+    },
+    {
+      "id": "archery.range",
+      "status": "provisional"
+    },
+    {
       "id": "cast.decision",
       "status": "provisional"
     },
@@ -1861,6 +1877,10 @@
     {
       "id": "character.class",
       "status": "reference"
+    },
+    {
+      "id": "character.class-hunter",
+      "status": "provisional"
     },
     {
       "id": "character.class-midgard",
@@ -2285,7 +2305,7 @@
   ],
   "rulesByStatus": {
     "documented": 26,
-    "provisional": 26,
+    "provisional": 31,
     "reference": 64
   },
   "placements": 29932,

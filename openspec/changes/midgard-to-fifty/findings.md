@@ -176,3 +176,14 @@ Read from OpenDAoC-Core (`ECS-Components/RangeAttackComponent.cs`, `AttackCompon
 - **Hunter class** (OpenDAoC-Core): hybrid on the Rogue base, 720 base hit points, weapon skill base 380, spec multiplier 20, primary dexterity, secondary quickness, tertiary strength, casts from dexterity; races Norseman, Dwarf, Kobold, Valkyn (the data's start table agrees). Specs from the data: Beastcraft, Composite Bow, Spear, Sword, Stealth.
 - **The data's grants:** Critical Shot, Penetrating Arrow and Rapid Fire come with the Composite Bow spec at the levels in the abilities table (Critical Shot 1 at 3 to 9 at 27, Penetrating Arrow 1 to 3 at 30, 40, 50, Rapid Fire 1 and 2 at 35 and 45); Camouflage with the Hunter career at 30.
 - **Searches that found nothing:** the exact 1.65 draw formula and the quiver capacity were not found; both stay provisional.
+
+## 9.4 What was seen in the browser (2026-11-20, scratch server on port 8778)
+
+A scratch server on a fresh import, a Norseman Hunter.
+
+- **Creation:** `norseman-hunter` is offered (Hunter for Norseman, Dwarf, Kobold and Valkyn).
+- **Starter kit:** a bow lands in the RANGED cell of the stock inventory and arrows in the first quiver cell. The stock paper doll has a cell for the bow but none for the quiver, so the four quiver cells (slots 49 to 52) sit in a row across the middle of the doll (`web/pack.js`). A stack of 20 arrows dragged into quiver 2 stayed there.
+- **Shooting:** with a cub targeted, B drew the bow: the cast bar read "Drawing", the arrow flew on release ("You hit the sveawolf cub for 9 damage!", the target bar fell to 71 percent) and the next draw began by itself. Cubs that reached the archer interrupted draws ("You are hit and lose your aim."); B again printed "You lower your bow."
+- **Spells:** Beastcraft at level 1 lists Minor Call of Gleipnir (the charm) and Hunter's Companion (the summon). At level 10 the companion appeared at level 7 with its window; Minor Call of Gleipnir on a cub gave "sveawolf cub is now under your control", labelled "Huntra's pet", and released the companion (one pet at a time).
+- **Not observed:** Critical Shot and Rapid Fire with a trained Composite Bow spec (covered by the world tests with the abilities set), Penetrating Arrow (no creature can hold a bladeturn), Camouflage (needs stealth, section 10), the arrow's flight (no effect drawn: the install has no arrow effect that was found), and bows other than the composite bow.
+- **Known gap:** a level 1 Hunter is killed by a pack of cubs; that is the game working as designed, as for every class.
