@@ -440,6 +440,7 @@ func LoadCatalog(path string) (*Catalog, error) {
 	for _, l := range c.checkStarts() {
 		log.Print(l)
 	}
+	ensureTaskItem(c)
 	return c, nil
 }
 

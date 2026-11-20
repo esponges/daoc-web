@@ -23,33 +23,35 @@ const StepsPerSecond = 60
 
 // Message types, client to server.
 const (
-	THello      = "hello"  // first message: protocol version and the character to play
-	TInput      = "input"  // a run of fixed movement steps
-	TChat       = "chat"   // say or broadcast
-	TTarget     = "target" // select an entity
-	TAttack     = "attack" // auto-attack on or off
-	TStyle      = "style"  // use a style by its slot on the bar
-	TLoot       = "loot"   // take an item from a corpse
-	TEquip      = "equip"  // move an item between slots
-	TUse        = "use"    // use a zone exit, etc.
-	TGM         = "gm"     // an administrator's command
-	TPing       = "ping"
-	TRelease    = "release"     // a dead character asks to be stood up now rather than when the timer ends
-	TInteract   = "interact"    // ask an NPC to do what it does (open a merchant's shop)
-	TBuy        = "buy"         // buy an item from the open shop
-	TSell       = "sell"        // sell a pack item to the open shop
-	TBarSet     = "barset"      // put a style on a bar slot
-	TRepair     = "repair"      // ask the open blacksmith for a repair price, or accept it
-	TTrain      = "train"       // raise a spec at the trainer
-	TRestore    = "restore"     // pay a healer to restore lost constitution
-	TPray       = "pray"        // pray at the targeted gravestone
-	TGroupOp    = "groupop"     // invite, accept, decline, leave or remove from a group
-	TCast       = "cast"        // cast a spell from the spellbook
-	TRezAnswer  = "rez-answer"  // accept or decline a resurrection offer
-	TConcCancel = "conc-cancel" // let go of one of the buffs the caster holds
-	TPetCmd     = "pet-cmd"     // an order to your pet: attack, follow, stay, release, or a stance
-	TUseItem    = "use-item"    // use the item in a pack slot (a poison goes on a weapon)
-	TShoot      = "shoot"       // draw a bow at the held target, switch Critical Shot or Rapid Fire, or stop
+	THello       = "hello"  // first message: protocol version and the character to play
+	TInput       = "input"  // a run of fixed movement steps
+	TChat        = "chat"   // say or broadcast
+	TTarget      = "target" // select an entity
+	TAttack      = "attack" // auto-attack on or off
+	TStyle       = "style"  // use a style by its slot on the bar
+	TLoot        = "loot"   // take an item from a corpse
+	TEquip       = "equip"  // move an item between slots
+	TUse         = "use"    // use a zone exit, etc.
+	TGM          = "gm"     // an administrator's command
+	TPing        = "ping"
+	TRelease     = "release"      // a dead character asks to be stood up now rather than when the timer ends
+	TInteract    = "interact"     // ask an NPC to do what it does (open a merchant's shop)
+	TBuy         = "buy"          // buy an item from the open shop
+	TSell        = "sell"         // sell a pack item to the open shop
+	TBarSet      = "barset"       // put a style on a bar slot
+	TRepair      = "repair"       // ask the open blacksmith for a repair price, or accept it
+	TTrain       = "train"        // raise a spec at the trainer
+	TRestore     = "restore"      // pay a healer to restore lost constitution
+	TPray        = "pray"         // pray at the targeted gravestone
+	TGroupOp     = "groupop"      // invite, accept, decline, leave or remove from a group
+	TCast        = "cast"         // cast a spell from the spellbook
+	TRezAnswer   = "rez-answer"   // accept or decline a resurrection offer
+	TConcCancel  = "conc-cancel"  // let go of one of the buffs the caster holds
+	TPetCmd      = "pet-cmd"      // an order to your pet: attack, follow, stay, release, or a stance
+	TAskTask     = "ask-task"     // talk to an NPC about tasks: ask for one, or hand one in
+	TAbandonTask = "abandon-task" // give up the task you hold
+	TUseItem     = "use-item"     // use the item in a pack slot (a poison goes on a weapon)
+	TShoot       = "shoot"        // draw a bow at the held target, switch Critical Shot or Rapid Fire, or stop
 )
 
 // Message types, server to client.
@@ -81,6 +83,7 @@ const (
 	TRezOffer    = "rez-offer"   // a resurrection offered to a dead character, or withdrawn
 	TConc        = "conc"        // the concentration a caster holds: pool, use and the buffs
 	TPet         = "pet"         // your pet: its name, level, health, stance and orders; closed when it is gone
+	TTask        = "task"        // your task: what it is, its progress and time left; on false when you hold none
 )
 
 // Envelope reads just the type of a message.
@@ -573,6 +576,10 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Shoot{}
 	case TUseItem:
 		v = &UseItem{}
+	case TAskTask:
+		v = &AskTask{}
+	case TAbandonTask:
+		return TAbandonTask, nil, nil
 	case TPray:
 		return TPray, nil, nil
 	case TPing:
@@ -651,6 +658,13 @@ type ConcCancel struct {
 	ID int    `json:"id"`
 }
 
+// AskTask talks to the NPC with this entity id about tasks: a giver offers one, the
+// giver of a finished kill task pays, and the receiver of a delivery takes the item.
+type AskTask struct {
+	T  string `json:"t"`
+	ID int64  `json:"id"`
+}
+
 // UseItem uses the item in a pack slot; a poison is put on a worn weapon.
 type UseItem struct {
 	T    string `json:"t"`
@@ -670,6 +684,21 @@ type Shoot struct {
 type PetCmd struct {
 	T   string `json:"t"`
 	Cmd string `json:"cmd"`
+}
+
+// Task is the sender's task, sent when it is taken, changes, is finished or
+// lost, and at login. On false means none is held.
+type Task struct {
+	T      string `json:"t"`
+	On     bool   `json:"on"`
+	Kind   string `json:"k,omitempty"`    // kill or delivery
+	Name   string `json:"nm,omitempty"`   // "Kill Task" or "Delivery Task"
+	Text   string `json:"tx,omitempty"`   // what to do next
+	Giver  string `json:"gv,omitempty"`   // who gave it
+	Done   bool   `json:"dn,omitempty"`   // a kill task whose creature has been killed
+	Left   int    `json:"left,omitempty"` // seconds until it expires
+	Finish int    `json:"n"`              // tasks finished at this level
+	Max    int    `json:"max"`            // and the most the level allows
 }
 
 // Pet is the sender's own pet, sent when it appears, changes or is lost.

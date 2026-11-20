@@ -72,6 +72,9 @@ func (z *Zone) Interact(p *Player, id int64) {
 		p.errMsg("interact", "You cannot do that while riding.")
 		return
 	}
+	if n.inReach(p) && z.taskTouch(p, n) {
+		return // a task ends here
+	}
 	if n.Kind == "" {
 		p.errMsg("interact", "You cannot interact with that.")
 		return

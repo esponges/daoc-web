@@ -363,6 +363,8 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { s.World.GroupOp(p, m) })
 	case *protocol.Cast:
 		z.Do(func() { z.Cast(p, m.Spell, m.Target) })
+	case *protocol.AskTask:
+		z.Do(func() { z.AskTask(p, m.ID) })
 	case *protocol.UseItem:
 		z.Do(func() { z.UseItem(p, m.Slot) })
 	case *protocol.Shoot:
@@ -382,6 +384,9 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 	}
 	if typ == protocol.TRelease {
 		z.Do(func() { z.ReleasePlayer(p) })
+	}
+	if typ == protocol.TAbandonTask {
+		z.Do(func() { z.AbandonTask(p) })
 	}
 }
 

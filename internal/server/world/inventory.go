@@ -158,6 +158,9 @@ func (p *Player) sendInv(c *Catalog, money int64) {
 	for _, slot := range sortedSlots(p.inv) {
 		if it := c.Items[p.inv[slot].ID]; it != nil {
 			v := itemView(slot, it, p.inv[slot].Count)
+			if it.ID == taskItemID && p.task != nil && p.task.ItemName != "" {
+				v.Name, v.Detail = p.task.ItemName, "a task item"
+			}
 			if repairable(it) {
 				v.Detail += ", " + conditionText(p.inv[slot].Cond)
 			}
@@ -319,6 +322,10 @@ func (z *Zone) MoveItem(p *Player, from, to int) {
 // DropItem destroys the item in a slot.
 func (z *Zone) DropItem(p *Player, slot int) {
 	if p.inv[slot] == nil {
+		return
+	}
+	if p.inv[slot].ID == taskItemID {
+		p.errMsg("drop", "You cannot destroy a task item; abandon the task instead.")
 		return
 	}
 	if err := z.W.Store.Tx(func(tx *store.Tx) error { return tx.RemoveItem(p.Char.ID, slot) }); err != nil {

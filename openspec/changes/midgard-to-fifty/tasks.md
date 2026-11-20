@@ -119,7 +119,7 @@
 - [x] 11.1 Sources: whether and how 1.65 Midgard offered kill and delivery tasks, who gave them, the limits, the time limit and the reward. Record them in `findings.md`.
 - [x] 11.2 Mark the 81 Midgard XP-item data quests not classic in `notclassic.go`, and update the census quests line and its test.
 - [x] 11.3 Rules: task limits, time limit and reward, with worked examples per level band, registry entries and table tests.
-- [ ] 11.4 Server:
+- [x] 11.4 Server:
   - task givers chosen by the rule;
   - kill target by con band, and delivery target and task item;
   - progress on kill, delivery on give;

@@ -349,3 +349,23 @@ func TestUseItemMessage(t *testing.T) {
 		t.Errorf("a poisoned weapon is %s", b)
 	}
 }
+
+func TestTaskMessages(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"ask-task","id":901}`))
+	if err != nil || typ != TAskTask || v.(*AskTask).ID != 901 {
+		t.Fatalf("ask-task: %v %v %v", typ, v, err)
+	}
+	typ, _, err = Decode([]byte(`{"t":"abandon-task"}`))
+	if err != nil || typ != TAbandonTask {
+		t.Fatalf("abandon-task: %v %v", typ, err)
+	}
+	b, _ := json.Marshal(Task{T: TTask, On: true, Kind: "kill", Name: "Kill Task", Text: "Find a wolf", Giver: "Sir Gudrun", Left: 7000, Finish: 1, Max: 8})
+	want := `{"t":"task","on":true,"k":"kill","nm":"Kill Task","tx":"Find a wolf","gv":"Sir Gudrun","left":7000,"n":1,"max":8}`
+	if string(b) != want {
+		t.Errorf("a task is %s, want %s", b, want)
+	}
+	b, _ = json.Marshal(Task{T: TTask, Max: 5})
+	if string(b) != `{"t":"task","on":false,"n":0,"max":5}` {
+		t.Errorf("no task is %s", b)
+	}
+}

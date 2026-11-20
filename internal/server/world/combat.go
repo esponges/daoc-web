@@ -625,6 +625,7 @@ func (z *Zone) respawnPlayer(p *Player) {
 
 // killNPC finishes a creature: experience, loot and the clock to its return.
 func (z *Zone) killNPC(n *NPC) {
+	defer z.taskKilled(n) // kill tasks count creatures by name, once the kill's credit is settled
 	if n.isPet() {
 		charmed := n.pet.charmed
 		z.releasePet(n, "Your "+n.title()+" dies.")
@@ -744,6 +745,7 @@ func (z *Zone) levelUp(p *Player) {
 	before, hpBefore, ptsBefore := p.sh.stats, p.sh.maxHP, p.sh.unspent
 	c.Level++
 	c.DeathCount = 0
+	z.taskLevelUp(p)
 	z.W.recalc(p)
 	p.hp = float64(p.maxHP())
 	p.end = float64(rules.MaxEndurance)

@@ -101,35 +101,37 @@ type invItem struct {
 // Player is a connected character in a zone. All fields belong to the zone's
 // goroutine; connections reach them through Zone.Do.
 type Player struct {
-	ID         int64
-	power      float64         // spell power, up to sh.maxPower
-	powerSet   bool            // the pool has been filled once
-	powerAt    float64         // when the next power tick is due
-	book       []bookSpell     // the spells they know
-	bookSent   protocol.Book   // what the client was last told
-	buffed     bool            // a spell buff was on at the last sheet
-	casting    *playerCast     // the spell being cast, or nil
-	left       *Item           // the weapon in the left hand, or nil
-	bow        *Item           // the bow in the ranged slot, or nil
-	draw       *playerDraw     // the shot being drawn, or nil
-	shooting   bool            // keep drawing shots at the target until told to stop
-	rapid      bool            // Rapid Fire is on
-	critical   bool            // the next shot is a Critical Shot
-	spellReady map[int]float64 // spell id -> when its recast has passed
-	stealthAt  float64         // when stealth last changed
-	song       *songState      // the song or chant they have on, nil when none
-	ride       *ride           // the horse route they are on, nil when walking
-	ab         abilityState    // Guard, Protect, Intercept and Engage in force
-	gearSent   map[int64]bool  // NPCs whose equipment this player has been sent while they stayed in view
-	gear       [][4]int        // what this player wears, as [slot, model, colour, extension]; slot is the item table's, so it reads like an NPC's
-	gearRev    int             // changes whenever gear does, so other players are sent it again
-	gearSeen   map[int64]int   // the gearRev of each player this one has been sent, while they stayed in view
-	Acct       *store.Account
-	Char       *store.Character
-	Arch       Archetype
-	Zone       *Zone
-	Body       Body
-	Admin      bool
+	ID             int64
+	power          float64         // spell power, up to sh.maxPower
+	powerSet       bool            // the pool has been filled once
+	powerAt        float64         // when the next power tick is due
+	book           []bookSpell     // the spells they know
+	bookSent       protocol.Book   // what the client was last told
+	buffed         bool            // a spell buff was on at the last sheet
+	casting        *playerCast     // the spell being cast, or nil
+	left           *Item           // the weapon in the left hand, or nil
+	task           *store.Task     // the task they hold and have done, loaded at login
+	taskPauseUntil float64         // until when a giver that had nothing is not asked again
+	bow            *Item           // the bow in the ranged slot, or nil
+	draw           *playerDraw     // the shot being drawn, or nil
+	shooting       bool            // keep drawing shots at the target until told to stop
+	rapid          bool            // Rapid Fire is on
+	critical       bool            // the next shot is a Critical Shot
+	spellReady     map[int]float64 // spell id -> when its recast has passed
+	stealthAt      float64         // when stealth last changed
+	song           *songState      // the song or chant they have on, nil when none
+	ride           *ride           // the horse route they are on, nil when walking
+	ab             abilityState    // Guard, Protect, Intercept and Engage in force
+	gearSent       map[int64]bool  // NPCs whose equipment this player has been sent while they stayed in view
+	gear           [][4]int        // what this player wears, as [slot, model, colour, extension]; slot is the item table's, so it reads like an NPC's
+	gearRev        int             // changes whenever gear does, so other players are sent it again
+	gearSeen       map[int64]int   // the gearRev of each player this one has been sent, while they stayed in view
+	Acct           *store.Account
+	Char           *store.Character
+	Arch           Archetype
+	Zone           *Zone
+	Body           Body
+	Admin          bool
 
 	out          chan []byte
 	closed       atomic.Bool

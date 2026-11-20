@@ -66,6 +66,7 @@ func New(c Config) *World {
 	if c.DefaultZone == 0 {
 		c.DefaultZone = 100
 	}
+	ensureTaskItem(c.Cat)
 	return &World{Config: c, zones: map[int]*Zone{}, online: map[int64]*Player{}, drops: map[int][]string{}, groups: newGroups()}
 }
 
@@ -290,6 +291,9 @@ func (z *Zone) join(p *Player) {
 		z.concChanged(p) // a caster sees their concentration pool from the start
 	}
 	p.sendInv(w.Cat, c.Money)
+	w.loadTask(p)
+	z.expireTask(p)
+	z.sendTask(p)
 	p.sendBar(w.Cat)
 	w.refreshBook(p)
 	p.send(protocol.Clock{T: protocol.TClock, GS: w.gameSeconds()})
@@ -474,6 +478,8 @@ func (w *World) command(z *Zone, p *Player, line string) {
 			return
 		}
 		z.PetCommand(p, strings.ToLower(f[1]))
+	case "task":
+		z.TaskCommand(p, f[1:])
 	case "stealth", "hide":
 		z.Stealth(p)
 	case "camouflage":

@@ -233,6 +233,7 @@ func (z *Zone) tickPlayer(p *Player) {
 	// only out of a fight.
 	if z.now >= p.regenAt {
 		p.regenAt = z.now + 1
+		z.tickTask(p)
 		fighting := z.now < p.combatUntil
 		gain := float64(rules.EnduranceRegenOut)
 		if fighting {

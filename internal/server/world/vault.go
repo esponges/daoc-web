@@ -79,6 +79,10 @@ func (z *Zone) vaultMove(p *Player, from, to int) {
 	if from == to {
 		return
 	}
+	if it := p.inv[from]; it != nil && it.ID == taskItemID {
+		p.errMsg("vault", "A task item cannot be stored.")
+		return
+	}
 	n := z.byID[p.vaultNPC]
 	if p.vaultNPC == 0 || p.dead || n == nil || n.gone || n.dead() || !n.inReach(p) {
 		z.closeVault(p)
