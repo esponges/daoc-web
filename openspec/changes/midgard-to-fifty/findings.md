@@ -146,3 +146,15 @@ Read from OpenDAoC-Core (`GameServer/playerclasses/midgard/ClassSpiritmaster.cs`
 - **The minion limit is in the resurrect-health column**, not the pulse column (which is 0 for every commander). The spell text says it ("Controls 3 additional pets"). This corrects 7.1; the server tests had set the pulse field and so passed.
 - **Spirit Enhancement's procs** (Hinder Prey, Snaring Blow, Hunter's Trap): `Value` is the id of the spell the proc casts (an unbreakable slow of 35, 60 and 85 percent for 10 seconds on the enemy), `Frequency` is the chance (20 percent) per blow of the pet. They last as long as the buff (1200 seconds).
 - **Census:** class spell types go from 62 to 64 of 73. The nine left are the Savage's and Taunt.
+
+## 8.3 What was seen in the browser (2026-11-20, scratch server on port 8778)
+
+A scratch server with a fresh import (the pet template columns present), its own player database and a throwaway admin login; a Norseman Spiritmaster and a Troll Bonedancer.
+
+- **Creation page:** 34 character types; the Spiritmaster only for Norseman and Kobold, the Bonedancer for Troll, Kobold and Valkyn.
+- **Stock SPELLS window:** the Spiritmaster at level 1 lists Darkness (Minor Dusk Dart, Dampen Lifeforce), Summoning (Summon Spirit Fighter, Valkyrie's Agility) and Suppression (Lessen Strength); the Bonedancer lists Bone Army (Summon Bone Boss, Soften Bones), Darkness and Suppression.
+- **Summon:** both classes cast their summon; the pet appears beside the owner, labelled "<Name>'s pet" under its name, and the pet window opens with health, Attack, Follow, Stay, Release and the three stances.
+- **Pet buff:** Valkyrie's Agility (target Pet) took hold of the spirit fighter.
+- **Attack order:** with a creature targeted and Attack pressed, the spirit fighter (level 8 at character level 10) ran about 1,700 units, killed a sveawolf cub ("The sveawolf cub dies!") and took no damage. A level 1 pet fighting a soft-shelled crab took the crab to a few percent before the level 1 owner was killed by it (the crab hated the owner as well); the pet was released with "released as you fall", and the respawn took the owner to the bind point.
+- **Found and fixed:** (1) an attack order on a creature across water left the pet standing at the shore in attack mode for good; a pet now gives up after 4 seconds without headway, says "cannot reach", returns to following and leaves that creature alone for 15 seconds (world test, pets spec scenario "Unreachable target"). (2) A summon printed "Your Summon X takes hold of the pet", the generic effect line, besides "now under your control"; the extra event is gone.
+- **Not observed:** the Bonedancer's commander fighting or taking a minion (a Bonedancer needs level 15 for a minion; covered by the real-data world test), the pet window fallback with `web/data/ui/` moved away (covered by `web/pet.test.mjs`), and the pet's XP share (world test).

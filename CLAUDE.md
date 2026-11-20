@@ -138,8 +138,9 @@ not show that a window looks right. Check the fallback by temporarily moving
 - **Specs drive work.** Changes live in `openspec/changes/<name>/` (proposal,
   specs, design, tasks); `/opsx:propose`, `/opsx:apply` and `/opsx:archive`
   run them. Archived changes sync into `openspec/specs/`. Open now:
-  `midgard-to-fifty` (Parts A and B are in: line of sight, resurrection, concentration and
-  merchant gear to level 50 (`internal/importer/addedstock.go`); the
+  `midgard-to-fifty` (in: line of sight, resurrection, concentration, merchant gear to
+  level 50 (`internal/importer/addedstock.go`), debuffs and wards, pets and charm,
+  Spiritmaster and Bonedancer; next the Hunter and archery, then the Shadowblade; the
   browser checks 2.4 and 4.5 are still open).
 - **Game rules have a rule book.** Every mechanic the server decides has a
   `rules-<mechanic>` spec giving the formula in our words, its sources, a status

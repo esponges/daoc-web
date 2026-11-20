@@ -26,6 +26,10 @@ The owner SHALL be able to tell the pet to attack their target, follow, stay or 
 - **WHEN** the owner targets a creature and gives "attack"
 - **THEN** the pet runs to that creature and fights it until it dies or the owner gives another command
 
+#### Scenario: Unreachable target
+- **WHEN** the owner orders an attack on a creature across water or a wall the pet cannot cross
+- **THEN** after 4 seconds without headway the pet gives it up, returns to following, says so to the owner, and leaves that creature alone for 15 seconds
+
 #### Scenario: Defensive
 - **WHEN** a defensive pet's owner is attacked by a creature
 - **THEN** the pet attacks that creature

@@ -23,19 +23,22 @@ const (
 // petState is what makes a creature somebody's pet: a creature the player
 // summoned, or one they charmed (which keeps its own spawn and goes back to it).
 type petState struct {
-	owner      *Player
-	leader     *NPC   // a minion's commander
-	minions    []*NPC // a commander's minions
-	maxMinions int
-	commander  bool // it was summoned as a commander, which may take minions
-	mode       string
-	stance     string
-	goal       *NPC
-	charmed    bool
-	released   bool
-	beyondAt   float64 // when the owner first went beyond the leash; 0 when within it
-	sent       string  // the last pet message sent, as text, to send only changes
-	attacker   *NPC    // the creature that last struck it
+	owner       *Player
+	leader      *NPC   // a minion's commander
+	minions     []*NPC // a commander's minions
+	maxMinions  int
+	commander   bool // it was summoned as a commander, which may take minions
+	mode        string
+	stance      string
+	goal        *NPC
+	charmed     bool
+	released    bool
+	beyondAt    float64 // when the owner first went beyond the leash; 0 when within it
+	sent        string  // the last pet message sent, as text, to send only changes
+	attacker    *NPC    // the creature that last struck it
+	stuckAt     float64 // when it first made no headway toward its goal; 0 while moving
+	ignored     *NPC    // a creature it gave up on as unreachable
+	ignoreUntil float64
 }
 
 // isPet says whether a creature belongs to a player.
@@ -162,7 +165,6 @@ func (z *Zone) summonPet(p *Player, sp *SpellDef) bool {
 	} else {
 		p.pet = n
 	}
-	z.event(protocol.Event{K: "effect", From: p.ID, To: n.ID, Text: sp.Name}, x, y)
 	sys(p, fmt.Sprintf("The %s is now under your control.", n.title()))
 	z.sendPet(p)
 	return true
@@ -363,13 +365,14 @@ func (z *Zone) petFindGoal(n *NPC, ps *petState) *NPC {
 	if ps.stance == rules.StancePassive {
 		return nil
 	}
-	if a := ps.attacker; a != nil && z.hostileTo(a) {
+	skip := func(o *NPC) bool { return o == ps.ignored && z.now < ps.ignoreUntil }
+	if a := ps.attacker; a != nil && z.hostileTo(a) && !skip(a) {
 		return a
 	}
 	var best *NPC
 	bd := math.MaxFloat64
 	for _, o := range z.npcs {
-		if !z.hostileTo(o) {
+		if !z.hostileTo(o) || skip(o) {
 			continue
 		}
 		d := math.Hypot(o.Body.X-n.Body.X, o.Body.Y-n.Body.Y)
@@ -406,8 +409,10 @@ func (z *Zone) petFight(n *NPC, goal *NPC, hold bool) {
 			return
 		}
 		n.stepToward(z, tx, ty, math.Max(n.RunSpd, 250))
+		z.petProgress(n, goal)
 		return
 	}
+	n.pet.stuckAt = 0
 	n.speedNow = 0
 	if z.now >= n.swingAt {
 		n.swingAt = z.now + n.Swing
@@ -490,4 +495,28 @@ func (z *Zone) tickPets() {
 			z.sendPet(p)
 		}
 	}
+}
+
+// petProgress notes whether a pet closing on its goal is getting anywhere. One
+// that makes no headway for PetStuckGrace seconds (water or a wall between them)
+// gives the creature up, returns to following, and leaves it alone for a while.
+func (z *Zone) petProgress(n *NPC, goal *NPC) {
+	ps := n.pet
+	if n.speedNow > 0 {
+		ps.stuckAt = 0
+		return
+	}
+	if ps.stuckAt == 0 {
+		ps.stuckAt = z.now
+		return
+	}
+	if z.now-ps.stuckAt < rules.PetStuckGrace {
+		return
+	}
+	ps.stuckAt = 0
+	ps.ignored, ps.ignoreUntil = goal, z.now+rules.PetIgnoreTime
+	ps.goal, ps.mode = nil, modeFollow
+	n.target = nil
+	sys(ps.owner, fmt.Sprintf("Your %s cannot reach %s.", n.title(), goal.title()))
+	z.sendPet(ps.owner)
 }

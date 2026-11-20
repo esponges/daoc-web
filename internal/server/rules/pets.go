@@ -18,6 +18,8 @@ const (
 	PetAggroRange  = 512.0   // how far an aggressive pet notices enemies
 	PetLeash       = 10000.0 // beyond this from its owner a pet starts to be lost
 	PetLeashGrace  = 10.0    // seconds beyond the leash before it is released
+	PetStuckGrace  = 4.0     // seconds a pet may make no headway toward its goal before it gives up on it (provisional)
+	PetIgnoreTime  = 15.0    // seconds it then leaves that creature alone (provisional)
 	CharmedHostile = 10.0    // seconds a creature whose charm ended is hostile to its old owner (provisional)
 )
 

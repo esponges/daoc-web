@@ -147,3 +147,33 @@ func TestMesmerizeDurationBuffShortensMezOnThePet(t *testing.T) {
 		t.Errorf("a 20 second mesmerize lasted %v on the pet, and %v with a 50 percent mesmerize duration buff", ends, short)
 	}
 }
+
+// river is flat ground with a river across x 30300 to 30600.
+type river struct{ flat }
+
+func (river) IsWet(x, y float64) bool { return x > 30300 && x < 30600 }
+
+func TestAPetGivesUpOnATargetItCannotReach(t *testing.T) {
+	r, h, _, sp := petRig(t)
+	sp.Damage = 50
+	castAndLand(r, h, sp, h)
+	pet := h.pet
+	r.z.G = river{}
+	wolf := r.z.npcs[0] // across the river, at 31000
+	wolf.Aggro, wolf.Roam = 0, 0
+	h.target = wolf.ID
+	r.z.PetCommand(h, "attack")
+	if pet.pet.mode != modeAttack {
+		t.Fatal("the attack order was not taken")
+	}
+	r.ticks(int((rules.PetStuckGrace + 12) * TickRate))
+	if pet.pet.mode != modeFollow || pet.pet.goal != nil {
+		t.Errorf("the pet kept trying: mode %q goal %v", pet.pet.mode, pet.pet.goal != nil)
+	}
+	if !said(h, "cannot reach") {
+		t.Error("the owner was not told the pet cannot reach its target")
+	}
+	if pet.pet.ignored != wolf {
+		t.Error("the pet does not remember the creature it gave up on")
+	}
+}
