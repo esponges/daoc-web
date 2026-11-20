@@ -141,8 +141,9 @@ not show that a window looks right. Check the fallback by temporarily moving
   `midgard-to-fifty` (in: line of sight, resurrection, concentration, merchant gear to
   level 50 (`internal/importer/addedstock.go`), debuffs and wards, pets and charm,
   all twelve classes: the Spiritmaster, Bonedancer, Hunter (archery) and Shadowblade
-  (stealth, poisons, the left hand); next the tasks and the data quests marked not
-  classic; the browser checks 2.4 and 4.5 are still open).
+  (stealth, poisons, the left hand), and tasks with the data quests marked not
+  classic (Part D); what is left is closing the change; the browser checks 2.4 and
+  4.5 are still open).
 - **Game rules have a rule book.** Every mechanic the server decides has a
   `rules-<mechanic>` spec giving the formula in our words, its sources, a status
   (documented, reference or provisional) and worked examples. Each numbered

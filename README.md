@@ -54,11 +54,12 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 0 gaps in 10 five-level bands (31 to 50 is the project's added stock) |
-| Rules | 26 documented, 66 reference, 34 provisional |
+| Rules | 26 documented, 66 reference, 36 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for all twelve of
 Midgard's classes (trainers teach them), with pets and charm, bows, stealth,
-poisons and the left hand. Not started: tasks and quests, crafting, housing,
+poisons, the left hand and tasks (kill and delivery tasks from town NPCs, up to level 20).
+Not started: quests, crafting, housing,
 keeps, relics, battlegrounds and every realm but Midgard. Merchant armour and
 weapons run to level 50 with stock this project added above level 30. [Known limitations](#known-limitations) has the rest.
 
@@ -525,7 +526,7 @@ look at them (`/uidemo.html` on the running server).
   models patch 1.65; the hit points, damage, experience and weapon-skill
   numbers are this project's. Creatures and players cast, and styles and
   weapons fire their procs, but there are no quests, crafting,
-  realm-versus-realm or housing. A creature
+  realm-versus-realm or housing (tasks only, to level 20). A creature
   type with no converted character is left out, and style icons are not
   converted. The table at the top says how much of each is done.
 - **Line of sight is provisional.** Hulls and trunks block, terrain is sampled every

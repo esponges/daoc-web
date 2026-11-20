@@ -2340,6 +2340,14 @@
       "status": "reference"
     },
     {
+      "id": "task.limits",
+      "status": "provisional"
+    },
+    {
+      "id": "task.reward",
+      "status": "provisional"
+    },
+    {
       "id": "time.day-length",
       "status": "reference"
     },
@@ -2350,7 +2358,7 @@
   ],
   "rulesByStatus": {
     "documented": 26,
-    "provisional": 34,
+    "provisional": 36,
     "reference": 66
   },
   "placements": 29932,

@@ -555,6 +555,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   if (stock) Object.assign(taskWin.el.style, { left: '320px', top: '80px', zIndex: 14 });
   root.appendChild(taskWin.el);
   net.on.task = (m) => taskWin.update(m);
+  if (net.task) taskWin.update(net.task); // the one sent at login arrived before the window existed
   setInterval(() => taskWin.tick(), 1000);
   toggleTasks = () => taskWin.toggle();
   // A resurrection offered to a dead character uses the same prompt.
