@@ -40,7 +40,7 @@ func (p *Player) poisonTarget(cat *Catalog) int {
 			return false
 		}
 		x := cat.Items[it.ID]
-		return x != nil && x.IsWeapon()
+		return x != nil && x.IsWeapon() && !x.IsShield()
 	}
 	switch {
 	case weapon(SlotWeapon) && p.inv[SlotWeapon].Poison == 0:

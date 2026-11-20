@@ -109,6 +109,7 @@ type Player struct {
 	bookSent   protocol.Book   // what the client was last told
 	buffed     bool            // a spell buff was on at the last sheet
 	casting    *playerCast     // the spell being cast, or nil
+	left       *Item           // the weapon in the left hand, or nil
 	bow        *Item           // the bow in the ranged slot, or nil
 	draw       *playerDraw     // the shot being drawn, or nil
 	shooting   bool            // keep drawing shots at the target until told to stop

@@ -76,12 +76,16 @@ func (w *World) loadInventory(p *Player) {
 // recalcGear derives what a player holds and wears from their inventory.
 func (w *World) recalcGear(p *Player) {
 	p.bow = nil
-	p.weapon, p.shield = nil, nil
+	p.weapon, p.shield, p.left = nil, nil, nil
 	if it := p.inv[SlotWeapon]; it != nil {
 		p.weapon = w.Cat.Items[it.ID]
 	}
 	if it := p.inv[SlotShield]; it != nil {
-		p.shield = w.Cat.Items[it.ID]
+		if x := w.Cat.Items[it.ID]; x != nil && x.IsShield() {
+			p.shield = x
+		} else if x != nil && x.IsWeapon() {
+			p.left = x
+		}
 	}
 	if it := p.inv[SlotRanged]; it != nil {
 		p.bow = w.Cat.Items[it.ID]
@@ -103,7 +107,7 @@ func gearOf(inv map[int]*invItem, items map[string]*Item) [][4]int {
 		if it == nil {
 			continue
 		}
-		if x := items[it.ID]; x != nil && x.Model > 0 && s < SlotRanged && wornSlot(x) == s {
+		if x := items[it.ID]; x != nil && x.Model > 0 && s < SlotRanged && (wornSlot(x) == s || s == SlotLeft && x.IsWeapon() && !x.IsShield()) {
 			out = append(out, [4]int{x.ItemType, x.Model, 0, 0})
 		}
 	}
@@ -238,6 +242,9 @@ func (z *Zone) MoveItem(p *Player, from, to int) {
 		}
 		if !slotFits(x, slot) {
 			return errors.New("that does not go there")
+		}
+		if slot == SlotLeft && !x.IsShield() && !p.leftHanded(x) {
+			return errors.New("you are not trained to use a weapon in your left hand")
 		}
 		return canUse(p, x)
 	}
@@ -406,9 +413,19 @@ func (z *Zone) AutoEquip(p *Player, from int) {
 // slotFits says whether an item goes in a worn slot: where wornSlot puts it,
 // or any of the four quiver slots for arrows.
 func slotFits(x *Item, slot int) bool {
+	if slot == SlotLeft && x.IsWeapon() && !x.IsShield() && x.ItemType == 11 {
+		return true // a one-hand weapon for the left hand (whether they may is checked by the mover)
+	}
 	w := wornSlot(x)
 	if w == SlotQuiver {
 		return slot >= SlotQuiver && slot < SlotQuiver+4
 	}
 	return w == slot
+}
+
+// leftHanded says whether a weapon may be held in the left hand: a left axe, or a
+// hand to hand weapon. The weaponry ability for it (trained or not) is checked
+// by MayUse.
+func (p *Player) leftHanded(it *Item) bool {
+	return it.ObjectType == rules.ObjLeftAxe || it.ObjectType == rules.ObjHandToHand
 }

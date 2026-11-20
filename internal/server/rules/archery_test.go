@@ -93,3 +93,30 @@ func TestArchery(t *testing.T) {
 		}
 	})
 }
+
+func TestLeftHand(t *testing.T) {
+	vector(t, "rules-melee", "A Shadowblade with two axes", func(t *testing.T) {
+		near(t, "left axe 20 damage", LeftAxeDamage(20), 0.625+0.068, 1e-9)
+		near(t, "left axe 50 damage", LeftAxeDamage(50), 0.795, 1e-9)
+		if LeftSwings(20) != 1 || LeftSwings(0) != 0 {
+			t.Error("a Left Axe fighter swings the left hand every round, an untrained one not at all")
+		}
+	})
+	vector(t, "rules-melee", "Hand to Hand blows", func(t *testing.T) {
+		d, tr, q := HandToHandChances(50)
+		near(t, "double", d, 0.25, 1e-9)
+		near(t, "triple", tr, 0.125, 1e-9)
+		near(t, "quad", q, 0.03125, 1e-9)
+		for _, c := range []struct {
+			roll float64
+			want int
+		}{{0.1, 1}, {0.3, 2}, {0.39, 3}, {0.5, 0}} {
+			if got := HandToHandExtra(50, c.roll); got != c.want {
+				t.Errorf("roll %v gave %d extra blows, want %d", c.roll, got, c.want)
+			}
+		}
+		if HandToHandExtra(0, 0) != 0 {
+			t.Error("an untrained fighter got extra blows")
+		}
+	})
+}

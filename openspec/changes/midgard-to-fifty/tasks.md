@@ -110,7 +110,7 @@
 
   Add world and JS tests.
 - [x] 10.3 Poisons: item charges and spell from the importer, applying to a worn weapon, firing through the weapon-proc path, and poison merchants' stock checked or added. Add tests.
-- [ ] 10.4 Left hand: the left-hand slot for trained weapons, the dual swing rule with table tests, and Savage hand-to-hand on the same rule. Add world tests.
+- [x] 10.4 Left hand: the left-hand slot for trained weapons, the dual swing rule with table tests, and Savage hand-to-hand on the same rule. Add world tests.
 - [ ] 10.5 Add the Shadowblade class, the creation page and trainers. Client: a translucent self in stealth, others unseen out of range, and the poison shown on the weapon. Browser check with two clients. Record what was seen.
 - [ ] 10.6 Part C close (as in 4.6). The census shows all twelve classes, with any spell type or ability still missing listed with a reason.
 

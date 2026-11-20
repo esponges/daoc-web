@@ -143,14 +143,15 @@ const (
 
 // The Midgard weapon families and the ability each needs.
 var weaponNeeds = map[int]string{
-	ObjStaff:   "Weaponry: Staves",
-	ObjSword:   "Weaponry: Swords",
-	ObjHammer:  "Weaponry: Hammers",
-	ObjAxe:     "Weaponry: Axes",
-	ObjSpear:   "Weaponry: Spears",
-	ObjCompBow: "Weaponry: Composite Bows",
-	ObjThrown:  "Weaponry: Thrown",
-	ObjLeftAxe: "Weaponry: Left Axes",
+	ObjStaff:      "Weaponry: Staves",
+	ObjSword:      "Weaponry: Swords",
+	ObjHammer:     "Weaponry: Hammers",
+	ObjAxe:        "Weaponry: Axes",
+	ObjSpear:      "Weaponry: Spears",
+	ObjCompBow:    "Weaponry: Composite Bows",
+	ObjThrown:     "Weaponry: Thrown",
+	ObjLeftAxe:    "Weaponry: Left Axes",
+	ObjHandToHand: "Weaponry: Hand to Hand",
 }
 
 var weaponryAbility = func() map[string]bool {

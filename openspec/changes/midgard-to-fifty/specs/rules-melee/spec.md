@@ -1,11 +1,15 @@
 ## ADDED Requirements
 
 ### Requirement: A left-hand weapon swings alongside the main hand
-A player who wears a left-hand weapon they are trained for SHALL, on each main-hand swing, also swing the left hand, at the chance and damage the left-hand rule gives from their Left Axe (or Hand to Hand) spec. Each hand SHALL roll its own hit, defences and damage. A swing with both SHALL take the swing time the rule gives for both weapons. Status: set by the findings.
+A player who wears a left-hand weapon they are trained for SHALL, on each main-hand swing, also swing the left hand, at the chance and damage the left-hand rule gives from their Left Axe (or Hand to Hand) spec. Each hand SHALL roll its own hit, defences and damage. The extra blows SHALL come in the same round as the main-hand swing, at the main hand's swing time. Status: set by the findings.
 
 #### Scenario: A Shadowblade with two axes
 - **WHEN** a Shadowblade with Left Axe 20 swings with an axe in each hand
 - **THEN** the main hand swings, and the left hand swings at the chance the rule gives, each with its own result
+
+#### Scenario: Hand to Hand blows
+- **WHEN** a Savage with Hand to Hand 50 and claws in both hands swings many rounds
+- **THEN** a round has an extra blow with chance 25 percent, two extra with 12.5 percent and three with about 3 percent
 
 #### Scenario: Untrained
 - **WHEN** a Warrior holds an axe in the left hand

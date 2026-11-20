@@ -357,7 +357,17 @@ func (z *Zone) combatPlayer(p *Player) {
 	z.playerSwing(p, n)
 }
 
+// playerSwing is one round of a player's attack: the main hand, then the left
+// hand's blows if they hold a weapon there they are trained for.
 func (z *Zone) playerSwing(p *Player, n *NPC) {
+	z.mainSwing(p, n)
+	if !n.dead() && !n.gone {
+		z.leftSwings(p, n)
+	}
+}
+
+// mainSwing is the main hand's blow, with its style and procs.
+func (z *Zone) mainSwing(p *Player, n *NPC) {
 	z.interruptCasting(n) // any attack, hit or not
 	var style *StyleDef
 	if p.pending >= 0 && p.pending < len(p.bar) {
