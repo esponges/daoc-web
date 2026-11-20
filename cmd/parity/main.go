@@ -98,6 +98,10 @@ func summary(w io.Writer, rep *Report) {
 		fmt.Fprintf(w, "  %-22s %3d of %3d implemented (%d of %d %s%s)\n", s.title, n, len(l), uses, total, s.uses, extra)
 	}
 	for _, c := range rep.Content {
+		if c.NotClassic != "" {
+			fmt.Fprintf(w, "  %-22s %d (%s)\n", c.Name, c.Uses, c.NotClassic)
+			continue
+		}
 		fmt.Fprintf(w, "  %-22s %d, none implemented\n", c.Name, c.Uses)
 	}
 	fmt.Fprintf(w, "  %-22s %d gaps in %d bands\n", "levelling gear", gearGaps(rep.LevellingGear), len(rep.LevellingGear))

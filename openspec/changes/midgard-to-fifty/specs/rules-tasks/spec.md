@@ -41,7 +41,19 @@ A finished task SHALL pay experience and money from the player's level by the ru
 
 #### Scenario: Reward at level 10
 - **WHEN** a level 10 player finishes a kill task
-- **THEN** they gain the experience and money the rule book's worked example gives for level 10
+- **THEN** they gain 14,222 experience (half of the level 10 bar over nine) and between 614 and 650 copper (632 within 3 percent)
+
+#### Scenario: Rewards by level band
+- **WHEN** the rewards at levels 1, 5, 10, 15 and 20 are read
+- **THEN** each pays more money and more experience than the band before
+
+#### Scenario: Task limits
+- **WHEN** the limits are read
+- **THEN** a player may finish as many tasks as their level before levelling up, none above level 20, a task lasts 2 hours, and a kill target is from two levels under the player to their own
+
+#### Scenario: Task givers
+- **WHEN** NPC names are tested for giving kill tasks
+- **THEN** named guard figures and soldiers qualify by the rule's name patterns, and trainers, merchants and town criers give delivery tasks
 
 ### Requirement: Tasks survive a reconnect
 A held task, its progress and its time limit SHALL be stored with the character and SHALL still be there after logging out and in.

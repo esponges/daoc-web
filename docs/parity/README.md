@@ -11,11 +11,12 @@ Midgard (regions 100, 101, 151): 29932 placements
   Style features          13 of  14 implemented (1382 of 1383 styles)
   Abilities               21 of  30 implemented (83 of 100 grants)
   Creature kinds          23 of 110 implemented (29118 of 29932 placements, 7 kinds not classic)
-  quests                 81, none implemented
+  quests                 0, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
+  quests not classic     81 (an XP Item collection quest: an NPC pays experience for a creature's drop)
   levelling gear         0 gaps in 10 bands
   rules: 26 documented, 66 reference, 34 provisional
 ```

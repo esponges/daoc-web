@@ -45,3 +45,14 @@ func TestSummonSpellTemplatesResolve(t *testing.T) {
 	}
 	_ = missing
 }
+
+func TestXPItemQuestsAreNotClassic(t *testing.T) {
+	for _, n := range []string{"Footman Cloaks XP Item", "Drakoran Skirmisher Head XP Item"} {
+		if _, ok := NotClassicQuest(n); !ok {
+			t.Errorf("%q should be not classic", n)
+		}
+	}
+	if _, ok := NotClassicQuest("The Lost Hammer"); ok {
+		t.Error("an ordinary quest was marked not classic")
+	}
+}

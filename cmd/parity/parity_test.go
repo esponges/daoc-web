@@ -136,6 +136,12 @@ func TestReadmeAgreesWithBaseline(t *testing.T) {
 		if it.Implemented {
 			continue
 		}
+		if it.NotClassic != "" {
+			if !strings.Contains(text, fmt.Sprint(it.Uses)+" XP Item") {
+				t.Errorf("README should say the %d XP Item data quests are not classic", it.Uses)
+			}
+			continue
+		}
 		if !strings.Contains(text, "0 of "+fmt.Sprint(it.Uses)) {
 			t.Errorf("README should list %s as 0 of %d", it.Name, it.Uses)
 		}

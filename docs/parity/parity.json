@@ -1812,7 +1812,7 @@
   "content": [
     {
       "name": "quests",
-      "uses": 81,
+      "uses": 0,
       "implemented": false
     },
     {
@@ -1834,6 +1834,12 @@
       "name": "battlegrounds",
       "uses": 5,
       "implemented": false
+    },
+    {
+      "name": "quests not classic",
+      "uses": 81,
+      "implemented": false,
+      "notClassic": "an XP Item collection quest: an NPC pays experience for a creature's drop"
     }
   ],
   "rules": [

@@ -218,7 +218,10 @@ func Run(dump string) (*Report, error) {
 		name, table string
 		keep        func(*importer.Row) bool
 	}{
-		{"quests", "dataquest", func(r *importer.Row) bool { return midgardRegions[r.Int("StartRegionID")] }},
+		{"quests", "dataquest", func(r *importer.Row) bool {
+			_, nc := importer.NotClassicQuest(r.Str("Name"))
+			return midgardRegions[r.Int("StartRegionID")] && !nc
+		}},
 		{"keep doors", "door", nil},
 		{"keeps", "keep", nil},
 		{"relics", "relic", nil},
@@ -230,6 +233,16 @@ func Run(dump string) (*Report, error) {
 		}
 		rep.Content = append(rep.Content, Item{Name: c.name, Uses: n})
 	}
+
+	not, err := count("dataquest", func(r *importer.Row) bool {
+		_, nc := importer.NotClassicQuest(r.Str("Name"))
+		return midgardRegions[r.Int("StartRegionID")] && nc
+	})
+	if err != nil {
+		return nil, err
+	}
+	nc, _ := importer.NotClassicQuest("x XP Item")
+	rep.Content = append(rep.Content, Item{Name: "quests not classic", Uses: not, NotClassic: nc.Reason})
 
 	gear, err := levellingGear(read)
 	if err != nil {

@@ -1,5 +1,7 @@
 package importer
 
+import "strings"
+
 // NotClassic says why an NPC class type is not part of the 1.65 world: the
 // server still spawns and draws these NPCs, and they answer an interaction
 // with a line saying their service is not part of this world.
@@ -28,6 +30,17 @@ var NotClassicKinds = map[string]NotClassic{
 	"DOL.GS.GameEmeraldSealsMerchant":  {"a seals merchant: Atlas-era currency", noSource},
 	"DOL.GS.GameDiamondSealsMerchant":  {"a seals merchant: Atlas-era currency", noSource},
 	"DOL.GS.GameBountyMerchant":        {"a bounty merchant: a later reward shop", noSource},
+}
+
+// NotClassicQuest says whether a data quest is not part of the 1.65 world: the
+// "XP Item" collection quests, which every Midgard data quest is (checked
+// 2026-11-19): an NPC asks for a drop and pays experience for each, a turn-in
+// system with no place in 1.65.
+func NotClassicQuest(name string) (NotClassic, bool) {
+	if strings.HasSuffix(strings.TrimSpace(name), " XP Item") {
+		return NotClassic{"an XP Item collection quest: an NPC pays experience for a creature's drop", noSource}, true
+	}
+	return NotClassic{}, false
 }
 
 // NotClassicOf looks a class type up in the not-classic list.
