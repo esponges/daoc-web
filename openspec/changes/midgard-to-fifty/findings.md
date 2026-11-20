@@ -66,3 +66,24 @@ A scratch server with the new build and a fresh import (the concentration, resur
 - **Concentration window:** the K key opens the list on the stock dialog frame; with no buffs held it reads "Concentration 0 / 49" for the level 10 Healer once the pool has been sent, and "You hold no buffs." Before the first stats message it read 0 / 0: the pool is now sent with the welcome, so the first look is right (fixed; checked by the world test of the stats message, not seen again).
 - **Not observed:** casting a concentration buff and cancelling it from the list; the buff ending out of range; a Healer dying with buffs; the resurrection prompt and the raise; casting through a wall, past a tree and over a hill; a dungeon caster coming round a corner. Every attempt was lost to the setup rather than the game: a creature killed the first Healer before it could cast (the character's saved hit points were those of level 1, so it was frail), and with two clients in one Chrome window the background tab runs at about one frame a second, so a second character cannot be walked or aimed (the game has no command to target a fallen player, and Tab only cycles creatures). Covered meanwhile by the world tests of each rule, by the real-zone tests of line of sight (Mularn: 121 of 4,000 lines of 600 units blocked, 2 microseconds each; Spindelhalla: walls and floors block, a ledge is seen over) and by the node tests of the windows.
 - **Found:** an offer prompt, a plain release button and the concentration list have no way to be driven from outside the page, so a visual check of the resurrection prompt needs a second real browser window; tasks 2.4 and 4.5 stay open for it.
+
+# Part B: merchant gear above level 30 (read 2026-11-19)
+
+## 5.1 Sources and what the data holds
+
+| Question | Searched | Found |
+| --- | --- | --- |
+| What quality and level range 1.65 Midgard merchants sold | `Dark Age of Camelot merchant sold weapons armor quality level cap Midgard 1.65` | No source gives a quality or level cap for merchant stock. The patch notes only say vendor weapons were corrected for damage, speed and weight. The project therefore keeps the data's own pattern and marks the table **provisional**. |
+
+What the community data shows (queried in the imported world store, not copied):
+
+1. **Every piece a Midgard merchant sells up to level 30 is quality 85, with no bonuses.** The few higher qualities in merchant lists above level 30 carry bonuses and are not generic gear.
+2. **The data has generic Midgard gear to level 50.** Items of level 31 to 50 with no bonus, no class lock, a lower-case name (named drops are capitalised) and a price exist for every kind a Midgard class wears or wields. For armour, weapons and shields at quality 85 they cover every band. Swords, hammers and axes at 36 to 45 exist only at quality 100 (the adamantium and asterite lines); the rule takes the lowest quality that exists in a band, so these bands are sold at 100.
+3. **Where the data's lists live:** Jordheim has a merchant for each kind (a weapon merchant for swords, hammers and axes, spear, bow, thrown, claw and axe, staff and shield merchants, cloth, leather, studded and chain merchants). The frontier towns share several of these lists.
+
+## 5.1 Settled
+
+1. **Rule (provisional):** per kind of piece and band of five levels, the data's generic items (Midgard or neutral, level 31 to 50, price over 0, no bonus level, stat or proc bonus, no class lock, lower-case name) at quality 85, or the lowest quality present where it has none.
+2. **Where:** each object type is added to one of Jordheim's existing merchant lists (`importer.AddedList`), after the list's last page. The lists Jordheim shares with other towns (shields) carry the stock to them.
+3. **Marked:** each added row has `merchant_stock.added` set to the reason; the census prints a star beside a count that only the project's stock fills.
+4. **Result:** 520 rows added; the census gap count goes from 32 to 0.

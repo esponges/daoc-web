@@ -52,7 +52,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Keeps | 0 of 79 |
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
-| Levelling gear | 32 gaps in 10 five-level bands |
+| Levelling gear | 0 gaps in 10 five-level bands (31 to 50 is the project's added stock) |
 | Rules | 26 documented, 58 reference, 23 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for eight of the twelve
@@ -373,8 +373,10 @@ data asks for:
 - the creature kinds, by class type;
 - quests, keep doors, keeps, relics and battlegrounds;
 - the Warrior weapons, shields and armour Midgard merchants sell in each
-  five-level band, with the gaps marked (none above level 30, as the data
-  stands).
+  five-level band, with the gaps marked (the data has none above level 30; the
+  importer adds generic gear for 31 to 50 from `internal/importer/addedstock.go`,
+  shown with a star, so there are no gaps
+  left).
 
 For each, it says whether the server implements it, and it counts the rules by
 status. It writes `docs/parity/parity.json` and `docs/parity/README.md`: names

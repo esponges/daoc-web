@@ -281,3 +281,29 @@ func TestSpellAmountsAgreeWithTheTable(t *testing.T) {
 	}
 	t.Logf("checked %d spells", n)
 }
+
+// With the project's added stock, no Midgard band from 1 to 50 lacks gear a
+// Warrior needs. Skipped with -short or without the dump.
+func TestLevellingGearHasNoGaps(t *testing.T) {
+	if testing.Short() {
+		t.Skip("reads the whole community database")
+	}
+	dump := filepath.Join("..", "..", "server", "data", "community", "opendaoc-db-core")
+	if _, err := os.Stat(filepath.Join(dump, "mob.sql")); err != nil {
+		t.Skip("no community database checked out in server/data/community")
+	}
+	rep, err := Run(dump)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g := gearGaps(rep.LevellingGear); g != 0 {
+		t.Errorf("%d gaps in the levelling gear table", g)
+	}
+	for _, r := range rep.LevellingGear[6:] {
+		for _, k := range gearKinds {
+			if gearNeeded(k, 31) && !r.AddedOnly[k] {
+				t.Errorf("%s %s: the data sells gear above level 30, so the table's note about added stock is out of date", r.Band, k)
+			}
+		}
+	}
+}

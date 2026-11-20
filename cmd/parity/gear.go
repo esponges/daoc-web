@@ -13,6 +13,9 @@ import (
 type GearRow struct {
 	Band  string         `json:"band"`
 	Kinds map[string]int `json:"kinds"`
+	// AddedOnly marks a kind whose stock in the band is all the project's
+	// own added stock: the data sells none.
+	AddedOnly map[string]bool `json:"addedOnly,omitempty"`
 }
 
 // gearKinds are the columns of the levelling-gear table, in order.
@@ -81,29 +84,58 @@ func levellingGear(read func(string, func(*importer.Row) error) error) ([]GearRo
 	}); err != nil {
 		return nil, err
 	}
-	sells := map[string]map[string]bool{} // band/kind -> stock lists
+	sells := map[string]map[string]bool{} // band/kind -> stock lists the data sells
+	added := map[string]map[string]bool{} // the same, for the stock this project adds
+	note := func(into map[string]map[string]bool, l string, it piece) {
+		k := band(it.level) + "/" + it.kind
+		if into[k] == nil {
+			into[k] = map[string]bool{}
+		}
+		into[k][l] = true
+	}
+	lastPage := map[string]int{}
 	if err := read("merchantitem", func(r *importer.Row) error {
 		l := r.Str("ItemListID")
+		lastPage[l] = 0
 		it, ok := items[r.Str("ItemTemplateID")]
 		if merchants[l] == 0 || !ok || it.level < 1 || it.level > 50 {
 			return nil
 		}
-		k := band(it.level) + "/" + it.kind
-		if sells[k] == nil {
-			sells[k] = map[string]bool{}
-		}
-		sells[k][l] = true
+		note(sells, l, it)
 		return nil
 	}); err != nil {
 		return nil, err
 	}
+	// The added stock goes to the data's lists that have rows; each counts
+	// where a merchant placement uses the list.
+	var cands []importer.StockCandidate
+	if err := read("itemtemplate", func(r *importer.Row) error {
+		cands = append(cands, importer.CandidateOf(r))
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	for _, a := range importer.PlaceStock(importer.AddedStock(cands), lastPage) {
+		if it, ok := items[a.Item]; ok && merchants[a.List] > 0 {
+			note(added, a.List, it)
+		}
+	}
 	var out []GearRow
 	for lo := 1; lo <= 46; lo += 5 {
-		row := GearRow{Band: band(lo), Kinds: map[string]int{}}
+		row := GearRow{Band: band(lo), Kinds: map[string]int{}, AddedOnly: map[string]bool{}}
 		for _, k := range gearKinds {
-			for l := range sells[row.Band+"/"+k] {
+			key := row.Band + "/" + k
+			lists := map[string]bool{}
+			for l := range sells[key] {
+				lists[l] = true
+			}
+			for l := range added[key] {
+				lists[l] = true
+			}
+			for l := range lists {
 				row.Kinds[k] += merchants[l]
 			}
+			row.AddedOnly[k] = len(sells[key]) == 0 && len(added[key]) > 0
 		}
 		out = append(out, row)
 	}
@@ -130,7 +162,11 @@ func gearTable(b *strings.Builder, rows []GearRow) {
 			n := r.Kinds[k]
 			switch {
 			case n > 0:
-				cells = append(cells, fmt.Sprint(n))
+				if r.AddedOnly[k] {
+					cells = append(cells, fmt.Sprint(n)+"*")
+				} else {
+					cells = append(cells, fmt.Sprint(n))
+				}
 			case gearNeeded(k, lo):
 				cells = append(cells, "**none**")
 			default:

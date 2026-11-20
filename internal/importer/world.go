@@ -35,7 +35,7 @@ CREATE TABLE spawn(
   realm INTEGER, flags INTEGER, path TEXT, brain TEXT, equip TEXT, classtype TEXT, items_list TEXT, race INTEGER,
   levels TEXT, timed INTEGER);
 CREATE INDEX spawn_zone ON spawn(zone);
-CREATE TABLE merchant_stock(list TEXT, item TEXT, page INTEGER, slot INTEGER);
+CREATE TABLE merchant_stock(list TEXT, item TEXT, page INTEGER, slot INTEGER, added TEXT DEFAULT '');
 CREATE INDEX merchant_stock_list ON merchant_stock(list);
 CREATE TABLE npc_equip(
   template TEXT, slot INTEGER, model INTEGER, color INTEGER, effect INTEGER, ext INTEGER, emblem INTEGER);
@@ -106,6 +106,7 @@ type Report struct {
 	UnknownEquip      int               // spawns whose equipment template has no rows
 	MerchantsSeen     int               // mobs of the merchant class type in the dump
 	MerchantsKept     int               // of those, the ones that became spawns
+	AddedStock        int               // merchant rows the project's levelling gear table added
 	Missing           []string          // required tables absent or empty
 	Staged            string            // where the store was left when Out was in use, else ""
 	Replaced          int               // spawns whose template replaces the row's values
@@ -428,12 +429,16 @@ func build(o Options) (*Report, error) {
 	}); err != nil {
 		return nil, err
 	}
+	lastPage := map[string]int{} // merchant list -> its highest page, for the added stock
 	if err := read("merchantitem", func(r *Row) (bool, error) {
 		list, item := r.Str("ItemListID"), r.Str("ItemTemplateID")
 		if list == "" || item == "" {
 			return false, nil
 		}
-		return true, ins(`INSERT INTO merchant_stock VALUES(?,?,?,?)`, list, item, r.Int("PageNumber"), r.Int("SlotPosition"))
+		if p, ok := lastPage[list]; !ok || r.Int("PageNumber") > p {
+			lastPage[list] = r.Int("PageNumber")
+		}
+		return true, ins(`INSERT INTO merchant_stock(list,item,page,slot) VALUES(?,?,?,?)`, list, item, r.Int("PageNumber"), r.Int("SlotPosition"))
 	}); err != nil {
 		return nil, err
 	}
@@ -449,7 +454,9 @@ func build(o Options) (*Report, error) {
 	}); err != nil {
 		return nil, err
 	}
+	var candidates []StockCandidate
 	if err := read("itemtemplate", func(r *Row) (bool, error) {
+		candidates = append(candidates, CandidateOf(r))
 		id := r.Str("Id_nb")
 		if p := r.Int("ProcSpellID"); p != 0 {
 			wantSpell[p] = true
@@ -469,6 +476,12 @@ func build(o Options) (*Report, error) {
 			r.Int("Bonus"), r.Int("Condition"), r.Int("MaxCondition"), r.Int("Durability"), r.Int("ProcSpellID"), r.Int("ProcChance"))
 	}); err != nil {
 		return nil, err
+	}
+	for _, a := range PlaceStock(AddedStock(candidates), lastPage) {
+		if err := ins(`INSERT INTO merchant_stock VALUES(?,?,?,?,?)`, a.List, a.Item, a.Page, a.Slot, AddedReason); err != nil {
+			return nil, err
+		}
+		rep.AddedStock++
 	}
 
 	// --- styles, specialisations, classes ---

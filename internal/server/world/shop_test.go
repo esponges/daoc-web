@@ -333,7 +333,7 @@ func TestCatalogLoadsStoresWithAndWithoutMerchantData(t *testing.T) {
 		stmts := []string{
 			`INSERT INTO zone VALUES(100,100,'Test',0,0,1,1,0,2,1)`,
 			`INSERT INTO spawn(zone,name,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,classtype,items_list) VALUES(100,'Smith',56,10,10,0,0,1,50,191,0,0,30,0,0,2,0,'DOL.GS.GameMerchant','L1')`,
-			`INSERT INTO merchant_stock VALUES('L1','b',1,0),('L1','a',0,2),('L1','c',0,1)`,
+			`INSERT INTO merchant_stock(list,item,page,slot) VALUES('L1','b',1,0),('L1','a',0,2),('L1','c',0,1)`,
 		}
 		if old {
 			stmts = append(stmts[:1], `INSERT INTO spawn(zone,name,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags) VALUES(100,'Smith',56,10,10,0,0,1,50,191,0,0,30,0,0,2,0)`)

@@ -16,7 +16,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   keeps                  79, none implemented
   relics                 6, none implemented
   battlegrounds          5, none implemented
-  levelling gear         32 gaps in 10 bands
+  levelling gear         0 gaps in 10 bands
   rules: 26 documented, 58 reference, 23 provisional
 ```
 
@@ -299,10 +299,10 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | 16-20 | 17 | 9 | 21 | 11 | 11 | 11 | 13 | 26 | 22 |
 | 21-25 | 17 | 9 | 21 | 11 | 11 | 11 | 13 | 22 | 15 |
 | 26-30 | 7 | 7 | 7 | 9 | 9 | 9 | 13 | 5 | 6 |
-| 31-35 | **none** | **none** | **none** | **none** | **none** | **none** | **none** | - | **none** |
-| 36-40 | **none** | **none** | **none** | **none** | **none** | **none** | **none** | - | **none** |
-| 41-45 | **none** | **none** | **none** | **none** | **none** | **none** | **none** | - | **none** |
-| 46-50 | **none** | **none** | **none** | **none** | **none** | **none** | **none** | - | **none** |
+| 31-35 | 2* | 2* | 2* | 2* | 2* | 2* | 8* | 5* | 1* |
+| 36-40 | 2* | 2* | 2* | 2* | 2* | 2* | 8* | 5* | 1* |
+| 41-45 | 2* | 2* | 2* | 2* | 2* | 2* | 8* | 5* | 1* |
+| 46-50 | 2* | 2* | 2* | 2* | 2* | 2* | 8* | 5* | 1* |
 
 ## Rules
 

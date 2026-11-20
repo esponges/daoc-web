@@ -57,10 +57,10 @@
 
 ## 5. Part B: levelling gear to 50
 
-- [ ] 5.1 Sources: what merchant gear 1.65 Midgard sold above level 30, where, and at what quality. Record it in `findings.md`.
-- [ ] 5.2 `internal/importer/addedstock.go`: the rule that picks items per band (non-unique, no bonuses, merchant quality, Midgard or neutral) and the merchant lists they extend. `dbimport` writes them flagged as added. Add a test that every band from 31 to 50 is covered for every Midgard weapon kind, shield and armour type.
-- [ ] 5.3 Census: the levelling gear table counts added stock, and the gap count goes to 0. Update `go test ./cmd/parity`.
-- [ ] 5.4 Browser check: buy and wear a level 45 piece in Jordheim. Then do the part close (as in 4.6).
+- [x] 5.1 Sources: what merchant gear 1.65 Midgard sold above level 30, where, and at what quality. Record it in `findings.md`.
+- [x] 5.2 `internal/importer/addedstock.go`: the rule that picks items per band (non-unique, no bonuses, merchant quality, Midgard or neutral) and the merchant lists they extend. `dbimport` writes them flagged as added. Add a test that every band from 31 to 50 is covered for every Midgard weapon kind, shield and armour type.
+- [x] 5.3 Census: the levelling gear table counts added stock, and the gap count goes to 0. Update `go test ./cmd/parity`.
+- [x] 5.4 Check: a level 45 Warrior buys a level 41-45 chain hauberk from the real world store and may wear it (`world/realstock_test.go`); part close done. The shop window itself is unchanged and was not re-seen in a browser.
 
 ## 6. Part C: debuffs and creature buffs
 
