@@ -158,6 +158,14 @@ func (z *Zone) castDebuffing(caster, target combatant, sp *SpellDef) (handled, l
 		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: -heal}, tx, ty)
 		return true, true
 	case rules.SpellAmnesia:
+		chance := rules.AmnesiaChance
+		if sp.AmnesiaChance > 0 {
+			chance = float64(sp.AmnesiaChance)
+		}
+		if z.rng.Float64()*100 >= chance {
+			z.event(protocol.Event{K: "resist", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+			return true, false
+		}
 		if n, ok := target.(*NPC); ok {
 			n.hate, n.target = nil, nil
 			z.cancelCasting(n)

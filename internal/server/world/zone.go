@@ -32,6 +32,7 @@ type Zone struct {
 	exits   []Exit
 	emptyAt float64
 	graves  map[int64]*grave // by owner character id
+	petSeq  int64            // the last pet entity number given out
 
 	stop    chan struct{}
 	done    chan struct{}
@@ -158,7 +159,9 @@ func (z *Zone) Tick() {
 	for _, n := range z.npcs {
 		n.update(z)
 	}
+	z.sweepPets()
 	z.tickEffects()
+	z.tickPets()
 	if z.tick%TickRate == 0 {
 		z.groupTick()
 		z.checkTimed()
@@ -381,6 +384,9 @@ func (z *Zone) npcEntity(n *NPC, to *Player) protocol.Entity {
 		ID: n.ID, K: "n", Name: n.title(), Guild: strings.TrimSpace(n.Spawn.Guild), Model: n.Model, Level: n.Level,
 		X: n.Body.X, Y: n.Body.Y, Z: n.Body.Z, Yaw: n.Body.Yaw, Speed: n.speedNow,
 		HP: math.Max(0, float64(n.HP)/float64(n.MaxHP)), State: st, Aggro: n.Aggro > 0, Friendly: n.Friendly, Kind: n.Kind,
+	}
+	if n.isPet() {
+		e.Owner = n.pet.owner.Char.Name
 	}
 	if n.dead() && (len(n.loot) > 0 || n.money > 0) && n.lootOwner == to.ID {
 		e.Loot = true

@@ -12,7 +12,7 @@ import (
 var (
 	minorMend = &SpellDef{ID: 3001, Name: "Minor Mending", Type: rules.SpellHeal, Target: "Realm", Range: 2000, CastTime: 2, Value: 60, Power: 10}
 	bigMend   = &SpellDef{ID: 3002, Name: "Major Mending", Type: rules.SpellHeal, Target: "Realm", Range: 2000, CastTime: 2, Value: 160, Power: 20}
-	summon    = &SpellDef{ID: 4001, Name: "Summon Thing", Type: "SummonMinion", Target: "Self", Range: 0, CastTime: 3, Power: 5}
+	summon    = &SpellDef{ID: 4001, Name: "Summon Thing", Type: "Taunt", Target: "Self", Range: 0, CastTime: 3, Power: 5}
 	runebolt  = &SpellDef{ID: 5001, Name: "Runebolt", Type: rules.SpellBolt, Target: "Enemy", Range: 1500, CastTime: 2, Recast: 10, Damage: 40, DamageType: 12, Power: 5}
 	strBuff   = &SpellDef{ID: 6001, Name: "Might", Type: rules.SpellStrConBuff, Target: "Self", Duration: 30, Value: 12, Power: 5}
 	groupAF   = &SpellDef{ID: 6002, Name: "Group Shield", Type: rules.SpellArmourBuff, Target: "Group", Range: 1500, Duration: 30, Value: 20, Power: 5}

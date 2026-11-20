@@ -13,7 +13,7 @@ var (
 	bolt  = &SpellDef{ID: 2901, Name: "Simple Runebolt", Type: rules.SpellDirectDamage, Target: "Enemy", Range: 1500, CastTime: 3, Recast: 30, Damage: 20, DamageType: 12}
 	mend  = &SpellDef{ID: 10131, Name: "Mend", Type: rules.SpellHeal, Target: "Realm", Range: 2000, CastTime: 2, Value: 1000}
 	shrud = &SpellDef{ID: 10082, Name: "Shroud of Doubt", Type: rules.SpellSpeedDecrease, Target: "Enemy", Range: 1500, Duration: 30, Value: 50}
-	armor = &SpellDef{ID: 777, Name: "Bark Skin", Type: "SummonMinion", Target: "Self", Duration: 600}
+	armor = &SpellDef{ID: 777, Name: "Bark Skin", Type: "Taunt", Target: "Self", Duration: 600}
 )
 
 // casterRig is a zone with one creature that knows the given spells, standing

@@ -122,6 +122,14 @@ type Template struct {
 	LevelLo   int
 	LevelHi   int
 	MeleeType int // damage type of its blows: 1 crush, 2 slash, 3 thrust
+	Model     int // the first of its models
+	Size      int
+	Speed     int
+	// From the extra template table (a store imported before pets lacks it).
+	Equip    string // equipment template id
+	BodyType int
+	LeftHand int // percent chance of a left-hand swing
+	Styles   string
 }
 
 // LootEntry is one row of a loot table.
@@ -293,15 +301,33 @@ func LoadCatalog(path string) (*Catalog, error) {
 	}); err != nil {
 		return nil, err
 	}
-	if err := q(`SELECT id,name,parry,evade,block,tether,level_lo,level_hi,COALESCE(melee_type,0) FROM npc_template`, func(r *sql.Rows) error {
+	if err := q(`SELECT id,name,parry,evade,block,tether,level_lo,level_hi,COALESCE(melee_type,0),COALESCE(model,0),COALESCE(size_lo,0),COALESCE(speed,0) FROM npc_template`, func(r *sql.Rows) error {
 		t := &Template{}
-		if err := r.Scan(&t.ID, &t.Name, &t.Parry, &t.Evade, &t.Block, &t.Tether, &t.LevelLo, &t.LevelHi, &t.MeleeType); err != nil {
+		if err := r.Scan(&t.ID, &t.Name, &t.Parry, &t.Evade, &t.Block, &t.Tether, &t.LevelLo, &t.LevelHi, &t.MeleeType, &t.Model, &t.Size, &t.Speed); err != nil {
 			return err
 		}
 		c.Templates[t.ID] = t
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+	var hasExt int
+	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND name='npc_template_ext'`).Scan(&hasExt)
+	if hasExt > 0 {
+		if err := q(`SELECT template,COALESCE(equip,''),COALESCE(body_type,0),COALESCE(left_hand,0),COALESCE(styles,'') FROM npc_template_ext`, func(r *sql.Rows) error {
+			var id int
+			var equip, styles string
+			var body, left int
+			if err := r.Scan(&id, &equip, &body, &left, &styles); err != nil {
+				return err
+			}
+			if t := c.Templates[id]; t != nil {
+				t.Equip, t.BodyType, t.LeftHand, t.Styles = equip, body, left, styles
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 	}
 	if err := q(`SELECT src_zone,sx,sy,sz,dst_zone,tx,ty,tz,heading,realm FROM zonepoint`, func(r *sql.Rows) error {
 		e := Exit{}

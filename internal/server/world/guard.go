@@ -51,6 +51,12 @@ func (n *NPC) defends(c combatant) bool {
 // unsharedDamage counts a guard's damage to a creature: it takes its share of
 // the kill's experience, and that share goes to no one.
 func unsharedDamage(by combatant, t *NPC, amount int) {
+	if o := ownerOf(by); o != nil && o != by {
+		t.hurtBy[o.ID] += amount // a pet's fight is its owner's
+		if t.tagger == 0 {
+			t.tagger = o.ID
+		}
+	}
 	if g, ok := by.(*NPC); ok && g.Guard {
 		t.hurtBy[g.ID] += amount
 	}

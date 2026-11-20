@@ -79,10 +79,13 @@ CREATE TABLE spell(
   damage REAL, damage_type INTEGER, value REAL, duration INTEGER, frequency INTEGER, life_drain INTEGER,
   sub_spell INTEGER, uninterruptible INTEGER, icon INTEGER, radius INTEGER,
   message1 TEXT, message2 TEXT, message3 TEXT, message4 TEXT, power INTEGER, pulse INTEGER, pulse_power INTEGER,
-  resurrect_health INTEGER, resurrect_mana INTEGER, concentration INTEGER, is_focus INTEGER);
+  resurrect_health INTEGER, resurrect_mana INTEGER, concentration INTEGER, is_focus INTEGER, amnesia_chance INTEGER);
 CREATE TABLE line_spell(spec TEXT, hint INTEGER, line TEXT, spell INTEGER, level INTEGER);
 CREATE INDEX line_spell_spec ON line_spell(spec);
 CREATE TABLE template_spell(template INTEGER, spell INTEGER, ord INTEGER);
+CREATE TABLE npc_template_ext(
+  template INTEGER PRIMARY KEY, equip TEXT, models TEXT, body_type INTEGER, left_hand INTEGER, styles TEXT,
+  class_type TEXT, flags INTEGER, race INTEGER);
 CREATE INDEX template_spell_template ON template_spell(template);
 CREATE TABLE style_spell(class INTEGER, style INTEGER, spell INTEGER, chance INTEGER);
 `
@@ -316,6 +319,10 @@ func build(o Options) (*Report, error) {
 				speed: r.Int("MaxSpeed"), flags: r.Int("Flags"), classType: r.Str("ClassType")}
 		} else {
 			delete(replaces, id)
+		}
+		if err := ins(`INSERT OR REPLACE INTO npc_template_ext VALUES(?,?,?,?,?,?,?,?,?)`, id, r.Str("EquipmentTemplateID"), r.Str("Model"),
+			r.Int("BodyType"), r.Int("LeftHandSwingChance"), r.Str("Styles"), r.Str("ClassType"), r.Int("Flags"), r.Int("Race")); err != nil {
+			return false, err
 		}
 		return true, ins(`INSERT OR REPLACE INTO npc_template VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			id, r.Str("Name"), ml, sl, sh, ll, lh, r.Int("MaxSpeed"),
@@ -632,11 +639,11 @@ func build(o Options) (*Report, error) {
 			continue
 		}
 		kept++
-		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
+		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
 			r.Int("Range"), r.Float("CastTime"), r.Int("RecastDelay"), r.Float("Damage"), r.Int("DamageType"), r.Float("Value"),
 			r.Int("Duration"), r.Int("Frequency"), r.Int("LifeDrainReturn"), r.Int("SubSpellID"), r.Int("Uninterruptible"),
 			r.Int("Icon"), r.Int("Radius"), r.Str("Message1"), r.Str("Message2"), r.Str("Message3"), r.Str("Message4"), r.Int("Power"), r.Int("Pulse"), r.Int("PulsePower"),
-			r.Int("ResurrectHealth"), r.Int("ResurrectMana"), r.Int("Concentration"), r.Int("IsFocus")); err != nil {
+			r.Int("ResurrectHealth"), r.Int("ResurrectMana"), r.Int("Concentration"), r.Int("IsFocus"), r.Int("AmnesiaChance")); err != nil {
 			return nil, err
 		}
 	}

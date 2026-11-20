@@ -57,7 +57,7 @@ func ImplementedPlayerSpell(spellType string) bool {
 		SpellBodyResistDebuff, SpellColdResistDebuff, SpellEnergyResistDebuff, SpellHeatResistDebuff, SpellMatterResistDebuff,
 		SpellSpiritResistDebuff, SpellDisease, SpellNearsight, SpellConfusion, SpellAmnesia, SpellBladeturn, SpellAblativeArmor,
 		SpellArmorAbsorbBuff, SpellLifeTransfer, SpellDDWithDebuff, SpellDamageSpeedDecr, SpellUnbreakableSlow,
-		SpellFatigueDebuff:
+		SpellFatigueDebuff, SpellSummonMinion, SpellSummonCommander, SpellSummonSpirit, SpellSummonHunterPet, SpellCharm:
 		return true
 	}
 	return ImplementedSpell(spellType) && spellType != SpellOffensiveProc

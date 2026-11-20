@@ -113,3 +113,20 @@ Read from OpenDAoC-Core's spell handlers and effects through the GitHub API (`Ga
 1. One mechanism: the debuffs are negative buffs on an effect, with the duration rule above; stat ones lower the stat, resist ones the resist, combat speed lengthens the swing, armour absorption lowers absorption.
 2. Creatures cast their template's `StrengthBuff`, `StrengthConstitutionBuff`, `BaseArmorFactorBuff`, `StrengthDebuff` and `DexterityDebuff`; the census creature types reach 15 of 15.
 3. Nearsight immunity after it ends: 10 seconds, provisional.
+
+## 7.1 Pets and charm (read 2026-11-19)
+
+Read from OpenDAoC-Core (`GameServer/spells/SummonSpellHandler.cs`, `Bonedancer/SummonMinionHandler.cs`, `Bonedancer/SummonCommanderPet.cs`, `CharmSpellHandler.cs`, `ai/brain/ControlledMob/ControlledMobBrain.cs`). Restated in our words.
+
+- **Summon spells:** the spell's `LifeDrainReturn` column (our `spell.life_drain`) is the id of the npc template to summon. Spell `Damage` below zero is the pet's level as a percent of the caster's level (above zero: a fixed level); `Value` is a hard cap on the pet's level. The Spiritmaster's Summon Spirit Fighter line is -88 with a cap of 50 (templates 1 to 5); the Bonedancer's minions are -75 with caps from 15 to 45 (templates 53 to 88), the commanders -80 to -82 with cap 40 or 41 (templates 49 to 52, and the Magus at 212). A pet starts at full health, is owned by the caster, stands in front of them and is "under your control". Status: reference.
+- **Commander and minions:** a commander summon's `Pulse` column is the number of minions it controls (0 to 3). A minion summon needs a commander and refuses at its limit. Minions follow the commander and assist it when it attacks. Reference.
+- **Charm:** `Value` is the highest level it takes; the spell's `AmnesiaChance` column is the kind it takes (all, animal, humanoid, insect, ...). A permanent charm (`Pulse` 0, the Hunter's Beastcraft) takes a creature up to the spell's level and no higher than the caster's own level. It resists by the ordinary hit rule (100 minus the to-hit chance). A pulsing charm (Minstrel, Mentalist) resists by a sweet-spot rule and is not used by a Midgard class we implement. A creature the charm cannot take is refused with a message. When a charm breaks the creature returns to hostility. Reference for the kind and level limits; the break chance for a permanent charm is **provisional** (no source gives it: it holds until the pet is released, dies, or the owner dies or leaves).
+- **Follow and orders:** a pet starts following. The owner can tell it to stay, come here, follow, or go to the target. A pet notices enemies within 512 units and fights those that attack its owner, by stance. It follows an owner as far as 10,000 units. Reference for the distances; the stances (passive, defensive, aggressive) are the live game's and are described by the pets spec.
+- **Missing from the data:** the spell table does have `AmnesiaChance` (which Part C 6.x took as absent). Amnesia chance is read from it now.
+
+## 7.1 Settled
+
+1. Pet level = the larger of 1 and `min(Value, floor(casterLevel × |Damage| / 100))` when `Damage` is below zero; `Damage` itself when above zero.
+2. A player owns one pet; a Bonedancer's commander may have minions up to its `Pulse` count, and releasing the commander releases them.
+3. Permanent charm: level ≤ spell value and ≤ caster level; resist chance `100 − hit chance`; the charm holds until released, then the creature is hostile for 10 seconds (provisional).
+4. Follow distance about 150 units behind the owner, an aggro range of 512, and release at 10,000 units from the owner. The 150 is ours.

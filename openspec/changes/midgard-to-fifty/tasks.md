@@ -71,7 +71,7 @@
 
 ## 7. Part C: pets and charm
 
-- [ ] 7.1 Sources: pet level from the spell, follow and leash distances, charm level limits, charm break and its chance, and the Bonedancer minion limit. Record them in `findings.md`.
+- [x] 7.1 Sources: pet level from the spell, follow and leash distances, charm level limits, charm break and its chance, and the Bonedancer minion limit. Record them in `findings.md`.
 - [ ] 7.2 Importer: npc template stats, body type, spells, styles and left-hand chance, additively. Add a test that every Midgard summon spell's template resolves.
 - [ ] 7.3 A helper lists the models the summon templates name. Convert them with `charconv`, and add them to the README's first-run recipe.
 - [ ] 7.4 Server pets:

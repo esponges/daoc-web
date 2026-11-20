@@ -123,7 +123,7 @@ func ConfusionTakesHold(value, r float64) bool { return value < 0 || r*100 < val
 func ConfusionAttacksAlly(value, r float64) bool { return value < 0 && r*100 < -value }
 
 // AmnesiaChance is the percent chance an amnesia makes a creature forget its
-// enemies. The data's spell rows carry no chance, so it always does.
+// enemies when the spell row gives none (the data's column, when set, wins).
 // Provisional.
 const AmnesiaChance = 100.0
 

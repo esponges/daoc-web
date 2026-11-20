@@ -89,6 +89,8 @@ type NPC struct {
 	// A night-only or day-only creature (rules.NightOnly, rules.DayOnly) is in the
 	// world only at its time. It arrives appear game seconds into it, leaves when
 	// it ends, and stays while in a fight (leaving) until the fight is over.
+	pet *petState // set while a player owns it
+
 	timed   int
 	appear  int
 	hidden  bool
@@ -259,6 +261,10 @@ func turnToward(cur, target, maxStep float64) float64 {
 
 // update runs one tick of a creature's life.
 func (n *NPC) update(z *Zone) {
+	if n.pet != nil {
+		z.petUpdate(n)
+		return
+	}
 	if n.hidden {
 		return
 	}

@@ -47,6 +47,7 @@ const (
 	TCast       = "cast"        // cast a spell from the spellbook
 	TRezAnswer  = "rez-answer"  // accept or decline a resurrection offer
 	TConcCancel = "conc-cancel" // let go of one of the buffs the caster holds
+	TPetCmd     = "pet-cmd"     // an order to your pet: attack, follow, stay, release, or a stance
 )
 
 // Message types, server to client.
@@ -77,6 +78,7 @@ const (
 	TGroupInv    = "groupinv"    // an invitation to join a group
 	TRezOffer    = "rez-offer"   // a resurrection offered to a dead character, or withdrawn
 	TConc        = "conc"        // the concentration a caster holds: pool, use and the buffs
+	TPet         = "pet"         // your pet: its name, level, health, stance and orders; closed when it is gone
 )
 
 // Envelope reads just the type of a message.
@@ -255,6 +257,7 @@ type Entity struct {
 	Con      *int     `json:"cc,omitempty"` // a creature's con colour to you, -3 grey to 3 purple
 	Own      bool     `json:"own,omitempty"`
 	Ride     bool     `json:"rd,omitempty"` // a player on a horse
+	Owner    string   `json:"ow,omitempty"` // the name of a pet's owner
 }
 
 // Event is something that happened this tick, for the log and the animations.
@@ -561,6 +564,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &RezAnswer{}
 	case TConcCancel:
 		v = &ConcCancel{}
+	case TPetCmd:
+		v = &PetCmd{}
 	case TPray:
 		return TPray, nil, nil
 	case TPing:
@@ -637,6 +642,35 @@ type ConcView struct {
 type ConcCancel struct {
 	T  string `json:"t"`
 	ID int    `json:"id"`
+}
+
+// PetCmd is an order to the sender's pet: "attack" (their target), "follow",
+// "stay", "release", or a stance, "passive", "defensive" or "aggressive".
+type PetCmd struct {
+	T   string `json:"t"`
+	Cmd string `json:"cmd"`
+}
+
+// Pet is the sender's own pet, sent when it appears, changes or is lost.
+// Closed says it is gone and the window should close.
+type Pet struct {
+	T       string      `json:"t"`
+	ID      int64       `json:"id,omitempty"`
+	Name    string      `json:"nm,omitempty"`
+	Level   int         `json:"lv,omitempty"`
+	HP      float64     `json:"hp"` // 0..1
+	Stance  string      `json:"st,omitempty"`
+	Mode    string      `json:"md,omitempty"` // follow, stay or attack
+	Minions []PetMinion `json:"mn,omitempty"`
+	Closed  bool        `json:"cl,omitempty"`
+}
+
+// PetMinion is one of a commander's minions.
+type PetMinion struct {
+	ID    int64   `json:"id"`
+	Name  string  `json:"nm"`
+	Level int     `json:"lv"`
+	HP    float64 `json:"hp"`
 }
 
 // RezOffer tells a dead character that a resurrection is offered, by whom and

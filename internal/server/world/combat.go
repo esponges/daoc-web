@@ -430,6 +430,9 @@ func (z *Zone) provoke(n *NPC, by combatant, damage float64) {
 	if n.dead() || n.Friendly && !n.Guard || n.state == npcReturn {
 		return
 	}
+	if o := ownerOf(by); o != nil && o != by {
+		n.addHate(o, damage) // a creature that hates a pet hates its owner too
+	}
 	n.attackedAt = z.now
 	if p, ok := by.(*Player); ok && damage > 0 {
 		damage = z.protectShift(n, p, damage)
@@ -478,6 +481,9 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 		return
 	}
 	z.event(protocol.Event{K: "hit", From: n.ID, To: t.ID, Amount: o.Damage}, t.Body.X, t.Body.Y)
+	if t.isPet() {
+		t.pet.attacker = n
+	}
 	t.HP -= o.Damage
 	unsharedDamage(n, t, o.Damage)
 	z.damaged(t)
@@ -552,6 +558,7 @@ func (z *Zone) killPlayer(p *Player, by *NPC) {
 	z.cancelPlayerCast(p, "")
 	p.song = nil // a dead caster plays nothing
 	z.endAllConc(p)
+	z.releaseOwned(p, "Your pet is released as you fall.")
 	p.hp = 0
 	p.dead = true
 	p.deadAt = z.now
@@ -599,6 +606,14 @@ func (z *Zone) respawnPlayer(p *Player) {
 
 // killNPC finishes a creature: experience, loot and the clock to its return.
 func (z *Zone) killNPC(n *NPC) {
+	if n.isPet() {
+		charmed := n.pet.charmed
+		z.releasePet(n, "Your "+n.title()+" dies.")
+		if !charmed {
+			return
+		}
+		n.hurtBy = map[int64]int{}
+	}
 	n.state = npcDead
 	n.diedAt = z.now
 	rs := float64(n.Spawn.RespawnS)

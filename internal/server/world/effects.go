@@ -234,6 +234,9 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 	if handled, landed := z.castDebuffing(caster, target, sp); handled {
 		return landed
 	}
+	if handled, landed := z.castPetSpell(caster, target, sp); handled {
+		return landed
+	}
 	switch sp.Type {
 	case rules.SpellHeal:
 		amount := int(sp.Value)
@@ -400,7 +403,7 @@ func (z *Zone) hurt(target, by combatant, amount int) {
 		}
 	case *NPC:
 		t.HP -= amount
-		if p, ok := by.(*Player); ok {
+		if p := ownerOf(by); p != nil {
 			t.hurtBy[p.ID] += amount
 			if t.tagger == 0 {
 				t.tagger = p.ID

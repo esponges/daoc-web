@@ -306,3 +306,24 @@ func TestSongFieldsAreAdditive(t *testing.T) {
 		t.Errorf("an older client reads %+v, %v", older, err)
 	}
 }
+
+func TestPetMessages(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"pet-cmd","cmd":"attack"}`))
+	if err != nil || typ != TPetCmd || v.(*PetCmd).Cmd != "attack" {
+		t.Fatalf("pet-cmd: %v %v %v", typ, v, err)
+	}
+	b, _ := json.Marshal(Pet{T: TPet, ID: 1500000001, Name: "spirit fighter", Level: 8, HP: 0.5, Stance: "defensive", Mode: "follow",
+		Minions: []PetMinion{{ID: 1500000002, Name: "bonemage", Level: 7, HP: 1}}})
+	want := `{"t":"pet","id":1500000001,"nm":"spirit fighter","lv":8,"hp":0.5,"st":"defensive","md":"follow","mn":[{"id":1500000002,"nm":"bonemage","lv":7,"hp":1}]}`
+	if string(b) != want {
+		t.Errorf("pet = %s\nwant %s", b, want)
+	}
+	b, _ = json.Marshal(Pet{T: TPet, Closed: true})
+	if string(b) != `{"t":"pet","hp":0,"cl":true}` {
+		t.Errorf("a closed pet = %s", b)
+	}
+	b, _ = json.Marshal(Entity{ID: 1, K: "n", Name: "wolf", Owner: "Alice"})
+	if !strings.Contains(string(b), `"ow":"Alice"`) {
+		t.Errorf("an entity does not carry its owner: %s", b)
+	}
+}
