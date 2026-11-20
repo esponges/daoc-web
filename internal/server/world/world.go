@@ -468,6 +468,12 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		} else {
 			w.GroupOp(p, &protocol.GroupOp{Op: protocol.GroupInvite, ID: p.target})
 		}
+	case "pet":
+		if len(f) < 2 {
+			sys(p, "Tell your pet: /pet attack, follow, stay, release, passive, defensive or aggressive.")
+			return
+		}
+		z.PetCommand(p, strings.ToLower(f[1]))
 	case "guard", "protect", "intercept", "engage":
 		z.UseAbility(p, f[0], f[1:]...)
 	case "accept":

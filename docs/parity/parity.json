@@ -188,7 +188,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DexterityQuicknessBuff",
@@ -375,7 +375,7 @@
       "classes": [
         "Hunter"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Bladeturn",
@@ -679,7 +679,7 @@
       "classes": [
         "Hunter"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "SummonSpiritFighter",
@@ -687,7 +687,7 @@
       "classes": [
         "Spiritmaster"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "AcuityBuff",
@@ -715,7 +715,7 @@
       "classes": [
         "Bonedancer"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "Taunt",
@@ -2107,6 +2107,18 @@
       "status": "reference"
     },
     {
+      "id": "pet.charm",
+      "status": "provisional"
+    },
+    {
+      "id": "pet.level",
+      "status": "reference"
+    },
+    {
+      "id": "pet.minions",
+      "status": "reference"
+    },
+    {
       "id": "power.cost",
       "status": "reference"
     },
@@ -2265,8 +2277,8 @@
   ],
   "rulesByStatus": {
     "documented": 26,
-    "provisional": 23,
-    "reference": 62
+    "provisional": 24,
+    "reference": 64
   },
   "placements": 29932,
   "levellingGear": [

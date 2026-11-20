@@ -9,6 +9,7 @@ const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'D
 import { createStockChat, createStockSummary, createStockBar, createStockRelease, RESPAWN_SECONDS } from './hud.js';
 import { releaseLine } from './effects.js';
 import { createConcWindow, heldSpells } from './conc.js';
+import { createPetWindow } from './pet.js';
 import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
@@ -538,6 +539,11 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     heldBuffs = heldSpells(m);
     spellBar.set(spellSlots, net.book, net.song, heldBuffs);
   };
+  // The pet: a window that opens when there is one and closes when it is gone.
+  const petWin = createPetWindow(document, stock, { onOrder: (cmd) => net.petOrder(cmd) });
+  if (stock) Object.assign(petWin.el.style, { left: '12px', top: '420px', zIndex: 14 });
+  root.appendChild(petWin.el);
+  net.on.pet = (m) => petWin.update(m);
   // A resurrection offered to a dead character uses the same prompt.
   const rezPrompt = createInvitePrompt(document, stock, {
     onAccept: () => net.rezAnswer(true),

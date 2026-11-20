@@ -7,7 +7,7 @@ How much of classic 1.65 Midgard the server implements, measured against the com
 ```
 Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    15 of  15 implemented (2585 of 2585 placements x spells)
-  Class spell types       57 of  73 implemented (864 of 987 spells)
+  Class spell types       62 of  73 implemented (924 of 987 spells)
   Style features          12 of  14 implemented (1379 of 1383 styles)
   Abilities               15 of  30 implemented (66 of 100 grants)
   Creature kinds          18 of 110 implemented (29083 of 29932 placements, 7 kinds not classic)
@@ -17,7 +17,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   relics                 6, none implemented
   battlegrounds          5, none implemented
   levelling gear         0 gaps in 10 bands
-  rules: 26 documented, 62 reference, 23 provisional
+  rules: 26 documented, 64 reference, 24 provisional
 ```
 
 ## Creature spell types
@@ -51,7 +51,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | Mesmerize (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Skald, Spiritmaster) | 44 | yes |
 | SpeedDecrease (Bonedancer, Healer, Mystic, Runemaster, Shadowblade, Shaman, Skald, Spiritmaster) | 40 | yes |
 | StrengthConstitutionBuff (Bonedancer, Healer, Hunter, Mystic, Runemaster, Seer, Shaman, Spiritmaster, Thane) | 40 | yes |
-| SummonMinion (Bonedancer, Mystic, Runemaster, Spiritmaster) | 36 |  |
+| SummonMinion (Bonedancer, Mystic, Runemaster, Spiritmaster) | 36 | yes |
 | DexterityQuicknessBuff (Bonedancer, Healer, Hunter, Seer, Shaman, Spiritmaster) | 30 | yes |
 | Bolt (Runemaster, Shaman) | 29 | yes |
 | BaseArmorFactorBuff (Bonedancer, Healer, Hunter, Mystic, Runemaster, Seer, Shaman, Spiritmaster) | 26 | yes |
@@ -68,7 +68,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | OffensiveProc (Shadowblade, Spiritmaster) | 13 |  |
 | StrengthConstitutionDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 | yes |
 | StrengthDebuff (Bonedancer, Mystic, Runemaster, Shadowblade, Spiritmaster) | 12 | yes |
-| Charm (Hunter) | 10 |  |
+| Charm (Hunter) | 10 | yes |
 | Bladeturn (Bonedancer, Mystic, Runemaster, Spiritmaster) | 8 | yes |
 | DexterityDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 8 | yes |
 | StrengthBuff (Healer, Seer, Shaman) | 8 | yes |
@@ -99,11 +99,11 @@ Midgard (regions 100, 101, 151): 29932 placements
 | PowerRegenBuff (Healer) | 5 | yes |
 | SavageCombatSpeedBuff (Savage) | 5 |  |
 | SpiritResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
-| SummonHunterPet (Hunter) | 5 |  |
-| SummonSpiritFighter (Spiritmaster) | 5 |  |
+| SummonHunterPet (Hunter) | 5 | yes |
+| SummonSpiritFighter (Spiritmaster) | 5 | yes |
 | AcuityBuff (Healer, Seer, Shaman) | 4 | yes |
 | CureNearsightCustom (Healer, Seer, Shaman) | 4 | yes |
-| SummonCommander (Bonedancer) | 4 |  |
+| SummonCommander (Bonedancer) | 4 | yes |
 | Taunt (Savage) | 4 |  |
 | ColdResistDebuff (Runemaster) | 3 | yes |
 | EnergyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 | yes |
@@ -380,6 +380,9 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | melee.swing-speed | documented |
 | melee.weapon-proc | reference |
 | melee.weapon-skill | reference |
+| pet.charm | provisional |
+| pet.level | reference |
+| pet.minions | reference |
 | power.cost | reference |
 | power.pool | reference |
 | power.regen | provisional |

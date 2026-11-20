@@ -72,9 +72,9 @@
 ## 7. Part C: pets and charm
 
 - [x] 7.1 Sources: pet level from the spell, follow and leash distances, charm level limits, charm break and its chance, and the Bonedancer minion limit. Record them in `findings.md`.
-- [ ] 7.2 Importer: npc template stats, body type, spells, styles and left-hand chance, additively. Add a test that every Midgard summon spell's template resolves.
-- [ ] 7.3 A helper lists the models the summon templates name. Convert them with `charconv`, and add them to the README's first-run recipe.
-- [ ] 7.4 Server pets:
+- [x] 7.2 Importer: npc template stats, body type, spells, styles and left-hand chance, additively. Add a test that every Midgard summon spell's template resolves.
+- [x] 7.3 A helper lists the models the summon templates name. Convert them with `charconv`, and add them to the README's first-run recipe.
+- [x] 7.4 Server pets:
   - owner, mode and stance;
   - follow, stay and attack;
   - defensive and aggressive reactions;
@@ -82,8 +82,8 @@
   - experience, loot and hate mapped to the owner.
 
   Add world tests for each spec scenario.
-- [ ] 7.5 Bonedancer commander and minions, and charm (taking, breaking, turning hostile). Add world tests.
-- [ ] 7.6 Protocol `pet` and `pet-cmd`, and the `/pet` chat command. Client: the pet window (stock or plain) and owner labels. Add node tests.
+- [x] 7.5 Bonedancer commander and minions, and charm (taking, breaking, turning hostile). Add world tests.
+- [x] 7.6 Protocol `pet` and `pet-cmd`, and the `/pet` chat command. Client: the pet window (stock or plain) and owner labels. Add node tests.
 
 ## 8. Part C: Spiritmaster and Bonedancer
 

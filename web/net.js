@@ -90,6 +90,8 @@ export class NetClient {
   // rezAnswer accepts or declines the resurrection offered to a dead character.
   // concCancel lets go of one of the buffs the character holds by concentration.
   concCancel(id) { this._send({ t: 'conc-cancel', id }); }
+  // petOrder gives an order to the pet: attack, follow, stay, release, or a stance.
+  petOrder(cmd) { this._send({ t: 'pet-cmd', cmd }); }
   rezAnswer(accept) { this._send({ t: 'rez-answer', accept: !!accept }); }
   loot(corpse, index) { this._send({ t: 'loot', corpse, index }); }
   equip(from, to) { this._send({ t: 'equip', from, to }); }
@@ -144,6 +146,7 @@ export class NetClient {
       case 'groupinv': this.on.groupinv?.(m); break;
       case 'rez-offer': this.on.rezoffer?.(m); break;
       case 'conc': this.conc = m; this.on.conc?.(m); break;
+      case 'pet': this.pet = m.cl ? null : m; this.on.pet?.(m); break;
       case 'effects':
         // Our lasting spells, and the speed they leave: prediction steps at
         // that factor from now on, as the server does.
@@ -207,7 +210,7 @@ export class NetClient {
         r = { id: e.id, samples: [], x: e.x, y: e.y, z: e.z, yaw: e.h };
         this.ents.set(e.id, r);
       }
-      r.k = e.k; r.name = e.nm; r.model = e.m || 0; r.guild = e.gd || ''; r.char = e.ch || ''; r.level = e.lv || 0;
+      r.k = e.k; r.name = e.nm; r.model = e.m || 0; r.guild = e.ow ? e.ow + "'s pet" : (e.gd || ''); r.char = e.ch || ''; r.level = e.lv || 0;
       r.race = e.rc || 0; r.female = !!e.fm;
       // Gear is sent once as the entity comes into view (and, for a player, again
       // whenever it changes, possibly to nothing: gs); kept until it leaves.

@@ -112,3 +112,12 @@
 .conc .conc-title { font-weight: bold; margin-bottom: 4px; }
 .conc .conc-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 2px 0; }
 .conc button { font: inherit; color: inherit; background: rgba(255,255,255,.08); border: 1px solid rgba(120,170,220,.4); border-radius: 5px; padding: 1px 8px; cursor: pointer; }
+.pet { position: fixed; left: 12px; top: 420px; display: none; }
+.pet.open { display: block; }
+.pet .pet-title { font-weight: bold; margin-bottom: 4px; }
+.pet .pet-hp { position: relative; height: 14px; background: #2a1414; border: 1px solid #000; margin-bottom: 6px; }
+.pet .pet-hp .fill { height: 100%; background: #3f8f4a; }
+.pet .pet-hp .nm { position: absolute; inset: 0; text-align: center; font-size: 11px; line-height: 14px; }
+.pet .pet-orders, .pet .pet-stances { display: flex; gap: 4px; margin: 3px 0; }
+.pet button.on { outline: 1px solid #c9a227; }
+.pet .pet-minion { font-size: 11px; opacity: 0.9; }

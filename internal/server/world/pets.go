@@ -131,7 +131,11 @@ func (z *Zone) summonPet(p *Player, sp *SpellDef) bool {
 	}
 	level := rules.PetLevel(sp.Damage, sp.Value, p.Char.Level)
 	z.petSeq++
-	spawn := Spawn{ID: PetIDBase + z.petSeq, Zone: z.ID, Name: t.Name, Model: t.Model, Size: t.Size, Speed: t.Speed, Template: t.ID,
+	model := t.Model
+	if list := strings.FieldsFunc(t.Models, func(r rune) bool { return r == ';' || r == '|' }); model == 0 && len(list) > 0 {
+		model, _ = strconv.Atoi(strings.TrimSpace(list[z.rng.Intn(len(list))]))
+	}
+	spawn := Spawn{ID: PetIDBase + z.petSeq, Zone: z.ID, Name: t.Name, Model: model, Size: t.Size, Speed: t.Speed, Template: t.ID,
 		Level: level, Equip: t.Equip, Realm: 2}
 	n := newNPC(spawn, z.W.Cat, z.rng)
 	n.Gear = petGear(z.W.Cat, t.Equip)

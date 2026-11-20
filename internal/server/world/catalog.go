@@ -128,7 +128,8 @@ type Template struct {
 	// From the extra template table (a store imported before pets lacks it).
 	Equip    string // equipment template id
 	BodyType int
-	LeftHand int // percent chance of a left-hand swing
+	LeftHand int    // percent chance of a left-hand swing
+	Models   string // every model it may be drawn with, separated by semicolons
 	Styles   string
 }
 
@@ -314,15 +315,15 @@ func LoadCatalog(path string) (*Catalog, error) {
 	var hasExt int
 	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND name='npc_template_ext'`).Scan(&hasExt)
 	if hasExt > 0 {
-		if err := q(`SELECT template,COALESCE(equip,''),COALESCE(body_type,0),COALESCE(left_hand,0),COALESCE(styles,'') FROM npc_template_ext`, func(r *sql.Rows) error {
+		if err := q(`SELECT template,COALESCE(equip,''),COALESCE(body_type,0),COALESCE(left_hand,0),COALESCE(styles,''),COALESCE(models,'') FROM npc_template_ext`, func(r *sql.Rows) error {
 			var id int
-			var equip, styles string
+			var equip, styles, models string
 			var body, left int
-			if err := r.Scan(&id, &equip, &body, &left, &styles); err != nil {
+			if err := r.Scan(&id, &equip, &body, &left, &styles, &models); err != nil {
 				return err
 			}
 			if t := c.Templates[id]; t != nil {
-				t.Equip, t.BodyType, t.LeftHand, t.Styles = equip, body, left, styles
+				t.Equip, t.BodyType, t.LeftHand, t.Styles, t.Models = equip, body, left, styles, models
 			}
 			return nil
 		}); err != nil {

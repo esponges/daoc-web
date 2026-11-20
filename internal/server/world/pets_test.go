@@ -360,3 +360,24 @@ func decodePet(raw []byte) protocol.Pet {
 	}
 	return m
 }
+
+func TestPetChatCommand(t *testing.T) {
+	r, h, _, sp := petRig(t)
+	castAndLand(r, h, sp, h)
+	r.w.command(r.z, h, "pet stay")
+	if h.pet.pet.mode != modeStay {
+		t.Error("/pet stay did not make the pet stay")
+	}
+	r.w.command(r.z, h, "pet Aggressive")
+	if h.pet.pet.stance != rules.StanceAggressive {
+		t.Error("/pet aggressive did not set the stance")
+	}
+	r.w.command(r.z, h, "pet")
+	if !said(h, "Tell your pet") {
+		t.Error("/pet alone gave no help")
+	}
+	r.w.command(r.z, h, "pet release")
+	if h.pet != nil {
+		t.Error("/pet release left the pet")
+	}
+}

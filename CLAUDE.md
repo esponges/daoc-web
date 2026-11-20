@@ -25,7 +25,7 @@ for detail; this file is only what you need to work here safely.
 
 | path | what |
 | --- | --- |
-| `cmd/*` | the tools: `zoneconv`, `propconv`, `charconv`, `animconv`, `interiorconv`, `worldconv` (run them over every zone), `uiconv` (the interface), `dbimport` (the world store), `gameserver`, `serve` (static files), `census`, `charshot`, `nifdump`, `mpakls` |
+| `cmd/*` | the tools: `zoneconv`, `propconv`, `charconv`, `animconv`, `interiorconv`, `worldconv` (run them over every zone), `uiconv` (the interface), `dbimport` (the world store), `gameserver`, `serve` (static files), `census`, `charshot`, `petmodels` (the models summon spells use), `nifdump`, `mpakls` |
 | `internal/*` | readers and converters: `mpak`, `nif`, `dds`, `kfa`, `zone`, `scenery`, `interior`, `ui` (interface XML, TGA, BMP, bitmap fonts); `importer` (SQL dump parser); `server/{auth,store,protocol,world,gameserver}` |
 | `web/` | the browser client: `viewer.js` (main), `net.js` (connection and prediction), `ui.js` + `hud.js` + `pack.js` + `loot.js` + `chrome.js` (windows), `uiwin.js` (renders windows from the converted layout), `*.test.mjs` |
 | `docs/protocol.md` | the wire format; messages are JSON, versioned, and only ever added to |
