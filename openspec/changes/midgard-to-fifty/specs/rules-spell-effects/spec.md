@@ -62,7 +62,7 @@ These buffs and heals SHALL do what their type names, by values recorded in the 
 - an endurance or power regeneration buff adds its value to each endurance or power tick;
 - a cure ends every effect of its kind on its target;
 - a spread heal heals the most hurt group members, sharing out its amount;
-- life transfer heals the target twice the spell's percent of the caster's maximum, the caster paying half of it (never below 1 hit point), and half of it on a diseased target.
+- life transfer heals the target and costs the caster half the heal (see the scenario);
 
 Status: reference.
 
@@ -80,7 +80,7 @@ Status: reference.
 
 #### Scenario: Life transfer
 - **WHEN** a Spiritmaster casts a 10 percent life transfer (maximum 1,000) on a group member
-- **THEN** the caster loses the amount the rule gives and the member gains twice that
+- **THEN** the member gains twice the percent of the caster's maximum (200), the caster loses half of that (100) and never falls under 1 hit point, and a diseased member gains half
 
 ### Requirement: Damage spells that also debuff or slow
 A direct damage spell with a sub-spell SHALL deal its damage and then apply the sub-spell when the damage is not resisted. A damage-and-slow spell SHALL do the same with its slow. Status: reference.
