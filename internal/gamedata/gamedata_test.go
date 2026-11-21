@@ -145,3 +145,30 @@ func TestHumanoidFaceIsNotTheHair(t *testing.T) {
 		t.Errorf("a wolf has no face skin, got %d", w.Face)
 	}
 }
+
+// Minor Dusk Dart's row says how the spell looks, and its animation numbers are
+// columns of the anim sets: a Norse Male's Bk-Hand start, mid and end.
+func TestSpellRowAndCasterAnimations(t *testing.T) {
+	tb := load(t)
+	s, ok := tb.Spells[2501]
+	if !ok || s.Name != "Minor Dusk Dart" {
+		t.Fatalf("spell row 2501 = %+v", s)
+	}
+	if s.Anim != [3]int{41, 42, 43} || len(s.Caster) != 2 || s.Caster[0] != 160 || s.Caster[1] != 161 || s.Target != 256 || s.Projectile != 0 {
+		t.Errorf("row %+v, want animations 41/42/43, caster effects 160 and 161, target effect 256 and no projectile", s)
+	}
+	seen := map[string]bool{}
+	for i, n := range s.Anim {
+		an, ok := tb.SetClipAt(28, n) // anim set 28 is Norse Male
+		if !ok {
+			t.Fatalf("Norse Male has no animation number %d", n)
+		}
+		seen[an.File] = true
+		if an.File == "" {
+			t.Errorf("animation %d of the cast (%d) resolves to no file", i, n)
+		}
+	}
+	if len(seen) < 2 {
+		t.Errorf("the three cast animations are all %v; start, hold and release should differ", seen)
+	}
+}

@@ -190,10 +190,15 @@ export async function createCharacter(gl, base, helpers) {
   // without them the procedural gait still drives the figure, which is what
   // the viewer falls back to.
   const clips = {};
+  // Clips marked lazy (the casting animations: dozens per figure) are fetched
+  // the first time something asks for one, with loadClip.
+  const lazy = {};
+  const loading = {};
   try {
     const idx = await fetch(base + '/anim/index.json').then((r) => (r.ok ? r.json() : null));
     if (idx) {
       await Promise.all(idx.animations.map(async (a) => {
+        if (a.lazy) { lazy[a.name] = a.file; return; }
         const j = await fetch(base + '/anim/' + a.file).then((r) => (r.ok ? r.json() : null));
         if (j) clips[a.name] = new Clip(j, skel);
       }));
@@ -331,6 +336,17 @@ export async function createCharacter(gl, base, helpers) {
     // read from its planted feet; 0 if absent or not a gait.
     groundSpeed: (name) => (clips[name] ? skel.groundSpeed(clips[name]) : 0),
     clips,
+    // hasClip says a clip is loaded or can be: a lazy one counts.
+    hasClip: (name) => !!clips[name] || !!lazy[name],
+    // loadClip fetches a lazy clip once and resolves to it, or to null.
+    loadClip(name) {
+      if (clips[name]) return Promise.resolve(clips[name]);
+      if (!lazy[name]) return Promise.resolve(null);
+      loading[name] ||= fetch(base + '/anim/' + lazy[name]).then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (j) clips[name] = new Clip(j, skel); return clips[name] || null; })
+        .catch(() => null);
+      return loading[name];
+    },
     clipNames: Object.keys(clips),
     skeleton: skel,
     equip,

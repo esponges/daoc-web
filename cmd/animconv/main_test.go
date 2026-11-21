@@ -154,3 +154,86 @@ func TestIdleIsStillerThanWalk(t *testing.T) {
 	}
 	t.Logf("L thigh rotation spread: idle %.4f, walk %.4f", idle, walk)
 }
+
+// A spell's caster animations are numbered columns of anims.csv: Minor Dusk
+// Dart's 41, 42 and 43 become cast41, cast42 and cast43 for a Norse Male, each
+// a different clip, and a set that has none of a number simply lacks it.
+func TestCastJobsFollowTheSpellTable(t *testing.T) {
+	game := gamePath(t)
+	tb, err := gamedataLoad(game)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jobs := castJobs(tb, 28) // anim set 28: Norse Male
+	byOut := map[string]job{}
+	for _, j := range jobs {
+		byOut[j.out] = j
+		if !j.alias {
+			t.Errorf("%s is not an alias job; a failed cast clip must not stop the run", j.out)
+		}
+	}
+	files := map[string]bool{}
+	for _, n := range []string{"cast41", "cast42", "cast43"} {
+		j, ok := byOut[n]
+		if !ok {
+			t.Fatalf("no %s job for Norse Male", n)
+		}
+		files[strings.ToLower(j.src)] = true
+	}
+	if len(files) != 3 {
+		t.Errorf("Bk-Hand start, mid and end are %v, want three different clips", files)
+	}
+	if len(castNumbers(tb)) < 40 {
+		t.Errorf("only %d distinct caster animations in the spell table", len(castNumbers(tb)))
+	}
+}
+
+func TestWithEntryReplacesBySameName(t *testing.T) {
+	l := withEntry(nil, indexEntry{Name: "walk", File: "walk.json"})
+	l = withEntry(l, indexEntry{Name: "cast41", File: "cast41.json"})
+	l = withEntry(l, indexEntry{Name: "walk", File: "walk2.json"})
+	if len(l) != 2 || l[0].File != "walk2.json" {
+		t.Errorf("entries %+v, want walk replaced in place and cast41 kept", l)
+	}
+}
+
+// Cast clips are written lazy, and two numbers that name the same file share it.
+func TestCastClipsAreLazyAndShareFiles(t *testing.T) {
+	game := gamePath(t)
+	src := filepath.Join("..", "..", "web", "data", "char", "norseman", "char.json")
+	b, err := os.ReadFile(src)
+	if err != nil {
+		t.Skipf("character not converted; run charconv first (%v)", err)
+	}
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "char.json"), b, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	nodes, err := loadAnimNodes(game)
+	if err != nil {
+		t.Fatal(err)
+	}
+	skel, err := loadCharBones(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jobs := []job{
+		{src: "W_VM", out: "cast1", rate: 1, alias: true},
+		{src: "W_VM", out: "cast2", rate: 1, alias: true},
+		{src: "no_such_clip", out: "cast3", rate: 1, alias: true},
+	}
+	if err := convert(game, dir, nodes, skel, jobs); err != nil {
+		t.Fatalf("a missing cast clip must not stop the run: %v", err)
+	}
+	ents, _ := os.ReadDir(filepath.Join(dir, "anim"))
+	if len(ents) != 2 { // cast1.json and index.json
+		t.Errorf("%d files written, want the clip once and the index", len(ents))
+	}
+	idx, _ := os.ReadFile(filepath.Join(dir, "anim", "index.json"))
+	if n := strings.Count(string(idx), `"lazy": true`); n != 2 {
+		t.Errorf("%d lazy entries in %s, want 2", n, idx)
+	}
+	if strings.Contains(string(idx), "cast3") {
+		t.Error("the clip that does not exist was listed")
+	}
+}

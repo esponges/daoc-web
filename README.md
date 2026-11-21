@@ -104,6 +104,8 @@ done
 # the world's population, from the community database (see below)
 git clone https://github.com/OpenDAoC/OpenDAoC-Database server/data/community
 go run ./cmd/dbimport                          # writes server/data/world.db
+# how spells look: the effects those spells use (needs the import above; see docs/formats.md)
+go run ./cmd/effectconv                       # writes web/data/effects/
 # the pets the summon spells make (Spiritmaster, Bonedancer, Hunter) use models too:
 for m in $(go run ./cmd/petmodels -missing); do
   go run ./cmd/charconv -model $m -name m$m && go run ./cmd/animconv -char web/data/char/m$m

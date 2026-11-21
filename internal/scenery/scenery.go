@@ -22,6 +22,7 @@ import (
 	"daocweb/internal/dds"
 	"daocweb/internal/mpak"
 	"daocweb/internal/nif"
+	"daocweb/internal/ui"
 )
 
 // Stride is pos[3] + normal[3] + uv[2], all float32, then the baked
@@ -524,6 +525,16 @@ func ReadTexture(dirs []string, name string) (image.Image, error) {
 		}
 	}
 	if path == "" {
+		// The effects directory keeps many of its textures as .tga.
+		for _, d := range dirs {
+			if p, err := findCase(d, name+".tga"); err == nil {
+				b, err := os.ReadFile(p)
+				if err != nil {
+					return nil, err
+				}
+				return ui.DecodeTGA(b)
+			}
+		}
 		return nil, fmt.Errorf("%w: %s.dds", ErrNoTexture, name)
 	}
 	b, err := os.ReadFile(path)

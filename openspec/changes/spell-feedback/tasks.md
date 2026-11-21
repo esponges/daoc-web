@@ -14,9 +14,9 @@ Browser checks use a scratch server on its own port with a copy of the data. A t
 
 ## 3. Converting effects and cast animations
 
-- [ ] 3.1 Find what `spells.csv` `Anim1–3` index by reading the client's animation tables in the install. Record the answer in `docs/formats.md`. Verify by naming the three clips Minor Dusk Dart plays for a norseman and a kobold.
-- [ ] 3.2 `animconv` writes the `cast_<id>` clips the imported spells use, plus the generic `cast`, for player bases and creature figures. Re-run it over all figures. Verify with an `animconv` test of the role table and by checking `web/data/char/norseman/anim/` holds the cast clips.
-- [ ] 3.3 `cmd/effectconv` reads `spells.csv`, `speffects.csv` and `spnifs.csv` from `gamedata.mpk` and the client effects in `world.db`. It converts each needed NIF once (meshes as `propconv` does, emitters via `internal/scenery`), writes `web/data/effects/index.json`, and prints the census of unsupported node types. Document it in `docs/formats.md` and the README run-order. Verify with tests on synthetic tables (effect 2501 → anims 41/42/43, caster 160/161, target 256), and run it over the install with a census of fewer unconverted effects than converted.
+- [x] 3.1 Find what `spells.csv` `Anim1–3` index by reading the client's animation tables in the install. Record the answer in `docs/formats.md`. Verify by naming the three clips Minor Dusk Dart plays for a norseman and a kobold.
+- [x] 3.2 `animconv` writes the `cast_<id>` clips the imported spells use, plus the generic `cast`, for player bases and creature figures. Re-run it over all figures. Verify with an `animconv` test of the role table and by checking `web/data/char/norseman/anim/` holds the cast clips.
+- [x] 3.3 `cmd/effectconv` reads `spells.csv`, `speffects.csv` and `spnifs.csv` from `gamedata.mpk` and the client effects in `world.db`. It converts each needed NIF once (meshes as `propconv` does, emitters via `internal/scenery`), writes `web/data/effects/index.json`, and prints the census of unsupported node types. Document it in `docs/formats.md` and the README run-order. Verify with tests on synthetic tables (effect 2501 → anims 41/42/43, caster 160/161, target 256), and run it over the install with a census of fewer unconverted effects than converted.
 
 ## 4. Playing effects in the view
 

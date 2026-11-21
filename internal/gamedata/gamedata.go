@@ -91,6 +91,43 @@ type Tables struct {
 	// CombatSets is the same for canims.csv, which shares the anim-set
 	// numbering: "att med", "flinch", "c-idle", "h2h att m", ...
 	CombatSets map[int]map[string]int
+	// SetCols is each anim set's row of anims.csv by column number, from 0 at
+	// "Walk": the numbers spells.csv uses to name a caster's animations.
+	SetCols map[int][]int
+	// Spells is spells.csv: how each client effect looks.
+	Spells map[int]SpellFX
+	// Effects is speffects.csv: each effect's model, bone and duration.
+	Effects map[int]Effect
+	// EffectNIFs is spnifs.csv: effect model number to file name, without extension.
+	EffectNIFs map[int]string
+}
+
+// Effect is one row of speffects.csv: a model that plays on a bone for a time.
+type Effect struct {
+	ID       int
+	Name     string
+	NIF      int     // a row of spnifs.csv
+	Node     string  // the bone it hangs on: "Bip01 L Held", "rootnode" for the feet
+	Duration int     // milliseconds
+	Rate     int     // percent of normal speed
+	Scale    float64 // 1 when the table leaves it blank
+}
+
+// SpellFX is one row of the client's spell table: what a spell shows. Anim is
+// the column numbers of anims.csv for the start, held and release animations of
+// the caster (0 for none); Caster the effects on the caster, Projectile the
+// effect that flies to the target, Target the one that plays on it; every
+// effect is a row of speffects.csv, 0 for none.
+type SpellFX struct {
+	ID, Icon   int
+	Name       string
+	Anim       [3]int
+	Caster     []int
+	Projectile int
+	Target     int
+	Buildup    int
+	Pulse      int
+	Resist     int
 }
 
 // Load reads the tables from the install at game.
@@ -102,6 +139,7 @@ func Load(game string) (*Tables, error) {
 	t := &Tables{
 		Monsters: map[int]Monster{}, Figures: map[int]Figure{}, Skins: map[int]Skin{},
 		Anims: map[int]Anim{}, AnimSets: map[int]map[string]int{}, CombatSets: map[int]map[string]int{},
+		SetCols: map[int][]int{}, Spells: map[int]SpellFX{}, Effects: map[int]Effect{}, EffectNIFs: map[int]string{},
 	}
 
 	rows, _, err := table(a, "monsters.csv")
@@ -152,6 +190,15 @@ func Load(game string) (*Tables, error) {
 		return nil, err
 	}
 	if t.CombatSets, err = roleTable(a, "canims.csv"); err != nil {
+		return nil, err
+	}
+	if t.SetCols, err = colTable(a, "anims.csv"); err != nil {
+		return nil, err
+	}
+	if t.Spells, err = spellTable(a); err != nil {
+		return nil, err
+	}
+	if err := effectTables(a, t); err != nil {
 		return nil, err
 	}
 	return t, nil
@@ -276,4 +323,81 @@ func (t *Tables) ByFile(file string) (Anim, bool) {
 		}
 	}
 	return best, best.ID != 0
+}
+
+// colTable reads a table with one row per anim set as numbered columns: cell
+// n of a set's row names a row of animnifs.csv for animation number n.
+func colTable(a *mpak.Archive, name string) (map[int][]int, error) {
+	rows, _, err := table(a, name)
+	if err != nil {
+		return nil, err
+	}
+	out := map[int][]int{}
+	for _, r := range rows {
+		var cols []int
+		for c := 2; c < len(r); c++ {
+			cols = append(cols, num(r, c))
+		}
+		out[num(r, 0)] = cols
+	}
+	return out, nil
+}
+
+// SetClipAt resolves animation number n in an anim set, counting the columns of
+// anims.csv from 0 at "Walk": the numbers a spell uses for its cast animations.
+func (t *Tables) SetClipAt(set, n int) (Anim, bool) {
+	cols := t.SetCols[set]
+	if n < 0 || n >= len(cols) {
+		return Anim{}, false
+	}
+	return t.resolve(cols[n])
+}
+
+// spellTable reads spells.csv: for each client effect its name, icon, the three
+// caster animations, caster effects, projectile and target effects, and the
+// build-up, pulse and resist effects.
+func spellTable(a *mpak.Archive) (map[int]SpellFX, error) {
+	rows, _, err := table(a, "spells.csv")
+	if err != nil {
+		return nil, err
+	}
+	out := map[int]SpellFX{}
+	for _, r := range rows {
+		s := SpellFX{ID: num(r, 0), Name: col(r, 1), Icon: num(r, 2),
+			Anim:       [3]int{num(r, 3), num(r, 4), num(r, 5)},
+			Projectile: num(r, 10), Target: num(r, 11), Buildup: num(r, 12), Pulse: num(r, 13), Resist: num(r, 16)}
+		for _, c := range []int{6, 7, 8, 9} {
+			if v := num(r, c); v > 0 {
+				s.Caster = append(s.Caster, v)
+			}
+		}
+		out[s.ID] = s
+	}
+	return out, nil
+}
+
+// effectTables reads speffects.csv and spnifs.csv, the effects a spell plays
+// and the models they use.
+func effectTables(a *mpak.Archive, t *Tables) error {
+	rows, _, err := table(a, "speffects.csv")
+	if err != nil {
+		return err
+	}
+	for _, r := range rows {
+		e := Effect{ID: num(r, 0), Name: col(r, 1), NIF: num(r, 2), Node: strings.TrimSpace(col(r, 3)),
+			Duration: num(r, 4), Rate: num(r, 5), Scale: 1}
+		if f, err := strconv.ParseFloat(strings.TrimSpace(col(r, 7)), 64); err == nil && f > 0 {
+			e.Scale = f
+		}
+		t.Effects[e.ID] = e
+	}
+	if rows, _, err = table(a, "spnifs.csv"); err != nil {
+		return err
+	}
+	for _, r := range rows {
+		if f := strings.TrimSpace(col(r, 2)); f != "" {
+			t.EffectNIFs[num(r, 0)] = f
+		}
+	}
+	return nil
 }

@@ -59,6 +59,16 @@ done
 go run ./cmd/serve                                       # then open localhost:8777
 ```
 
+### How a spell looks: the client's spell table
+
+`gamedata.mpk` holds the client's own table of how spells look. Three files fit together:
+
+- `spells.csv`: one row per **client effect**, the number the community data keeps as a spell's `ClientEffect` (Minor Dusk Dart is 2501 in both). A row gives the name, the icon, three **caster animations** (`Anim1`–`Anim3`: start, held loop, release), the effects on the caster (`Effect1A`, `Effect1B`, `Effect2`, `Effect3`), then the projectile, target, build-up, pulse and resist effects, a sound set and a projectile lag.
+- `speffects.csv`: one row per **effect**: its name, the NIF it plays (a row of `spnifs.csv`), the bone it hangs on (`Bip01 L Held`, `rootnode`), its duration in milliseconds and its rate.
+- `spnifs.csv`: NIF number to file name in the install's `effects/` directory.
+
+The three caster animations are **column numbers of `anims.csv`**, counted from 0 at "Walk": 32, 33, 34 are "1H Circ Start, Mid, End", 41, 42, 43 are "Bk-Hand Start, Mid, End", 47, 48, 49 "Crossed", 120, 121, 122 "Warlock", and so on. 63 different numbers are used. A figure's anim set (the row of `anims.csv` its `monnifs.csv` figure names) says which clip that is for that body: for a Norse Male (set 28) number 41 is a different clip from the Troll Male's. `animconv` writes them as `cast<number>` clips, marked `lazy` in `anim/index.json` so a client fetches one only when a cast needs it; a number a set fills with the same file as another shares that file. `internal/gamedata` reads the table as `Tables.Spells` and resolves a clip by column number with `SetClipAt`.
+
 Where they stand is `web/spawns/zone100.json`, which is this project's own
 placement — see [NPCs](#npcs). `?npcs=0` leaves them out.
 
@@ -108,7 +118,8 @@ at any speed.
 | `zoneconv` | zone terrain, texture atlas and water |
 | `propconv` | zone scenery: models flattened, placed and grouped by texture |
 | `charconv` | one character: mesh, skeleton, skin weights, textures; `-model N` from the game tables |
-| `animconv` | recorded animations; by default the model's own anim set, `-list` scores every clip |
+| `animconv` | recorded animations; by default the model's own anim set, `-list` scores every clip, and the casting animations spells name (`cast<n>`, lazy) |
+| `effectconv` | the spell effects the world's spells use, from the client's spell tables: models and particle emitters into `web/data/effects/pack`, with an `index.json` of spells and effects; lists what it cannot draw |
 | `charshot` | renders an exported character to a PNG, no browser needed |
 | `nifdump` | inspects a `.nif`; `-bind` checks the bind pose, `-shapes` lists geometry, `-tex` each shape's textures and blending |
 | `census` | reads every asset in the install and reports what parses and converts; see [Verifying](#verifying) |

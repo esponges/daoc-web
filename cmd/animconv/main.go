@@ -102,7 +102,7 @@ func run(game, char string, list, gaitOnly bool, top int, names, as string) erro
 	t, _ := gamedata.Load(game) // optional here: only the rates come from it
 	jobs := make([]job, len(src))
 	for i := range src {
-		jobs[i] = job{strings.TrimSpace(src[i]), strings.TrimSpace(dst[i]), 1, true, 0}
+		jobs[i] = job{src: strings.TrimSpace(src[i]), out: strings.TrimSpace(dst[i]), rate: 1, loop: true}
 		// A clip named by hand still has a row in animnifs.csv, which says
 		// how fast the game plays it.
 		if t != nil {
@@ -122,6 +122,9 @@ type job struct {
 	rate     float64 // playback speed relative to the keys; 1 if unknown
 	loop     bool
 	length   float64 // seconds the tables say the clip lasts; 0 if unknown
+	// alias marks a clip another job may already have converted: it is then
+	// listed under its own name but shares the file, and a failure is not fatal.
+	alias bool
 }
 
 // A tableRole is one clip taken from a model's tables when none are named:
@@ -221,7 +224,7 @@ func fromAnimSet(game, char string) ([]job, error) {
 				continue
 			}
 		}
-		jobs = append(jobs, job{strings.TrimSuffix(an.File, filepath.Ext(an.File)), r.out, an.Rate(), an.Loop, an.Length()})
+		jobs = append(jobs, job{src: strings.TrimSuffix(an.File, filepath.Ext(an.File)), out: r.out, rate: an.Rate(), loop: an.Loop, length: an.Length()})
 		mode := "once"
 		if an.Loop {
 			mode = "loop"
@@ -231,7 +234,42 @@ func fromAnimSet(game, char string) ([]job, error) {
 	if len(jobs) == 0 {
 		return nil, fmt.Errorf("anim set %d resolves no clips", m.AnimSet)
 	}
+	jobs = append(jobs, castJobs(t, m.AnimSet)...)
 	return jobs, nil
+}
+
+// castNumbers lists the animation numbers any spell uses for its caster, sorted.
+func castNumbers(t *gamedata.Tables) []int {
+	seen := map[int]bool{}
+	for _, s := range t.Spells {
+		for _, n := range s.Anim {
+			if n > 0 {
+				seen[n] = true
+			}
+		}
+	}
+	out := make([]int, 0, len(seen))
+	for n := range seen {
+		out = append(out, n)
+	}
+	sort.Ints(out)
+	return out
+}
+
+// castJobs are the clips the spell table names for a caster in this anim set,
+// each called cast<number> after its column in anims.csv. Sets that fill them
+// with a stand-in share its file instead of adding copies.
+func castJobs(t *gamedata.Tables, set int) []job {
+	var jobs []job
+	for _, n := range castNumbers(t) {
+		an, ok := t.SetClipAt(set, n)
+		if !ok {
+			continue
+		}
+		jobs = append(jobs, job{src: strings.TrimSuffix(an.File, filepath.Ext(an.File)), out: fmt.Sprintf("cast%d", n),
+			rate: an.Rate(), loop: an.Loop, length: an.Length(), alias: true})
+	}
+	return jobs
 }
 
 // loadCharBones reads the bone names out of a converted character's manifest.
@@ -363,6 +401,9 @@ type indexEntry struct {
 	Duration float32 `json:"duration"`
 	Loop     bool    `json:"loop"`
 	Tracks   int     `json:"tracks"`
+	// Lazy marks a clip the client fetches only when it is first wanted: the
+	// casting animations, of which a figure may have dozens.
+	Lazy bool `json:"lazy,omitempty"`
 }
 
 type indexOut struct {
@@ -381,14 +422,37 @@ func convert(game, char string, nodes []string, skel map[string]bool, jobs []job
 	if b, err := os.ReadFile(filepath.Join(dir, "index.json")); err == nil {
 		_ = json.Unmarshal(b, &idx)
 	}
+	// What is converted already, by source file, so that a clip another role
+	// named is shared rather than written again.
+	done := map[string]indexEntry{}
+	for _, e := range idx.Animations {
+		done[strings.ToLower(e.Source)] = e
+	}
+	// skip says a failed alias clip is left out rather than stopping the run.
+	skip := func(jb job, err error) bool {
+		if jb.alias {
+			fmt.Printf("  %-8s skipped: %v\n", jb.out, err)
+		}
+		return jb.alias
+	}
 	for _, jb := range jobs {
 		name, out := jb.src, jb.out
+		if prior, ok := done[strings.ToLower(name+".kfa")]; ok && jb.alias {
+			idx.Animations = withEntry(idx.Animations, indexEntry{out, prior.File, prior.Source, prior.Duration, prior.Loop, prior.Tracks, true})
+			continue
+		}
 		path, err := findCase(filepath.Join(game, "anims"), name+".kfa")
 		if err != nil {
+			if skip(jb, err) {
+				continue
+			}
 			return err
 		}
 		a, err := readAnim(path, nodes)
 		if err != nil {
+			if skip(jb, err) {
+				continue
+			}
 			return fmt.Errorf("%s: %w", name, err)
 		}
 
@@ -427,7 +491,11 @@ func convert(game, char string, nodes []string, skel map[string]bool, jobs []job
 			ao.Tracks = append(ao.Tracks, to)
 		}
 		if len(ao.Tracks) == 0 {
-			return fmt.Errorf("%s: no track matched the character's skeleton", name)
+			err := fmt.Errorf("%s: no track matched the character's skeleton", name)
+			if skip(jb, err) {
+				continue
+			}
+			return err
 		}
 
 		js, err := json.Marshal(ao)
@@ -438,16 +506,9 @@ func convert(game, char string, nodes []string, skel map[string]bool, jobs []job
 		if err := os.WriteFile(filepath.Join(dir, file), js, 0o644); err != nil {
 			return err
 		}
-		entry := indexEntry{out, file, ao.Source, ao.Duration, ao.Loop, len(ao.Tracks)}
-		replaced := false
-		for k := range idx.Animations {
-			if idx.Animations[k].Name == out {
-				idx.Animations[k], replaced = entry, true
-			}
-		}
-		if !replaced {
-			idx.Animations = append(idx.Animations, entry)
-		}
+		entry := indexEntry{out, file, ao.Source, ao.Duration, ao.Loop, len(ao.Tracks), jb.alias}
+		idx.Animations = withEntry(idx.Animations, entry)
+		done[strings.ToLower(ao.Source)] = entry
 
 		fmt.Printf("  %-8s <- %-16s %5.2fs  %3d tracks (%d dropped), %4d keys, %d bytes\n",
 			out, ao.Source, ao.Duration, len(ao.Tracks), len(ao.Unmapped), keys, len(js))
@@ -510,3 +571,16 @@ func strayTail(a *anim, length float64) bool {
 	}
 	return true
 }
+
+// withEntry adds an index entry, or replaces the one of the same name.
+func withEntry(list []indexEntry, e indexEntry) []indexEntry {
+	for k := range list {
+		if list[k].Name == e.Name {
+			list[k] = e
+			return list
+		}
+	}
+	return append(list, e)
+}
+
+var gamedataLoad = gamedata.Load
