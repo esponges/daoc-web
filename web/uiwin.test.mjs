@@ -5,7 +5,7 @@
 // is looked at in a browser.
 
 import { readFileSync, existsSync } from 'node:fs';
-import { UIData, nineSlice, layoutText, place, pngPath, buildWindow, child, num, str, hrCells, hrButton, compassOffset } from './uiwin.js';
+import { UIData, nineSlice, layoutText, place, pngPath, buildWindow, child, num, str, hrCells, hrButton, compassOffset, registerDrawer, missingDrawing, forgetReported } from './uiwin.js';
 
 let failed = 0;
 const check = (name, ok, extra = '') => {
@@ -129,6 +129,45 @@ check('button is sprited', w.ctl.close.style.backgroundImage.includes('a.png'));
 w.resize(140, 90);
 check('resize rebuilds', w.el.style.width === '140px' && w.ctl.bg.style.width === '140px' && w.ctl.bg.children.length === 9);
 check('unknown window throws', (() => { try { buildWindow(doc, data, 'Nope'); } catch { return true; } return false; })());
+
+
+// Windows are found by WindowId or, when ids repeat or are missing, by Name.
+{
+  const dup = new UIData({ skin: 't', elements: [
+    n('WindowTemplate', [n('Name', 'stats_spells'), n('WindowId', 'c_windowInvalid'), n('Width', 10), n('Height', 10)]),
+    n('WindowTemplate', [n('Name', 'stats_combat'), n('WindowId', 'c_windowInvalid'), n('Width', 20), n('Height', 20)]),
+    n('WindowTemplate', [n('Name', 'siege'), n('Width', 30), n('Height', 30)]),
+  ] }, 'x');
+  check('window by name when the id repeats', num(dup.window('stats_combat'), 'Width') === 20 && num(dup.window('stats_spells'), 'Width') === 10);
+  check('window by name when it has no id', num(dup.window('siege'), 'Width') === 30);
+  check('no such window', dup.window('nope') === undefined);
+  check('a window with a repeated id builds by name', buildWindow(doc, dup, 'stats_combat').width === 20);
+}
+
+// A control type nobody draws is reported once; the rest of the window still draws.
+{
+  forgetReported();
+  const logged = [];
+  const orig = console.warn;
+  console.warn = (m) => logged.push(m);
+  const odd = new UIData({ skin: 't', elements: [
+    n('WindowTemplate', [n('Name', 'odd'), n('WindowId', 'Odd'), n('Width', 50), n('Height', 50),
+      n('MysteryDef', [n('ControlId', 'm1')]), n('MysteryDef', [n('ControlId', 'm2')]), n('OtherDef', [n('ControlId', 'o')]),
+      n('InvisibleButtonDef', [n('ControlId', 'ok'), n('Width', 5), n('Height', 5), n('Position', { X: 1, Y: 1 })])]),
+  ] }, 'x');
+  const ow = buildWindow(doc, odd, 'Odd');
+  buildWindow(doc, odd, 'Odd');
+  console.warn = orig;
+  check('each unknown type is reported once', eq(logged, ['uiwin: no drawing for MysteryDef', 'uiwin: no drawing for OtherDef']), JSON.stringify(logged));
+  check('the rest of the window still draws', 'ok' in ow.ctl && !('m1' in ow.ctl));
+  check('the settings of a window are not reported', !logged.some((m) => /Width|Name|WindowId/.test(m)));
+  // A drawer can be registered for a type.
+  registerDrawer('MysteryDef', (env, c, r) => { const e = env.doc.createElement('div'); e.style.left = r.x + 'px'; return e; });
+  check('a registered drawer takes over', 'm1' in buildWindow(doc, odd, 'Odd').ctl);
+  forgetReported();
+  check('missingDrawing returns what has been reported', missingDrawing('X', () => {}).has('X'));
+  forgetReported();
+}
 
 // Bars and labels bound to adapters.
 const bw = buildWindow(doc, data, 'Bars');

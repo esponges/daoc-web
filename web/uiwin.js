@@ -37,6 +37,7 @@ export class UIData {
     this.base = base.endsWith('/') || base === '' ? base : base + '/';
     this.templates = new Map(); // "Kind/name" -> node
     this.windows = new Map(); // WindowId -> WindowTemplate node
+    this.byName = new Map(); // template Name -> WindowTemplate node (some windows share or lack an id)
     this.textures = new Map(); // texture name -> file
     this.fonts = new Map(); // TTF name -> {file, height}
     for (const e of layout.elements) {
@@ -46,9 +47,19 @@ export class UIData {
       else if (e.t === 'WindowTemplate') {
         const id = str(e, 'WindowId');
         if (id) this.windows.set(id, e);
-        if (name) this.templates.set('WindowTemplate/' + name, e);
+        if (name) {
+          this.templates.set('WindowTemplate/' + name, e);
+          this.byName.set(name, e);
+        }
       } else if (name && e.t.endsWith('Template')) this.templates.set(e.t + '/' + name, e);
     }
+  }
+
+  // window finds a window template by its WindowId or, failing that, its Name:
+  // stats_spells and stats_combat share the id c_windowInvalid, so only the
+  // name tells them apart.
+  window(idOrName) {
+    return this.windows.get(idOrName) || this.byName.get(idOrName);
   }
 
   tpl(kind, name) {
@@ -614,36 +625,164 @@ export function place(ctl, winW, winH, baseW, baseH) {
   return { x, y, w, h };
 }
 
-// buildWindow builds the window with a WindowId at w by h (default: its
-// own size). It returns {el, ctl, resize}: ctl maps each ControlId to its
-// element, so the caller can set text and listen for clicks.
+// --- control drawers ---
+
+// Each control type a window layout holds is drawn by a function in this table.
+// A drawer is called as draw(env, c, r): env is the window being built (its
+// document, data, options and the adapter maps), c the control's node and r
+// its place {x, y, w, h}. It returns the element, or null to draw nothing. A
+// control type with no drawer is reported once on the console, not skipped
+// silently, so that a window that looks empty says why.
+export const DRAWERS = {};
+
+// registerDrawer adds or replaces the drawer of a control type.
+export function registerDrawer(type, fn) {
+  DRAWERS[type] = fn;
+}
+
+const reported = new Set();
+
+// missingDrawing reports a control type nobody draws, once. It returns the
+// types reported so far, for tests.
+export function missingDrawing(type, log = console.warn) {
+  if (!reported.has(type)) {
+    reported.add(type);
+    log('uiwin: no drawing for ' + type);
+  }
+  return reported;
+}
+
+// forgetReported clears the once-only memory; tests use it.
+export function forgetReported() {
+  reported.clear();
+}
+
+// bind adds an item to the map under an adapter name; unnamed items are not kept.
+const bind = (map, name, item) => {
+  if (!name || name === 'none') return;
+  if (!map.has(name)) map.set(name, []);
+  map.get(name).push(item);
+};
+
+registerDrawer('FullResizeImageDef', (env, c, r) => {
+  const tn = str(c, 'TemplateName') || env.opts.background;
+  if (!tn) return null;
+  const el = frame(env.doc, env.data, tn, r.w, r.h);
+  el.style.left = px(r.x);
+  el.style.top = px(r.y);
+  return el;
+});
+
+registerDrawer('ChatControlDef', (env, c, r) => {
+  const ct = env.data.tpl('ChatControlTemplate', str(c, 'TemplateName'));
+  const el = frame(env.doc, env.data, (ct && str(ct, 'BackgroundTemplate')) || '', r.w, r.h);
+  el.style.left = px(r.x);
+  el.style.top = px(r.y);
+  el.dataset.font = ct ? str(ct, 'FontName') : '';
+  const off = pt(c, 'TextOffset');
+  el.dataset.textX = off ? off.x : 0;
+  el.dataset.textY = off ? off.y : 0;
+  el.dataset.linePadding = num(c, 'LinePadding');
+  return el;
+});
+
+registerDrawer('ButtonDef', (env, c, r) => {
+  const { opts } = env;
+  const id = str(c, 'ControlId');
+  const ev = str(c, 'OnClickEvent') || str(c, 'onClickEvent');
+  // Labels are drawn only for windows that ask (opts.labels): older windows'
+  // buttons carry theirs in the art.
+  const label = opts.labels ? str(c, 'Label') : '';
+  const el = button(env.doc, env.data, str(c, 'TemplateName'), r.x, r.y, opts.onClick && (() => opts.onClick(id, ev)), label);
+  if (opts.disabled && label && opts.disabled(ev || id, id)) el.disable();
+  return el;
+});
+
+const drawSprite = (env, c, r) => sprite(env.doc, env.data, str(c, 'TemplateName') || str(c, 'ImageAreaTemplateName'), r.x, r.y);
+registerDrawer('ImageAreaDef', drawSprite);
+
+const drawLabel = (env, c, r) => {
+  const lt = labelText(env.doc, env.data, c);
+  // A label with no adapter is a caption: its Data is the text, drawn by
+  // windows that ask for captions.
+  const adapter = str(c, 'Adapter') || str(c, 'AdapterName');
+  if (env.opts.captions && (!adapter || adapter === 'none') && str(c, 'Data')) lt.set(str(c, 'Data'));
+  lt.el.style.left = px(r.x);
+  lt.el.style.top = px(r.y);
+  bind(env.labels, adapter, lt);
+  return lt.el;
+};
+registerDrawer('LabelDef', drawLabel);
+registerDrawer('ScalarLabelDef', drawLabel);
+
+registerDrawer('InvisibleButtonDef', (env, c, r) => box(env.doc, r.x, r.y, r.w, r.h));
+
+registerDrawer('HorizontalResizeButtonDef', (env, c, r) => {
+  const { opts } = env;
+  const id = str(c, 'ControlId');
+  const ev = str(c, 'OnClickEvent') || str(c, 'onClickEvent');
+  const b = hrButton(env.doc, env.data, str(c, 'TemplateName'), str(c, 'Label'), r.w, opts.onClick && (() => opts.onClick(ev || id)));
+  if (opts.disabled && opts.disabled(ev || id)) {
+    b.disable();
+    // A greyed button says why.
+    const why = opts.tooltip && opts.tooltip(ev || id);
+    if (why) b.el.title = why;
+  }
+  b.el.style.left = px(r.x);
+  b.el.style.top = px(r.y);
+  if (ev) env.buttons.set(ev, b);
+  return b.el;
+});
+
+registerDrawer('CompassControlDef', (env, c, r) => {
+  // The window names a small and a large control at the same place; only the
+  // larger is drawn.
+  const widest = Math.max(...(env.wt.c || []).filter((x) => x.t === 'CompassControlDef').map((x) => num(x, 'Width')));
+  if (r.w < widest) return null;
+  const cc = compass(env.doc, env.data, str(c, 'TemplateName'), r.w, r.h);
+  cc.el.style.left = px(r.x);
+  cc.el.style.top = px(r.y);
+  env.compasses.push(cc);
+  return cc.el;
+});
+
+registerDrawer('StatusBarDef', (env, c, r) => {
+  const sb = statusBar(env.doc, env.data, str(c, 'TemplateName'), r.w);
+  sb.el.style.left = px(r.x);
+  sb.el.style.top = px(r.y);
+  bind(env.bars, str(c, 'AdapterName'), sb);
+  env.barList.push(sb);
+  return sb.el;
+});
+
+// buildWindow builds the window with a WindowId or a template Name at w by h
+// (default: its own size). It returns {el, ctl, resize}: ctl maps each
+// ControlId to its element, so the caller can set text and listen for clicks.
 export function buildWindow(doc, data, id, opts = {}) {
-  const wt = data.windows.get(id);
+  const wt = data.window(id);
   if (!wt) throw new Error(`no window ${id} in the interface data`);
   const baseW = num(wt, 'Width'), baseH = num(wt, 'Height');
   const root = box(doc, 0, 0, baseW, baseH);
   root.dataset.window = id;
   const ctl = {};
-  // Controls bound to an adapter, the stock name for a live value: bars take
-  // a fraction, labels take text.
-  const bars = new Map(), labels = new Map(), buttons = new Map();
-  // Every bar in layout order: some windows (the group's) leave them unnamed.
-  let barList = [];
-  let compasses = [];
+  // Controls bound to an adapter, the stock name for a live value: bars take a
+  // fraction, labels take text. barList is every bar in layout order: some
+  // windows (the group's) leave them unnamed.
+  const env = {
+    doc, data, opts, wt, baseW, baseH,
+    bars: new Map(), labels: new Map(), buttons: new Map(), barList: [], compasses: [],
+    win: null,
+  };
   const win = {
     el: root, ctl, width: baseW, height: baseH, resize,
-    setBar(name, f) { (bars.get(name) || []).forEach((b) => b.set(f)); },
-    setBarAt(i, f) { if (barList[i]) barList[i].set(f); },
-    setText(name, v, color) { (labels.get(name) || []).forEach((l) => l.set(v, color)); },
-    has(name) { return bars.has(name) || labels.has(name); },
-    button(event) { return buttons.get(event); },
-    setHeading(deg) { compasses.forEach((c) => c.set(deg)); },
+    setBar(name, f) { (env.bars.get(name) || []).forEach((b) => b.set(f)); },
+    setBarAt(i, f) { if (env.barList[i]) env.barList[i].set(f); },
+    setText(name, v, color) { (env.labels.get(name) || []).forEach((l) => l.set(v, color)); },
+    has(name) { return env.bars.has(name) || env.labels.has(name); },
+    button(event) { return env.buttons.get(event); },
+    setHeading(deg) { env.compasses.forEach((c) => c.set(deg)); },
   };
-  const bind = (map, name, item) => {
-    if (!name) return;
-    if (!map.has(name)) map.set(name, []);
-    map.get(name).push(item);
-  };
+  env.win = win;
 
   function resize(w, h) {
     win.width = w;
@@ -652,109 +791,26 @@ export function buildWindow(doc, data, id, opts = {}) {
     root.style.height = px(h);
     root.textContent = '';
     for (const k of Object.keys(ctl)) delete ctl[k];
-    bars.clear();
-    labels.clear();
-    buttons.clear();
-    barList = [];
-    compasses = [];
+    env.bars.clear();
+    env.labels.clear();
+    env.buttons.clear();
+    env.barList = [];
+    env.compasses = [];
     populate();
   }
 
   function populate() {
     const w = win.width, h = win.height;
     for (const c of wt.c || []) {
-      let el;
-      const r = place(c, w, h, baseW, baseH);
-      switch (c.t) {
-        case 'FullResizeImageDef': {
-          const tn = str(c, 'TemplateName') || opts.background;
-          if (!tn) continue;
-          el = frame(doc, data, tn, r.w, r.h);
-          el.style.left = px(r.x);
-          el.style.top = px(r.y);
-          break;
-        }
-        case 'ChatControlDef': {
-          const ct = data.tpl('ChatControlTemplate', str(c, 'TemplateName'));
-          el = frame(doc, data, (ct && str(ct, 'BackgroundTemplate')) || '', r.w, r.h);
-          el.style.left = px(r.x);
-          el.style.top = px(r.y);
-          el.dataset.font = ct ? str(ct, 'FontName') : '';
-          const off = pt(c, 'TextOffset');
-          el.dataset.textX = off ? off.x : 0;
-          el.dataset.textY = off ? off.y : 0;
-          el.dataset.linePadding = num(c, 'LinePadding');
-          break;
-        }
-        case 'ButtonDef': {
-          const id = str(c, 'ControlId');
-          const ev = str(c, 'OnClickEvent') || str(c, 'onClickEvent');
-          // Labels are drawn only for windows that ask (opts.labels): older
-          // windows' buttons carry theirs in the art.
-          const label = opts.labels ? str(c, 'Label') : '';
-          el = button(doc, data, str(c, 'TemplateName'), r.x, r.y, opts.onClick && (() => opts.onClick(id, ev)), label);
-          if (opts.disabled && label && opts.disabled(ev || id, id)) el.disable();
-          break;
-        }
-        case 'ImageAreaDef':
-          el = sprite(doc, data, str(c, 'TemplateName') || str(c, 'ImageAreaTemplateName'), r.x, r.y);
-          break;
-        case 'LabelDef':
-        case 'ScalarLabelDef': {
-          const lt = labelText(doc, data, c);
-          // A label with no adapter is a caption: its Data is the text, drawn
-          // by windows that ask for captions.
-          const adapter = str(c, 'Adapter') || str(c, 'AdapterName');
-          if (opts.captions && (!adapter || adapter === 'none') && str(c, 'Data')) lt.set(str(c, 'Data'));
-          el = lt.el;
-          el.style.left = px(r.x);
-          el.style.top = px(r.y);
-          bind(labels, str(c, 'Adapter') || str(c, 'AdapterName'), lt);
-          break;
-        }
-        case 'InvisibleButtonDef':
-          el = box(doc, r.x, r.y, r.w, r.h);
-          break;
-        case 'HorizontalResizeButtonDef': {
-          const id = str(c, 'ControlId');
-          const ev = str(c, 'OnClickEvent') || str(c, 'onClickEvent');
-          const b = hrButton(doc, data, str(c, 'TemplateName'), str(c, 'Label'), r.w, opts.onClick && (() => opts.onClick(ev || id)));
-          if (opts.disabled && opts.disabled(ev || id)) {
-            b.disable();
-            // A greyed button says why.
-            const why = opts.tooltip && opts.tooltip(ev || id);
-            if (why) b.el.title = why;
-          }
-          el = b.el;
-          el.style.left = px(r.x);
-          el.style.top = px(r.y);
-          if (ev) buttons.set(ev, b);
-          break;
-        }
-        case 'CompassControlDef': {
-          // The window names a small and a large control at the same place;
-          // only the larger is drawn.
-          const widest = Math.max(...(wt.c || []).filter((x) => x.t === 'CompassControlDef').map((x) => num(x, 'Width')));
-          if (r.w < widest) continue;
-          const cc = compass(doc, data, str(c, 'TemplateName'), r.w, r.h);
-          el = cc.el;
-          el.style.left = px(r.x);
-          el.style.top = px(r.y);
-          compasses.push(cc);
-          break;
-        }
-        case 'StatusBarDef': {
-          const sb = statusBar(doc, data, str(c, 'TemplateName'), r.w);
-          el = sb.el;
-          el.style.left = px(r.x);
-          el.style.top = px(r.y);
-          bind(bars, str(c, 'AdapterName'), sb);
-          barList.push(sb);
-          break;
-        }
-        default:
-          continue;
+      const draw = DRAWERS[c.t];
+      if (!draw) {
+        // Only controls (names ending in Def) are drawings; the rest of the
+        // children are the window's own settings.
+        if (c.t.endsWith('Def')) missingDrawing(c.t);
+        continue;
       }
+      const el = draw(env, c, place(c, w, h, baseW, baseH));
+      if (!el) continue;
       const cid = str(c, 'ControlId');
       if (cid) {
         el.dataset.control = cid;
