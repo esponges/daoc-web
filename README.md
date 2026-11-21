@@ -490,7 +490,10 @@ node web/chrome.test.mjs         # the clock text
 ```
 
 `web/uidemo.html` draws a handful of the stock windows and every font for a
-look at them (`/uidemo.html` on the running server).
+look at them (`/uidemo.html` on the running server). `?w=Merchant,mini_pet` draws just
+those windows (a WindowId or a template name, with sample rows in their lists) and
+`?w=all` every window the game builds from the stock layouts; a control type the
+builder cannot draw is named once on the console.
 
 ## Known limitations
 

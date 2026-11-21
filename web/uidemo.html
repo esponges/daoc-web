@@ -53,7 +53,9 @@ if (!data) {
     }
   };
   // ?w=Merchant,MiniPet,stats_spells draws just those windows (WindowId or Name) in a row.
-  const only = params.get('w');
+  // ?w=all is every window the stock-windows change builds.
+  const ALL = 'StatsAttributes,stats_spells,stats_spec_abil,stats_combat,Merchant,mini_pet,Vault,new_quest_journal,train,Interact,Concentration,Timer,WindowQuiver,Chat';
+  const only = params.get('w') === 'all' ? ALL : params.get('w');
   if (only) {
     let x = 20, y = 40, rowH = 0;
     for (const id of only.split(',')) {
