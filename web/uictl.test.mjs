@@ -4,7 +4,7 @@
 
 import assert from 'node:assert/strict';
 import { UIData, buildWindow, child, num, str, pt } from './uiwin.js';
-import { vrCells, clampTop, scrollThumb, topFromThumb, rowHeight } from './uictl.js';
+import { vrCells, clampTop, scrollThumb, topFromThumb, rowHeight, flattenGroups } from './uictl.js';
 
 const n = (t, body) => {
   if (Array.isArray(body)) return { t, c: body };
@@ -52,6 +52,12 @@ const layout = {
       n('Texture', [n('TextureName', 'page1'), n('Top', { X: 227, Y: 219 }), n('Repeat', { X: 227, Y: 227 }), n('Bottom', { X: 227, Y: 243 })])]),
     n('VerticalScrollbarTemplate', [n('Name', 'vscroll'), n('UpButtonTemplate', 'up'), n('DownButtonTemplate', 'down'), n('ThumbVResizeTemplate', 'thumb'), n('GutterVResizeTemplate', 'gutter'), n('Width', 15), n('ThumbOffset', { X: 2, Y: 0 })]),
     n('ListBoxTemplate', [n('Name', 'lb'), n('ScrollbarTemplate', 'vscroll'), n('DrawScroll', 'true'), n('BackgroundTemplate', 'interior'), n('TextFont', [n('Name', 'arial9'), n('LineOffset', 2), n('TextLeftOffset', 4)])]),
+    n('CheckBoxTemplate', [n('Name', 'tree_check'), n('Size', { X: 12, Y: 12 }), n('Texture', [n('TextureName', 'page1'), n('Normal', { X: 76, Y: 241 }), n('Pressed', { X: 63, Y: 241 })])]),
+    n('TreeControlTemplate', [n('Name', 'tree'), n('BackgroundTemplate', 'none'), n('CheckBoxTemplate', 'tree_check'), n('ScrollbarTemplate', 'vscroll'), n('FontName', 'brit9'), n('LinePadding', 1), n('OffsetX', 0)]),
+    n('WindowTemplate', [
+      n('Name', 'trees'), n('WindowId', 'Trees'), n('Width', 200), n('Height', 140),
+      n('TreeControlDef', [n('TemplateName', 'tree'), n('ControlId', '1000'), n('AdapterName', 'spells'), n('width', 120), n('height', 110), n('Position', { x: 9, y: 30 })]),
+    ]),
     n('WindowTemplate', [
       n('Name', 'lists'), n('WindowId', 'Lists'), n('Width', 200), n('Height', 140),
       n('ListBoxDef', [n('TemplateName', 'lb'), n('ControlId', '1005'), n('AdapterName', 'items'), n('Width', 120), n('Height', 108), n('Position', { X: 10, Y: 20 })]),
@@ -157,6 +163,47 @@ const h = { child, num, str, pt };
   list.setRows([]);
   assert.equal(body(list).children.length, 0);
   console.log('ok: a list box shows, scrolls, selects and drags its rows');
+}
+
+
+// A tree: headings that fold, and the rows of the open ones.
+{
+  const groups = [
+    { title: 'Bone Army', open: true, rows: [{ text: 'Summon Bone Boss', icon: 634 }, { text: 'Soften Bones' }] },
+    { title: 'Darkness', open: false, rows: [{ text: 'Minor Dusk Dart' }] },
+  ];
+  const flat = flattenGroups(groups);
+  assert.deepEqual(flat.map((r) => r.text), ['Bone Army', 'Summon Bone Boss', 'Soften Bones', 'Darkness'], 'a closed group shows only its heading');
+  assert.deepEqual(flat.map((r) => r.check), ['open', undefined, undefined, 'closed']);
+  assert.deepEqual(flat.map((r) => r.indent || 0), [0, 12, 12, 0]);
+  assert.equal(flat[0].group, 0);
+  assert.equal(flat[3].group, 1);
+  assert.deepEqual(flattenGroups([]), []);
+
+  const tw = buildWindow(doc, data, 'Trees');
+  assert.equal(tw.ctl['1000'].style.left, '9px', 'a lower case Position is read');
+  assert.equal(tw.ctl['1000'].style.top, '30px');
+  const tree = tw.tree('spells');
+  tree.setGroups(groups);
+  const lines = () => tree.el.children.find((c) => c.style.overflow === 'hidden').children;
+  assert.equal(lines().length, 4);
+  const box = (line) => line.children[0];
+  assert.notEqual(box(lines()[0]).style.backgroundPosition, box(lines()[3]).style.backgroundPosition, 'open and closed use different art');
+  // Folding a heading hides its rows and opening shows them.
+  lines()[0].listeners.click();
+  assert.equal(tree.isOpen(0), false);
+  assert.equal(lines().length, 2, 'Bone Army folded: two headings');
+  lines()[1].listeners.click();
+  assert.equal(tree.isOpen(1), true);
+  assert.deepEqual(lines().map((l) => l.dataset.row), ['0', '1', '2']);
+  tree.toggle(0);
+  assert.equal(lines().length, 5);
+  // A row of an open group selects like a list row.
+  const picked = [];
+  tree.onSelect((i, row) => picked.push(row.text));
+  lines()[1].listeners.click();
+  assert.deepEqual(picked, ['Summon Bone Boss']);
+  console.log('ok: a tree folds its headings and shows the rows of the open ones');
 }
 
 const win = buildWindow(doc, data, 'Imgs', { onClick: (id) => clicked.push(id) });

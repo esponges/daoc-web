@@ -27,6 +27,11 @@ if (!data) {
       stage.appendChild(w.el);
       // Fill every list box with sample rows, so the lists and scrollbars can be seen.
       for (const c of data.window(id).c || []) {
+        if (c.t === 'TreeControlDef') {
+          const t = w.tree((c.c.find((x) => x.t === 'ControlId') || {}).x);
+          if (t) t.setGroups(['Bone Army', 'Darkness', 'Suppression'].map((title, g) => ({ title, open: g !== 1, rows: [1, 2, 3].map((k) => ({ text: 'Spell ' + g + '.' + k + '  ' + (k * 2) + ' pw', icon: 634 })) })));
+          continue;
+        }
         if (c.t !== 'ListBoxDef') continue;
         const l = w.list((c.c.find((x) => x.t === 'ControlId') || {}).x);
         if (l) l.setRows(Array.from({ length: 40 }, (_, i) => ({ text: (i % 10 === 0 ? 'Heading ' : 'Sample row ') + i, header: i % 10 === 0, icon: i % 10 ? 634 : 0 })));

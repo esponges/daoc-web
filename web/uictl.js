@@ -55,6 +55,18 @@ export function rowHeight(fontH, iconH, lineOffset) {
   return Math.max(fontH, iconH) + lineOffset;
 }
 
+// flattenGroups turns the groups of a tree into the rows of its list: a heading
+// for each group, folded with a box that says open or closed, then the group's
+// own rows, indented, when it is open. A heading remembers its group.
+export function flattenGroups(groups) {
+  const rows = [];
+  groups.forEach((g, i) => {
+    rows.push({ text: g.title, header: true, check: g.open ? 'open' : 'closed', group: i, title: g.titleTip });
+    if (g.open) for (const row of g.rows || []) rows.push({ indent: 12, ...row });
+  });
+  return rows;
+}
+
 // createControls builds the drawers. h holds uiwin's primitives: box, paint,
 // px, sprite, hrImage, hrButton, icon and the tree readers child, num, str, pt.
 export function createControls(h) {
@@ -219,31 +231,22 @@ export function createControls(h) {
     };
   };
 
-  // A list: rows of text with an optional icon, a scrollbar when they overflow,
-  // the wheel, a selected row, and rows that can be dragged. Rows are
-  // {text, color, icon, title, drag, header, on}: header rows are gold, rows
-  // with on false are greyed. win.list(adapter or control id) gives
-  //   setRows(rows)  select(i)  selected  onSelect(fn(i, row))  onActivate(fn)
-  //   top  scrollTo(i)  rows
-  D.ListBoxDef = (env, c, r) => {
+  // buildList builds the rows, scrollbar and wheel of a list. cfg says how it
+  // looks: {bg, font: {name, normal, high, grey, head}, lineOffset, iconPx,
+  // textLeft, scroll: scrollbar template name or '', check: art for a heading's
+  // box, onHeader(i, row)}. Rows are {text, color, icon, title, drag, header,
+  // on, indent, check} where check is 'open' or 'closed' for a heading that
+  // folds. It returns {root, api}.
+  const buildList = (env, r, cfg) => {
     const { doc, data } = env;
-    const tpl = data.tpl('ListBoxTemplate', str(c, 'TemplateName'));
     const root = box(doc, r.x, r.y, r.w, r.h);
-    if (tpl) root.appendChild(frame(doc, data, str(tpl, 'BackgroundTemplate'), r.w, r.h));
-    const font = tpl && child(tpl, 'TextFont');
-    const fontName = (font && str(font, 'Name')) || 'arial9';
-    const colors = {
-      normal: rgba(child(font, 'ColorNormal')) || 'rgb(225,225,225)',
-      high: rgba(child(font, 'ColorHighlit')) || 'rgb(255,192,0)',
-      grey: rgba(child(font, 'ColorGreyed')) || 'rgb(127,127,127)',
-      head: 'rgb(255,200,100)',
-    };
+    if (cfg.bg) root.appendChild(frame(doc, data, cfg.bg, r.w, r.h));
+    const fontName = cfg.font.name;
     const bf = data.bitmapFont(fontName);
     const fontH = (bf && bf.h) || 12;
-    const iconSize = tpl && child(tpl, 'IconSize') ? pt(tpl, 'IconSize') : null;
-    const iconPx = iconSize ? iconSize.x : 16;
-    const rowH = rowHeight(fontH, iconPx, num(font, 'LineOffset', 2));
-    const pad = 4, leftText = num(font, 'TextLeftOffset', 4);
+    const iconPx = cfg.iconPx;
+    const rowH = rowHeight(fontH, iconPx, cfg.lineOffset);
+    const pad = 4;
     const innerW = r.w - pad * 2;
     const inner = box(doc, pad, pad, innerW, r.h - pad * 2);
     inner.style.overflow = 'hidden';
@@ -257,7 +260,14 @@ export function createControls(h) {
         const line = box(doc, 0, k * rowH, innerW, rowH);
         if (i === selected) line.style.background = 'rgba(255,192,0,0.2)';
         line.dataset.row = String(i);
-        let x = leftText;
+        let x = cfg.textLeft + (row.indent || 0);
+        if (row.check && cfg.check) {
+          const cb = box(doc, x, Math.max(0, (rowH - cfg.check.size) / 2), cfg.check.size, cfg.check.size);
+          const at = row.check === 'open' ? cfg.check.pressed : cfg.check.normal;
+          if (at) paint(cb, data, { tex: cfg.check.tex, sx: at.x, sy: at.y, sw: cfg.check.size, sh: cfg.check.size, dw: cfg.check.size, dh: cfg.check.size });
+          line.appendChild(cb);
+          x += cfg.check.size + 5;
+        }
         if (row.icon) {
           const ic = icon(doc, data, row.icon, x, Math.max(0, (rowH - iconPx) / 2));
           ic.style.transform = 'scale(' + iconPx / 32 + ')';
@@ -265,7 +275,7 @@ export function createControls(h) {
           line.appendChild(ic);
           x += iconPx + 4;
         }
-        const color = row.header ? colors.head : row.on === false ? colors.grey : i === selected ? colors.high : (row.color || colors.normal);
+        const color = row.header ? cfg.font.head : row.on === false ? cfg.font.grey : i === selected ? cfg.font.high : (row.color || cfg.font.normal);
         const t = text(doc, data, fontName, row.text, color);
         t.style.left = px(x);
         t.style.top = px(Math.max(0, (rowH - fontH) / 2));
@@ -275,8 +285,11 @@ export function createControls(h) {
           line.draggable = true;
           line.addEventListener('dragstart', (e) => { if (e.dataTransfer) e.dataTransfer.setData('text/plain', row.drag); });
         }
-        line.style.cursor = row.header ? 'default' : 'pointer';
-        line.addEventListener('click', () => { if (!row.header) api.select(i); });
+        line.style.cursor = row.header && !row.check ? 'default' : 'pointer';
+        line.addEventListener('click', () => {
+          if (row.check && cfg.onHeader) { cfg.onHeader(i, row); return; }
+          if (!row.header) api.select(i);
+        });
         line.addEventListener('dblclick', () => { if (!row.header && onActivate) onActivate(i, row); });
         inner.appendChild(line);
       });
@@ -303,8 +316,8 @@ export function createControls(h) {
       onSelect(fn) { onSelect = fn; },
       onActivate(fn) { onActivate = fn; },
     };
-    if (tpl && str(tpl, 'DrawScroll') !== 'false') {
-      bar = scrollBar(env, str(tpl, 'ScrollbarTemplate'), r.h - 4, (t) => api.scrollTo(t));
+    if (cfg.scroll) {
+      bar = scrollBar(env, cfg.scroll, r.h - 4, (t) => api.scrollTo(t));
       if (bar) {
         bar.el.style.left = px(r.w - bar.w - 3);
         bar.el.style.top = px(2);
@@ -316,9 +329,80 @@ export function createControls(h) {
       if (e.preventDefault) e.preventDefault();
       api.scrollTo(top + (e.deltaY > 0 ? 3 : -3));
     });
+    return { root, api };
+  };
+
+  // A list: rows of text with an optional icon, a scrollbar when they overflow,
+  // the wheel, a selected row, and rows that can be dragged. win.list(adapter
+  // or control id) gives
+  //   setRows(rows)  select(i)  selected  onSelect(fn(i, row))  onActivate(fn)
+  //   top  scrollTo(i)  rows
+  D.ListBoxDef = (env, c, r) => {
+    const { data } = env;
+    const tpl = data.tpl('ListBoxTemplate', str(c, 'TemplateName'));
+    const font = tpl && child(tpl, 'TextFont');
+    const iconSize = tpl && child(tpl, 'IconSize') ? pt(tpl, 'IconSize') : null;
+    const { root, api } = buildList(env, r, {
+      bg: tpl ? str(tpl, 'BackgroundTemplate') : '',
+      font: {
+        name: (font && str(font, 'Name')) || 'arial9',
+        normal: rgba(child(font, 'ColorNormal')) || 'rgb(225,225,225)',
+        high: rgba(child(font, 'ColorHighlit')) || 'rgb(255,192,0)',
+        grey: rgba(child(font, 'ColorGreyed')) || 'rgb(127,127,127)',
+        head: 'rgb(255,200,100)',
+      },
+      lineOffset: num(font, 'LineOffset', 2),
+      iconPx: iconSize ? iconSize.x : 16,
+      textLeft: num(font, 'TextLeftOffset', 4),
+      scroll: tpl && str(tpl, 'DrawScroll') !== 'false' ? str(tpl, 'ScrollbarTemplate') : '',
+    });
     bind(env.lists, str(c, 'AdapterName'), api);
     bind(env.lists, str(c, 'ControlId'), api);
     return root;
+  };
+
+  // A tree: headings that fold with a small box, and rows under them. It is a
+  // list of the open groups' rows; win.tree(adapter or control id) gives the
+  // list's calls and
+  //   setGroups([{title, open, rows}])  toggle(group)  isOpen(group)
+  // where a group's rows are list rows and open says whether they show.
+  D.TreeControlDef = (env, c, r) => {
+    const { data } = env;
+    const tpl = data.tpl('TreeControlTemplate', str(c, 'TemplateName'));
+    const checkTpl = tpl && data.tpl('CheckBoxTemplate', str(tpl, 'CheckBoxTemplate'));
+    const tex = checkTpl && child(checkTpl, 'Texture');
+    const checkSize = checkTpl && pt(checkTpl, 'Size') ? pt(checkTpl, 'Size').x : 12;
+    const colorOf = tpl && child(tpl, 'FontColor');
+    const iconTpl = tpl && data.tpl('IconTemplate', str(tpl, 'IconTemplate'));
+    let groups = [];
+    let list = null;
+    const refresh = () => list.setRows(flattenGroups(groups));
+    const made = buildList(env, r, {
+      bg: tpl && str(tpl, 'BackgroundTemplate') !== 'none' ? str(tpl, 'BackgroundTemplate') : '',
+      font: {
+        name: (tpl && str(tpl, 'FontName')) || 'arial9',
+        normal: rgba(colorOf) || 'rgb(192,192,192)',
+        high: 'rgb(255,192,0)',
+        grey: 'rgb(127,127,127)',
+        head: 'rgb(230,200,120)',
+      },
+      lineOffset: tpl ? num(tpl, 'LinePadding', 1) + 1 : 2,
+      iconPx: iconTpl && pt(iconTpl, 'Size') ? pt(iconTpl, 'Size').x : 16,
+      textLeft: tpl ? num(tpl, 'OffsetX', 0) + 2 : 2,
+      scroll: tpl ? str(tpl, 'ScrollbarTemplate') : '',
+      check: tex ? { tex: str(tex, 'TextureName'), normal: pt(tex, 'Normal'), pressed: pt(tex, 'Pressed'), size: checkSize } : null,
+      onHeader: (i, row) => { groups[row.group].open = !groups[row.group].open; refresh(); },
+    });
+    list = made.api;
+    const api = Object.assign(Object.create(list), {
+      setGroups(next) { groups = (next || []).map((g) => ({ ...g })); refresh(); },
+      toggle(g) { if (groups[g]) { groups[g].open = !groups[g].open; refresh(); } },
+      isOpen(g) { return !!(groups[g] && groups[g].open); },
+      get groups() { return groups; },
+    });
+    bind(env.lists, str(c, 'AdapterName'), api);
+    bind(env.lists, str(c, 'ControlId'), api);
+    return made.root;
   };
 
   return D;

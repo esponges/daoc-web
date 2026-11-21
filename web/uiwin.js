@@ -24,9 +24,10 @@ export const num = (n, tag, d = 0) => {
   return Number.isFinite(v) ? v : d;
 };
 // A point element {X, Y}.
+// Some layouts spell the axes in lower case (the spell tree's Position does).
 export const pt = (n, tag) => {
   const c = child(n, tag);
-  return c ? { x: num(c, 'X'), y: num(c, 'Y') } : undefined;
+  return c ? { x: num(c, 'X', num(c, 'x', 0)), y: num(c, 'Y', num(c, 'y', 0)) } : undefined;
 };
 export const flag = (n, tag) => str(n, tag).toLowerCase() === 'true';
 
@@ -791,6 +792,8 @@ export function buildWindow(doc, data, id, opts = {}) {
     setIcon(name, n) { (env.icons.get(name) || []).forEach((i) => i.set(n)); },
     // list is the list box bound to an adapter name or a control id, or undefined.
     list(key) { return (env.lists.get(String(key)) || [])[0]; },
+    // tree is the same lookup: a tree control is a list with setGroups.
+    tree(key) { return (env.lists.get(String(key)) || [])[0]; },
     // setStatus shows or hides the status marker bound to an adapter by level.
     setStatus(name, level) { (env.status.get(name) || []).forEach((i) => i.set(level)); },
   };
