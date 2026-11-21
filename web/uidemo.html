@@ -36,6 +36,20 @@ if (!data) {
       console.error(id, e);
     }
   };
+  // ?w=Merchant,MiniPet,stats_spells draws just those windows (WindowId or Name) in a row.
+  const only = params.get('w');
+  if (only) {
+    let x = 20, y = 40, rowH = 0;
+    for (const id of only.split(',')) {
+      const wt = data.window(id);
+      if (!wt) { console.error('no window', id); continue; }
+      const ww = parseFloat((wt.c.find((c) => c.t === 'Width') || {}).x) || 200, hh = parseFloat((wt.c.find((c) => c.t === 'Height') || {}).x) || 100;
+      if (x + ww > 1080) { x = 20; y += rowH + 30; rowH = 0; }
+      show(id, x, y);
+      x += ww + 20;
+      rowH = Math.max(rowH, hh);
+    }
+  } else {
   show('Chat', 20, 40, params.get('bg') ? { background: params.get('bg') } : {});
   show('MiniInfo', 400, 40);
   show('MiniGroup', 570, 40);
@@ -53,5 +67,6 @@ if (!data) {
     stage.appendChild(t);
   };
   [['arial9', 400], ['arial11', 420], ['arial14', 440], ['title', 464], ['button_large', 500], ['brit9s', 530], ['chat_small', 560], ['chat_large', 580]].forEach(([f, y]) => sample(f, y));
+  }
 }
 </script>

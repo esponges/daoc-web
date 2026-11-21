@@ -9,6 +9,8 @@
 // that does not touch the DOM is plain functions over that tree, checked
 // headlessly in uiwin.test.mjs.
 
+import { createControls } from './uictl.js';
+
 // --- reading the tree ---
 
 export const child = (n, tag) => (n && n.c ? n.c.find((c) => c.t === tag) : undefined);
@@ -755,6 +757,9 @@ registerDrawer('StatusBarDef', (env, c, r) => {
   return sb.el;
 });
 
+// The controls that live in uictl.js join the table.
+for (const [type, fn] of Object.entries(createControls({ box, paint, px, sprite, hrImage, hrButton, icon, child, num, str, pt }))) registerDrawer(type, fn);
+
 // buildWindow builds the window with a WindowId or a template Name at w by h
 // (default: its own size). It returns {el, ctl, resize}: ctl maps each
 // ControlId to its element, so the caller can set text and listen for clicks.
@@ -771,6 +776,7 @@ export function buildWindow(doc, data, id, opts = {}) {
   const env = {
     doc, data, opts, wt, baseW, baseH,
     bars: new Map(), labels: new Map(), buttons: new Map(), barList: [], compasses: [],
+    icons: new Map(), status: new Map(),
     win: null,
   };
   const win = {
@@ -781,6 +787,10 @@ export function buildWindow(doc, data, id, opts = {}) {
     has(name) { return env.bars.has(name) || env.labels.has(name); },
     button(event) { return env.buttons.get(event); },
     setHeading(deg) { env.compasses.forEach((c) => c.set(deg)); },
+    // setIcon puts icon number n in the icon bound to an adapter, 0 clearing it.
+    setIcon(name, n) { (env.icons.get(name) || []).forEach((i) => i.set(n)); },
+    // setStatus shows or hides the status marker bound to an adapter by level.
+    setStatus(name, level) { (env.status.get(name) || []).forEach((i) => i.set(level)); },
   };
   env.win = win;
 
@@ -794,6 +804,8 @@ export function buildWindow(doc, data, id, opts = {}) {
     env.bars.clear();
     env.labels.clear();
     env.buttons.clear();
+    env.icons.clear();
+    env.status.clear();
     env.barList = [];
     env.compasses = [];
     populate();
