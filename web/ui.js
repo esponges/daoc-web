@@ -10,6 +10,7 @@ import { createStockChat, createStockSummary, createStockBar, createStockRelease
 import { releaseLine } from './effects.js';
 import { createConcWindow, heldSpells } from './conc.js';
 import { createPetWindow } from './pet.js';
+import { createSpellQuickbar, quickbarPlace, BAR_W } from './quickbar.js';
 import { styleIconNumber } from './uiwin.js';
 import { createMover, createPositionStore } from './uimove.js';
 import { createTaskWindow } from './task.js';
@@ -189,12 +190,26 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     const t = getTarget ? getTarget() : null;
     net.cast(id, t && !t.dead ? t.id : 0);
   };
-  const spellBar = createSpellBar(document, {
+  const barHandlers = {
     onCast: castSpell,
     onAssign: (id, slot) => setSpellSlot(id, slot),
     onClear: (slot) => { spellSlots[slot] = 0; saveSlots(); },
-  });
+  };
+  // The stock quickbar, drawn from the skin's art, when the interface is converted.
+  const spellBar = stock
+    ? createSpellQuickbar(document, stock, { ...barHandlers, findSpell, dragId: spellDragId })
+    : createSpellBar(document, barHandlers);
   root.appendChild(spellBar.el);
+  // The two rows sit where default.ini puts the quickbar: centred, near the bottom.
+  const placeBars = () => {
+    if (!stock) return;
+    const a = quickbarPlace(innerWidth, innerHeight, 0), b = quickbarPlace(innerWidth, innerHeight, 1);
+    Object.assign(bar.style, { left: a.left + 'px', top: a.top + 'px', bottom: 'auto', transform: 'none', width: BAR_W + 'px', flexWrap: 'nowrap', gap: '0px' });
+    Object.assign(spellBar.el.style, { left: b.left + 'px', top: b.top + 'px' });
+  };
+  placeBars();
+  addEventListener('resize', placeBars);
+  if (stock) spellBar.set(spellSlots, net.book, net.song, heldBuffs); // the empty bar shows from the start
   const castBox = createCastBar(document);
   root.appendChild(castBox.el);
   const saveSlots = () => {
@@ -237,6 +252,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
 
   // Abilities used on a target (Guard, Protect, Intercept, Engage) sit beside the styles.
   const abBar = el('div', 'stylebar abilities');
+  if (stock) abBar.style.bottom = '134px'; // above the quickbar
   root.appendChild(abBar);
   const renderAbilities = () => {
     abBar.replaceChildren();
@@ -637,7 +653,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     }
     if (stockBar) stockBar.update(me);
     castBox.update(cast, performance.now() / 1000);
-    spellBar.el.querySelectorAll('.style').forEach((b) => {
+    if (stock) spellBar.update(me);
+    else spellBar.el.querySelectorAll('.style').forEach((b) => {
       const id = spellSlots[Number(b.dataset.slot)];
       const s = id && findSpell(net.book, id);
       b.classList.toggle('poor', !!s && me.power < s.pw);

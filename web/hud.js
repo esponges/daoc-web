@@ -4,6 +4,7 @@
 // decides everything; these only display and ask.
 
 import { buildWindow, frame, fontFamily, child, num, str, pt, text, icon, styleIconNumber, hrButton } from './uiwin.js';
+import { slotFrame } from './quickbar.js';
 import { releaseLine } from './effects.js';
 
 // Colours of chat lines by kind.
@@ -230,6 +231,7 @@ export function createStockBar(doc, data, { onUse, onDrop, keys = [] } = {}) {
       const cell = doc.createElement('div');
       Object.assign(cell.style, { position: 'relative', width: '36px', height: '36px', cursor: 'pointer' });
       cell.title = `${s.nm} (${s.opens}, level ${s.lv}, ${s.cost} endurance)`;
+      cell.appendChild(slotFrame(doc, data));
       cell.appendChild(icon(doc, data, styleIconNumber(s.spec), 2, 2));
       const shade = doc.createElement('div');
       Object.assign(shade.style, { position: 'absolute', left: '2px', top: '2px', width: '32px', height: '32px', pointerEvents: 'none' });

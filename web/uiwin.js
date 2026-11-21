@@ -255,7 +255,7 @@ function box(doc, x, y, w, h) {
 }
 
 // spriteCell draws a source rectangle of a texture into e, scaled to fit.
-function paint(e, data, cell) {
+export function paint(e, data, cell) {
   const t = data.texture(cell.tex);
   if (!t) return;
   const kx = cell.dw / cell.sw, ky = cell.dh / cell.sh;
