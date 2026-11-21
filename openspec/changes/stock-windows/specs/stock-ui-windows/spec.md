@@ -18,7 +18,7 @@ The window builder SHALL draw every control type the converted layouts use, each
 - **THEN** the console names that type once and the rest of the window still draws
 
 ### Requirement: Game windows are built from their own templates
-Each game window SHALL be built from its own stock template and filled through that template's controls, with no plain HTML panel drawn over a borrowed frame. The windows and templates SHALL be: Attributes `StatsAttributes`, Spells `stats_spells`, Skills and Styles `stats_spec_abil`, Merchant `Merchant`, Pet `MiniPet`, Vault `Vault`, Task `Quest`, Trainer `Train`, Healer and NPC talk `Interact`, Concentration `Concentration`, Cast bar `Timer` and Quiver `WindowQuiver`.
+Each game window SHALL be built from its own stock template and filled through that template's controls, with no plain HTML panel drawn over a borrowed frame. The windows and templates SHALL be: Attributes `StatsAttributes`, Spells `stats_spells`, Skills `stats_spec_abil`, Styles `stats_combat`, Merchant `Merchant`, Pet `MiniPet`, Vault `Vault`, Task `Quest`, Trainer `Train`, Healer and NPC talk `Interact`, Concentration `Concentration`, Cast bar `Timer` and Quiver `WindowQuiver`.
 
 #### Scenario: Opening the trainer
 - **WHEN** the player right-clicks their trainer with the converted interface present

@@ -696,8 +696,13 @@ registerDrawer('ButtonDef', (env, c, r) => {
   // Labels are drawn only for windows that ask (opts.labels): older windows'
   // buttons carry theirs in the art.
   const label = opts.labels ? str(c, 'Label') : '';
-  const el = button(env.doc, env.data, str(c, 'TemplateName'), r.x, r.y, opts.onClick && (() => opts.onClick(id, ev)), label);
-  if (opts.disabled && label && opts.disabled(ev || id, id)) el.disable();
+  const caption = str(c, 'Label');
+  const el = button(env.doc, env.data, str(c, 'TemplateName'), r.x, r.y, opts.onClick && (() => opts.onClick(id, ev, caption)), label);
+  if (opts.disabled && label && opts.disabled(ev || id, id, caption)) {
+    el.disable();
+    const why = opts.tooltip && opts.tooltip(ev || id, id, caption);
+    if (why) el.title = why;
+  }
   return el;
 });
 

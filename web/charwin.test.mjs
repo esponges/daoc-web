@@ -1,5 +1,5 @@
 // node web/charwin.test.mjs — what the attributes, skills and styles windows show.
-import { attributesView, skillsView, stylesView, STAT_ADAPTERS } from './charwin.js';
+import { attributesView, skillsView, stylesView, STAT_ADAPTERS, spellKind, spellGroups, styleGroups, SPELL_ICON } from './charwin.js';
 import { styleDragId } from './hud.js';
 import { MENU_WHY } from './chrome.js';
 
@@ -32,4 +32,25 @@ ok(v.usable.filter((r) => r.draggable).every((r) => Number.isInteger(r.id)), 'ea
 ok(v.locked.length === 1 && v.locked[0].draggable === false && v.locked[0].text.includes('Sword'), 'a style the character cannot use now is listed but cannot be dragged');
 ok(styleDragId('style:42') === 42 && styleDragId('42') === null && styleDragId(undefined) === null, 'only a style drag is read as one');
 ok(Object.keys(MENU_WHY).length === 3 && !MENU_WHY.ToggleJournal && MENU_WHY.ShowWarMap && Object.values(MENU_WHY).every((t) => t.length > 10), 'each greyed menu button has a tooltip saying why');
+// The spells tree: a group for each spec line, rows drawn by kind.
+ok(spellKind('DirectDamage') === 'damage' && spellKind('Bolt') === 'damage' && spellKind('HealthRegenBuff') === 'heal', 'spells are sorted into kinds by their type');
+ok(spellKind('StrengthConstitutionBuff', 'Pet') === 'pet' && spellKind('Summon', 'Self') === 'pet', 'a spell aimed at the pet, or a summon, is a pet spell');
+ok(spellKind('Mesmerize') === 'mez' && spellKind('Stun') === 'stun' && spellKind('Disease') === 'debuff' && spellKind('Odd') === 'other', 'holds, debuffs and the unknown have their kinds');
+const book = { lines: [
+  { nm: 'Bone Army', sp: [{ id: 1, nm: 'Summon Bone Boss', lv: 1, pw: 27, ct: 6, ok: true, tp: 'Summon' }, { id: 2, nm: 'Soften Bones', lv: 1, pw: 2, ct: 3, ok: true, tp: 'Debuff' }] },
+  { nm: 'Darkness', sp: [{ id: 3, nm: 'Minor Dusk Dart', lv: 1, pw: 2, ct: 2.6, ok: true, tp: 'DirectDamage' }, { id: 4, nm: 'Odd Spell', lv: 5, pw: 3, ct: 0, ok: false, tp: 'Odd' }] },
+] };
+const sg = spellGroups(book, 3, { Darkness: false });
+ok(sg.length === 2 && sg[0].title === 'Bone Army' && sg[0].open === true && sg[1].open === false, 'a group for each line, open unless the player folded it');
+ok(sg[0].rows[0].text === 'Summon Bone Boss  1, 27 pw, 6s' && sg[0].rows[0].icon === SPELL_ICON.pet && sg[0].rows[0].drag === 'spell:1', 'a spell row has its cost and time, its kind icon and a drag payload');
+ok(sg[1].rows[0].text.endsWith('(playing)') && sg[1].rows[1].text.includes('instant') && sg[1].rows[1].text.includes('(not yet)'), 'the song that is on is marked, an instant spell says so, one the server cannot cast says not yet');
+ok(sg[1].rows[1].on === false && sg[1].rows[1].drag === undefined, 'a spell that cannot be cast is greyed and cannot be dragged');
+ok(spellGroups(null).length === 0 && spellGroups({ lines: [] }).length === 0, 'no book, no groups');
+
+// The styles tree.
+const stg = styleGroups(slots, [{ id: 9, nm: 'Slice', spec: 'Sword' }], (spec) => (spec === 'Hammer' ? 634 : 705), { Shield: false });
+ok(stg.map((g) => g.title).join('|') === 'Hammer|Shield|Not usable now', 'styles are grouped by line, then the ones that cannot be used');
+ok(stg[0].rows.length === 2 && stg[0].rows[0].drag === 'style:1' && stg[0].rows[0].icon === 634 && stg[1].open === false, 'a usable style carries its id and the line icon; a folded line stays folded');
+ok(stg[2].rows[0].on === false && stg[2].rows[0].drag === undefined && stg[2].rows[0].text.includes('Sword'), 'a style that cannot be used now is greyed and not draggable');
+ok(styleGroups([], []).length === 0, 'no styles, no groups');
 process.exit(failed ? 1 : 0);

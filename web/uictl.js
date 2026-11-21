@@ -414,6 +414,7 @@ export function createControls(h) {
     const iconTpl = tpl && data.tpl('IconTemplate', str(tpl, 'IconTemplate'));
     let groups = [];
     let list = null;
+    let toggled = null;
     const refresh = () => list.setRows(flattenGroups(groups));
     const made = buildList(env, r, {
       bg: tpl && str(tpl, 'BackgroundTemplate') !== 'none' ? str(tpl, 'BackgroundTemplate') : '',
@@ -429,12 +430,19 @@ export function createControls(h) {
       textLeft: tpl ? num(tpl, 'OffsetX', 0) + 2 : 2,
       scroll: tpl ? str(tpl, 'ScrollbarTemplate') : '',
       check: tex ? { tex: str(tex, 'TextureName'), normal: pt(tex, 'Normal'), pressed: pt(tex, 'Pressed'), size: checkSize } : null,
-      onHeader: (i, row) => { groups[row.group].open = !groups[row.group].open; refresh(); },
+      onHeader: (i, row) => {
+        const g = groups[row.group];
+        g.open = !g.open;
+        refresh();
+        if (toggled) toggled(row.group, g.open, g.title);
+      },
     });
     list = made.api;
     const api = Object.assign(Object.create(list), {
       setGroups(next) { groups = (next || []).map((g) => ({ ...g })); refresh(); },
-      toggle(g) { if (groups[g]) { groups[g].open = !groups[g].open; refresh(); } },
+      toggle(g) { if (groups[g]) { groups[g].open = !groups[g].open; refresh(); if (toggled) toggled(g, groups[g].open, groups[g].title); } },
+      // onToggle(fn(group, open, title)) hears a heading being folded or unfolded.
+      onToggle(fn) { toggled = fn; },
       isOpen(g) { return !!(groups[g] && groups[g].open); },
       get groups() { return groups; },
     });

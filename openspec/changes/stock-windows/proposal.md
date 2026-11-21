@@ -21,7 +21,8 @@ Opening most windows in play shows our own panels, not the game's. The menu bar,
   | --- | --- |
   | Attributes | `StatsAttributes` (stat strips, resist and info list boxes) |
   | Spells | `stats_spells` (spell tree with icons) |
-  | Skills and Styles | `stats_spec_abil`, filled through its list boxes |
+  | Skills | `stats_spec_abil`, filled through its list boxes |
+  | Styles | `stats_combat`, a tree of weapon lines with their styles |
   | Combat styles list | `stats_combat` |
   | Merchant | `Merchant` (list box, pages, quantity, coin fields, buy/sell buttons) |
   | Pet | `MiniPet` (title, health bar, stance and command checkboxes, buttons) |

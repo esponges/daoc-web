@@ -10,6 +10,7 @@ import { createStockChat, createStockSummary, createStockBar, createStockRelease
 import { releaseLine } from './effects.js';
 import { createConcWindow, heldSpells } from './conc.js';
 import { createPetWindow } from './pet.js';
+import { styleIconNumber } from './uiwin.js';
 import { createMover, createPositionStore } from './uimove.js';
 import { createTaskWindow } from './task.js';
 import { createStockPack } from './pack.js';
@@ -116,7 +117,13 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     root.appendChild(summary.el);
     // The menu bar across the top carries the experience and the money, so
     // the separate experience window is not needed.
-    charWins = createStockCharWindows(document, stock, { onCast: (id) => castSpell(id), onAssign: (id) => setSpellSlot(id, -1), mover });
+    charWins = createStockCharWindows(document, stock, { onCast: (id) => castSpell(id), onAssign: (id) => setSpellSlot(id, -1), mover, styleIcon: styleIconNumber,
+      onAction: (a) => {
+        if (a === 'concentration') concWin.toggle();
+        else if (a === 'pet') { if (!petWin.isOpen) say('You have no pet.', 'sys'); }
+        else if (a === 'pray') sendLine('/pray');
+        else if (a === 'bind') sendLine('/bind');
+      } });
     root.appendChild(charWins.el);
     menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); else if (a === 'journal') toggleTasks(); else charWins.toggle(a); } });
     Object.assign(menuBar.el.style, { position: 'fixed', left: '50%', top: '0px', marginLeft: '-400px', zIndex: 12 });

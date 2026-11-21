@@ -3,9 +3,8 @@
 // filled from what the server has told the character about themselves. A field
 // the server has not sent stays empty: nothing here is invented.
 
-import { buildWindow, place, text } from './uiwin.js';
+import { buildWindow } from './uiwin.js';
 import { STAT_NAMES } from './sheet.js';
-import { spellsView } from './spells.js';
 
 // --- what each window shows (pure, so node can test it) ---
 
@@ -63,55 +62,96 @@ export function stylesView(slots, also) {
   return { usable, locked };
 }
 
-// --- the windows ---
+// --- rows for the stock controls (pure) ---
 
-const GREY = 'rgb(150,150,150)';
-const GOLD = 'rgb(255,215,106)';
+// SPELL_ICON are the pictures of the spell sheet used for a spell by what it
+// does: the imported icon numbers do not match this install's sheets (see
+// CLAUDE.md), so a spell is drawn by its kind, as styles are by weapon line.
+export const SPELL_ICON = { damage: 76, heal: 11, buff: 20, debuff: 70, mez: 5, stun: 6, pet: 1, other: 0 };
 
-// listRows lays rows of text into a list box's rectangle, scrolling when they
-// do not fit. A row with draggable carries its style id for the bar.
-function listRows(doc, data, win, id, rows) {
-  const node = (data.windows.get(win.id).c || []).find((c) => c.t === 'ListBoxDef' && (c.c || []).some((x) => x.t === 'ControlId' && x.x === id));
-  if (!node) return;
-  const r = place(node, win.width, win.height, win.width, win.height);
-  const box = doc.createElement('div');
-  Object.assign(box.style, { position: 'absolute', left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px', overflowY: 'auto', overflowX: 'hidden' });
-  box.className = 'listrows';
-  for (const row of rows) {
-    const d = doc.createElement('div');
-    Object.assign(d.style, { position: 'relative', height: '13px', margin: '0 2px' });
-    const color = row.header ? GOLD : row.draggable === false || row.on === false ? GREY : 'rgb(255,255,255)';
-    const t = text(doc, data, 'arial9', row.header || row.text, color);
-    t.style.top = '1px';
-    t.style.left = row.header ? '0px' : '4px';
-    t.style.pointerEvents = 'none';
-    d.appendChild(t);
-    if (row.draggable) {
-      d.draggable = true;
-      d.style.cursor = 'grab';
-      d.title = 'Drag onto the style bar';
-      d.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', row.drag || 'style:' + row.id));
-    }
-    if (row.onClick) {
-      d.style.cursor = 'pointer';
-      d.addEventListener('click', row.onClick);
-    }
-    box.appendChild(d);
-  }
-  win.el.appendChild(box);
+// spellKind sorts a spell by the server's type name (and who it aims at) into
+// the kinds above.
+export function spellKind(tp = '', tg = '') {
+  if (/Mesmerize/i.test(tp)) return 'mez';
+  if (/Stun/i.test(tp)) return 'stun';
+  if (/Summon|Charm|Pet/i.test(tp) || /^Pet$/i.test(tg)) return 'pet';
+  if (/Heal|Regen|Cure|Resurrect|Resur|Lifetransfer|SpreadHeal/i.test(tp)) return 'heal';
+  if (/Damage|Bolt|Lifedrain|Drain|Taunt|Proc/i.test(tp)) return 'damage';
+  if (/Debuff|Slow|Snare|Disease|Nearsight|Amnesia|Confusion|Fatigue|Root/i.test(tp)) return 'debuff';
+  if (/Buff|Shield|Ward|Armour|Armor|Haste|Speed|Absorb|Ablative|Bladeturn|Resist|Regeneration|Strength|Constitution|Dexterity|Acuity|Wraith|Siphon/i.test(tp)) return 'buff';
+  return 'other';
 }
 
-// createStockCharWindows builds the attributes, skills and styles windows,
-// hidden. update(me, stats, bar, also) refills them; toggle(name) opens or
-// closes one ("attributes", "skills", "styles").
-export function createStockCharWindows(doc, data, { onCast, onAssign, mover } = {}) {
-  const attrib = buildWindow(doc, data, 'StatsAttributes', { captions: true });
-  const skills = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true });
-  const styles = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true });
-  const spells = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true });
-  skills.id = styles.id = spells.id = 'Stats_Spec_Abil';
-  // The styles window reuses the layout: its first list holds the styles that
-  // can be used now, the second those learned but not usable.
+// spellGroups is the spells tree's content: a group for each spec line with its
+// spells, each a row {id, text, icon, on, drag, title}. open says which groups
+// are unfolded, by line name; a line not listed is open. A spell the server
+// cannot cast yet is greyed.
+export function spellGroups(book, song = 0, open = {}) {
+  return ((book && book.lines) || []).map((line) => ({
+    title: line.nm,
+    open: open[line.nm] !== false,
+    rows: line.sp.map((s) => {
+      const cast = s.ct ? s.ct + 's' : 'instant';
+      return {
+        id: s.id,
+        text: s.nm + '  ' + s.lv + ', ' + s.pw + ' pw, ' + cast + (s.ok ? '' : ' (not yet)') + (song && s.id === song ? '  (playing)' : ''),
+        icon: SPELL_ICON[spellKind(s.tp, s.tg)],
+        on: !!s.ok,
+        drag: s.ok ? 'spell:' + s.id : undefined,
+        title: s.ok ? 'Double-click to cast, drag to the spell bar' : 'You cannot cast this yet',
+      };
+    }),
+  }));
+}
+
+// styleGroups is the styles tree's content: a group for each weapon line with
+// the styles the character can use now (each carries its id to drag to the
+// style bar), then one group of those they have learned but cannot use.
+export function styleGroups(slots, also, iconOf = () => 0, open = {}) {
+  const v = stylesView(slots, also);
+  const groups = [];
+  for (const r of v.usable) {
+    if (r.header) { groups.push({ title: r.header, open: open[r.header] !== false, rows: [] }); continue; }
+    groups[groups.length - 1].rows.push({ id: r.id, text: r.text, icon: iconOf(r.spec), drag: 'style:' + r.id, title: 'Drag onto the style bar' });
+  }
+  if (v.locked.length) {
+    const t = 'Not usable now';
+    groups.push({ title: t, open: open[t] !== false, rows: v.locked.map((r) => ({ id: r.id, text: r.text, icon: iconOf(r.spec), on: false })) });
+  }
+  return groups;
+}
+
+// --- the windows ---
+
+// createStockCharWindows builds the attributes, skills, styles and spells
+// windows from their own stock templates, hidden. update(me, stats, bar, also,
+// book, song) refills them; toggle(name) opens or closes one ("attributes",
+// "skills", "styles", "spells").
+//   onCast(id)          a spell was double-clicked
+//   onAssign(id)        a spell was asked for the spell bar
+//   onAction(name)      a window button: "concentration", "pet", "quiver",
+//                       "pray", "bind"
+//   mover               makes the windows draggable and remembers their places
+export function createStockCharWindows(doc, data, { onCast, onAssign, onAction, mover, styleIcon = () => 0 } = {}) {
+  const closeOf = (name) => () => api.toggle(name, false);
+  const attrib = buildWindow(doc, data, 'StatsAttributes', {
+    captions: true, labels: true, onClose: closeOf('attributes'),
+    onClick: (id, ev, label) => { if (label === 'PRAY') onAction?.('pray'); else if (label === 'BIND') onAction?.('bind'); },
+    disabled: (ev, id, label) => label !== 'PRAY' && label !== 'BIND',
+    tooltip: () => 'Not built yet.',
+  });
+  const skills = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true, onClose: closeOf('skills') });
+  const styles = buildWindow(doc, data, 'stats_combat', {
+    captions: true, labels: true, onClose: closeOf('styles'),
+    onClick: (id, ev) => { if (ev === 'ToggleQuiver') onAction?.('quiver'); },
+  });
+  const spells = buildWindow(doc, data, 'stats_spells', {
+    captions: true, labels: true, onClose: closeOf('spells'),
+    onClick: (id, ev) => {
+      if (ev === 'ToggleConcentration') onAction?.('concentration');
+      else if (ev === 'ToggleMiniPet') onAction?.('pet');
+    },
+  });
   const wins = { attributes: attrib, skills, styles, spells };
   const root = doc.createElement('div');
   const open = { attributes: false, skills: false, styles: false, spells: false };
@@ -121,60 +161,47 @@ export function createStockCharWindows(doc, data, { onCast, onAssign, mover } = 
     root.appendChild(w.el);
     mover?.makeMovable(w.el, name);
   }
-  const cap = (w, adapter, value) => w.setText(adapter, value);
+
+  // Which tree headings the player folded, by name, kept across refills.
+  const folded = { spells: {}, styles: {} };
+  const watch = (win, id, key) => {
+    const tree = win.tree(id);
+    if (!tree) return;
+    tree.onToggle((g, isOpen, title) => { folded[key][title] = isOpen; });
+  };
+  watch(spells, '1000', 'spells');
+  watch(styles, '1000', 'styles');
+  const dbl = spells.tree('1000');
+  if (dbl) dbl.onActivate((i, row) => { if (row.id && row.on !== false) onCast?.(row.id); });
+
   let last = {};
+  const fill = (win, adapter, value) => win.setText(adapter, value);
 
   function render() {
     const { me, st, bar, also, book, song } = last;
     const a = attributesView(me, st);
-    cap(attrib, 'stats_name', a.name);
-    cap(attrib, 'stats_level', a.level);
-    cap(attrib, 'stats_weapon_skill', a.weaponSkill);
-    cap(attrib, 'stats_hitpoints', a.hitPoints);
-    cap(attrib, 'stats_armor_factor', a.armourFactor);
-    STAT_ADAPTERS.forEach((ad, i) => cap(attrib, ad, a.stats[i]));
+    fill(attrib, 'stats_name', a.name);
+    fill(attrib, 'stats_level', a.level);
+    fill(attrib, 'stats_weapon_skill', a.weaponSkill);
+    fill(attrib, 'stats_hitpoints', a.hitPoints);
+    fill(attrib, 'stats_armor_factor', a.armourFactor);
+    STAT_ADAPTERS.forEach((ad, i) => fill(attrib, ad, a.stats[i]));
     // The extra-info list: race and class, endurance.
-    for (const old of attrib.el.querySelectorAll('.listrows')) old.remove();
-    attrib.id = 'StatsAttributes';
-    infoRows(attrib, a.info);
+    attrib.list('1100')?.setRows(a.info.map((t) => ({ text: t })));
 
     const s = skillsView(st);
-    cap(skills, 'stats_spec_points', s.points);
-    for (const old of skills.el.querySelectorAll('.listrows')) old.remove();
-    listRows(doc, data, skills, '1000', s.specs);
-    listRows(doc, data, skills, '1001', s.abilities);
+    fill(skills, 'stats_spec_points', s.points);
+    skills.list('1000')?.setRows(s.specs);
+    skills.list('1001')?.setRows(s.abilities);
+    skills.list('1002')?.setRows([]);
 
-    const v = stylesView(bar, also);
-    cap(styles, 'stats_spec_points', '');
-    for (const old of styles.el.querySelectorAll('.listrows')) old.remove();
-    listRows(doc, data, styles, '1000', v.usable);
-    listRows(doc, data, styles, '1001', v.locked);
+    styles.tree('1000')?.setGroups(styleGroups(bar, also, styleIcon, folded.styles));
 
-    // The spells: the book by spec line; a click casts at the target, shift-click or a drag puts it on the spell bar.
-    cap(spells, 'stats_spec_points', '');
-    for (const old of spells.el.querySelectorAll('.listrows')) old.remove();
-    const sv = spellsView(book, song).map((r) => (r.id ? { ...r, onClick: (e) => (e.shiftKey ? onAssign?.(r.id) : onCast?.(r.id)) } : r));
-    listRows(doc, data, spells, '1000', sv.length ? sv : [{ header: 'You have no spells.' }]);
+    const groups = spellGroups(book, song, folded.spells);
+    spells.tree('1000')?.setGroups(groups.length ? groups : [{ title: 'You have no spells.', open: false, rows: [] }]);
   }
 
-  // The attributes window's additional-info list box.
-  function infoRows(win, lines) {
-    const node = (data.windows.get('StatsAttributes').c || []).find((c) => c.t === 'ListBoxDef');
-    if (!node) return;
-    const r = place(node, win.width, win.height, win.width, win.height);
-    const box = doc.createElement('div');
-    box.className = 'listrows';
-    Object.assign(box.style, { position: 'absolute', left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px', overflowY: 'auto' });
-    lines.forEach((l, i) => {
-      const t = text(doc, data, 'arial9', l, 'rgb(255,255,255)');
-      t.style.left = '4px';
-      t.style.top = 2 + i * 13 + 'px';
-      box.appendChild(t);
-    });
-    win.el.appendChild(box);
-  }
-
-  return {
+  const api = {
     el: root,
     isOpen: (name) => open[name],
     toggle(name, on = !open[name]) {
@@ -187,4 +214,6 @@ export function createStockCharWindows(doc, data, { onCast, onAssign, mover } = 
       if (Object.values(open).some(Boolean)) render();
     },
   };
+  return api;
 }
+
