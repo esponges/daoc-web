@@ -104,7 +104,7 @@ function listRows(doc, data, win, id, rows) {
 // createStockCharWindows builds the attributes, skills and styles windows,
 // hidden. update(me, stats, bar, also) refills them; toggle(name) opens or
 // closes one ("attributes", "skills", "styles").
-export function createStockCharWindows(doc, data, { onCast, onAssign } = {}) {
+export function createStockCharWindows(doc, data, { onCast, onAssign, mover } = {}) {
   const attrib = buildWindow(doc, data, 'StatsAttributes', { captions: true });
   const skills = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true });
   const styles = buildWindow(doc, data, 'Stats_Spec_Abil', { captions: true });
@@ -119,6 +119,7 @@ export function createStockCharWindows(doc, data, { onCast, onAssign } = {}) {
   for (const [name, w] of Object.entries(wins)) {
     Object.assign(w.el.style, { position: 'fixed', left: '12px', top: '60px', marginLeft: place3[name] + 'px', zIndex: 14, display: 'none' });
     root.appendChild(w.el);
+    mover?.makeMovable(w.el, name);
   }
   const cap = (w, adapter, value) => w.setText(adapter, value);
   let last = {};
@@ -179,7 +180,7 @@ export function createStockCharWindows(doc, data, { onCast, onAssign } = {}) {
     toggle(name, on = !open[name]) {
       open[name] = on;
       wins[name].el.style.display = on ? 'block' : 'none';
-      if (on) render();
+      if (on) { mover?.restore(name); render(); }
     },
     update(me, st, bar, also, book, song = 0) {
       last = { me, st, bar, also, book, song };

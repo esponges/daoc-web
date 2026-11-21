@@ -10,6 +10,7 @@ import { createStockChat, createStockSummary, createStockBar, createStockRelease
 import { releaseLine } from './effects.js';
 import { createConcWindow, heldSpells } from './conc.js';
 import { createPetWindow } from './pet.js';
+import { createMover, createPositionStore } from './uimove.js';
 import { createTaskWindow } from './task.js';
 import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
@@ -53,7 +54,14 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   // --- chat ---
   // Either the stock chat window, when the converted interface is there, or
   // the plain one below. Both give say / open / close and a typing flag.
+  // Windows can be dragged by their title and remember where they were left;
+  // /resetui puts them all back.
+  let storage;
+  try { storage = localStorage; } catch { storage = undefined; }
+  const mover = createMover({ store: createPositionStore(storage), viewport: () => ({ w: innerWidth, h: innerHeight }) });
+  addEventListener('resize', () => mover.reclamp());
   const sendLine = (t) => {
+    if (t.trim() === '/resetui') { mover.resetAll(); say('Window positions reset.', 'sys'); return; }
     if (t.startsWith('!')) net.chat('all', t.slice(1).trim());
     else net.chat('say', t);
   };
@@ -108,7 +116,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     root.appendChild(summary.el);
     // The menu bar across the top carries the experience and the money, so
     // the separate experience window is not needed.
-    charWins = createStockCharWindows(document, stock, { onCast: (id) => castSpell(id), onAssign: (id) => setSpellSlot(id, -1) });
+    charWins = createStockCharWindows(document, stock, { onCast: (id) => castSpell(id), onAssign: (id) => setSpellSlot(id, -1), mover });
     root.appendChild(charWins.el);
     menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); else if (a === 'journal') toggleTasks(); else charWins.toggle(a); } });
     Object.assign(menuBar.el.style, { position: 'fixed', left: '50%', top: '0px', marginLeft: '-400px', zIndex: 12 });

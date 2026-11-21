@@ -845,6 +845,12 @@ export function buildWindow(doc, data, id, opts = {}) {
       }
       root.appendChild(el);
     }
+    // A window built with onClose gets the skin's close button in its corner.
+    if (opts.onClose) {
+      const cb = button(doc, data, 'window_close', w - 14, 3, opts.onClose);
+      cb.title = 'Close';
+      root.appendChild(cb);
+    }
     // Work that needs every control drawn first, such as a tab showing its own.
     for (const fn of env.after.splice(0)) fn();
   }

@@ -169,6 +169,19 @@ check('unknown window throws', (() => { try { buildWindow(doc, data, 'Nope'); } 
   forgetReported();
 }
 
+// A window built with onClose has a close button in its corner that calls it.
+{
+  let closed = 0;
+  const cw2 = buildWindow(doc, data, 'Win', { onClose: () => closed++ });
+  const cb = cw2.el.children[cw2.el.children.length - 1];
+  check('the close button is the last thing drawn', cb.title === 'Close' && cb.style.left === '86px', cb.style.left);
+  cb.listeners.pointerenter(); cb.listeners.pointerdown(); cb.listeners.pointerup();
+  check('pressing it closes the window', closed === 1);
+  cw2.resize(140, 90);
+  check('and it follows the corner when the window grows', cw2.el.children[cw2.el.children.length - 1].style.left === '126px');
+  check('no onClose, no button', buildWindow(doc, data, 'Win').el.children.every((x) => x.title !== 'Close'));
+}
+
 // Bars and labels bound to adapters.
 const bw = buildWindow(doc, data, 'Bars');
 check('adapter known', bw.has('hits') && !bw.has('nope'));
