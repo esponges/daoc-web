@@ -18,6 +18,8 @@ The window templates exist in the converted layout under these ids, all checked 
 - `Train` 300×450, `Interact` 384×320, `Concentration` 128×104, `Timer` 300×96;
 - `WindowQuiver` 240×100, `stats_spells` 192×416, `stats_spec_abil` 192×416, `stats_combat` 192×416, `Chat` 350×200.
 
+The install's `default.ini` holds the stock quickbars' places (`Quickbar=304,489,1,1,100,0,1`, with a `Quickbar2` and `Quickbar3`, and other values for each resolution); the layout files do not.
+
 `stats_spells` and `stats_combat` have the WindowId `c_windowInvalid`, so they must be looked up by template `Name`, not by WindowId.
 
 The install's `ui/isles` (Shrouded Isles) skin is incomplete. About 100 template references name textures (`page1`–`page3`, `frames_win`, `navigation`) that it doesn't define, so it draws blank. This change stays on the Atlantis skin, which is also the skin of the 1.65 (Trials of Atlantis era) XML interface.

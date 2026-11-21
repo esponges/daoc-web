@@ -2,7 +2,7 @@
 
 ## Why
 
-Opening most windows in play shows our own panels, not the game's. The menu bar, summary, compass, clock, group and release windows are drawn from the converted stock layout. Everything else isn't, including the windows players use most. Spells, Skills and Styles borrow one stock frame and fill it with plain HTML text. Merchant, pet, vault, task, trainer, healer, concentration, cast bar and quickbar are our own panels. Chat is a fixed box of about seven lines. The cause is in the window builder (`web/uiwin.js`). It draws 11 of the 29 control types the stock layouts use. List boxes, tree controls, checkboxes, icons, tabs, sliders, text areas, combo boxes and the `dialog_inset` strips (145 uses) are all skipped, so each window was finished by hand. The goal is the 1.65 game in the browser, and the interface is what a player looks at the whole time.
+Opening most windows in play shows our own panels, not the game's. The menu bar, summary, compass, clock, group and release windows are drawn from the converted stock layout. Everything else isn't, including the windows players use most. Spells, Skills and Styles borrow one stock frame and fill it with plain HTML text. Merchant, pet, vault, task, trainer, healer, concentration, cast bar and quickbar are our own panels. Chat is a fixed box of about seven lines. The cause is in the window builder (`web/uiwin.js`). It draws 11 of the 29 control types the stock layouts use. List boxes, tree controls, checkboxes, icons, tabs, sliders, text areas, combo boxes and the `dialog_inset` strips (145 uses) are all skipped, so each window was finished by hand. In play the split is easy to see: INV. opens a window that looks stock because the pack draws itself on the skin's paper-doll art, but ATTRIB., SKILLS, STYLES, SPELLS and JOURNAL open frames and fills of ours (the first four are one borrowed stock frame placed side by side; JOURNAL is a plain panel), and the spell bar is a row of plain buttons although the stock client has a quickbar of its own. The goal is the 1.65 game in the browser, and the interface is what a player looks at the whole time.
 
 ## What Changes
 
@@ -19,13 +19,14 @@ Opening most windows in play shows our own panels, not the game's. The menu bar,
 
   | Window | Stock template |
   | --- | --- |
+  | Attributes | `StatsAttributes` (stat strips, resist and info list boxes) |
   | Spells | `stats_spells` (spell tree with icons) |
   | Skills and Styles | `stats_spec_abil`, filled through its list boxes |
   | Combat styles list | `stats_combat` |
   | Merchant | `Merchant` (list box, pages, quantity, coin fields, buy/sell buttons) |
   | Pet | `MiniPet` (title, health bar, stance and command checkboxes, buttons) |
   | Vault | `Vault` |
-  | Task | `Quest` journal |
+  | Task, opened by JOURNAL | `Quest` journal (`new_quest_journal`) |
   | Trainer | `Train` |
   | Healer and NPC talk | `Interact` |
   | Concentration | `Concentration` |
@@ -36,7 +37,7 @@ Opening most windows in play shows our own panels, not the game's. The menu bar,
   - its tabs filter channels, with Main showing everything and combat lines going to Main;
   - it scrolls back through earlier lines with a scrollbar;
   - it can be moved and resized, and it starts at a usable size.
-- **Quickbar:** the client draws it itself, with no XML layout. It is rebuilt from the skin's own art: ten slots, a bar number, slots shaded while recharging, and icons chosen by line and kind.
+- **Quickbar:** the client draws it itself, with no XML layout, but the install's `default.ini` gives its place (`Quickbar`, `Quickbar2`, `Quickbar3`, one position each per resolution). It is rebuilt from the skin's own art: ten slots, a bar number, slots shaded while recharging, and icons chosen by line and kind.
 - **Windows can be moved and closed:**
   - stock windows move by their title bars and close with their close buttons, as the templates allow;
   - each window's position is remembered in the browser between sessions.
