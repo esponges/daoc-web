@@ -67,10 +67,48 @@ export function flattenGroups(groups) {
   return rows;
 }
 
+// wrapText breaks text into lines no wider than width, where measure(string)
+// gives a string's width in pixels. Lines break at spaces and at newlines;
+// a word wider than the line is broken wherever it fits.
+export function wrapText(measure, text, width) {
+  const out = [];
+  for (const para of String(text ?? '').split(/\r?\n/)) {
+    let line = '';
+    for (const word of para.split(' ')) {
+      const trial = line ? line + ' ' + word : word;
+      if (measure(trial) <= width || !line && !word) { line = trial; continue; }
+      if (line) { out.push(line); line = ''; }
+      let w = word;
+      while (measure(w) > width && w.length > 1) {
+        let k = w.length - 1;
+        while (k > 1 && measure(w.slice(0, k)) > width) k--;
+        out.push(w.slice(0, k));
+        w = w.slice(k);
+      }
+      line = w;
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+// sliderValue is the value a slider holds when the pointer is x pixels along
+// its track: ticks values, 0 at the left, ticks - 1 at the right.
+export function sliderValue(x, track, ticks) {
+  if (ticks <= 1 || track <= 0) return 0;
+  return Math.max(0, Math.min(ticks - 1, Math.round((x / track) * (ticks - 1))));
+}
+
+// sliderX is where the indicator sits for a value, in pixels along the track.
+export function sliderX(value, track, ticks) {
+  if (ticks <= 1) return 0;
+  return Math.round((Math.max(0, Math.min(ticks - 1, value)) / (ticks - 1)) * track);
+}
+
 // createControls builds the drawers. h holds uiwin's primitives: box, paint,
 // px, sprite, hrImage, hrButton, icon and the tree readers child, num, str, pt.
 export function createControls(h) {
-  const { box, paint, px, sprite, hrImage, hrButton, icon, button, text, frame, rgba, flag, child, num, str, pt } = h;
+  const { box, paint, px, sprite, hrImage, hrButton, icon, button, text, layoutText, frame, rgba, flag, child, num, str, pt } = h;
   const put = (el, r) => {
     el.style.left = px(r.x);
     el.style.top = px(r.y);
@@ -404,6 +442,275 @@ export function createControls(h) {
     bind(env.lists, str(c, 'ControlId'), api);
     return made.root;
   };
+
+  // Some layouts spell the adapter name Adaptername.
+  const adapterOf = (c) => str(c, 'AdapterName') || str(c, 'Adaptername');
+  const bindBoth = (map, c, item) => {
+    bind(map, adapterOf(c), item);
+    bind(map, str(c, 'ControlId'), item);
+  };
+  const fontColors = (font) => ({
+    normal: rgba(child(font, 'ColorNormal')) || 'rgb(192,192,192)',
+    pressed: rgba(child(font, 'ColorPressed')) || 'rgb(255,192,0)',
+    high: rgba(child(font, 'ColorHighlit')) || 'rgb(255,255,255)',
+    off: rgba(child(font, 'ColorDisabled')) || 'rgb(128,128,128)',
+  });
+
+  // A check box: the skin's little box and a caption in the template's font.
+  // win.check(adapter or control id) gives set(on), get(), onChange(fn(on)),
+  // setLabel(text) and disable(on). A click toggles it and reports the new state.
+  D.CheckBoxDef = (env, c, r) => {
+    const { doc, data } = env;
+    const tpl = data.tpl('CheckBoxTemplate', str(c, 'TemplateName'));
+    const size = tpl && pt(tpl, 'Size') ? pt(tpl, 'Size').x : 12;
+    const font = tpl && child(tpl, 'Font');
+    const colors = fontColors(font);
+    const fontName = (font && str(font, 'Name')) || 'arial9';
+    const textAt = font && child(font, 'TextOffset') ? pt(font, 'TextOffset').x : size + 5;
+    const tex = tpl && child(tpl, 'Texture');
+    const labelW = num(c, 'LabelWidth', 60);
+    const root = box(doc, r.x, r.y, size + 5 + labelW, size);
+    root.style.cursor = 'pointer';
+    let on = false, over = false, off = false, label = str(c, 'Data'), listener = null;
+    const art = box(doc, 0, 0, size, size);
+    const cap = box(doc, textAt, 0, labelW, size);
+    root.append(art, cap);
+    const draw = () => {
+      const state = off ? 'Disabled' : on ? (over ? 'PressedHighlit' : 'Pressed') : over ? 'NormalHighlit' : 'Normal';
+      const at = tex && (pt(tex, state) || pt(tex, 'Normal'));
+      if (at) paint(art, data, { tex: str(tex, 'TextureName'), sx: at.x, sy: at.y, sw: size, sh: size, dw: size, dh: size });
+      cap.textContent = '';
+      if (label) {
+        const t = text(doc, data, fontName, label, off ? colors.off : on ? colors.pressed : over ? colors.high : colors.normal);
+        const bf = data.bitmapFont(fontName);
+        t.style.top = px(Math.max(0, (size - ((bf && bf.h) || 11)) / 2));
+        cap.appendChild(t);
+      }
+    };
+    const api = {
+      el: root,
+      set(v) { on = !!v; draw(); },
+      get() { return on; },
+      onChange(fn) { listener = fn; },
+      setLabel(t) { label = t; draw(); },
+      disable(v = true) { off = v; root.style.cursor = v ? 'default' : 'pointer'; draw(); },
+    };
+    root.addEventListener('pointerenter', () => { over = true; draw(); });
+    root.addEventListener('pointerleave', () => { over = false; draw(); });
+    root.addEventListener('click', () => {
+      if (off) return;
+      on = !on;
+      draw();
+      if (listener) listener(on);
+    });
+    draw();
+    bindBoth(env.checks, c, api);
+    return root;
+  };
+
+  // A block of wrapped text with a scrollbar: what a trainer or healer says,
+  // a quest's story. win.area(adapter or control id).setText(text) fills it.
+  D.TextAreaDef = (env, c, r) => {
+    const { doc, data } = env;
+    const tpl = data.tpl('TextAreaTemplate', str(c, 'TemplateName'));
+    const font = tpl && child(tpl, 'Font');
+    const colors = { normal: rgba(child(font, 'ColorNormal')) || 'rgb(192,192,192)' };
+    const fontName = (font && str(font, 'Name')) || 'arial11';
+    const bf = data.bitmapFont(fontName);
+    const fontH = (bf && bf.h) || 12;
+    const lineH = fontH + 2 + (tpl ? num(tpl, 'LinePadding', 0) : 0);
+    const off = tpl && child(tpl, 'TextOffset') ? pt(tpl, 'TextOffset') : { x: 8, y: 4 };
+    const root = box(doc, r.x, r.y, r.w, r.h);
+    if (tpl && str(tpl, 'BackgroundTemplate')) root.appendChild(frame(doc, data, str(tpl, 'BackgroundTemplate'), r.w, r.h));
+    const view = Math.max(1, Math.floor((r.h - off.y * 2) / lineH));
+    const inner = box(doc, off.x, off.y, r.w - off.x * 2 - 14, r.h - off.y * 2);
+    inner.style.overflow = 'hidden';
+    root.appendChild(inner);
+    const measure = (t) => (bf ? layoutText(bf, t).width : t.length * 6);
+    let lines = [], top = 0, bar = null;
+    const draw = () => {
+      inner.textContent = '';
+      lines.slice(top, top + view).forEach((ln, k) => {
+        if (!ln) return;
+        const t = text(doc, data, fontName, ln, colors.normal);
+        t.style.top = px(k * lineH);
+        inner.appendChild(t);
+      });
+      if (bar) bar.set({ total: lines.length, view, top });
+    };
+    const api = {
+      el: root,
+      get lines() { return lines; },
+      get top() { return top; },
+      get view() { return view; },
+      setText(t) {
+        lines = wrapText(measure, t, r.w - off.x * 2 - 14);
+        top = 0;
+        draw();
+      },
+      scrollTo(i) { top = clampTop(i, lines.length, view); draw(); },
+    };
+    if (tpl && str(tpl, 'ScrollbarTemplate')) {
+      bar = scrollBar(env, str(tpl, 'ScrollbarTemplate'), r.h - 4, (t) => api.scrollTo(t));
+      if (bar) {
+        bar.el.style.left = px(r.w - bar.w - 3);
+        bar.el.style.top = px(2);
+        root.appendChild(bar.el);
+      }
+    }
+    root.addEventListener('wheel', (e) => {
+      if (lines.length <= view) return;
+      if (e.preventDefault) e.preventDefault();
+      api.scrollTo(top + (e.deltaY > 0 ? 3 : -3));
+    });
+    bindBoth(env.areas, c, api);
+    return root;
+  };
+
+  // Tabs: a row of tab buttons over a framed area, and the controls each tab
+  // shows (the layout's TabControl entries by ControlId). win.tabs(id) gives
+  // select(tab id), selected and onChange(fn(id)).
+  D.TabsDef = (env, c, r) => {
+    const { doc, data } = env;
+    const tpl = data.tpl('TabsTemplate', str(c, 'TemplateName'));
+    const btnTpl = tpl && data.tpl('ButtonTemplate', str(tpl, 'TabButtonTemplate'));
+    const bw = btnTpl && pt(btnTpl, 'Size') ? pt(btnTpl, 'Size').x : 100;
+    const bh = btnTpl && pt(btnTpl, 'Size') ? pt(btnTpl, 'Size').y : 16;
+    const root = box(doc, r.x, r.y, r.w, r.h);
+    if (tpl && str(tpl, 'ControlAreaFullResizeImageTemplate')) {
+      const area = frame(doc, data, str(tpl, 'ControlAreaFullResizeImageTemplate'), r.w, r.h - bh);
+      area.style.top = px(bh);
+      root.appendChild(area);
+    }
+    const tabs = (c.c || []).filter((x) => x.t === 'Tab').map((x) => ({ id: str(x, 'Id'), name: str(x, 'Name') }));
+    const owned = (c.c || []).filter((x) => x.t === 'TabControl').map((x) => ({ tab: str(x, 'TabId'), id: str(x, 'ControlId') }));
+    let selected = null, listener = null;
+    const labels = new Map();
+    const api = {
+      el: root,
+      get tabs() { return tabs; },
+      get selected() { return selected; },
+      select(id) {
+        selected = id;
+        for (const [tid, b] of labels) b.look(tid === id ? 'Pressed' : 'Normal');
+        for (const o of owned) {
+          const el = env.win.ctl[o.id];
+          if (el) el.style.display = o.tab === id ? '' : 'none';
+        }
+        if (listener) listener(id);
+      },
+      onChange(fn) { listener = fn; },
+    };
+    tabs.forEach((t, i) => {
+      const b = button(doc, data, str(tpl || c, 'TabButtonTemplate'), (tpl ? num(tpl, 'TabXOffset', 5) : 5) + i * (bw + 2), 0, () => api.select(t.id), t.name);
+      labels.set(t.id, b);
+      root.appendChild(b);
+    });
+    // Once every control of the window is drawn, show the first tab's.
+    env.after.push(() => { if (tabs.length) api.select(tabs[0].id); });
+    bindBoth(env.tabsets, c, api);
+    return root;
+  };
+
+  // A slider: the track, an indicator, and ticks values. win.slider(adapter or
+  // control id) gives set(v), get(), onChange(fn(v)). Dragging along the track
+  // or clicking on it sets the value.
+  D.HorizontalSliderDef = (env, c, r) => {
+    const { doc, data } = env;
+    const tpl = data.tpl('HorizontalSliderTemplate', str(c, 'TemplateName'));
+    const w = r.w || num(c, 'Width', 100);
+    const trackH = tpl ? num(tpl, 'Height', 13) : 13;
+    const root = box(doc, r.x, r.y, w, trackH);
+    root.style.cursor = 'pointer';
+    if (tpl) root.appendChild(hrImage(doc, data, str(tpl, 'BackgroundHResizeTemplate'), w));
+    const art = tpl && data.tpl('ImageAreaTemplate', str(tpl, 'ImageAreaTemplate'));
+    const iw = art && pt(art, 'Size') ? pt(art, 'Size').x : 13;
+    const ih = art && pt(art, 'Size') ? pt(art, 'Size').y : 7;
+    const ticks = num(c, 'Numticks', num(c, 'NumTicks', 2));
+    const track = Math.max(1, w - iw);
+    const mark = tpl ? sprite(doc, data, str(tpl, 'ImageAreaTemplate'), 0, Math.max(0, (trackH - ih) / 2)) : box(doc, 0, 0, iw, ih);
+    root.appendChild(mark);
+    let value = 0, listener = null, dragging = false;
+    const draw = () => { mark.style.left = px(sliderX(value, track, ticks)); };
+    const setFrom = (e) => {
+      const rect = root.getBoundingClientRect ? root.getBoundingClientRect() : { left: 0 };
+      const v = sliderValue((e.clientX - rect.left) - iw / 2, track, ticks);
+      if (v !== value) { value = v; draw(); if (listener) listener(value); }
+    };
+    root.addEventListener('pointerdown', (e) => { dragging = true; setFrom(e); });
+    root.addEventListener('pointermove', (e) => { if (dragging) setFrom(e); });
+    root.addEventListener('pointerup', () => { dragging = false; });
+    const api = {
+      el: root, ticks,
+      set(v) { value = Math.max(0, Math.min(ticks - 1, v)); draw(); },
+      get() { return value; },
+      onChange(fn) { listener = fn; },
+    };
+    draw();
+    bindBoth(env.sliders, c, api);
+    return root;
+  };
+
+  // A combo box: the chosen option on a stock button, and the down arrow.
+  // Clicking steps to the next option. win.combo(id) gives setOptions(list),
+  // select(i), selected, value and onChange(fn(i, option)).
+  D.ComboBoxDef = (env, c, r) => {
+    const { doc, data } = env;
+    const tpl = data.tpl('ComboBoxTemplate', str(c, 'Templatename') || str(c, 'TemplateName'));
+    const root = box(doc, r.x, r.y, 120, 18);
+    let options = [], at = -1, listener = null, face = null;
+    const down = tpl ? button(doc, data, str(tpl, 'DownButtonTemplate'), 104, 1, () => api.select((at + 1) % Math.max(1, options.length))) : null;
+    const draw = () => {
+      if (face) face.remove ? face.remove() : null;
+      root.textContent = '';
+      face = box(doc, 0, 0, 104, 18);
+      face.style.cursor = 'pointer';
+      face.addEventListener('click', () => api.select((at + 1) % Math.max(1, options.length)));
+      if (at >= 0 && options[at] !== undefined) face.appendChild(text(doc, data, 'arial9', String(options[at]), 'rgb(220,220,220)'));
+      root.appendChild(face);
+      if (down) root.appendChild(down);
+    };
+    const api = {
+      el: root,
+      get selected() { return at; },
+      get value() { return options[at]; },
+      setOptions(list) { options = list || []; at = options.length ? Math.min(Math.max(at, 0), options.length - 1) : -1; draw(); },
+      select(i) { if (!options.length) return; at = i; draw(); if (listener) listener(i, options[i]); },
+      onChange(fn) { listener = fn; },
+    };
+    draw();
+    bindBoth(env.combos, c, api);
+    return root;
+  };
+
+  // A line to type in: a text box on the entry bar's art. win.edit(id) gives
+  // value, set(text), focus() and onEnter(fn(text)).
+  const edit = (env, c, r) => {
+    const { doc, data } = env;
+    const tpl = data.tpl('EditBoxTemplate', str(c, 'TemplateName'));
+    const w = r.w || num(c, 'Width', 150), hgt = r.h || num(c, 'Height', 16);
+    const root = box(doc, r.x, r.y, w, hgt);
+    const bg = tpl && str(tpl, 'BackgroundTemplate');
+    if (bg && bg !== 'none') root.appendChild(frame(doc, data, bg, w, hgt));
+    const input = doc.createElement('input');
+    input.type = 'text';
+    input.autocomplete = 'off';
+    Object.assign(input.style, { position: 'absolute', left: '6px', top: '0px', width: px(w - 12), height: px(hgt), border: '0', outline: '0', background: 'transparent', color: '#fff', font: '12px sans-serif' });
+    root.appendChild(input);
+    let onEnter = null;
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && onEnter) onEnter(input.value); });
+    const api = {
+      el: root, input,
+      get value() { return input.value; },
+      set(t) { input.value = t; },
+      focus() { if (input.focus) input.focus(); },
+      onEnter(fn) { onEnter = fn; },
+    };
+    bindBoth(env.edits, c, api);
+    return root;
+  };
+  D.EditBoxDef = edit;
+  D.ClickableEditBoxDef = edit;
 
   return D;
 }

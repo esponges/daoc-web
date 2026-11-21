@@ -32,6 +32,11 @@ if (!data) {
           if (t) t.setGroups(['Bone Army', 'Darkness', 'Suppression'].map((title, g) => ({ title, open: g !== 1, rows: [1, 2, 3].map((k) => ({ text: 'Spell ' + g + '.' + k + '  ' + (k * 2) + ' pw', icon: 634 })) })));
           continue;
         }
+        if (c.t === 'TextAreaDef') {
+          const a = w.area((c.c.find((x) => x.t === 'ControlId') || {}).x);
+          if (a) a.setText(Array.from({ length: 30 }, (_, i) => 'Greetings, traveller. This is line ' + i + ' of what the stock text area shows.').join(String.fromCharCode(10)));
+          continue;
+        }
         if (c.t !== 'ListBoxDef') continue;
         const l = w.list((c.c.find((x) => x.t === 'ControlId') || {}).x);
         if (l) l.setRows(Array.from({ length: 40 }, (_, i) => ({ text: (i % 10 === 0 ? 'Heading ' : 'Sample row ') + i, header: i % 10 === 0, icon: i % 10 ? 634 : 0 })));

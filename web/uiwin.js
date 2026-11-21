@@ -759,7 +759,7 @@ registerDrawer('StatusBarDef', (env, c, r) => {
 });
 
 // The controls that live in uictl.js join the table.
-for (const [type, fn] of Object.entries(createControls({ box, paint, px, sprite, hrImage, hrButton, icon, button, text, frame, rgba, flag, child, num, str, pt }))) registerDrawer(type, fn);
+for (const [type, fn] of Object.entries(createControls({ box, paint, px, sprite, hrImage, hrButton, icon, button, text, layoutText, frame, rgba, flag, child, num, str, pt }))) registerDrawer(type, fn);
 
 // buildWindow builds the window with a WindowId or a template Name at w by h
 // (default: its own size). It returns {el, ctl, resize}: ctl maps each
@@ -778,6 +778,8 @@ export function buildWindow(doc, data, id, opts = {}) {
     doc, data, opts, wt, baseW, baseH,
     bars: new Map(), labels: new Map(), buttons: new Map(), barList: [], compasses: [],
     icons: new Map(), status: new Map(), lists: new Map(),
+    checks: new Map(), areas: new Map(), tabsets: new Map(), sliders: new Map(), combos: new Map(), edits: new Map(),
+    after: [],
     win: null,
   };
   const win = {
@@ -794,6 +796,12 @@ export function buildWindow(doc, data, id, opts = {}) {
     list(key) { return (env.lists.get(String(key)) || [])[0]; },
     // tree is the same lookup: a tree control is a list with setGroups.
     tree(key) { return (env.lists.get(String(key)) || [])[0]; },
+    check(key) { return (env.checks.get(String(key)) || [])[0]; },
+    area(key) { return (env.areas.get(String(key)) || [])[0]; },
+    tabs(key) { return (env.tabsets.get(String(key)) || [])[0]; },
+    slider(key) { return (env.sliders.get(String(key)) || [])[0]; },
+    combo(key) { return (env.combos.get(String(key)) || [])[0]; },
+    edit(key) { return (env.edits.get(String(key)) || [])[0]; },
     // setStatus shows or hides the status marker bound to an adapter by level.
     setStatus(name, level) { (env.status.get(name) || []).forEach((i) => i.set(level)); },
   };
@@ -812,6 +820,7 @@ export function buildWindow(doc, data, id, opts = {}) {
     env.icons.clear();
     env.status.clear();
     env.lists.clear();
+    for (const m of [env.checks, env.areas, env.tabsets, env.sliders, env.combos, env.edits]) m.clear();
     env.barList = [];
     env.compasses = [];
     populate();
@@ -836,6 +845,8 @@ export function buildWindow(doc, data, id, opts = {}) {
       }
       root.appendChild(el);
     }
+    // Work that needs every control drawn first, such as a tab showing its own.
+    for (const fn of env.after.splice(0)) fn();
   }
 
   populate();
