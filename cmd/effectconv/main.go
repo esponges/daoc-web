@@ -55,6 +55,14 @@ type Index struct {
 	Spells map[string]SpellOut `json:"spells"`
 	// Effects maps an effect number to its model in the pack and its timing.
 	Effects map[string]EffectOut `json:"effects"`
+	// Arrow is the effect a bow shot plays: the arrow in flight and where it strikes.
+	Arrow *ArrowOut `json:"arrow,omitempty"`
+}
+
+// ArrowOut names the effects of an arrow, by effect number.
+type ArrowOut struct {
+	Travel int `json:"travel"`
+	Strike int `json:"strike"`
 }
 
 // SpellOut is one client effect: the caster's animation numbers (columns of
@@ -156,7 +164,7 @@ func run(game, world, out string, all bool) error {
 	}
 
 	pack := filepath.Join(out, "pack")
-	if err := scenery.WriteProps(pack, 0, dirs, models, verts, indices, nil, skipped); err != nil {
+	if err := scenery.WriteProps(pack, 0, dirs, models, verts, indices, []scenery.Instance{}, skipped); err != nil {
 		return err
 	}
 	b, err := json.MarshalIndent(idx, "", " ")
@@ -203,6 +211,21 @@ func Plan(t *gamedata.Tables, want []int) (*Index, map[int]bool) {
 		for _, id := range []int{s.Projectile, s.Target, s.Buildup, s.Pulse, s.Resist} {
 			add(id)
 		}
+	}
+	// A bow shot has no spell: its arrow is the table's plain slashing one.
+	var arrow ArrowOut
+	for id, e := range t.Effects {
+		switch strings.ToLower(e.Name) {
+		case "arrow slash01 travel":
+			arrow.Travel = id
+		case "arrow slash01 strike":
+			arrow.Strike = id
+		}
+	}
+	if arrow.Travel > 0 {
+		idx.Arrow = &arrow
+		add(arrow.Travel)
+		add(arrow.Strike)
 	}
 	return idx, need
 }

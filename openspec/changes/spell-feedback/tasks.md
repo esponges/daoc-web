@@ -20,10 +20,10 @@ Browser checks use a scratch server on its own port with a copy of the data. A t
 
 ## 4. Playing effects in the view
 
-- [ ] 4.1 `web/spellfx.js`: one-shot effect instances attached to a bone, followed each frame, dropped after their duration, capped at 64, and not drawn past the drawing distance. The particles use `particles.js` with a per-instance start and seed, and meshes use the props path. Verify with node tests of the instance lifecycle, the cap and the bone fallback.
-- [ ] 4.2 Casts. On `cast`, play the start clip, then hold the loop, and run the caster effects on their bones. On `spell`, play the release. On `interrupt`/`castfail`, clear. This applies to the player's own figure in `viewer.js` and to others in `remote.js`, with the generic `cast` when the clips are missing. Verify with `remote.test.mjs` and viewer tests of the clip sequence, and in the browser: the Bonedancer visibly casts Summon Bone Boss and Minor Dusk Dart, and a creature caster casts too. Save a screenshot for the user.
+- [x] 4.1 `web/spellfx.js`: one-shot effect instances attached to a bone, followed each frame, dropped after their duration, capped at 64, and not drawn past the drawing distance. The particles use `particles.js` with a per-instance start and seed, and meshes use the props path. Verify with node tests of the instance lifecycle, the cap and the bone fallback.
+- [x] 4.2 Casts. On `cast`, play the start clip, then hold the loop, and run the caster effects on their bones. On `spell`, play the release. On `interrupt`/`castfail`, clear. This applies to the player's own figure in `viewer.js` and to others in `remote.js`, with the generic `cast` when the clips are missing. Verify with `remote.test.mjs` and viewer tests of the clip sequence, and in the browser: the Bonedancer visibly casts Summon Bone Boss and Minor Dusk Dart, and a creature caster casts too. Save a screenshot for the user.
 - [ ] 4.3 Projectiles and target effects. A bolt flies from the caster's hand to the target. The target effect plays on its bone for its duration, and a resisted spell shows no target effect. Arrows fly on the `arrow` event. Verify with node tests of projectile timing, and in the browser: Minor Dusk Dart flies and hits, a heal glows on its target, and a Hunter's arrow flies.
-- [ ] 4.4 Fallback. Without `web/data/effects/`, spells cast, land and log as before with no console error. Verify in the browser with the folder moved aside.
+- [x] 4.4 Fallback. Without `web/data/effects/`, spells cast, land and log as before with no console error. Verify in the browser with the folder moved aside.
 
 ## 5. Effects in the HUD
 

@@ -162,6 +162,22 @@ function loadImage(src) {
 
 const NO_SCROLL = [0, 0];
 
+// fillInstance writes one placement into an instance buffer: position, yaw,
+// scale and the yaw's axis, up unless the instance gives one (as a few tipped
+// dungeon props do). The fixture's Z is absolute world height, so it goes
+// straight in.
+function fillInstance(data, o, it) {
+  const a = it.axis || [0, 0, 1];
+  data[o + 0] = it.p[0];
+  data[o + 1] = it.p[2];
+  data[o + 2] = it.p[1];
+  data[o + 3] = it.yaw;
+  data[o + 4] = it.s;
+  data[o + 5] = a[0];
+  data[o + 6] = a[1];
+  data[o + 7] = a[2];
+}
+
 export async function createProps(gl, base) {
   const manifest = await fetch(base + '/props.json').then((r) => {
     if (!r.ok) throw new Error('props.json: HTTP ' + r.status);
@@ -196,7 +212,7 @@ export async function createProps(gl, base) {
 
   // Group the instance list by model so each model gets one instance buffer.
   const perModel = manifest.models.map(() => []);
-  for (const inst of manifest.instances) {
+  for (const inst of manifest.instances || []) {
     if (inst.m >= 0 && inst.m < perModel.length) perModel[inst.m].push(inst);
   }
 
@@ -206,18 +222,7 @@ export async function createProps(gl, base) {
     // Position, yaw, scale and the yaw's axis: up unless the instance
     // gives one, as a few tipped dungeon props do.
     const data = new Float32Array(list.length * INST);
-    for (let k = 0; k < list.length; k++) {
-      const it = list[k], o = k * INST, a = it.axis || [0, 0, 1];
-      // The fixture's Z is absolute world height, so it goes straight in.
-      data[o + 0] = it.p[0];
-      data[o + 1] = it.p[2];
-      data[o + 2] = it.p[1];
-      data[o + 3] = it.yaw;
-      data[o + 4] = it.s;
-      data[o + 5] = a[0];
-      data[o + 6] = a[1];
-      data[o + 7] = a[2];
-    }
+    for (let k = 0; k < list.length; k++) fillInstance(data, k * INST, list[k]);
     const ibuf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, ibuf);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
@@ -255,7 +260,7 @@ export async function createProps(gl, base) {
     for (const g of m.groups) {
       if (g.pulse) g.pulseKeys = new Float32Array(g.pulse.slice(0, 8).flat());
     }
-    return { name: m.name, vao, count: list.length, groups: m.groups, max: m.max };
+    return { name: m.name, vao, ibuf, count: list.length, groups: m.groups, max: m.max };
   });
 
   // One texture object per distinct image. A missing file is not fatal: the
@@ -290,6 +295,22 @@ export async function createProps(gl, base) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     textures.set(n, t);
   }));
+
+  // setInstances replaces what is placed with a list drawn from now on, one
+  // buffer upload per model that has any: for placements that come and go,
+  // such as a spell's effects. An instance is {m, p: [x, y, height], yaw, s}.
+  function setInstances(list) {
+    const per = models.map(() => []);
+    for (const it of list) if (per[it.m]) per[it.m].push(it);
+    models.forEach((m, i) => {
+      m.count = per[i].length;
+      if (!m.count) return;
+      const data = new Float32Array(m.count * INST);
+      per[i].forEach((it, k) => fillInstance(data, k * INST, it));
+      gl.bindBuffer(gl.ARRAY_BUFFER, m.ibuf);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    });
+  }
 
   function draw(ctx) {
     gl.useProgram(prog);
@@ -344,12 +365,13 @@ export async function createProps(gl, base) {
 
   return {
     draw,
+    setInstances,
     // texture finds one of the scenery's textures by name, for the particles.
     texture: (name) => textures.get(name) || white,
     models,
     manifest,
     missingTextures: missing,
-    instanceCount: manifest.instances.length,
+    instanceCount: (manifest.instances || []).length,
     triangleCount: manifest.indexCount / 3,
     drawCalls: models.reduce((n, m) => n + (m.count ? m.groups.length : 0), 0),
   };

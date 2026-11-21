@@ -172,16 +172,20 @@ export function createParticles(gl, props, { program, uniforms }) {
 
   // Every placed emitter: the model's settings and the placement's.
   const man = props.manifest;
-  const emitters = [];
-  man.instances.forEach((inst, n) => {
+  // emittersOf lists the emitters of one placement. seed varies copies of a
+  // model; t0, when given, is the clock time the placement began, so that its
+  // particles start from nothing then (a spell's effect) and not mid-stream.
+  const emittersOf = (inst, seed, t0) => {
+    const out = [];
     const model = man.models[inst.m];
-    for (const p of model.particles || []) {
+    for (const p of (model && model.particles) || []) {
       const colors = (p.color || []).slice(0, 6);
-      emitters.push({
+      out.push({
         p,
+        t0,
         place: [inst.p[0], inst.p[2], inst.p[1], inst.yaw],
         scale: inst.s,
-        seed: (n * 2654435761) >>> 0,
+        seed: seed >>> 0,
         slots: Math.ceil(p.rate * (p.life[0] + p.life[1])),
         // mat3 uniforms are column-major; the axes are row-major.
         axes: new Float32Array([p.axes[0], p.axes[3], p.axes[6], p.axes[1], p.axes[4], p.axes[7], p.axes[2], p.axes[5], p.axes[8]]),
@@ -190,12 +194,21 @@ export function createParticles(gl, props, { program, uniforms }) {
         colorN: colors.length,
       });
     }
-  });
+    return out;
+  };
+  const emitters = [];
+  (man.instances || []).forEach((inst, n) => emitters.push(...emittersOf(inst, n * 2654435761)));
+  // dynamic are the emitters of placements that come and go; see setDynamic.
+  let dynamic = [];
+  // setDynamic replaces them. A placement is {m, p: [x, y, height], yaw, s, t0, seed}.
+  const setDynamic = (list) => {
+    dynamic = list.flatMap((it) => emittersOf(it, it.seed || 0, it.t0));
+  };
 
   let drawn = 0;
   function draw(ctx) {
     drawn = 0;
-    if (!emitters.length) return;
+    if (!emitters.length && !dynamic.length) return;
     gl.useProgram(prog);
     gl.uniformMatrix4fv(U.uViewProj, false, ctx.viewProj);
     gl.uniform3fv(U.uCamPos, ctx.camPos);
@@ -216,11 +229,12 @@ export function createParticles(gl, props, { program, uniforms }) {
       gl.blendFunc(gl.SRC_ALPHA, additive ? gl.ONE : gl.ONE_MINUS_SRC_ALPHA);
       gl.uniform1f(U.uAdditive, additive ? 1 : 0);
       gl.uniform1f(U.uOpacity, additive ? 1 : SMOKE_OPACITY);
-      for (const e of emitters) {
+      for (const e of emitters.length ? emitters.concat(dynamic) : dynamic) {
         const p = e.p;
         if (p.additive !== additive) continue;
         if (Math.hypot(e.place[0] - ctx.camPos[0], e.place[2] - ctx.camPos[2]) > DRAW_DISTANCE) continue;
         gl.bindTexture(gl.TEXTURE_2D, props.texture(p.texture));
+        gl.uniform1f(U.uTime, e.t0 === undefined ? ctx.time : Math.max(0, ctx.time - e.t0));
         gl.uniform4fv(U.uPlace, e.place);
         gl.uniform1f(U.uScale, e.scale);
         gl.uniform1ui(U.uSeed, e.seed);
@@ -250,5 +264,5 @@ export function createParticles(gl, props, { program, uniforms }) {
     gl.bindVertexArray(null);
   }
 
-  return { draw, emitters, get drawn() { return drawn; } };
+  return { draw, emitters, setDynamic, get drawn() { return drawn; } };
 }

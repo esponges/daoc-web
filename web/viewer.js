@@ -18,12 +18,13 @@ import { createSky } from './sky.js';
 import { gameSeconds, nightness, nightLook, createDarken } from './daynight.js';
 import { createGrass } from './grass.js';
 import { createParticles } from './particles.js';
+import { createSpellFx, createDirector, bonePoint } from './spellfx.js';
 import { loadInterior } from './interior.js';
 import { NetClient } from './net.js';
 import { loadOutdoorCollision } from './collision.js';
 import { createRemote, eventAnim } from './remote.js';
 import { candidates } from './race.js';
-import { createUI, conColor } from './ui.js';
+import { createUI, conColor, money } from './ui.js';
 import { ownCastLine } from './spells.js';
 import { eventLine, conColour } from './sheet.js';
 import { effectRows, effectChangeLines, spellLine, castLine, petLine, petNames } from './effects.js';
@@ -774,6 +775,11 @@ async function main() {
   // Fire, smoke and sparks from the scenery's own emitters.
   const particles = props ? createParticles(gl, props, { program, uniforms }) : null;
 
+  // What spells look like: the converted effects (effectconv). Without them casting
+  // still animates, and nothing else changes.
+  let spellfx = null;
+  if (net) createSpellFx(gl, { program, uniforms }).then((fx) => { spellfx = fx; }).catch((e) => console.warn('spell effects:', e.message));
+
   // --- grass ---
   // Optional too: zones converted before grass.go have none.
   let grass = null;
@@ -1145,14 +1151,31 @@ async function main() {
 
   // --- network mode: what the server says happened ---
   const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  // The figure of an entity: the player's own, or another's as remote.js draws it.
+  const figureOf = (id) => {
+    if (net && id === net.me.id) return { anim, ch: char, moving: player.gait > 0, view: { x: player.x, y: player.y, z: player.z, yaw: player.yaw, scale: char.scale } };
+    const v = remote && remote.views.get(id);
+    if (!v || !v.anim || !v.type) return null;
+    return { anim: v.anim, ch: v.type.ch, moving: v.e.speed > 5, view: { x: v.x, y: v.y, z: v.e.z, yaw: v.yaw, scale: v.scale } };
+  };
+  // Where an effect's anchor {id, bone} is in the world, [x, y, height]: a bone
+  // of the figure, or the middle of the body for a hit.
+  const locateFx = (a) => {
+    const f = figureOf(a.id);
+    if (!f) return null;
+    return bonePoint(f.ch.skeleton, a.chest ? '' : a.bone, f.view, { chest: a.chest || a.bone === 'rootnode' ? 0 : f.ch.height * 0.55 })
+      .map((v, k) => (k === 2 && a.chest ? v + f.ch.height * f.view.scale * 0.55 : v));
+  };
+  const director = net ? createDirector({ getFx: () => spellfx, figure: figureOf, locate: locateFx }) : null;
   const labelEls = [];
-  function handleEvents(list) {
+  function handleEvents(list, nowS) {
     const me = net.me;
     remote.events(list, me.id);
     const the = (id) => (id === me.id ? 'you' : 'the ' + (remote.views.get(id)?.name || 'creature'));
     const pets = petNames(net.pet);
     for (const ev of list) {
       const mine = ev.from === me.id, toMe = ev.to === me.id;
+      director.event(ev, nowS);
       const pl = petLine(ev, pets, the, me.id);
       if (pl) { log(pl.text, pl.cls); continue; }
       switch (ev.k) {
@@ -1315,7 +1338,8 @@ async function main() {
     // --- NPCs and the fight ---
     if (net) {
       remote.sync(net);
-      handleEvents(net.takeEvents());
+      handleEvents(net.takeEvents(), now / 1000);
+      director.tick(now / 1000);
       remote.update(dt);
       ui.update();
       if (view.eye && view.target) ui.setHeading(Math.atan2(view.target[0] - view.eye[0], -(view.target[2] - view.eye[2])) * 180 / Math.PI);
@@ -1467,6 +1491,7 @@ async function main() {
       if (remote) remote.draw(ctx);
       // Particles cast no shadow, and go in last, over everything solid.
       if (particles && !shadowPass) particles.draw(ctx);
+      if (spellfx && !shadowPass) spellfx.draw(ctx, locateFx);
     };
 
     // Inside, the zone's own lights nearest the eye.
