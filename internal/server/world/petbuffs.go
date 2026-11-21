@@ -59,6 +59,6 @@ func (z *Zone) creatureShieldHits(t *NPC, attacker combatant) {
 	}
 	dmg := rules.ShieldDamage(e.spell.Damage, z.spellResist(attacker, e.spell.DamageType))
 	ax, ay := attacker.position()
-	z.event(protocol.Event{K: "spell", From: t.ID, To: attacker.entityID(), Text: e.spell.Name, Amount: dmg}, ax, ay)
+	z.event(protocol.Event{K: "spell", From: t.ID, To: attacker.entityID(), Text: e.spell.Name, FX: e.spell.ClientEffect, Amount: dmg}, ax, ay)
 	z.hurt(attacker, t, dmg)
 }

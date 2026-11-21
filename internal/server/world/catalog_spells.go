@@ -30,6 +30,7 @@ type SpellDef struct {
 	ResurrectMana   int  // and of power
 	Concentration   int  // above 0: a lasting buff that holds this much of the caster's concentration while it is on
 	AmnesiaChance   int  // an amnesia's chance in percent, and for a charm the kind of creature it takes
+	ClientEffect    int  // the row of the client's spell table that says how the spell looks: its casting, projectile and target effects
 	Focus           bool // a focus spell: held by its caster's attention, ended when they act
 	SubSpell        int
 	Uninterruptible bool
@@ -95,13 +96,14 @@ func (c *Catalog) loadSpells(db *sql.DB, q func(string, func(*sql.Rows) error) e
 	powerCol, radiusCol, pulseCol, pulsePowerCol := col("power"), col("radius"), col("pulse"), col("pulse_power")
 	rezHCol, rezMCol, concCol, focusCol := col("resurrect_health"), col("resurrect_mana"), col("concentration"), col("is_focus")
 	amnCol := col("amnesia_chance")
+	fxCol := col("client_effect")
 	if err := q(`SELECT id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,
-		sub_spell,uninterruptible,icon,COALESCE(message1,''),COALESCE(message2,''),COALESCE(message3,''),COALESCE(message4,''),`+powerCol+`,`+radiusCol+`,`+pulseCol+`,`+pulsePowerCol+`,`+rezHCol+`,`+rezMCol+`,`+concCol+`,`+focusCol+`,`+amnCol+` FROM spell`, func(r *sql.Rows) error {
+		sub_spell,uninterruptible,icon,COALESCE(message1,''),COALESCE(message2,''),COALESCE(message3,''),COALESCE(message4,''),`+powerCol+`,`+radiusCol+`,`+pulseCol+`,`+pulsePowerCol+`,`+rezHCol+`,`+rezMCol+`,`+concCol+`,`+focusCol+`,`+amnCol+`,`+fxCol+` FROM spell`, func(r *sql.Rows) error {
 		s := &SpellDef{}
 		var unint, focus int
 		if err := r.Scan(&s.ID, &s.Name, &s.Type, &s.Target, &s.Range, &s.CastTime, &s.Recast, &s.Damage, &s.DamageType, &s.Value,
 			&s.Duration, &s.Frequency, &s.LifeDrain, &s.SubSpell, &unint, &s.Icon, &s.Messages[0], &s.Messages[1], &s.Messages[2], &s.Messages[3], &s.Power, &s.Radius, &s.Pulse, &s.PulsePower,
-			&s.ResurrectHealth, &s.ResurrectMana, &s.Concentration, &focus, &s.AmnesiaChance); err != nil {
+			&s.ResurrectHealth, &s.ResurrectMana, &s.Concentration, &focus, &s.AmnesiaChance, &s.ClientEffect); err != nil {
 			return err
 		}
 		s.Focus = focus != 0

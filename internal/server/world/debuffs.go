@@ -155,7 +155,7 @@ func (z *Zone) castDebuffing(caster, target combatant, sp *SpellDef) (handled, l
 			cp.hp = math.Max(1, cp.hp-float64(cost))
 		}
 		z.heal(target, heal)
-		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: -heal}, tx, ty)
+		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect, Amount: -heal}, tx, ty)
 		return true, true
 	case rules.SpellAmnesia:
 		chance := rules.AmnesiaChance
@@ -163,26 +163,26 @@ func (z *Zone) castDebuffing(caster, target combatant, sp *SpellDef) (handled, l
 			chance = float64(sp.AmnesiaChance)
 		}
 		if z.rng.Float64()*100 >= chance {
-			z.event(protocol.Event{K: "resist", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+			z.event(protocol.Event{K: "resist", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
 			return true, false
 		}
 		if n, ok := target.(*NPC); ok {
 			n.hate, n.target = nil, nil
 			z.cancelCasting(n)
 			n.state = npcReturn
-			z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+			z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
 			return true, true
 		}
 		return true, false
 	case rules.SpellConfusion:
 		if !rules.ConfusionTakesHold(sp.Value, z.rng.Float64()) {
-			z.event(protocol.Event{K: "resist", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+			z.event(protocol.Event{K: "resist", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
 			return true, false
 		}
 		if p, ok := target.(*Player); ok {
 			// Against a player it only interrupts what they were doing.
 			z.interruptPlayerCast(p, "You are confused and lose your concentration.")
-			z.event(protocol.Event{K: "effect", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+			z.event(protocol.Event{K: "effect", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
 			return true, true
 		}
 		z.addEffect(target, caster, sp, effConfusion)

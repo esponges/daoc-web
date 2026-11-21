@@ -276,6 +276,7 @@ type Event struct {
 	Crit   bool    `json:"c,omitempty"`
 	At     float64 `json:"at,omitempty"`
 	Dur    float64 `json:"dur,omitempty"` // a cast's time, in seconds
+	FX     int     `json:"fx,omitempty"`  // the client effect of the spell, on cast, spell, effect and resist events: how the spell looks
 }
 
 // Self is the part of a snapshot only the player gets.

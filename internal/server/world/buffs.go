@@ -51,7 +51,7 @@ func (z *Zone) shieldHits(p *Player, n *NPC) {
 		return
 	}
 	dmg := rules.ShieldDamage(e.spell.Damage, z.spellResist(n, e.spell.DamageType))
-	z.event(protocol.Event{K: "spell", From: p.ID, To: n.ID, Text: e.spell.Name, Amount: dmg}, n.Body.X, n.Body.Y)
+	z.event(protocol.Event{K: "spell", From: p.ID, To: n.ID, Text: e.spell.Name, FX: e.spell.ClientEffect, Amount: dmg}, n.Body.X, n.Body.Y)
 	z.hurt(n, p, dmg)
 	if n.dead() {
 		return
@@ -75,7 +75,7 @@ func (z *Zone) cure(caster, target combatant, sp *SpellDef) {
 	}
 	*list = kept
 	tx, ty := target.position()
-	z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+	z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
 	if cured > 0 {
 		z.effectsChanged(target)
 		return
@@ -107,7 +107,7 @@ func (z *Zone) spreadHeal(caster *Player, sp *SpellDef) {
 		}
 		x, y := members[i].position()
 		z.heal(members[i], share)
-		z.event(protocol.Event{K: "spell", From: caster.ID, To: members[i].entityID(), Text: sp.Name, Amount: -share}, x, y)
+		z.event(protocol.Event{K: "spell", From: caster.ID, To: members[i].entityID(), Text: sp.Name, FX: sp.ClientEffect, Amount: -share}, x, y)
 	}
 	sys(caster, fmt.Sprintf("Your %s spreads %d hit points among your group.", sp.Name, total))
 }

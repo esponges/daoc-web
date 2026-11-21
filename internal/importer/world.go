@@ -79,7 +79,7 @@ CREATE TABLE spell(
   damage REAL, damage_type INTEGER, value REAL, duration INTEGER, frequency INTEGER, life_drain INTEGER,
   sub_spell INTEGER, uninterruptible INTEGER, icon INTEGER, radius INTEGER,
   message1 TEXT, message2 TEXT, message3 TEXT, message4 TEXT, power INTEGER, pulse INTEGER, pulse_power INTEGER,
-  resurrect_health INTEGER, resurrect_mana INTEGER, concentration INTEGER, is_focus INTEGER, amnesia_chance INTEGER);
+  resurrect_health INTEGER, resurrect_mana INTEGER, concentration INTEGER, is_focus INTEGER, amnesia_chance INTEGER, client_effect INTEGER);
 CREATE TABLE line_spell(spec TEXT, hint INTEGER, line TEXT, spell INTEGER, level INTEGER);
 CREATE INDEX line_spell_spec ON line_spell(spec);
 CREATE TABLE template_spell(template INTEGER, spell INTEGER, ord INTEGER);
@@ -639,11 +639,11 @@ func build(o Options) (*Report, error) {
 			continue
 		}
 		kept++
-		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
+		if err := ins(`INSERT INTO spell VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, r.Str("Name"), r.Str("Type"), r.Str("Target"),
 			r.Int("Range"), r.Float("CastTime"), r.Int("RecastDelay"), r.Float("Damage"), r.Int("DamageType"), r.Float("Value"),
 			r.Int("Duration"), r.Int("Frequency"), r.Int("LifeDrainReturn"), r.Int("SubSpellID"), r.Int("Uninterruptible"),
 			r.Int("Icon"), r.Int("Radius"), r.Str("Message1"), r.Str("Message2"), r.Str("Message3"), r.Str("Message4"), r.Int("Power"), r.Int("Pulse"), r.Int("PulsePower"),
-			r.Int("ResurrectHealth"), r.Int("ResurrectMana"), r.Int("Concentration"), r.Int("IsFocus"), r.Int("AmnesiaChance")); err != nil {
+			r.Int("ResurrectHealth"), r.Int("ResurrectMana"), r.Int("Concentration"), r.Int("IsFocus"), r.Int("AmnesiaChance"), r.Int("ClientEffect")); err != nil {
 			return nil, err
 		}
 	}

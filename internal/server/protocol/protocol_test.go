@@ -369,3 +369,16 @@ func TestTaskMessages(t *testing.T) {
 		t.Errorf("no task is %s", b)
 	}
 }
+
+// An event carries the client effect of its spell as fx, and says nothing when
+// it has none, so older clients and spell-less events are unchanged.
+func TestEventClientEffectIsAdditive(t *testing.T) {
+	with, _ := json.Marshal(Event{K: "spell", From: 1, To: 2, Text: "Minor Dusk Dart", FX: 2501})
+	if !strings.Contains(string(with), `"fx":2501`) {
+		t.Errorf("an event with a client effect marshals as %s", with)
+	}
+	without, _ := json.Marshal(Event{K: "hit", From: 1, To: 2, Amount: 5})
+	if strings.Contains(string(without), "fx") {
+		t.Errorf("an event with none marshals as %s", without)
+	}
+}

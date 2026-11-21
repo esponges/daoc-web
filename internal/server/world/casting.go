@@ -62,7 +62,7 @@ func (z *Zone) startCasting(n *NPC) bool {
 	}
 	n.casting = &castState{spell: sp, target: target, ends: rules.CastEnds(z.now, sp.CastTime)}
 	n.speedNow = 0
-	z.event(protocol.Event{K: "cast", From: n.ID, To: target.entityID(), Text: sp.Name, Dur: sp.CastTime}, n.Body.X, n.Body.Y)
+	z.event(protocol.Event{K: "cast", From: n.ID, To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect, Dur: sp.CastTime}, n.Body.X, n.Body.Y)
 	if sp.CastTime <= 0 {
 		z.continueCasting(n)
 	}

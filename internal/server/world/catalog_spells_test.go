@@ -31,10 +31,12 @@ func buildSpellStore(t *testing.T, old bool) *Catalog {
 		`INSERT INTO spell(id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,sub_spell,uninterruptible,icon,resurrect_health,resurrect_mana,concentration,is_focus)
 		 VALUES(1361,'Raise Fallen','Resurrect','Corpse',1500,4,0,0,0,0,0,0,0,0,0,4,30,10,0,0),
 		       (2001,'Blessing of Health','ConstitutionBuff','Realm',1000,3,0,0,0,14,0,0,0,0,0,5,0,0,2,1)`,
+		`INSERT INTO spell(id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,sub_spell,uninterruptible,icon,client_effect)
+		 VALUES(2501,'Minor Dusk Dart','DirectDamage','Enemy',1500,2.6,0,5,11,0,0,0,0,0,0,6,2501)`,
 	}
 	if old {
 		stmts = append([]string{`ALTER TABLE spell DROP COLUMN radius`, `ALTER TABLE spell DROP COLUMN pulse`, `ALTER TABLE spell DROP COLUMN pulse_power`,
-			`ALTER TABLE spell DROP COLUMN resurrect_health`, `ALTER TABLE spell DROP COLUMN resurrect_mana`, `ALTER TABLE spell DROP COLUMN concentration`, `ALTER TABLE spell DROP COLUMN is_focus`}, stmts[0],
+			`ALTER TABLE spell DROP COLUMN resurrect_health`, `ALTER TABLE spell DROP COLUMN resurrect_mana`, `ALTER TABLE spell DROP COLUMN concentration`, `ALTER TABLE spell DROP COLUMN is_focus`, `ALTER TABLE spell DROP COLUMN client_effect`}, stmts[0],
 			`INSERT INTO spell(id,name,type,target,range,cast_time,recast,damage,damage_type,value,duration,frequency,life_drain,sub_spell,uninterruptible,icon,power)
 			 VALUES(3521,'Thunder Shout','DirectDamage','Enemy',0,0,20,15,12,0,0,0,0,0,0,1,4)`)
 	}
@@ -114,5 +116,17 @@ func TestCatalogLoadsRezAndConcentration(t *testing.T) {
 	old := buildSpellStore(t, true)
 	if sp := old.Spells[3521]; sp == nil || sp.Concentration != 0 || sp.ResurrectHealth != 0 || sp.Focus {
 		t.Errorf("an old store's spell %+v, want none of the new fields", sp)
+	}
+}
+
+// A spell's client effect is loaded; a store without the column loads with none.
+func TestCatalogLoadsClientEffect(t *testing.T) {
+	c := buildSpellStore(t, false)
+	if sp := c.Spells[2501]; sp == nil || sp.ClientEffect != 2501 {
+		t.Errorf("Minor Dusk Dart %+v, want client effect 2501", sp)
+	}
+	old := buildSpellStore(t, true)
+	if sp := old.Spells[3521]; sp == nil || sp.ClientEffect != 0 {
+		t.Errorf("an old store's spell %+v, want client effect 0", sp)
 	}
 }

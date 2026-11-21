@@ -227,7 +227,7 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 	tx, ty := target.position()
 	if sp.Hostile() && roll {
 		if z.rng.Float64() >= rules.SpellHitChance(level, levelOf(target)) {
-			z.event(protocol.Event{K: "resist", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+			z.event(protocol.Event{K: "resist", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
 			return false
 		}
 	}
@@ -247,13 +247,13 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		}
 		amount = sickened(amount, caster)
 		z.heal(target, amount)
-		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: -amount}, tx, ty)
+		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect, Amount: -amount}, tx, ty)
 	case rules.SpellDirectDamage, rules.SpellDDNoVariance, rules.SpellBolt, rules.SpellLifedrain, rules.SpellDDWithDebuff, rules.SpellDamageSpeedDecr:
 		if sp.Type == rules.SpellBolt {
 			if p, ok := target.(*Player); ok {
 				inFront := angleOff(p.Body.Yaw, angleTo(p.Body.X, p.Body.Y, cx, cy)) <= frontArc
 				if rules.BoltBlocked(rules.BlockChance(p.combatant(z.W.Cat), inFront), z.rng.Float64()) {
-					z.event(protocol.Event{K: "block", From: target.entityID(), To: caster.entityID(), Text: sp.Name}, tx, ty)
+					z.event(protocol.Event{K: "block", From: target.entityID(), To: caster.entityID(), Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
 					return true
 				}
 			}
@@ -263,7 +263,7 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 			dmg = rules.PlayerSpellDamage(sp.Damage, sc.stat, sc.spec, levelOf(caster), levelOf(target), z.rng.Float64(), z.spellResist(target, sp.DamageType))
 		}
 		dmg = sickened(dmg, caster)
-		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, Amount: dmg}, tx, ty)
+		z.event(protocol.Event{K: "spell", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect, Amount: dmg}, tx, ty)
 		z.hurt(target, caster, dmg)
 		if sp.Type == rules.SpellLifedrain && caster.fightable(z) {
 			z.heal(caster, rules.DrainHeal(dmg, sp.LifeDrain))
@@ -347,7 +347,7 @@ func (z *Zone) addEffect(target, caster combatant, sp *SpellDef, kind string) {
 	}
 	tx, ty := target.position()
 	if !(refresh && sp.pulsing()) { // a song pulsing on a member again is not news
-		z.event(protocol.Event{K: "effect", From: caster.entityID(), To: target.entityID(), Text: sp.Name}, tx, ty)
+		z.event(protocol.Event{K: "effect", From: caster.entityID(), To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
 	}
 	if kind == effStun || kind == effMez {
 		z.stopActing(target)
@@ -500,7 +500,7 @@ func (z *Zone) tickEffectsOf(c combatant) {
 			if e.caster != nil {
 				from = e.caster.entityID()
 			}
-			z.event(protocol.Event{K: "spell", From: from, To: c.entityID(), Text: e.spell.Name, Amount: dmg}, x, y)
+			z.event(protocol.Event{K: "spell", From: from, To: c.entityID(), Text: e.spell.Name, FX: e.spell.ClientEffect, Amount: dmg}, x, y)
 			z.hurt(c, e.caster, dmg)
 		}
 	}

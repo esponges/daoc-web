@@ -335,3 +335,23 @@ func TestImportSpellRezAndConcentration(t *testing.T) {
 		t.Errorf("Blessing of Health: health %d concentration %d focus %d, want 0 2 1", rh, conc, focus)
 	}
 }
+
+// A spell keeps the number of its row in the client's spell table, which says
+// how the spell looks.
+func TestImportSpellClientEffect(t *testing.T) {
+	dir := minimalDump(t)
+	dumpTable(t, dir, "stylexspell", "`SpellID`, `ClassID`, `StyleID`, `Chance`", "2501, 0, 164, 100")
+	dumpTable(t, dir, "spell", "`SpellID`, `Name`, `Type`, `Target`, `Range`, `ClientEffect`",
+		"2501, 'Minor Dusk Dart', 'DirectDamage', 'Enemy', 1500, 2501")
+	out := filepath.Join(t.TempDir(), "world.db")
+	if _, err := Run(Options{Dump: dir, Out: out}); err != nil {
+		t.Fatal(err)
+	}
+	db, _ := sql.Open("sqlite", out)
+	defer db.Close()
+	var fx int
+	db.QueryRow(`SELECT client_effect FROM spell WHERE id=2501`).Scan(&fx)
+	if fx != 2501 {
+		t.Errorf("Minor Dusk Dart client effect %d, want 2501", fx)
+	}
+}

@@ -9,8 +9,8 @@ Browser checks use a scratch server on its own port with a copy of the data. A t
 
 ## 2. Client effects through the server
 
-- [ ] 2.1 The importer stores `spell.client_effect`, with the world store migration (a missing column reads 0). Verify with an importer test on a synthetic dump and a world test loading a store without the column. Then re-import and check that Minor Dusk Dart carries 2501.
-- [ ] 2.2 `Event.FX` (`fx`) on the `cast`, `spell`, `effect` and `resist` events of player and creature spells. Document it in `docs/protocol.md`. Verify with a world test that the cast and land events of a spell with client effect 2501 carry it, and a protocol test that `fx` is omitted at 0.
+- [x] 2.1 The importer stores `spell.client_effect`, with the world store migration (a missing column reads 0). Verify with an importer test on a synthetic dump and a world test loading a store without the column. Then re-import and check that Minor Dusk Dart carries 2501.
+- [x] 2.2 `Event.FX` (`fx`) on the `cast`, `spell`, `effect` and `resist` events of player and creature spells. Document it in `docs/protocol.md`. Verify with a world test that the cast and land events of a spell with client effect 2501 carry it, and a protocol test that `fx` is omitted at 0.
 
 ## 3. Converting effects and cast animations
 

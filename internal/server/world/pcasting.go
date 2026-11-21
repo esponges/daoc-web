@@ -183,7 +183,7 @@ func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 	z.unstealth(p, "You are no longer hidden.")
 	p.casting = &playerCast{spell: sp, target: target, ends: rules.CastEnds(z.now, sp.CastTime), x: p.Body.X, y: p.Body.Y}
 	p.pending = -1
-	z.event(protocol.Event{K: "cast", From: p.ID, To: target.entityID(), Text: sp.Name, Dur: sp.CastTime}, p.Body.X, p.Body.Y)
+	z.event(protocol.Event{K: "cast", From: p.ID, To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect, Dur: sp.CastTime}, p.Body.X, p.Body.Y)
 	if sp.CastTime <= 0 {
 		z.continuePlayerCast(p)
 	}
@@ -311,12 +311,12 @@ func (z *Zone) continuePlayerCast(p *Player) {
 		alive = z.corpseOK(c.target)
 	}
 	if !rules.CastLands(alive, dist, spellRange(p, sp)) {
-		z.event(protocol.Event{K: "castfail", From: p.ID, Text: sp.Name}, p.Body.X, p.Body.Y)
+		z.event(protocol.Event{K: "castfail", From: p.ID, Text: sp.Name, FX: sp.ClientEffect}, p.Body.X, p.Body.Y)
 		sys(p, "Your target is no longer there, and "+sp.Name+" fails.")
 		return
 	}
 	if z.needsSight(p, sp, c.target) && !z.sees(p, c.target) {
-		z.event(protocol.Event{K: "castfail", From: p.ID, Text: sp.Name}, p.Body.X, p.Body.Y)
+		z.event(protocol.Event{K: "castfail", From: p.ID, Text: sp.Name, FX: sp.ClientEffect}, p.Body.X, p.Body.Y)
 		sys(p, rules.SightMessage)
 		return
 	}

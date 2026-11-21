@@ -302,3 +302,34 @@ func TestWeaponProcFires(t *testing.T) {
 	}
 	t.Error("a 100% weapon proc never fired on a landed blow")
 }
+
+// A spell's cast and landing events carry its client effect, so the client can
+// show how it looks; one without a client effect sends none.
+func TestSpellEventsCarryTheClientEffect(t *testing.T) {
+	r := casterWorld(t)
+	h := caster(r, "Healer", rules.ClassHealer, 10)
+	w := r.player("Warrior", 10, 30500, 30000, true)
+	w.hp = 1
+	heal := buffSpell(r, h, &SpellDef{ID: 9400, Name: "Pretty Heal", Type: rules.SpellHeal, Target: "Realm", Range: 1000, CastTime: 1, Value: 20, ClientEffect: 2501})
+	plain := buffSpell(r, h, &SpellDef{ID: 9401, Name: "Plain Heal", Type: rules.SpellHeal, Target: "Realm", Range: 1000, CastTime: 1, Value: 20})
+	castAndLand(r, h, heal, w)
+	castAndLand(r, h, plain, w)
+	seen := map[string]int{}
+	for _, s := range snaps(h) {
+		for _, e := range s.Ev {
+			if e.K == "cast" || e.K == "spell" {
+				seen[e.Text+":"+e.K] = e.FX
+			}
+		}
+	}
+	for _, k := range []string{"Pretty Heal:cast", "Pretty Heal:spell"} {
+		if fx, ok := seen[k]; !ok || fx != 2501 {
+			t.Errorf("%s event carries client effect %d (seen %v), want 2501", k, fx, ok)
+		}
+	}
+	for _, k := range []string{"Plain Heal:cast", "Plain Heal:spell"} {
+		if fx, ok := seen[k]; !ok || fx != 0 {
+			t.Errorf("%s event carries client effect %d (seen %v), want none", k, fx, ok)
+		}
+	}
+}

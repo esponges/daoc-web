@@ -75,6 +75,7 @@ drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the 
 - `resist`: a hostile spell from `from` did not land on `to`; `x` is its name;
 - `effect`: a lasting spell (damage over time, slow, stun, mesmerize) took hold on `to`; `x` is its name. A `block` event with `x` set is a bolt blocked.
 - `cast`: a creature began casting: `from` the caster, `to` its target, `x` the spell, `dur` the cast time in seconds. As on a 1.65 server, a client shows the line and the caster's cast animation, not a cast bar;
+- `fx` is added to the `cast`, `spell`, `effect` and `resist` events of a spell that has one: the number of the spell's row in the client's own spell table (`spells.csv` in `gamedata.mpk`), which says how the spell looks (its caster animations and effects, its projectile and its target effect). Absent when the spell has none or the world store was imported without it.
 - `interrupt`: the caster `from` was interrupted (`x` the spell), and `castfail`: its spell failed because the target left its range or died.
 - `draw`: the archer `from` began drawing a bow at `to`; `x` is `normal`, `critical` or `rapid`, `dur` the draw time in seconds. `drawstop` follows when the draw ends, by release or interruption. `arrow`: an arrow left `from` for `to` and takes `dur` seconds to arrive; the `hit`, `miss`, `block` or `evade` event for it follows at once. A shot is never parried.
 
