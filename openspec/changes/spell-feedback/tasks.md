@@ -4,8 +4,8 @@ Browser checks use a scratch server on its own port with a copy of the data. A t
 
 ## 1. Quick wins: pet log and one cast per press
 
-- [ ] 1.1 Pet log. In `effects.js`, `petLine` covers the pet's hit, miss, spell and resist, and blows and spells on the pet, for the pet and its minions by the ids in the `pet` message. `handleEvents` calls it for events that aren't the player's. Verify with `effects.test.mjs` cases (the pet hits for 23, a creature hits the pet for 12, another player's pet logs nothing) and in the browser: a Bonedancer's commander fights a creature and both directions appear in Main.
-- [ ] 1.2 One cast per press. Ignore a cast request while casting or within 300 ms of the same request, and ignore key repeats on quickbar keys. Verify with a `spells.test.mjs` case and in the browser: double-click Minor Dusk Dart and see one "You begin casting" and no "already casting" line.
+- [x] 1.1 Pet log. In `effects.js`, `petLine` covers the pet's hit, miss, spell and resist, and blows and spells on the pet, for the pet and its minions by the ids in the `pet` message. `handleEvents` calls it for events that aren't the player's. The server also delivers a pet's events to its owner beyond sight range (`petInvolved`, with a world test). Verify with `effects.test.mjs` cases (the pet hits for 23, a creature hits the pet for 12, another player's pet logs nothing) and in the browser: a Bonedancer's commander fights a creature and both directions appear in Main.
+- [x] 1.2 One cast per press. Ignore a cast request while casting or within 300 ms of the same request, and ignore key repeats on quickbar keys. Verify with a `spells.test.mjs` case and in the browser: double-click Minor Dusk Dart and see one "You begin casting" and no "already casting" line.
 
 ## 2. Client effects through the server
 

@@ -381,3 +381,33 @@ func TestPetChatCommand(t *testing.T) {
 		t.Error("/pet release left the pet")
 	}
 }
+
+func TestOwnerHearsOfThePetsFightBeyondSight(t *testing.T) {
+	r, h, w, sp := petRig(t)
+	castAndLand(r, h, sp, h)
+	pet := petsOf(r.z, h)[0]
+	far := InterestRadius * 2
+	// The pet's blow lands out of sight of both players; the owner is still told.
+	r.z.event(protocol.Event{K: "hit", From: pet.ID, To: 99, Amount: 23}, h.Body.X+far, h.Body.Y)
+	r.z.event(protocol.Event{K: "hit", From: 98, To: 99, Amount: 5}, h.Body.X+far, h.Body.Y)
+	r.z.event(protocol.Event{K: "hit", From: 99, To: pet.ID, Amount: 12}, h.Body.X+far, h.Body.Y)
+	r.z.snapshots()
+	var got []protocol.Event
+	for _, s := range snaps(h) {
+		for _, e := range s.Ev {
+			if e.K == "hit" {
+				got = append(got, e)
+			}
+		}
+	}
+	if len(got) != 2 || got[0].From != pet.ID || got[1].To != pet.ID {
+		t.Errorf("the owner got %+v, want the pet's blow and the blow it took, and nothing else", got)
+	}
+	for _, s := range snaps(w) {
+		for _, e := range s.Ev {
+			if e.Amount == 23 || e.Amount == 12 {
+				t.Errorf("a stranger was told of the pet's fight: %+v", e)
+			}
+		}
+	}
+}

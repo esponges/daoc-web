@@ -520,3 +520,22 @@ func (z *Zone) petProgress(n *NPC, goal *NPC) {
 	sys(ps.owner, fmt.Sprintf("Your %s cannot reach %s.", n.title(), goal.title()))
 	z.sendPet(ps.owner)
 }
+
+// petInvolved says whether an event is a blow or spell the player's pet, or one
+// of its minions, gave or took. The owner is told of those wherever the pet is,
+// so that its fight is in their log even when it has gone beyond sight.
+func (p *Player) petInvolved(e protocol.Event) bool {
+	n := p.pet
+	if n == nil || !n.isPet() {
+		return false
+	}
+	if e.From == n.ID || e.To == n.ID {
+		return true
+	}
+	for _, m := range n.pet.minions {
+		if e.From == m.ID || e.To == m.ID {
+			return true
+		}
+	}
+	return false
+}

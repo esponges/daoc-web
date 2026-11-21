@@ -332,7 +332,7 @@ func (z *Zone) snapshots() {
 			}
 		}
 		for _, e := range z.ev {
-			if math.Hypot(e.x-p.Body.X, e.y-p.Body.Y) <= InterestRadius {
+			if math.Hypot(e.x-p.Body.X, e.y-p.Body.Y) <= InterestRadius || p.petInvolved(e.e) {
 				s.Ev = append(s.Ev, e.e)
 			}
 		}

@@ -189,3 +189,19 @@ export function createCastBar(doc) {
     },
   };
 }
+
+// castGuard stops one press from becoming two casts: a double-click on a
+// spell row arrives as two clicks, and the second would be refused by the
+// server with "already casting". It lets a request through unless the same
+// spell was asked for a moment ago. ask(id, nowMs) says whether to send.
+export function castGuard(gapMs = 300) {
+  let lastId = 0, lastAt = -Infinity;
+  return {
+    ask(id, nowMs) {
+      if (id === lastId && nowMs - lastAt < gapMs) return false;
+      lastId = id;
+      lastAt = nowMs;
+      return true;
+    },
+  };
+}

@@ -26,7 +26,7 @@ import { candidates } from './race.js';
 import { createUI, conColor } from './ui.js';
 import { ownCastLine } from './spells.js';
 import { eventLine, conColour } from './sheet.js';
-import { effectRows, effectChangeLines, spellLine, castLine } from './effects.js';
+import { effectRows, effectChangeLines, spellLine, castLine, petLine, petNames } from './effects.js';
 import { loadUI, registerFonts } from './uiwin.js';
 
 // The game's typeface for page text (the zone picker, names over heads), when
@@ -1150,8 +1150,11 @@ async function main() {
     const me = net.me;
     remote.events(list, me.id);
     const the = (id) => (id === me.id ? 'you' : 'the ' + (remote.views.get(id)?.name || 'creature'));
+    const pets = petNames(net.pet);
     for (const ev of list) {
       const mine = ev.from === me.id, toMe = ev.to === me.id;
+      const pl = petLine(ev, pets, the, me.id);
+      if (pl) { log(pl.text, pl.cls); continue; }
       switch (ev.k) {
         case 'swing':
           if (mine) eventAnim(anim, ev, player.gait > 0);

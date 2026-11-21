@@ -98,6 +98,47 @@ export function spellLine(ev, me, the) {
   return null;
 }
 
+// petNames maps the ids of the player's pet, and of the minions it commands,
+// to their names, from the last `pet` message; empty when there is none.
+export function petNames(pet) {
+  const m = new Map();
+  if (!pet || pet.cl) return m;
+  if (pet.id) m.set(pet.id, pet.nm || 'pet');
+  for (const x of pet.mn || []) m.set(x.id, x.nm || 'minion');
+  return m;
+}
+
+// petLine is the log line for a blow or spell that the player's pet (or one of
+// its minions) gave or took, in the game's words; null for anything else,
+// including events that concern the player, which have lines of their own.
+//   names  petNames(pet)      the(id)  a name for any other entity ("the wolf")
+const VERB = { block: 'blocks', parry: 'parries', evade: 'evades' };
+
+export function petLine(ev, names, the, me) {
+  if (!names.size || ev.from === me || ev.to === me) return null;
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  const mine = names.get(ev.from), hit = names.get(ev.to);
+  if (!mine && !hit) return null;
+  const n = ev.n || 0;
+  switch (ev.k) {
+    case 'hit':
+      if (mine) return { text: 'Your ' + mine + ' hits ' + the(ev.to) + ' for ' + n + ' damage!' + (ev.c ? ' Critical!' : ''), cls: 'hit' };
+      return { text: cap(the(ev.from)) + ' hits your ' + hit + ' for ' + n + ' damage!', cls: 'hit-in' };
+    case 'miss':
+      if (mine) return { text: 'Your ' + mine + ' misses ' + the(ev.to) + '!', cls: 'miss' };
+      return { text: cap(the(ev.from)) + ' misses your ' + hit + '!', cls: 'miss-in' };
+    case 'block': case 'parry': case 'evade':
+      // The event comes from the one who defended.
+      if (mine) return { text: 'Your ' + mine + ' ' + VERB[ev.k] + ' ' + the(ev.to) + "'s attack!", cls: ev.k };
+      return { text: cap(the(ev.from)) + ' ' + VERB[ev.k] + ' your ' + hit + "'s attack.", cls: 'miss' };
+    case 'spell':
+      if (n < 0) return null; // a heal has its own line
+      if (mine) return { text: 'Your ' + mine + "'s " + ev.x + ' hits ' + the(ev.to) + ' for ' + n + ' damage!', cls: 'spell' };
+      return { text: (ev.from ? cap(the(ev.from)) + "'s " : '') + ev.x + ' hits your ' + hit + ' for ' + n + ' damage!', cls: 'spell-in' };
+  }
+  return null;
+}
+
 // castLine is the log line for a creature beginning or losing a cast near
 // the player; as on 1.65 there is no cast bar for another's cast.
 export function castLine(ev, the) {

@@ -1,7 +1,7 @@
 // Headless checks of the spellbook's pure parts.
 //   node web/spells.test.mjs
 
-import { spellsView, findSpell, spellDragId, slotsFor, assignSlot, castBar, castEventEffect, ownCastLine, SPELL_SLOTS } from './spells.js';
+import { spellsView, findSpell, spellDragId, slotsFor, assignSlot, castBar, castEventEffect, ownCastLine, castGuard, SPELL_SLOTS } from './spells.js';
 
 let failed = 0;
 const ok = (cond, name, extra = '') => {
@@ -55,5 +55,14 @@ ok(castEventEffect({ k: 'drawstop', from: 7 }, 7).what === 'end' && !castEventEf
 ok(ownCastLine({ k: 'draw', from: 7, x: 'normal', dur: 3 }, 7) === null && ownCastLine({ k: 'drawstop', from: 7 }, 7) === null, 'a draw has no begin casting line');
 const bar = castBar({ name: 'Drawing', start: 10, dur: 4 }, 12);
 ok(bar && Math.abs(bar.f - 0.5) < 1e-9, 'the bar is half full halfway through the draw');
+
+// One press, one cast.
+{
+  const g = castGuard(300);
+  ok(g.ask(5, 1000) === true, 'the first request goes');
+  ok(g.ask(5, 1100) === false, 'the same spell again at once is the second half of a double-click');
+  ok(g.ask(6, 1100) === true, 'another spell is a different press');
+  ok(g.ask(6, 1500) === true, 'the same spell after the gap is a new press');
+}
 
 if (failed) { console.log(`\n${failed} failed`); process.exit(1); }

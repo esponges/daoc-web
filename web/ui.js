@@ -20,7 +20,7 @@ import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
-import { createSpellPanel, createSpellBar, createCastBar, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, SPELL_SLOTS } from './spells.js';
+import { createSpellPanel, createSpellBar, createCastBar, castGuard, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, SPELL_SLOTS } from './spells.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -168,7 +168,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     try { saved = JSON.parse(localStorage.getItem(slotKey()) || '[]'); } catch { /* private window: no memory */ }
     spellSlots = slotsFor(saved, net.book);
   };
+  const guard = castGuard();
   const castSpell = (id) => {
+    if (!guard.ask(id, performance.now())) return;
     const t = getTarget ? getTarget() : null;
     net.cast(id, t && !t.dead ? t.id : 0);
   };

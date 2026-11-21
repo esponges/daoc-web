@@ -12,3 +12,7 @@ The owner's log SHALL show their pet's hits with damage, its misses, its spells 
 #### Scenario: Someone else's pet
 - **WHEN** another player's pet fights near the owner
 - **THEN** none of that fight appears in the owner's log
+
+#### Scenario: Out of sight
+- **WHEN** the owner's pet fights a creature far beyond what the owner can see
+- **THEN** the owner's log still shows the pet's blows and the blows it takes, and no other player is told of that fight
