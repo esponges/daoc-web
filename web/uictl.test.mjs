@@ -4,7 +4,7 @@
 
 import assert from 'node:assert/strict';
 import { UIData, buildWindow, child, num, str, pt } from './uiwin.js';
-import { vrCells } from './uictl.js';
+import { vrCells, clampTop, scrollThumb, topFromThumb, rowHeight } from './uictl.js';
 
 const n = (t, body) => {
   if (Array.isArray(body)) return { t, c: body };
@@ -44,6 +44,18 @@ const layout = {
       n('Font', [n('Name', 'arial9')])]),
     n('IconTemplate', [n('Name', 'plain_icon_large'), n('Size', { X: 32, Y: 32 })]),
     n('StatusIconTemplate', [n('Name', 'pip'), n('Width', 8), n('Height', 8), n('TextureName', 'page1'), n('TextureStart', { X: 190, Y: 97 })]),
+    n('FullResizeImageTemplate', [n('Name', 'interior'), n('TopHeight', 4), n('MiddleHeight', 4), n('BottomHeight', 4), n('LeftWidth', 4), n('MiddleWidth', 4), n('RightWidth', 4),
+      n('Texture', [n('TextureName', 'page1'), n('TopLeft', { X: 0, Y: 41 }), n('TopMiddle', { X: 41, Y: 41 }), n('TopRight', { X: 82, Y: 41 }), n('MiddleLeft', { X: 0, Y: 82 }), n('MiddleMiddle', { X: 41, Y: 82 }), n('MiddleRight', { X: 82, Y: 82 }), n('BottomLeft', { X: 0, Y: 123 }), n('BottomMiddle', { X: 41, Y: 123 }), n('BottomRight', { X: 82, Y: 123 })])]),
+    n('ButtonTemplate', [n('Name', 'up'), n('Size', { X: 15, Y: 17 })]),
+    n('ButtonTemplate', [n('Name', 'down'), n('Size', { X: 15, Y: 17 })]),
+    n('VerticalResizeImageTemplate', [n('Name', 'thumb'), n('Width', 11), n('TopHeight', 8), n('RepeatHeight', 16), n('BottomHeight', 8),
+      n('Texture', [n('TextureName', 'page1'), n('Top', { X: 227, Y: 219 }), n('Repeat', { X: 227, Y: 227 }), n('Bottom', { X: 227, Y: 243 })])]),
+    n('VerticalScrollbarTemplate', [n('Name', 'vscroll'), n('UpButtonTemplate', 'up'), n('DownButtonTemplate', 'down'), n('ThumbVResizeTemplate', 'thumb'), n('GutterVResizeTemplate', 'gutter'), n('Width', 15), n('ThumbOffset', { X: 2, Y: 0 })]),
+    n('ListBoxTemplate', [n('Name', 'lb'), n('ScrollbarTemplate', 'vscroll'), n('DrawScroll', 'true'), n('BackgroundTemplate', 'interior'), n('TextFont', [n('Name', 'arial9'), n('LineOffset', 2), n('TextLeftOffset', 4)])]),
+    n('WindowTemplate', [
+      n('Name', 'lists'), n('WindowId', 'Lists'), n('Width', 200), n('Height', 140),
+      n('ListBoxDef', [n('TemplateName', 'lb'), n('ControlId', '1005'), n('AdapterName', 'items'), n('Width', 120), n('Height', 108), n('Position', { X: 10, Y: 20 })]),
+    ]),
     n('WindowTemplate', [
       n('Name', 'imgs'), n('WindowId', 'Imgs'), n('Width', 200), n('Height', 120),
       n('HorizontalResizeImageDef', [n('TemplateName', 'inset'), n('Width', 100), n('Position', { X: 5, Y: 6 }), n('ControlId', 'h')]),
@@ -69,6 +81,82 @@ const h = { child, num, str, pt };
   assert.equal(vrCells(tpl, 2, h).cells.length, 2, 'just both ends');
   assert.deepEqual(vrCells({ c: [] }, 50, h), { w: 0, cells: [] }, 'a template with no art draws nothing');
   console.log('ok: a vertical strip lays out its ends and middle');
+}
+
+
+// The scroll arithmetic.
+{
+  assert.equal(clampTop(-3, 30, 5), 0);
+  assert.equal(clampTop(99, 30, 5), 25, 'the last position that still fills the view');
+  assert.equal(clampTop(4.6, 30, 5), 5);
+  assert.equal(clampTop(3, 4, 5), 0, 'a short list never scrolls');
+  assert.equal(scrollThumb({ total: 10, view: 10, top: 0, track: 200 }), null, 'everything fits: no thumb');
+  assert.deepEqual(scrollThumb({ total: 100, view: 10, top: 0, track: 200 }), { h: 20, y: 0, maxTop: 90 });
+  assert.deepEqual(scrollThumb({ total: 100, view: 10, top: 45, track: 200 }), { h: 20, y: 90, maxTop: 90 }, 'halfway down the list, halfway down the track');
+  assert.equal(scrollThumb({ total: 100, view: 10, top: 90, track: 200 }).y, 180, 'at the end the thumb is at the bottom');
+  assert.equal(scrollThumb({ total: 1000, view: 5, top: 0, track: 100 }).h, 16, 'never thinner than the minimum');
+  assert.equal(topFromThumb(90, 200, 20, 100, 10), 45);
+  assert.equal(topFromThumb(500, 200, 20, 100, 10), 90, 'a thumb dragged past the end stops at the end');
+  assert.equal(topFromThumb(-5, 200, 20, 100, 10), 0);
+  assert.equal(rowHeight(11, 16, 2), 18);
+  assert.equal(rowHeight(11, 0, 2), 13);
+  console.log('ok: the scroll arithmetic');
+}
+
+// A list box shows its rows, scrolls, selects and offers rows to drag.
+{
+  const lw = buildWindow(doc, data, 'Lists');
+  const list = lw.list('items');
+  assert.ok(list && lw.list('1005') === list, 'found by adapter and by control id');
+  const body = (l) => l.el.children.find((c) => c.style.overflow === 'hidden');
+  assert.equal(lw.list('nope'), undefined);
+  const rows = Array.from({ length: 30 }, (_, i) => ({ text: 'Row ' + i, drag: i === 2 ? 'spell:7' : undefined, header: i === 0, on: i !== 3 }));
+  list.setRows(rows);
+  assert.equal(list.view, 5, 'the rows that fit: 100px of 18px rows');
+  assert.equal(body(list).children.length, 5);
+  assert.equal(body(list).children[0].dataset.row, '0');
+  assert.ok(list.el.children.some((c) => c.style.left === '102px'), 'the scrollbar sits at the right edge');
+  list.scrollTo(10);
+  assert.equal(list.top, 10);
+  assert.equal(body(list).children[0].dataset.row, '10');
+  list.el.listeners.wheel({ deltaY: 100, preventDefault() {} });
+  assert.equal(list.top, 13, 'the wheel moves three rows');
+  list.el.listeners.wheel({ deltaY: -100, preventDefault() {} });
+  list.scrollTo(999);
+  assert.equal(list.top, 25, 'scrolling past the end stops at the end');
+  list.scrollTo(0);
+
+  // Selecting: a click on a row, not on a header.
+  const picked = [];
+  list.onSelect((i, row) => picked.push([i, row.text]));
+  body(list).children[0].listeners.click(); // the header
+  assert.deepEqual(picked, [], 'a header cannot be selected');
+  body(list).children[1].listeners.click();
+  assert.deepEqual(picked, [[1, 'Row 1']]);
+  assert.equal(list.selected, 1);
+  assert.equal(body(list).children[1].style.background, 'rgba(255,192,0,0.2)', 'the selected row is marked');
+  const act = [];
+  list.onActivate((i) => act.push(i));
+  body(list).children[1].listeners.dblclick();
+  assert.deepEqual(act, [1]);
+
+  // Rows with a drag payload can be dragged.
+  const dragRow = body(list).children[2];
+  assert.equal(dragRow.draggable, true);
+  const payload = {};
+  dragRow.listeners.dragstart({ dataTransfer: { setData: (t, v) => { payload[t] = v; } } });
+  assert.deepEqual(payload, { 'text/plain': 'spell:7' });
+  assert.equal(body(list).children[1].draggable, undefined, 'plain rows are not draggable');
+
+  // A short list has no thumb; setting fewer rows drops a selection that is gone.
+  list.setRows(rows.slice(0, 3));
+  assert.equal(list.selected, 1);
+  list.setRows(rows.slice(0, 1));
+  assert.equal(list.selected, -1);
+  assert.equal(list.top, 0);
+  list.setRows([]);
+  assert.equal(body(list).children.length, 0);
+  console.log('ok: a list box shows, scrolls, selects and drags its rows');
 }
 
 const win = buildWindow(doc, data, 'Imgs', { onClick: (id) => clicked.push(id) });

@@ -25,6 +25,12 @@ if (!data) {
       w.el.style.left = x + 'px';
       w.el.style.top = y + 'px';
       stage.appendChild(w.el);
+      // Fill every list box with sample rows, so the lists and scrollbars can be seen.
+      for (const c of data.window(id).c || []) {
+        if (c.t !== 'ListBoxDef') continue;
+        const l = w.list((c.c.find((x) => x.t === 'ControlId') || {}).x);
+        if (l) l.setRows(Array.from({ length: 40 }, (_, i) => ({ text: (i % 10 === 0 ? 'Heading ' : 'Sample row ') + i, header: i % 10 === 0, icon: i % 10 ? 634 : 0 })));
+      }
       const t = document.createElement('div');
       t.className = 'tag';
       t.style.left = x + 'px';
