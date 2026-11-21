@@ -35,6 +35,10 @@ export const EFFECT_KINDS = {
   mezdur: { label: 'z', colour: '#6a4a8f', title: 'mesmerizes are shorter' },
 };
 
+// The kinds that harm whoever holds them: their badge is framed in red, the
+// others in gold.
+export const HARMFUL_KINDS = new Set(['dot', 'slow', 'stun', 'mez', 'debuff', 'resdebuff', 'combatslow', 'disease', 'nearsight', 'fatigue', 'sick']);
+
 // What starting to suffer an effect of a kind says.
 const START = { stun: 'You are stunned!', mez: 'You are mesmerized!', slow: 'You are slowed!', disease: 'You are diseased!', nearsight: 'You are nearsighted!', debuff: 'You feel weaker!' };
 
@@ -42,11 +46,13 @@ const START = { stun: 'You are stunned!', mez: 'You are mesmerized!', slow: 'You
 // left counted down from when it arrived.
 export function effectRows(effects, now) {
   const gone = Math.max(0, now - (effects.at || 0));
-  return (effects.list || []).map((e) => {
+  const rows = (effects.list || []).map((e) => {
     const k = EFFECT_KINDS[e.k] || { label: '?', colour: '#666', title: e.k };
     const left = Math.max(0, (e.left || 0) - gone);
-    return { name: e.nm, kind: e.k, label: k.label, colour: k.colour, title: e.nm + ' (' + k.title + ')', left, text: clock(left) };
+    return { name: e.nm, kind: e.k, label: k.label, colour: k.colour, title: e.nm + ' (' + k.title + ')', left, text: e.of === 0 ? '' : clock(left), of: e.of || 0, harmful: HARMFUL_KINDS.has(e.k) };
   });
+  // What helps first, what harms after it; each in the order the server holds them.
+  return rows.filter((r) => !r.harmful).concat(rows.filter((r) => r.harmful));
 }
 
 // clock shows seconds as "12s" or "1:05".

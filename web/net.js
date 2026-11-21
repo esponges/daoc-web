@@ -154,7 +154,7 @@ export class NetClient {
       case 'rez-offer': this.on.rezoffer?.(m); break;
       case 'conc': this.conc = m; this.on.conc?.(m); break;
       case 'task': this.task = m; this.on.task?.(m); break;
-      case 'pet': this.pet = m.cl ? null : m; this.on.pet?.(m); break;
+      case 'pet': if (!m.cl) m.at = this.now(); this.pet = m.cl ? null : m; this.on.pet?.(m); break;
       case 'effects':
         // Our lasting spells, and the speed they leave: prediction steps at
         // that factor from now on, as the server does.

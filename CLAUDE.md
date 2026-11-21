@@ -141,7 +141,7 @@ not show that a window looks right. Check the fallback by temporarily moving
   `stock-windows` (every window from its own stock template; the builder learns
   the missing control types) and `spell-feedback` (spell effects and cast
   animations from the client's own tables in `gamedata.mpk`, the pet's fight in
-  the log, pet and own effect icons, one cast per press). The last change, `midgard-to-fifty` (archived 2026-11-20), brought line of
+  the log, pet and own effect icons, one cast per press); its bolt-in-flight, arrow-in-flight and pet-effect icon browser checks are still open. The last change, `midgard-to-fifty` (archived 2026-11-20), brought line of
   sight, resurrection, concentration, merchant gear to level 50
   (`internal/importer/addedstock.go`), debuffs and wards, pets and charm, all twelve
   classes (archery, stealth, poisons, the left hand) and tasks, with the data quests

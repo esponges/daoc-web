@@ -705,15 +705,16 @@ type Task struct {
 // Pet is the sender's own pet, sent when it appears, changes or is lost.
 // Closed says it is gone and the window should close.
 type Pet struct {
-	T       string      `json:"t"`
-	ID      int64       `json:"id,omitempty"`
-	Name    string      `json:"nm,omitempty"`
-	Level   int         `json:"lv,omitempty"`
-	HP      float64     `json:"hp"` // 0..1
-	Stance  string      `json:"st,omitempty"`
-	Mode    string      `json:"md,omitempty"` // follow, stay or attack
-	Minions []PetMinion `json:"mn,omitempty"`
-	Closed  bool        `json:"cl,omitempty"`
+	T       string       `json:"t"`
+	ID      int64        `json:"id,omitempty"`
+	Name    string       `json:"nm,omitempty"`
+	Level   int          `json:"lv,omitempty"`
+	HP      float64      `json:"hp"` // 0..1
+	Stance  string       `json:"st,omitempty"`
+	FX      []EffectView `json:"fx,omitempty"` // the pet's lasting effects, the same as yours; the client counts their time down
+	Mode    string       `json:"md,omitempty"` // follow, stay or attack
+	Minions []PetMinion  `json:"mn,omitempty"`
+	Closed  bool         `json:"cl,omitempty"`
 }
 
 // PetMinion is one of a commander's minions.

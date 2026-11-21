@@ -57,3 +57,31 @@ win.update({ t: 'pet', cl: true, hp: 0 });
 assert.equal(win.isOpen, false);
 assert.equal(win.el.style.display, 'none');
 console.log('ok: pet window');
+
+// The pet's effects show as icons with their time counting down: the six with
+// the least left, those with no timer after them.
+{
+  const { petEffects, MAX_PET_EFFECTS } = await import('./pet.js');
+  const m = { t: 'pet', id: 5, nm: 'bone pet', lv: 5, hp: 1, at: 100, fx: [
+    { nm: 'Strength of Valhalla', k: 'buff', left: 600, of: 1200 },
+    { nm: 'Spirit of Melee', k: 'haste', left: 30, of: 60 },
+    { nm: 'Shield of the Dead', k: 'ablative', left: 0, of: 0 },
+  ] };
+  let rows = petEffects(m, 110);
+  assert.deepEqual(rows.map((r) => r.name), ['Spirit of Melee', 'Strength of Valhalla', 'Shield of the Dead'], 'least time left first, no timer last');
+  assert.deepEqual(rows.map((r) => r.text), ['20s', '9:50', ''], 'counted down from when the message arrived, blank without a timer');
+  assert.equal(petEffects(m, 140)[0].left, 0, 'never below zero');
+  m.fx = Array.from({ length: 9 }, (_, i) => ({ nm: 'Buff ' + i, k: 'buff', left: 90 - i, of: 90 }));
+  rows = petEffects(m, 100);
+  assert.equal(rows.length, MAX_PET_EFFECTS);
+  assert.equal(rows[0].name, 'Buff 8', 'the six that end soonest');
+  assert.deepEqual(petEffects({ t: 'pet', id: 5, nm: 'x', hp: 1 }, 0), [], 'no effects, no icons');
+  const view = petView(m, 100);
+  assert.equal(view.effects.length, 6);
+  const win = createPetWindow(doc, null, {});
+  win.update(m, 100);
+  const html = JSON.stringify(win.el.children.map((c) => c.className));
+  win.refresh(160);
+  assert.ok(win.isOpen);
+  console.log('ok: the pet window shows its effects with time left');
+}

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"daocweb/internal/server/protocol"
 	"daocweb/internal/server/rules"
 )
 
@@ -175,5 +176,30 @@ func TestAPetGivesUpOnATargetItCannotReach(t *testing.T) {
 	}
 	if pet.pet.ignored != wolf {
 		t.Error("the pet does not remember the creature it gave up on")
+	}
+}
+
+// The pet message carries the pet's lasting effects, and says so again when one
+// starts or ends, but not each tick as the time runs down.
+func TestPetMessageCarriesThePetsEffects(t *testing.T) {
+	r, h, pet, _ := petWithBuffSpell(t, &SpellDef{ID: 9320, Name: "Strength of Valhalla", Type: rules.SpellStrConBuff, Value: 18, Duration: 40})
+	pets := func() []protocol.Pet { return sentOf[protocol.Pet](h, protocol.TPet) }
+	pets() // the summon's own messages
+	castAndLand(r, h, r.w.Cat.Spells[9320], h)
+	got := pets()
+	if len(got) == 0 || len(got[len(got)-1].FX) != 1 || got[len(got)-1].FX[0].Name != "Strength of Valhalla" || got[len(got)-1].FX[0].Left <= 0 {
+		t.Fatalf("after the buff the pet message is %+v, want one effect with time left", got)
+	}
+	r.ticks(TickRate * 3)
+	if again := pets(); len(again) != 0 {
+		t.Errorf("%d pet messages while only the time ran down", len(again))
+	}
+	for _, e := range pet.effects {
+		e.ends = r.z.now + 0.01
+	}
+	r.ticks(TickRate)
+	got = pets()
+	if len(got) == 0 || len(got[len(got)-1].FX) != 0 {
+		t.Errorf("after the buff ended the pet message is %+v, want none", got)
 	}
 }

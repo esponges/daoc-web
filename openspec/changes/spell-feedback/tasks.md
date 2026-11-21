@@ -28,11 +28,11 @@ Browser checks use a scratch server on its own port with a copy of the data. A t
 ## 5. Effects in the HUD
 
 - [ ] 5.1 Pet effects. `protocol.Pet.Fx` is filled in `petMsg` and re-sent when an effect starts or ends on the pet. Document it in `docs/protocol.md`. The pet window shows up to six icons (the least time left first) with time and a name on hover. Verify with a world test (a buff on the pet resends `pet` with `fx`), a `pet` node test, and in the browser: buff the pet and see the icon count down.
-- [ ] 5.2 Own effects row. Icons by kind with helpful and harmful frames and the time left, placed under the summary window from its rectangle, replacing the `#effects` badges. Verify with an `effects.test.mjs` case of the frames and order, and in the browser: buff yourself and get slowed, both show, nothing covers them, and the slow's icon goes when the slow ends.
+- [x] 5.2 Own effects row. Icons by kind with helpful and harmful frames and the time left, placed under the summary window from its rectangle, replacing the `#effects` badges. Verify with an `effects.test.mjs` case of the frames and order, and in the browser: buff yourself and get slowed, both show, nothing covers them, and the slow's icon goes when the slow ends.
 
 ## 6. Close
 
-- [ ] 6.1 Update the specs' scenarios as built, the README (run-order, what's shown), `docs/formats.md`, `docs/protocol.md` and CLAUDE.md's "Open now". Then run `go test -short ./...`, all `web/*.test.mjs` and `openspec validate spell-feedback`. Verify that all of them pass.
+- [x] 6.1 Update the specs' scenarios as built, the README (run-order, what's shown), `docs/formats.md`, `docs/protocol.md` and CLAUDE.md's "Open now". Then run `go test -short ./...`, all `web/*.test.mjs` and `openspec validate spell-feedback`. Verify that all of them pass.
 
 ## Workflow follow-up
 

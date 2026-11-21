@@ -395,6 +395,15 @@ The current reading is the table at the top of this file.
 
 ### Classes, spells and power
 
+How a spell looks comes from the client's own tables (`docs/formats.md`, "How a
+spell looks"): the server sends each spell's client effect as `fx` on its events,
+and with `web/data/effects` converted (`cmd/effectconv`, and `cmd/animconv` for the
+casting clips) a caster plays the spell's cast animation with its hand effects, a
+bolt flies and the target effect plays on the target. Without that data spells
+work and log as they always did. The log also shows your pet's fight, and the pet
+window and the row under the clock show lasting effects, helpful ones framed in
+gold and harmful ones in red.
+
 The creation page offers every race and class pair the data's start table lists
 for all twelve Midgard classes, each with a
 choice of male or female. A caster has a power pool (`rules/power.go`;

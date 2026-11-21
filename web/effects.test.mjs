@@ -76,3 +76,28 @@ console.log('ok: resurrection sickness and the release timer');
   assert.equal(petNames({ cl: true, id: 50 }).size, 0, 'a released pet is nobody');
   console.log('ok: the pet\'s fight is logged in the game\'s words');
 }
+
+// Your effects: helpful ones first, harmful ones after and framed as harmful.
+{
+  const { HARMFUL_KINDS } = await import('./effects.js');
+  const list = { at: 0, list: [
+    { nm: 'Shroud of Doubt', k: 'slow', left: 5, of: 5 },
+    { nm: 'Might', k: 'buff', left: 60, of: 60 },
+    { nm: 'Mind Agony', k: 'dot', left: 9, of: 9 },
+    { nm: 'Spirit of Melee', k: 'haste', left: 30, of: 30 },
+  ] };
+  const rows = effectRows(list, 0);
+  assert.deepEqual(rows.map((r) => r.name), ['Might', 'Spirit of Melee', 'Shroud of Doubt', 'Mind Agony'], 'helpful first, each group in server order');
+  assert.deepEqual(rows.map((r) => r.harmful), [false, false, true, true]);
+  assert.equal(rows[0].of, 60);
+  for (const k of ['dot', 'slow', 'stun', 'mez', 'debuff', 'disease']) assert.ok(HARMFUL_KINDS.has(k), k + ' harms');
+  for (const k of ['buff', 'haste', 'regen', 'resist', 'stealth', 'ablative']) assert.ok(!HARMFUL_KINDS.has(k), k + ' helps');
+  console.log('ok: effects are framed as helpful or harmful, helpful first');
+}
+
+// An effect with no timer (a concentration buff) shows no time, not "0s".
+{
+  const r = effectRows({ at: 0, list: [{ nm: 'Guardian\'s Lesser Ward', k: 'buff', left: 0, of: 0, cc: true }, { nm: 'Might', k: 'buff', left: 20, of: 60 }] }, 0);
+  assert.deepEqual(r.map((x) => x.text), ['', '20s']);
+  console.log('ok: a buff held by concentration shows no time');
+}

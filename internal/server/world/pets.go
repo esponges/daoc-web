@@ -471,6 +471,13 @@ func (z *Zone) petMsg(p *Player) protocol.Pet {
 	}
 	m := protocol.Pet{T: protocol.TPet, ID: n.ID, Name: n.title(), Level: n.Level, HP: math.Max(0, float64(n.HP)/float64(max(1, n.MaxHP))),
 		Stance: n.pet.stance, Mode: n.pet.mode}
+	for _, e := range n.effects {
+		v := protocol.EffectView{Name: e.spell.Name, Kind: e.kind, Icon: e.spell.Icon, Left: math.Max(0, e.ends-z.now), Of: e.spell.effectSeconds()}
+		if math.IsInf(e.ends, 1) || e.cb != nil {
+			v.Left, v.Of = 0, 0
+		}
+		m.FX = append(m.FX, v)
+	}
 	for _, mm := range n.pet.minions {
 		m.Minions = append(m.Minions, protocol.PetMinion{ID: mm.ID, Name: mm.title(), Level: mm.Level, HP: math.Max(0, float64(mm.HP)/float64(max(1, mm.MaxHP)))})
 	}
@@ -480,7 +487,13 @@ func (z *Zone) petMsg(p *Player) protocol.Pet {
 // sendPet sends a player their pet's state if it has changed.
 func (z *Zone) sendPet(p *Player) {
 	m := z.petMsg(p)
-	key := fmt.Sprintf("%+v", m)
+	// The time left falls every tick; only a change in what the pet holds is news.
+	keyed := m
+	keyed.FX = nil
+	for _, v := range m.FX {
+		keyed.Name += fmt.Sprintf("|%s:%s", v.Name, v.Kind)
+	}
+	key := fmt.Sprintf("%+v", keyed)
 	if key == p.petSent {
 		return
 	}

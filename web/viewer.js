@@ -908,7 +908,7 @@ async function main() {
     const drawFx = () => {
       fxEl.replaceChildren(...effectRows(net.effects, net.now()).map((r) => {
         const b = document.createElement('div');
-        b.className = 'fx';
+        b.className = 'fx ' + (r.harmful ? 'bad' : 'good');
         b.title = r.title;
         b.style.background = r.colour;
         b.textContent = r.label;
@@ -917,6 +917,8 @@ async function main() {
         b.append(t);
         return b;
       }));
+      // Under the summary and the clock, wherever they are drawn.
+      fxEl.style.top = ui.fxTop() + 'px';
     };
     net.on.effects = (fx) => {
       for (const l of effectChangeLines(lastFx, fx)) log(l.text, l.cls);

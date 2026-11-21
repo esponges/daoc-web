@@ -551,7 +551,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const petWin = createPetWindow(document, stock, { onOrder: (cmd) => net.petOrder(cmd) });
   if (stock) Object.assign(petWin.el.style, { left: '12px', top: '420px', zIndex: 14 });
   root.appendChild(petWin.el);
-  net.on.pet = (m) => petWin.update(m);
+  net.on.pet = (m) => petWin.update(m, net.now());
+  setInterval(() => petWin.refresh(net.now()), 500);
   // The task window opens from the journal button; the converted interface has no window of its own for it.
   const taskWin = createTaskWindow(document, stock, { onAbandon: () => net.abandonTask() });
   if (stock) Object.assign(taskWin.el.style, { left: '320px', top: '80px', zIndex: 14 });
@@ -672,5 +673,12 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
 
   // The compass follows the camera; the viewer gives its heading each frame.
   const setHeading = (deg) => { if (compassWin) compassWin.setHeading(deg); };
-  return { update, setHeading, key, say, castEvent, toggleSpells, get typing() { return chatApi.typing; }, renderLoot, togglePack, toggleSheet, toggleGroup };
+  // fxTop is where the row of your effects starts: under the stock summary and
+  // clock windows, which are at the right edge, else a fixed place.
+  const fxTop = () => {
+    let bottom = 144;
+    for (const w of [summary, clockWin]) if (w) bottom = Math.max(bottom, Math.ceil(w.el.getBoundingClientRect().bottom) + 8);
+    return bottom;
+  };
+  return { update, setHeading, key, say, castEvent, fxTop, toggleSpells, get typing() { return chatApi.typing; }, renderLoot, togglePack, toggleSheet, toggleGroup };
 }
