@@ -585,8 +585,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   net.on.pet = (m) => petWin.update(m, net.now());
   setInterval(() => petWin.refresh(net.now()), 500);
   // The task window opens from the journal button; the converted interface has no window of its own for it.
-  const taskWin = createTaskWindow(document, stock, { onAbandon: () => net.abandonTask() });
-  if (stock) Object.assign(taskWin.el.style, { left: '320px', top: '80px', zIndex: 14 });
+  const taskWin = createTaskWindow(document, stock, { onAbandon: () => net.abandonTask(), mover });
   root.appendChild(taskWin.el);
   net.on.task = (m) => taskWin.update(m);
   if (net.task) taskWin.update(net.task); // the one sent at login arrived before the window existed

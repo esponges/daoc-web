@@ -698,6 +698,7 @@ registerDrawer('ButtonDef', (env, c, r) => {
   const label = opts.labels ? str(c, 'Label') : '';
   const caption = str(c, 'Label');
   const el = button(env.doc, env.data, str(c, 'TemplateName'), r.x, r.y, opts.onClick && (() => opts.onClick(id, ev, caption)), label);
+  if (ev || id) env.buttons.set(ev || id, { el, disable: (on = true) => el.disable(on) });
   if (opts.disabled && label && opts.disabled(ev || id, id, caption)) {
     el.disable();
     const why = opts.tooltip && opts.tooltip(ev || id, id, caption);
@@ -718,6 +719,7 @@ const drawLabel = (env, c, r) => {
   lt.el.style.left = px(r.x);
   lt.el.style.top = px(r.y);
   bind(env.labels, adapter, lt);
+  bind(env.labels, str(c, 'ControlId'), lt);
   return lt.el;
 };
 registerDrawer('LabelDef', drawLabel);
