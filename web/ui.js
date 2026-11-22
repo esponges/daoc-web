@@ -22,6 +22,7 @@ import { gameSeconds, clockFace } from './daynight.js';
 import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
+import { createStockTrainer } from './trainwin.js';
 import { createStockTalk, healerTalk } from './talk.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
 import { createSpellPanel, createSpellBar, createCastBar, castGuard, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, SPELL_SLOTS } from './spells.js';
@@ -518,15 +519,21 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     }
     sheetPanel.append(closeButton(sheetPanel));
   };
-  net.on.stats = () => { renderAbilities(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song); if (sheetPanel.classList.contains('open')) renderSheet(); if (trainPanel.classList.contains('open') && net.trainer) renderTrainer(net.trainer); };
+  net.on.stats = () => { renderAbilities(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song); if (sheetPanel.classList.contains('open')) renderSheet(); if ((stockTrainer ? stockTrainer.isOpen : trainPanel.classList.contains('open')) && net.trainer) renderTrainer(net.trainer); };
   // C opens the stock attributes window when the converted interface is there, the plain sheet when not.
   const toggleSheet = () => {
     if (charWins) { charWins.toggle('attributes'); return; }
     sheetPanel.classList.toggle('open');
     renderSheet();
   };
+  let stockTrainer = null;
+  if (stock && stock.window('train')) {
+    stockTrainer = createStockTrainer(document, stock, { onTrain: (key) => net.train(key, 1), mover });
+    root.appendChild(stockTrainer.el);
+  }
   const renderTrainer = (m) => {
     const v = trainerView(m);
+    if (stockTrainer) { stockTrainer.show(v); return; }
     trainPanel.replaceChildren(el('h2', '', v.title), el('div', 'line', v.points + ' specialization points to spend'));
     for (const r of v.rows) {
       const row = el('div', 'row' + (r.can ? '' : ' off'));

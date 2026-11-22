@@ -21,7 +21,7 @@ Every window task ends with a browser check against the stock look, using a scra
 - [x] 3.1 Rebuild SPELLS on `stats_spells`: the tree with one heading per line and spells with icon by kind, name and level. A double-click casts, and dragging puts the spell on the quickbar. Verify with a `charwin` node test (a Bonedancer's lines and rows) and in the browser: open SPELLS, expand Bone Army, and cast Summon Bone Boss from it.
 - [x] 3.2 Rebuild Skills on `stats_spec_abil`'s three list boxes and points label, and Styles on the `stats_combat` tree (the game's own Styles window), keeping style drag to the bar. Verify with node tests (a level 10 Warrior's specs and Guard I, and a long ability list scrolls) and in the browser: drag a style to the bar and use it by key.
 - [x] 3.4 Attributes (ATTRIB. and `C`) on `StatsAttributes`: the stat strips, hit points, armour factor and weapon skill labels, the resist and info list boxes, drawn with the stock insets, with only what the server sends filled in. Verify with a `charwin` node test of the rows and in the browser: open ATTRIB. at level 20 and see it match the stock layout (screenshot for the user).
-- [ ] 3.3 Trainer on the stock `Train` window: the specs list, points labels and train button, using the existing trainer messages. Verify with a node test of the rows from a trainer message and in the browser: train a spec at a trainer and see the points drop.
+- [x] 3.3 Trainer on the stock `Train` window: the specs list, points labels and train button, using the existing trainer messages. Verify with a node test of the rows from a trainer message and in the browser: train a spec at a trainer and see the points drop.
 
 ## 4. NPC windows
 
