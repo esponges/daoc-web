@@ -22,6 +22,7 @@ import { gameSeconds, clockFace } from './daynight.js';
 import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
+import { createStockQuiver } from './quiverwin.js';
 import { createStockTrainer } from './trainwin.js';
 import { createStockTalk, healerTalk } from './talk.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
@@ -133,6 +134,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
         else if (a === 'pet') { if (!petWin.isOpen) say('You have no pet.', 'sys'); }
         else if (a === 'pray') sendLine('/pray');
         else if (a === 'bind') sendLine('/bind');
+        else if (a === 'quiver') { if (stockQuiver) stockQuiver.toggle(); else say('You have no quiver window.', 'sys'); }
       } });
     root.appendChild(charWins.el);
     menuBar = createStockMenuBar(document, stock, { onAction: (a) => { if (a === 'inventory') togglePack(); else if (a === 'group') toggleGroup(); else if (a === 'journal') toggleTasks(); else charWins.toggle(a); } });
@@ -341,7 +343,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     cash.textContent = 'Money: ' + money(net.inv.mo || 0);
   };
   // A change to the pack is a buy gone through, so the next of a quantity is asked for.
-  net.on.inv = (...a) => { renderInv(...a); stockShop?.ack(); };
+  net.on.inv = (...a) => { renderInv(...a); stockShop?.ack(); stockQuiver?.update(net.inv); };
   let toggleTasks = () => {}; // set where the task window is built
   const togglePack = () => {
     if (stockPack) { stockPack.toggle(); renderInv(); return; }
@@ -387,6 +389,11 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   // item while it is open (see the pack handlers above).
   const shopPanel = el('div', 'panel shop');
   root.appendChild(shopPanel);
+  let stockQuiver = null;
+  if (stock && stock.window('quiver')) {
+    stockQuiver = createStockQuiver(document, stock, { onMove: (from, to) => net.equip(from, to), mover });
+    root.appendChild(stockQuiver.el);
+  }
   let stockShop = null;
   if (stock) {
     stockShop = createStockShop(document, stock, { onBuy: (id) => net.buy(id), onClose: () => hideShop(), formatMoney: money, mover });

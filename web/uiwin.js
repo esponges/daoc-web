@@ -728,7 +728,16 @@ const drawLabel = (env, c, r) => {
 registerDrawer('LabelDef', drawLabel);
 registerDrawer('ScalarLabelDef', drawLabel);
 
-registerDrawer('InvisibleButtonDef', (env, c, r) => box(env.doc, r.x, r.y, r.w, r.h));
+// An invisible button is a hot area: it draws nothing and reports its event.
+registerDrawer('InvisibleButtonDef', (env, c, r) => {
+  const e = box(env.doc, r.x, r.y, r.w, r.h);
+  const ev = str(c, 'OnClickEvent') || str(c, 'onClickEvent');
+  if (env.opts.onClick && ev) {
+    e.style.cursor = 'pointer';
+    e.addEventListener('click', () => env.opts.onClick(str(c, 'ControlId'), ev, ''));
+  }
+  return e;
+});
 
 registerDrawer('HorizontalResizeButtonDef', (env, c, r) => {
   const { opts } = env;
