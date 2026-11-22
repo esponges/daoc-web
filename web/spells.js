@@ -3,6 +3,7 @@
 // DOM parts are the built-in panels used when the converted interface is
 // absent, and the bar and cast bar in both cases.
 
+import { buildWindow } from './uiwin.js';
 // spellsView is the spells window's content: for each spec line a header and
 // its spells, each with its level, power and cast time. A spell the server
 // cannot cast yet is greyed (on: false) and cannot be dragged.
@@ -170,9 +171,30 @@ export function createSpellBar(doc, { onCast, onAssign, onClear } = {}) {
   };
 }
 
+// createStockCastBar is the cast bar on the stock Timer window: the spell's name
+// over a green bar that fills, shown only while the cast lasts.
+function createStockCastBar(doc, data, { mover }) {
+  const win = buildWindow(doc, data, 'timer', { captions: true, labels: true });
+  Object.assign(win.el.style, { position: 'fixed', left: '50%', top: 'auto', bottom: '190px', marginLeft: '-150px', zIndex: 13, display: 'none', pointerEvents: 'none' });
+  let shown = false;
+  return {
+    el: win.el,
+    get shown() { return shown; },
+    update(cast, nowS) {
+      const s = castBar(cast, nowS);
+      shown = !!s;
+      win.el.style.display = s ? 'block' : 'none';
+      if (!s) return;
+      win.setText('timer_text', s.name);
+      win.setBar('timer_time', s.f);
+    },
+  };
+}
+
 // createCastBar builds the bar that fills while the player casts. update(cast,
 // nowS) takes the cast state castBar reads.
-export function createCastBar(doc) {
+export function createCastBar(doc, data = null, { mover } = {}) {
+  if (data && data.window && data.window('timer')) return createStockCastBar(doc, data, { mover });
   const box = el(doc, 'div', 'castbar');
   const name = el(doc, 'span', 'nm');
   const fill = el(doc, 'div', 'fill');

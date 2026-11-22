@@ -219,7 +219,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   placeBars();
   addEventListener('resize', placeBars);
   if (stock) spellBar.set(spellSlots, net.book, net.song, heldBuffs); // the empty bar shows from the start
-  const castBox = createCastBar(document);
+  const castBox = createCastBar(document, stock, { mover });
   root.appendChild(castBox.el);
   const saveSlots = () => {
     try { localStorage.setItem(slotKey(), JSON.stringify(spellSlots)); } catch { /* not remembered */ }

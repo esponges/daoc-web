@@ -66,3 +66,23 @@ ok(bar && Math.abs(bar.f - 0.5) < 1e-9, 'the bar is half full halfway through th
 }
 
 if (failed) { console.log(`\n${failed} failed`); process.exit(1); }
+
+// The stock cast bar is built from the Timer window when the interface is there.
+{
+  const { existsSync, readFileSync } = await import('node:fs');
+  const real = 'web/data/ui/atlantis/layout.json';
+  if (existsSync(real)) {
+    const { UIData } = await import('./uiwin.js');
+    const { createCastBar } = await import('./spells.js');
+    const mk = (tag) => ({ tag, style: {}, dataset: {}, children: [], appendChild(c) { this.children.push(c); return c; }, append(...cs) { cs.forEach((c) => this.children.push(c)); }, addEventListener() {}, set textContent(v) { this.children = []; }, get textContent() { return ''; } });
+    const data = new UIData(JSON.parse(readFileSync(real, 'utf8')), 'data/ui/atlantis/');
+    const bar = createCastBar({ createElement: mk }, data, {});
+    bar.update({ name: 'Bolt', start: 10, dur: 3 }, 11.5);
+    ok(bar.el.style.display === 'block', 'stock cast bar shown while casting');
+    bar.update({ name: 'Bolt', start: 10, dur: 3 }, 14);
+    ok(bar.el.style.display === 'none', 'stock cast bar hidden when the cast has run');
+    bar.update(null, 0);
+    ok(bar.el.style.display === 'none', 'stock cast bar hidden with no cast');
+    console.log('ok: the stock cast bar shows only while casting');
+  } else console.log('skip stock cast bar (run go run ./cmd/uiconv)');
+}
