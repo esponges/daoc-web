@@ -80,11 +80,22 @@ if (existsSync(real)) {
   stock.update(m);
   stock.toggle(true);
   assert.equal(stock.el.style.display, 'block');
-  assert.equal(stock.el.style.height, 44 + 24 * 2 + 'px', 'the frame grows with the list');
-  assert.match(texts(stock.el).join('|'), /Blessing of Might on Ragnar/);
-  stock.update({ max: 92, used: 0, list: [] });
-  assert.equal(stock.el.style.height, 44 + 24 + 'px');
+  assert.equal(stock.isOpen, true);
   stock.toggle(false);
   assert.equal(stock.el.style.display, 'none');
   console.log('ok: stock concentration list');
 } else console.log('skip stock concentration list (run go run ./cmd/uiconv)');
+
+// The stock window's bar and list.
+{
+  const { concBar, concListRows } = await import('./conc.js');
+  const m = { max: 10, used: 4, list: [{ id: 1, nm: 'Rune of Strength', tg: 'you', cost: 4, sp: 9 }] };
+  assert.equal(concBar(m), 0.4);
+  assert.equal(concBar(null), 0);
+  const rows = concListRows(m);
+  assert.equal(rows[0].header, true);
+  assert.equal(rows[1].id, 1);
+  assert.equal(rows[1].text, 'Rune of Strength on you  (4)');
+  assert.equal(concListRows({ max: 10, used: 0, list: [] })[1].text, 'You hold no buffs.');
+  console.log('ok: the stock concentration window shows its bar and buffs');
+}

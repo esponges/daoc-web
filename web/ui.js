@@ -591,8 +591,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   };
   net.on.groupinv = (m) => invite.show(m.from, m.secs);
   // The buffs a caster holds by concentration: a list to open (K), marked on the spell bar.
-  const concWin = createConcWindow(document, stock, { onCancel: (id) => net.concCancel(id) });
-  if (stock) Object.assign(concWin.el.style, { left: '12px', top: '300px', zIndex: 14 });
+  const concWin = createConcWindow(document, stock, { onCancel: (id) => net.concCancel(id), mover });
+  if (stock && !stock.window('concentration')) Object.assign(concWin.el.style, { left: '12px', top: '300px', zIndex: 14 });
   root.appendChild(concWin.el);
   net.on.conc = (m) => {
     concWin.update(m);

@@ -7,7 +7,7 @@
 // version is the stock dialog frame with the list inside; the fallback is a
 // plain panel.
 
-import { frame } from './uiwin.js';
+import { frame, buildWindow } from './uiwin.js';
 
 // concRows turns the conc message into what to draw.
 export function concRows(m) {
@@ -25,10 +25,50 @@ export function heldSpells(m) {
   return new Set(((m && m.list) || []).map((b) => b.sp).filter(Boolean));
 }
 
+// concBar is the fraction of the pool the buffs hold.
+export function concBar(m) {
+  const max = (m && m.max) || 0;
+  return max > 0 ? Math.max(0, Math.min(1, ((m && m.used) || 0) / max)) : 0;
+}
+
+// concListRows are the rows of the stock window's list: a header with what is
+// used of the pool, then each buff with its cost. A double-click cancels one.
+export function concListRows(m) {
+  const v = concRows(m);
+  const head = [{ text: v.title, header: true }];
+  if (v.empty) return head.concat([{ text: v.empty, on: false }]);
+  return head.concat(v.rows.map((r) => ({ id: r.id, text: r.text + '  (' + r.cost + ')', title: 'Double-click to cancel', on: true })));
+}
+
+// createStockConc is the window on the stock Concentration template: the
+// pool's bar and the list of buffs held.
+function createStockConc(doc, data, { onCancel, mover }) {
+  let open = false, last = null;
+  const win = buildWindow(doc, data, 'concentration', { onClose: () => api.toggle(false) });
+  win.resize(220, 190);
+  Object.assign(win.el.style, { position: 'fixed', left: '12px', top: '300px', zIndex: 14, display: 'none' });
+  mover?.makeMovable(win.el, 'concentration');
+  const list = win.list('2000');
+  if (list) list.onActivate((i, row) => { if (row && row.id) onCancel?.(row.id); });
+  const draw = () => {
+    win.setBar('concentration', concBar(last));
+    if (list) list.setRows(concListRows(last));
+  };
+  const api = {
+    el: win.el,
+    get isOpen() { return open; },
+    update(m) { last = m; draw(); },
+    toggle(on = !open) { open = on; win.el.style.display = open ? 'block' : 'none'; if (open) mover?.restore('concentration'); },
+  };
+  draw();
+  return api;
+}
+
 // createConcWindow builds the list: on the stock dialog frame when the
 // interface is there (data), a plain panel when not. update(m) redraws it,
 // toggle() opens or closes it. onCancel(id) asks the server to end a buff.
-export function createConcWindow(doc, data, { onCancel } = {}) {
+export function createConcWindow(doc, data, { onCancel, mover } = {}) {
+  if (data && data.window && data.window('concentration')) return createStockConc(doc, data, { onCancel, mover });
   const root = doc.createElement('div');
   root.className = data ? '' : 'panel conc';
   const W = 280;
