@@ -70,7 +70,7 @@ export function createMover({ store, viewport }) {
 
   return {
     // makeMovable returns the item: {restore(), reset()}.
-    makeMovable(el, key, strip = TITLE_STRIP) {
+    makeMovable(el, key, strip = TITLE_STRIP, grab = null) {
       const home = { ...where(el), set: false };
       const item = {
         el, key, home,
@@ -92,7 +92,8 @@ export function createMover({ store, viewport }) {
       let drag = null;
       el.addEventListener('pointerdown', (e) => {
         const p = where(el);
-        if (e.clientY - p.y > strip) return;
+        // A window with its own grab handle (the chat, whose title strip holds tabs) moves only by that.
+        if (grab ? !(e.target && grab.contains && grab.contains(e.target)) : e.clientY - p.y > strip) return;
         drag = { dx: e.clientX - p.x, dy: e.clientY - p.y };
         if (el.setPointerCapture && e.pointerId !== undefined) el.setPointerCapture(e.pointerId);
       });

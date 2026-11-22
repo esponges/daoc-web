@@ -14,7 +14,7 @@ Every window task ends with a browser check against the stock look, using a scra
 
 ## 2. Chat
 
-- [ ] 2.1 Stock chat with a 500-line ring, the stock scrollbar and mouse-wheel scrollback, stick-to-bottom, resizing from the corner, moving, and a 450×230 starting size. Main shows combat, spell and system lines; Chat and Group show their own. Verify with `hud.test.mjs` cases for scrollback, stick-to-bottom and tab filtering, and in the browser during a fight: scroll up, the lines stay put, and switching tabs filters.
+- [x] 2.1 Stock chat with a 500-line ring, the stock scrollbar and mouse-wheel scrollback, stick-to-bottom, resizing from the corner, moving, and a 450×230 starting size. Main shows combat, spell and system lines; Chat and Group show their own. Verify with `hud.test.mjs` cases for scrollback, stick-to-bottom and tab filtering, and in the browser during a fight: scroll up, the lines stay put, and switching tabs filters.
 
 ## 3. Character windows
 

@@ -69,9 +69,15 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   };
   let chatApi;
   if (stock) {
-    chatApi = createStockChat(document, stock, { onSend: sendLine });
-    Object.assign(chatApi.el.style, { position: 'fixed', left: '12px', top: 'auto', bottom: '150px', zIndex: 12 });
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('ui.chat.size') || 'null'); } catch { saved = null; }
+    chatApi = createStockChat(document, stock, { onSend: sendLine, viewport: () => ({ w: innerWidth, h: innerHeight }),
+      onResize: (w, h) => { try { localStorage.setItem('ui.chat.size', JSON.stringify({ w, h })); } catch { /* not kept */ } } });
+    if (saved && saved.w > 0) chatApi.setSize(saved.w, saved.h);
+    Object.assign(chatApi.el.style, { position: 'fixed', left: '12px', top: Math.max(10, innerHeight - chatApi.size.h - 150) + 'px', zIndex: 12 });
     root.appendChild(chatApi.el);
+    mover.makeMovable(chatApi.el, 'chat', 20, chatApi.handle);
+    mover.restore('chat');
   } else {
     const chat = el('div', 'chat');
     const lines = el('div', 'lines');

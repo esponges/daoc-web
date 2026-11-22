@@ -5,6 +5,8 @@
 
 import { buildWindow, frame, fontFamily, child, num, str, pt, text, icon, styleIconNumber, hrButton } from './uiwin.js';
 import { slotFrame } from './quickbar.js';
+import { CHAT_MAX, CHAT_SIZE, pushRing, atBottom, chatSize } from './chatlog.js';
+import { scrollThumb } from './uictl.js';
 import { releaseLine } from './effects.js';
 
 // Colours of chat lines by kind.
@@ -22,13 +24,15 @@ const LINE_COLOR = {
 const SPEECH_KINDS = new Set(['', 'all', 'tell', 'group']);
 const TAB_KINDS = { main: null, chat: SPEECH_KINDS, group: new Set(['group']) };
 
-// createStockChat builds the stock chat window: lines in its text area and an
-// entry bar that shows while typing. size is the window's width and height.
+// createStockChat builds the stock chat window: lines in its text area (500
+// kept, scrolled with the wheel or the bar, the view staying where it was put
+// unless it was at the bottom), tabs, a resize grip in the corner and an entry
+// bar that shows while typing.
 //   onSend(text)   the player pressed Enter on a non-empty line
 //   onToggle(open) typing started or stopped
-export function createStockChat(doc, data, { onSend, onToggle, width = 400, height = 150, maxLines = 60 } = {}) {
+//   onResize(w,h)  the window was resized
+export function createStockChat(doc, data, { onSend, onToggle, onResize, width = CHAT_SIZE.w, height = CHAT_SIZE.h, maxLines = CHAT_MAX, viewport = () => ({ w: 1024, h: 768 }) } = {}) {
   const win = buildWindow(doc, data, 'Chat');
-  win.resize(width, height);
   const wt = data.windows.get('Chat');
   const area = child(wt, 'ChatControlDef');
   const entry = (wt.c || []).find((c) => c.t === 'FullResizeImageDef' && str(c, 'ControlId') === '1002');
@@ -39,53 +43,86 @@ export function createStockChat(doc, data, { onSend, onToggle, width = 400, heig
   const off = pt(area, 'TextOffset') || { x: 9, y: 8 };
   const fontName = (ct && str(ct, 'FontName')) || 'chat_small';
   const font = data.fonts.get(fontName);
-
-  // The text area fills the window above the entry bar.
-  const areaW = width - ap.x * 2, areaH = height - ap.y - entryH - 4;
   const bgTpl = (ct && str(ct, 'BackgroundTemplate')) || '';
-  const bg = frame(doc, data, bgTpl, areaW, areaH);
-  bg.style.left = ap.x + 'px';
-  bg.style.top = ap.y + 'px';
-  bg.style.pointerEvents = 'none';
-  const old = win.ctl['1000'];
-  if (old) old.replaceWith(bg);
-  else win.el.appendChild(bg);
+  let W = width, H = height;
+  const parts = []; // what is put back on the window each time it is rebuilt at a new size
 
+  // The text area: a scrolling column, bottom-aligned while short.
   const lines = doc.createElement('div');
   Object.assign(lines.style, {
-    position: 'absolute',
-    left: off.x + 'px',
-    top: off.y + 'px',
-    width: areaW - off.x * 2 + 'px',
-    height: areaH - off.y * 2 + 'px',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
+    position: 'absolute', left: off.x + 'px', top: off.y + 'px', overflowY: 'scroll', overflowX: 'hidden',
+    display: 'flex', flexDirection: 'column', scrollbarWidth: 'none',
     font: font ? `${font.height + 1}px/${font.height + 3}px "${fontFamily(fontName)}", sans-serif` : '11px/13px sans-serif',
-    textShadow: '0 1px 1px #000',
-    pointerEvents: 'none',
+    textShadow: '0 1px 1px #000', pointerEvents: 'auto', overscrollBehavior: 'contain',
   });
-  bg.appendChild(lines);
+  const content = doc.createElement('div');
+  content.style.marginTop = 'auto';
+  lines.appendChild(content);
+
+  // The scrollbar: a thumb on a thin track at the area's right edge.
+  const track = doc.createElement('div');
+  Object.assign(track.style, { position: 'absolute', width: '6px', background: 'rgba(0,0,0,0.5)', display: 'none', pointerEvents: 'auto' });
+  const thumb = doc.createElement('div');
+  Object.assign(thumb.style, { position: 'absolute', left: '0px', width: '6px', background: '#b08d4a', borderRadius: '2px', cursor: 'pointer' });
+  track.appendChild(thumb);
 
   // The entry bar, with a real input over it.
   const bar = doc.createElement('div');
-  Object.assign(bar.style, { position: 'absolute', left: '0px', top: height - entryH - 2 + 'px', width: width + 'px', height: entryH + 'px', display: 'none' });
-  const oldEntry = win.ctl['1002'];
-  if (oldEntry) oldEntry.remove();
-  const entryFrame = frame(doc, data, entry ? str(entry, 'TemplateName') : 'chat_entry', width, entryH);
-  bar.appendChild(entryFrame);
+  Object.assign(bar.style, { position: 'absolute', left: '0px', height: entryH + 'px', display: 'none' });
   const input = doc.createElement('input');
   input.type = 'text';
   input.maxLength = 200;
   input.autocomplete = 'off';
   Object.assign(input.style, {
-    position: 'absolute', left: '13px', top: '0px', width: width - 26 + 'px', height: entryH + 'px', boxSizing: 'border-box',
+    position: 'absolute', left: '13px', top: '0px', height: entryH + 'px', boxSizing: 'border-box',
     padding: '0', margin: '0', border: '0', outline: '0', background: 'transparent', color: '#fff',
     font: font ? `${font.height + 2}px "${fontFamily(fontName)}", sans-serif` : '12px sans-serif',
   });
+  let entryFrame = null;
+
+  // The grip in the bottom-right corner.
+  const grip = doc.createElement('div');
+  Object.assign(grip.style, { position: 'absolute', width: '14px', height: '14px', cursor: 'nwse-resize', pointerEvents: 'auto',
+    borderRight: '2px solid #b08d4a', borderBottom: '2px solid #b08d4a', boxSizing: 'border-box', opacity: '0.7' });
+  grip.title = 'Drag to resize';
+
+  const thumbDraw = () => {
+    const track_h = lines.clientHeight || parseFloat(lines.style.height) || 0;
+    const t = scrollThumb({ total: lines.scrollHeight, view: lines.clientHeight, top: lines.scrollTop, track: track_h });
+    track.style.display = t ? 'block' : 'none';
+    if (t) { thumb.style.height = t.h + 'px'; thumb.style.top = t.y + 'px'; }
+    return t;
+  };
+
+  // layout (re)builds the frames at W by H and puts every piece in place.
+  const layout = () => {
+    win.resize(W, H);
+    const areaW = W - ap.x * 2, areaH = H - ap.y - entryH - 4;
+    const nbg = frame(doc, data, bgTpl, areaW, areaH);
+    nbg.style.left = ap.x + 'px';
+    nbg.style.top = ap.y + 'px';
+    nbg.style.pointerEvents = 'none';
+    const prev = win.ctl['1000'];
+    if (prev) prev.replaceWith(nbg);
+    else win.el.appendChild(nbg);
+    const oldEntry = win.ctl['1002'];
+    if (oldEntry && oldEntry.remove) oldEntry.remove();
+    const nf = frame(doc, data, entry ? str(entry, 'TemplateName') : 'chat_entry', W, entryH);
+    if (entryFrame) entryFrame.replaceWith(nf);
+    else bar.insertBefore(nf, input);
+    entryFrame = nf;
+    Object.assign(lines.style, { left: ap.x + off.x + 'px', top: ap.y + off.y + 'px', width: areaW - off.x * 2 - 8 + 'px', height: areaH - off.y * 2 + 'px' });
+    Object.assign(track.style, { left: ap.x + areaW - off.x + 'px', top: ap.y + off.y + 'px', height: areaH - off.y * 2 + 'px' });
+    Object.assign(bar.style, { top: H - entryH - 2 + 'px', width: W + 'px' });
+    input.style.width = W - 26 + 'px';
+    Object.assign(grip.style, { left: W - 16 + 'px', top: H - 16 + 'px' });
+    for (const p of parts) win.el.appendChild(p);
+    lines.scrollTop = lines.scrollHeight;
+    thumbDraw();
+  };
+  parts.push(lines, track, bar, grip);
   bar.appendChild(input);
-  win.el.appendChild(bar);
+  layout();
 
   let typing = false;
   const open = (prefill = '') => {
@@ -112,7 +149,7 @@ export function createStockChat(doc, data, { onSend, onToggle, width = 400, heig
   });
   input.addEventListener('keyup', (e) => e.stopPropagation());
 
-  // Every line is kept; the tab picks which are shown.
+  // Every line is kept in the ring; the tab picks which are shown.
   const buffer = [];
   let tab = 'main';
   const shown = (e) => !TAB_KINDS[tab] || TAB_KINDS[tab].has(e.kind);
@@ -124,16 +161,49 @@ export function createStockChat(doc, data, { onSend, onToggle, width = 400, heig
   };
   const say = (text, kind = '') => {
     const e = { text, kind };
-    buffer.push(e);
-    if (buffer.length > maxLines * 4) buffer.shift();
+    pushRing(buffer, e, maxLines);
     if (!shown(e)) return;
-    lines.appendChild(lineEl(e));
-    while (lines.childElementCount > maxLines) lines.firstChild.remove();
+    const stick = atBottom(lines.scrollTop, lines.clientHeight, lines.scrollHeight);
+    content.appendChild(lineEl(e));
+    while (content.children.length > maxLines) content.children[0].remove();
+    if (stick) lines.scrollTop = lines.scrollHeight;
+    thumbDraw();
   };
   const redraw = () => {
-    lines.textContent = '';
-    for (const e of buffer.filter(shown).slice(-maxLines)) lines.appendChild(lineEl(e));
+    content.textContent = '';
+    for (const e of buffer.filter(shown)) content.appendChild(lineEl(e));
+    lines.scrollTop = lines.scrollHeight;
+    thumbDraw();
   };
+  lines.addEventListener('scroll', thumbDraw);
+
+  // Dragging the thumb scrolls; the grip resizes.
+  thumb.addEventListener('pointerdown', (e) => {
+    const t = thumbDraw();
+    if (!t) return;
+    const room = Math.max(1, (lines.clientHeight) - t.h);
+    const y0 = e.clientY, top0 = lines.scrollTop;
+    const move = (m) => { lines.scrollTop = top0 + ((m.clientY - y0) / room) * (lines.scrollHeight - lines.clientHeight); };
+    const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
+    addEventListener('pointermove', move);
+    addEventListener('pointerup', up);
+    e.preventDefault?.();
+    e.stopPropagation?.();
+  });
+  grip.addEventListener('pointerdown', (e) => {
+    const x0 = e.clientX, y0 = e.clientY, w0 = W, h0 = H;
+    const move = (m) => {
+      const vp = viewport();
+      const s = chatSize(w0 + m.clientX - x0, h0 + m.clientY - y0, vp.w, vp.h);
+      W = s.w; H = s.h;
+      layout();
+    };
+    const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); onResize?.(W, H); };
+    addEventListener('pointermove', move);
+    addEventListener('pointerup', up);
+    e.preventDefault?.();
+    e.stopPropagation?.();
+  });
 
   // Tabs along the top, drawn with the stock tab button.
   const tabButtons = [];
@@ -145,13 +215,24 @@ export function createStockChat(doc, data, { onSend, onToggle, width = 400, heig
     });
     b.select(id === tab);
     Object.assign(b.el.style, { left: ap.x + 2 + i * 46 + 'px', top: '0px', pointerEvents: 'auto' });
+    parts.push(b.el);
     win.el.appendChild(b.el);
     tabButtons.push(b);
   });
 
   win.el.style.pointerEvents = 'none';
+  // The empty strip right of the tabs is where the window is picked up to move it.
+  const handle = doc.createElement('div');
+  Object.assign(handle.style, { position: 'absolute', left: ap.x + 2 + 3 * 46 + 'px', top: '0px', right: '0px', height: TAB_H + 'px', pointerEvents: 'auto', cursor: 'move' });
+  parts.push(handle);
+  win.el.appendChild(handle);
   input.style.pointerEvents = 'auto';
-  return { el: win.el, say, open, close, get typing() { return typing; }, lines, input };
+  return {
+    el: win.el, handle, say, open, close, get typing() { return typing; }, lines: content, input,
+    get size() { return { w: W, h: H }; },
+    setSize(w, h) { const s = chatSize(w, h, viewport().w, viewport().h); W = s.w; H = s.h; layout(); },
+    get tab() { return tab; },
+  };
 }
 
 // createStockSummary builds the stock summary window: the character's hits,
