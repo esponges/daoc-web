@@ -27,7 +27,7 @@ Every window task ends with a browser check against the stock look, using a scra
 
 - [x] 4.1 Merchant on the stock `Merchant` window, following the merchants spec delta. The list box shows the page's items. The page buttons and label turn the pages. The quantity sends that many `buy` messages and stops at the first refusal. The coin fields show the selected price, the title shows the merchant's name, and selling by click on the pack is kept. Verify with `shop` node tests (pages, quantity, coins) and in the browser: buy three packs of arrows and sell an item.
 - [ ] 4.2 Vault on the stock `Vault` window, keeping drag between pack and vault. Verify with a node test of the rows and in the browser: store and take an item at a vault keeper.
-- [ ] 4.3 Healer and NPC talk on the stock `Interact` window (title and text area). Verify with a node test and in the browser: right-click a healer.
+- [x] 4.3 Healer and NPC talk on the stock `Interact` window (title and text area). Verify with a node test and in the browser: right-click a healer.
 - [x] 4.4 Task window on the stock `Quest` journal (tree of tasks and abandon button), replaying the last task message on open. Verify with a `task.test.mjs` case and in the browser: ask a task, see it listed, and abandon it.
 
 ## 5. Combat windows

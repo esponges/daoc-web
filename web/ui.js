@@ -22,6 +22,7 @@ import { gameSeconds, clockFace } from './daynight.js';
 import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour } from './sheet.js';
+import { createStockTalk, healerTalk } from './talk.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
 import { createSpellPanel, createSpellBar, createCastBar, castGuard, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, SPELL_SLOTS } from './spells.js';
 
@@ -538,7 +539,13 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     trainPanel.classList.add('open');
   };
   net.on.trainer = renderTrainer;
+  let stockTalk = null, talkNpc = null;
+  if (stock && stock.window('interact')) {
+    stockTalk = createStockTalk(document, stock, { onAccept: () => { if (talkNpc) net.restore(talkNpc); }, mover });
+    root.appendChild(stockTalk.el);
+  }
   const renderHealer = (m) => {
+    if (stockTalk) { talkNpc = m.npc; stockTalk.show(healerTalk(m, money)); return; }
     healPanel.replaceChildren(el('h2', '', m.nm), el('div', 'line', healerText(m, money)));
     const ok = el('button', '', 'Accept');
     ok.addEventListener('click', () => { net.restore(m.npc); healPanel.classList.remove('open'); });
