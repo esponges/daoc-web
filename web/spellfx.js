@@ -185,6 +185,7 @@ export async function createSpellFx(gl, helpers, { base = 'data/effects', fetchJ
   const book = createFxBook(index);
   const live = createFxLive();
   const flights = [];
+  let flown = 0;
 
   const place = (inst, pos) => {
     const e = book.effect(inst.effect);
@@ -202,12 +203,15 @@ export async function createSpellFx(gl, helpers, { base = 'data/effects', fetchJ
       if (!e) return null;
       return live.add({ effect: effectId, anchor, start: now, dur: dur || e.ms / 1000, tag });
     },
+    // stats is what is playing now, for checks in the browser.
+    get stats() { return { flights: flights.length, flown }; },
     // fly sends an effect from one point to another over dur seconds.
     fly(effectId, from, to, now, dur) {
       if (!book.effect(effectId)) return null;
       // A model flies along the line it is sent: turned to face the way it goes.
       const f = { effect: effectId, from, to, start: now, dur, seed: flights.length + 1, yaw: Math.atan2(to[0] - from[0], -(to[1] - from[1])) };
       flights.push(f);
+      flown++;
       return f;
     },
     draw(ctx, locate) {

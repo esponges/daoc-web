@@ -964,6 +964,7 @@ async function main() {
   // Debug handle: lets you jump the camera from the console, e.g.
   //   daoc.goto(120, 90, 800)   // heightmap cell x, y, metres above ground
   globalThis.daoc = {
+    get spellfx() { return spellfx; },
     cam, orbit, player, char, props, npcs, combat, anim, manifest: man, world, grass, particles, net, remote,
     heightAt: world.heightAtCell,
     groundAt,
