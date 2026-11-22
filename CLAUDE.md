@@ -138,8 +138,8 @@ not show that a window looks right. Check the fallback by temporarily moving
 - **Specs drive work.** Changes live in `openspec/changes/<name>/` (proposal,
   specs, design, tasks); `/opsx:propose`, `/opsx:apply` and `/opsx:archive`
   run them. Archived changes sync into `openspec/specs/`. Open now:
-  `stock-windows` (every window from its own stock template; the builder learns
-  the missing control types) and `spell-feedback` (spell effects and cast
+  `stock-windows` (every window from its own stock template; all tasks done,
+  to archive after a last look in play) and `spell-feedback` (spell effects and cast
   animations from the client's own tables in `gamedata.mpk`, the pet's fight in
   the log, pet and own effect icons, one cast per press); its bolt-in-flight, arrow-in-flight and pet-effect icon browser checks are still open. The last change, `midgard-to-fifty` (archived 2026-11-20), brought line of
   sight, resurrection, concentration, merchant gear to level 50

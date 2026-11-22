@@ -433,10 +433,15 @@ spec and the weapon's swing as the community servers do.
 
 ### The game's own interface
 
-The menu bar, compass and clock, chat (with its Main and Chat tabs, which also
-takes the combat and game messages), the summary window, the style bar, the
-inventory, the loot window and the Release window are drawn with the game's
-own windows, art and fonts, when they have been converted:
+Every window is drawn from the game's own templates, art and fonts when they
+have been converted: the menu bar, compass, clock and summary; chat (Main, Chat
+and Group tabs, a 500-line scrollback, resizable and movable); Attributes,
+Skills, Styles and Spells; the quest journal; the merchant, vault and trainer;
+the healer's talk (Interact); the pet (MiniPet), Concentration, the cast bar
+(Timer) and the quiver; and the spell bar and quickbar, drawn from the skin's
+own slot art. Windows move by their title and remember where they were left
+(`/resetui` puts them back). What the install has no layout for (the pack, the
+loot window, the quickbar) is built on the stock frame and art by hand:
 
 ```bash
 go run ./cmd/uiconv -skin atlantis    # writes web/data/ui/atlantis/ (not committed)

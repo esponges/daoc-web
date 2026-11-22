@@ -40,8 +40,8 @@ Every window task ends with a browser check against the stock look, using a scra
 
 ## 6. Fallback and close
 
-- [ ] 6.1 Fallback: move `web/data/ui/` aside and check that every window of this change opens its built-in panel and works. Verify in the browser, then put the folder back.
-- [ ] 6.2 Update the specs' scenarios as built, the README's interface section and CLAUDE.md's "Open now". Then run `go test -short ./...`, all `web/*.test.mjs` and `openspec validate stock-windows`. Verify that all of them pass.
+- [x] 6.1 Fallback: move `web/data/ui/` aside and check that every window of this change opens its built-in panel and works. Verify in the browser, then put the folder back.
+- [x] 6.2 Update the specs' scenarios as built, the README's interface section and CLAUDE.md's "Open now". Then run `go test -short ./...`, all `web/*.test.mjs` and `openspec validate stock-windows`. Verify that all of them pass.
 
 ## Workflow follow-up
 
