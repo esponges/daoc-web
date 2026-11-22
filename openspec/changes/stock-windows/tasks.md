@@ -32,7 +32,7 @@ Every window task ends with a browser check against the stock look, using a scra
 
 ## 5. Combat windows
 
-- [ ] 5.1 Pet window on the stock `MiniPet`: title, health bar, stance checkboxes ticked from the server's stance, and command buttons. Verify with a `pet` node test and in the browser: summon, set passive, attack, and the bar falls as the pet is hit.
+- [x] 5.1 Pet window on the stock `MiniPet`: title, health bar, stance checkboxes ticked from the server's stance, and command buttons. Verify with a `pet` node test and in the browser: summon, set passive, attack, and the bar falls as the pet is hit.
 - [ ] 5.2 Concentration on the stock `Concentration` window: bar, label and the list with cancel. Verify with a `conc` node test and in the browser with a Healer holding two buffs, cancelling one.
 - [ ] 5.3 Cast bar on the stock `Timer` window: spell name and progress, hidden when the spell lands, fails or is interrupted; the bow draw uses the same window. Verify with a `spells` node test of the timing and in the browser with a three-second cast.
 - [ ] 5.4 Quiver on the stock `WindowQuiver` (four icons and counts, click to pick the active quiver slot). Verify with a node test and in the browser with a Hunter holding two arrow kinds.

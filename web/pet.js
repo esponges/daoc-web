@@ -8,6 +8,7 @@
 
 import { frame } from './uiwin.js';
 import { effectRows } from './effects.js';
+import { createStockPet } from './petwin.js';
 
 // The most effects the window shows, as the stock pet window has room for.
 export const MAX_PET_EFFECTS = 6;
@@ -29,6 +30,8 @@ export function petView(m, now = 0) {
   if (!m || m.cl || !m.id) return null;
   const pct = Math.max(0, Math.min(1, m.hp ?? 0));
   return {
+    id: m.id,
+    name: m.nm,
     title: m.nm + '  (level ' + (m.lv || 0) + ')',
     hp: pct,
     hpText: Math.round(pct * 100) + '%',
@@ -49,7 +52,17 @@ export function ownerLabel(ent) { return ent && ent.ow ? ent.ow + "'s pet" : '';
 // interface is there (data), a plain panel when not. update(m) redraws it;
 // it opens when there is a pet and closes when there is none.
 // onOrder(cmd) sends a pet-cmd.
-export function createPetWindow(doc, data, { onOrder } = {}) {
+export function createPetWindow(doc, data, { onOrder, mover } = {}) {
+  if (data && data.window && data.window('mini_pet')) {
+    const stock = createStockPet(doc, data, { onOrder, mover });
+    let seen = null;
+    return {
+      el: stock.el,
+      get isOpen() { return stock.isOpen; },
+      update(m, now = 0) { seen = m; stock.update(m, now, petView(m, now)); },
+      refresh(now) { if (seen) stock.update(seen, now, petView(seen, now)); },
+    };
+  }
   const root = doc.createElement('div');
   root.className = data ? '' : 'panel pet';
   const W = 260;

@@ -600,8 +600,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     spellBar.set(spellSlots, net.book, net.song, heldBuffs);
   };
   // The pet: a window that opens when there is one and closes when it is gone.
-  const petWin = createPetWindow(document, stock, { onOrder: (cmd) => net.petOrder(cmd) });
-  if (stock) Object.assign(petWin.el.style, { left: '12px', top: '420px', zIndex: 14 });
+  const petWin = createPetWindow(document, stock, { onOrder: (cmd) => net.petOrder(cmd), mover });
   root.appendChild(petWin.el);
   net.on.pet = (m) => petWin.update(m, net.now());
   setInterval(() => petWin.refresh(net.now()), 500);

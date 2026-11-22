@@ -85,3 +85,18 @@ console.log('ok: pet window');
   assert.ok(win.isOpen);
   console.log('ok: the pet window shows its effects with time left');
 }
+
+// The stock window's check boxes follow the pet's stance and movement.
+{
+  const { petChecked, petIcons, PET_CHECKS } = await import('./petwin.js');
+  const v = petView({ t: 'pet', id: 5, nm: 'x', hp: 1, st: 'aggressive', md: 'stay' });
+  assert.equal(petChecked('1000', v), true, 'Aggro ticked for an aggressive pet');
+  assert.equal(petChecked('1001', v), false);
+  assert.equal(petChecked('1004', v), true, 'Stay ticked for a pet that stays');
+  assert.equal(petChecked('1003', v), false);
+  assert.equal(petChecked('1005', v), false, 'Go Target has no order');
+  assert.equal(PET_CHECKS[1002].order, 'passive');
+  assert.equal(petChecked('1000', null), false);
+  assert.equal(petIcons([{ harmful: false }, { harmful: true }]).length, 2);
+  console.log('ok: the stock pet window shows stance and movement from the server');
+}
