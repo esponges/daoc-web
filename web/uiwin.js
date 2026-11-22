@@ -625,7 +625,8 @@ export function place(ctl, winW, winH, baseW, baseH) {
   const growW = al && flag(al, 'GrowWidth'), growH = al && flag(al, 'GrowHeight');
   const w = growW ? w0 + (winW - baseW) : w0;
   const h = growH ? h0 + (winH - baseH) : h0;
-  const x = al && flag(al, 'OffsetRight') ? winW - p.x - w : p.x;
+  // CenterHorizontally puts a control in the middle of the window (a title label, say).
+  const x = al && flag(al, 'OffsetRight') ? winW - p.x - w : al && flag(al, 'CenterHorizontally') && !growW ? Math.round((winW - w) / 2) + p.x : p.x;
   const y = al && flag(al, 'OffsetBottom') ? winH - p.y - h : p.y;
   return { x, y, w, h };
 }

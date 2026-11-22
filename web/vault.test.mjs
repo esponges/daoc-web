@@ -14,3 +14,15 @@ ok(firstFreePack({ items: [{ slot: 0 }, { slot: 1 }, { slot: 3 }] }) === 2, 'the
 ok(firstFreePack({ items: Array.from({ length: 40 }, (_, s) => ({ slot: s })) }) === -1, 'a full pack has no free slot');
 ok(firstFreePack({ items: [{ slot: 40 }] }) === 0, 'worn slots do not count as pack slots');
 process.exit(failed ? 1 : 0);
+
+// The stock vault lists what is held.
+{
+  const { vaultRows } = await import('./vault.js');
+  const rows = vaultRows({ items: [{ slot: 1003, nm: 'Ale', n: 3 }, { slot: 1000, nm: 'Sword' }] });
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].slot, 1000, 'in slot order');
+  assert.equal(rows[1].text, 'Ale x3');
+  assert.equal(rows[1].drag, '1003', 'a row drags by its slot');
+  assert.equal(vaultRows(null).length, 0);
+  console.log('ok: the stock vault lists its items');
+}

@@ -4,7 +4,7 @@
 // onto another. Built on the stock window frame when the interface is there,
 // and as a plain panel when it is not.
 
-import { frame, text, hrButton, layoutText } from './uiwin.js';
+import { frame, text, hrButton, layoutText, buildWindow, itemIconNumber } from './uiwin.js';
 
 export const VAULT_BASE = 1000;
 export const VAULT_SLOTS = 40;
@@ -33,10 +33,58 @@ export function firstFreePack(inv) {
   return -1;
 }
 
+// vaultRows are the stock vault list's rows: the items held, in slot order,
+// each draggable by its slot.
+export function vaultRows(vault) {
+  return vaultCells(vault).filter((c) => c.item).map((c) => ({
+    slot: c.slot, text: c.item.nm + (c.item.n > 1 ? ' x' + c.item.n : ''), icon: itemIconNumber(c.item),
+    title: c.item.nm + (c.item.d ? ' - ' + c.item.d : '') + ' - click: take it to your pack', drag: String(c.slot),
+  }));
+}
+
+// createStockVault is the vault on the stock Vault window: a list of what is
+// held. A click on a row takes the item to the pack, a row can be dragged to a
+// pack slot, and a pack item dropped on the window goes into the vault.
+function createStockVault(doc, data, { onMove, onClose, getInv, mover }) {
+  const win = buildWindow(doc, data, 'vault_window', { captions: true, labels: true, onClose: () => onClose?.() });
+  Object.assign(win.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-150px', zIndex: 15, display: 'none' });
+  mover?.makeMovable(win.el, 'vault');
+  let vault = null, open = false, rows = [];
+  const list = win.list('1000');
+  if (list) list.onSelect((i) => {
+    const r = rows[i];
+    if (!r) return;
+    const free = firstFreePack(getInv());
+    if (free >= 0) onMove?.(r.slot, free);
+  });
+  win.el.addEventListener('dragover', (e) => e.preventDefault());
+  win.el.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const from = Number(e.dataTransfer?.getData('text/plain'));
+    if (!Number.isFinite(from) || from >= VAULT_BASE) return;
+    const free = firstFreeVault(vault);
+    if (free >= 0) onMove?.(from, free);
+  });
+  const draw = () => { rows = vaultRows(vault); if (list) list.setRows(rows); };
+  return {
+    el: win.el,
+    get isOpen() { return open; },
+    get vault() { return vault; },
+    show(m) {
+      vault = m; draw();
+      if (!open) mover?.restore('vault');
+      open = true;
+      win.el.style.display = 'block';
+    },
+    hide() { vault = null; open = false; win.el.style.display = 'none'; },
+  };
+}
+
 // createVault builds the window, hidden.
 //   onMove(from, to)  an item was clicked or dragged
 //   onClose()         the Close button was pressed
-export function createVault(doc, data, { onMove, onClose, getInv = () => null } = {}) {
+export function createVault(doc, data, { onMove, onClose, getInv = () => null, mover } = {}) {
+  if (data && data.window && data.window('vault_window')) return createStockVault(doc, data, { onMove, onClose, getInv, mover });
   const root = doc.createElement('div');
   root.className = data ? 'vault-stock' : 'panel vault';
   if (data) Object.assign(root.style, { position: 'relative', width: WIDTH + 'px', height: HEIGHT + 'px', display: 'none' });

@@ -433,9 +433,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const vaultWin = createVault(document, stock || null, {
     onMove: (from, to) => net.equip(from, to),
     onClose: () => hideVault(),
-    getInv: () => net.inv,
+    getInv: () => net.inv, mover,
   });
-  if (stock) Object.assign(vaultWin.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-170px', zIndex: 15 });
+  if (stock && !stock.window('vault_window')) Object.assign(vaultWin.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-170px', zIndex: 15 });
   root.appendChild(vaultWin.el);
   const vaultOpen = () => vaultWin.isOpen;
   const toVault = (slot) => {
