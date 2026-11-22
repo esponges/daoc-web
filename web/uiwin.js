@@ -444,6 +444,8 @@ export function labelText(doc, data, c) {
   const font = str(c, 'FontName');
   const baseColor = rgba(child(c, 'Color')) || 'rgb(255,255,255)';
   const root = box(doc, 0, 0, w, h);
+  const al = child(c, 'Alignment');
+  const centered = flag(c, 'TextCentered') || (al && flag(al, 'CenterHorizontally'));
   const set = (value, color) => {
     root.textContent = '';
     if (value === '' || value === undefined || value === null) return;
@@ -451,12 +453,12 @@ export function labelText(doc, data, c) {
     const bf = data.bitmapFont(font);
     const tw = bf ? layoutText(bf, value).width : 0;
     if (bf) {
-      t.style.left = px(flag(c, 'TextCentered') ? (w - tw) / 2 : flag(c, 'EndAligned') ? w - tw : 0);
+      t.style.left = px(centered ? (w - tw) / 2 : flag(c, 'EndAligned') ? w - tw : 0);
       t.style.top = px(Math.max(0, (h - bf.h) / 2));
     } else {
       t.style.left = '0px';
       t.style.width = px(w);
-      t.style.textAlign = flag(c, 'TextCentered') ? 'center' : flag(c, 'EndAligned') ? 'right' : 'left';
+      t.style.textAlign = centered ? 'center' : flag(c, 'EndAligned') ? 'right' : 'left';
     }
     root.appendChild(t);
   };

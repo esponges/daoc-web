@@ -1,21 +1,16 @@
-// The merchant window, built on the stock window frame the way the loot window
-// is: the install has art for a merchant window but no layout for it, so this
-// is a stock frame with rows of picture, name, detail and price in stock fonts
-// and a stock button. A merchant can sell over a hundred things, so the rows
-// scroll inside a window of fixed height.
+// The merchant window: the stock Merchant window, filled with what the
+// merchant sells.
+//
+// Its list box shows a page of the stock (picture and name, the price in the
+// row), the arrows turn the pages and the page label says which. Clicking a
+// row selects it, and the five coin fields show its price. The quantity
+// arrows say how many to buy; BUY asks the server for that many, one `buy` at
+// a time, stopping at the first one it refuses. Selling is a click on a pack
+// item while the window is open, which ui.js handles. The server decides every
+// purchase.
 
-import { frame, text, icon, itemIconNumber, hrButton, layoutText } from './uiwin.js';
-
-export const WIDTH = 300;
-export const ROW_H = 36;
-const TOP = 26;
-const BOTTOM = 52;
-export const MAX_ROWS = 8;
-
-// shopHeight is the window height for a shop with this many rows.
-export function shopHeight(rows) {
-  return TOP + Math.min(MAX_ROWS, Math.max(1, rows)) * ROW_H + BOTTOM;
-}
+import { buildWindow, itemIconNumber } from './uiwin.js';
+import { coins } from './pack.js';
 
 // shopRows turns a shop message into the rows to show, in the order sent.
 export function shopRows(shop, formatMoney = String) {
@@ -27,105 +22,148 @@ export function shopRows(shop, formatMoney = String) {
 // canAfford says whether money (copper) covers a row.
 export const canAfford = (row, money) => money >= row.price;
 
+// pageCount is how many pages n rows make at perPage a page; always at least one.
+export const pageCount = (n, perPage) => Math.max(1, Math.ceil(n / Math.max(1, perPage)));
+
+// pageRows is the rows of one page.
+export const pageRows = (rows, page, perPage) => rows.slice(page * perPage, (page + 1) * perPage);
+
+// MAX_QTY is the most that can be asked for at once.
+export const MAX_QTY = 99;
+
+// stepQty moves a quantity by d, kept from 1 to MAX_QTY.
+export const stepQty = (q, d) => Math.max(1, Math.min(MAX_QTY, q + d));
+
+// priceOf is what qty of a row cost, in copper; 0 when nothing is selected.
+export const priceOf = (row, qty) => (row ? row.price * qty : 0);
+
+// coinFields is a price in copper as the five coin fields show it: mithril,
+// platinum, gold, silver and copper.
+export const coinFields = (copper) => coins(copper);
+
+// createBuyQueue asks for the same item n times, one at a time: send(id) goes
+// out for the first at once, and for each next when ack() says the last one
+// went through; fail() drops what is left (the server refused one). pending is
+// how many are still to be asked for.
+export function createBuyQueue(send) {
+  let id = null, left = 0;
+  return {
+    get pending() { return left; },
+    start(item, n) {
+      id = item;
+      left = Math.max(0, n);
+      if (left > 0) { left--; send(id); }
+    },
+    ack() { if (left > 0) { left--; send(id); } },
+    fail() { left = 0; },
+  };
+}
+
+// The five coin fields' adapters, mithril first.
+const COIN_ADAPTERS = ['merchant_mithril', 'merchant_platinum', 'merchant_gold', 'merchant_silver', 'merchant_copper'];
+
 // createStockShop builds the window, hidden. show(shop) fills and opens it.
-//   onBuy(itemId)   a row was clicked
-//   onClose()       the Close button was pressed
-export function createStockShop(doc, data, { onBuy, onClose, formatMoney = String } = {}) {
-  const root = doc.createElement('div');
-  Object.assign(root.style, { position: 'relative', width: WIDTH + 'px', display: 'none' });
-  let shop = null;
-  let money = 0;
-  let open = false;
+//   onBuy(itemId)   one unit is to be bought (called once per unit, in turn)
+//   onClose()       the window was closed
+// ack() and fail() tell it how a buy went, so a quantity stops at a refusal.
+export function createStockShop(doc, data, { onBuy, onClose, formatMoney = String, mover } = {}) {
+  let shop = null, money = 0, open = false;
+  let page = 0, selected = -1, qty = 1, keep = false;
+  const queue = createBuyQueue((id) => onBuy?.(id));
+  const win = buildWindow(doc, data, 'merchant', {
+    captions: true, labels: true,
+    onClose: () => onClose?.(),
+    onClick: (id, ev, label) => {
+      if (id === '1000') turn(-1);
+      else if (id === '1001') turn(1);
+      else if (id === '1007') setQty(stepQty(qty, -1));
+      else if (id === '1008') setQty(stepQty(qty, 1));
+      else if (label === 'BUY') buy();
+    },
+    // Selling is a click on a pack item, and appraising is not built.
+    disabled: (ev, id, label) => label === 'SELL' || label === 'APPRAISE',
+    tooltip: (ev, id, label) => (label === 'SELL' ? 'Click an item in your pack to sell it.' : 'Not built yet.'),
+  });
+  Object.assign(win.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-175px', zIndex: 15, display: 'none' });
+  mover?.makeMovable(win.el, 'merchant');
+  const list = win.list('1005');
+  const keepBox = win.check('1009');
+  if (keepBox) keepBox.onChange((on) => { keep = on; });
 
-  function render() {
-    root.textContent = '';
-    const rows = shopRows(shop, formatMoney);
-    const h = shopHeight(rows.length);
-    root.style.height = h + 'px';
-    root.appendChild(frame(doc, data, 'dlg_background_noresize', WIDTH, h));
+  let rows = [];
+  const perPage = () => (list ? list.view : 10);
 
-    const title = text(doc, data, 'arial11', shop ? shop.nm : '', 'rgb(255,255,255)');
-    const bf = data.bitmapFont('arial11');
-    const tw = bf && shop ? layoutText(bf, shop.nm).width : 0;
-    title.style.left = Math.max(8, (WIDTH - tw) / 2) + 'px';
-    title.style.top = '7px';
-    title.style.pointerEvents = 'none';
-    root.appendChild(title);
-
-    const visible = Math.min(MAX_ROWS, Math.max(1, rows.length));
-    const list = doc.createElement('div');
-    Object.assign(list.style, {
-      position: 'absolute', left: '10px', top: TOP + 'px', width: WIDTH - 20 + 'px', height: visible * ROW_H + 'px',
-      overflowY: 'auto', overflowX: 'hidden',
-    });
-    rows.forEach((r, i) => {
-      const row = doc.createElement('div');
-      Object.assign(row.style, { position: 'absolute', left: '0', top: i * ROW_H + 'px', width: WIDTH - 36 + 'px', height: ROW_H - 2 + 'px', cursor: 'pointer' });
-      row.addEventListener('pointerenter', () => (row.style.background = 'rgba(255,255,255,.10)'));
-      row.addEventListener('pointerleave', () => (row.style.background = 'transparent'));
-      row.addEventListener('click', () => onBuy?.(r.id));
-      row.appendChild(icon(doc, data, itemIconNumber(r.item), 2, 1));
-      const name = text(doc, data, 'arial11', r.name, 'rgb(255,255,255)');
-      name.style.left = '40px';
-      name.style.top = (r.detail ? 3 : 10) + 'px';
-      name.style.pointerEvents = 'none';
-      row.appendChild(name);
-      if (r.detail) {
-        const d = text(doc, data, 'arial9', r.detail, 'rgb(170,180,190)');
-        d.style.left = '40px';
-        d.style.top = '19px';
-        d.style.pointerEvents = 'none';
-        row.appendChild(d);
-      }
-      const price = text(doc, data, 'arial9', r.priceText, canAfford(r, money) ? 'rgb(255,215,106)' : 'rgb(255,110,110)');
-      const pw = bf ? layoutText(data.bitmapFont('arial9') || bf, r.priceText).width : 0;
-      price.style.left = Math.max(40, WIDTH - 36 - pw - 4) + 'px';
-      price.style.top = '3px';
-      price.style.pointerEvents = 'none';
-      row.appendChild(price);
-      list.appendChild(row);
-    });
-    if (rows.length) {
-      const spacer = doc.createElement('div');
-      Object.assign(spacer.style, { position: 'absolute', top: rows.length * ROW_H + 'px', height: '1px', width: '1px' });
-      list.appendChild(spacer);
-    }
-    root.appendChild(list);
-
-    const cash = text(doc, data, 'arial9', formatMoney(money), 'rgb(255,215,106)');
-    cash.style.left = '12px';
-    cash.style.top = h - BOTTOM + 8 + 'px';
-    cash.style.pointerEvents = 'none';
-    root.appendChild(cash);
-    const close = hrButton(doc, data, 'generic_hr_button', 'CLOSE', 90, () => onClose?.());
-    Object.assign(close.el.style, { left: (WIDTH - 90) / 2 + 'px', top: h - BOTTOM + 24 + 'px' });
-    root.appendChild(close.el);
+  function fields() {
+    const row = rows[selected];
+    COIN_ADAPTERS.forEach((ad, i) => win.setText(ad, row ? String(coinFields(priceOf(row, qty))[i]) : ''));
+    win.setText('merchant_quantity', String(qty));
+    win.setText('merchant_page_display', 'Page ' + (page + 1) + ' of ' + pageCount(rows.length, perPage()));
   }
 
+  function draw() {
+    win.setText('merchant_title', shop ? shop.nm : '');
+    if (list) {
+      list.setRows(pageRows(rows, page, perPage()).map((r) => ({
+        text: r.name + (r.price ? '   ' + r.priceText : ''),
+        icon: itemIconNumber(r.item),
+        on: canAfford(r, money),
+        title: [r.detail, r.priceText].filter(Boolean).join(' - '),
+      })));
+      list.select(selected >= 0 && Math.floor(selected / perPage()) === page ? selected % perPage() : -1);
+    }
+    fields();
+  }
+
+  function turn(d) {
+    const last = pageCount(rows.length, perPage()) - 1;
+    const next = Math.max(0, Math.min(last, page + d));
+    if (next === page) return;
+    page = next;
+    selected = -1;
+    draw();
+  }
+  function setQty(q) { qty = q; fields(); }
+  function buy() {
+    const row = rows[selected];
+    if (!row) return;
+    queue.start(row.id, qty);
+    if (!keep) setQty(1);
+  }
+  if (list) list.onSelect((i) => { selected = page * perPage() + i; fields(); });
+
   return {
-    el: root,
-    get isOpen() {
-      return open;
-    },
-    get npcId() {
-      return shop ? shop.npc : null;
-    },
+    el: win.el,
+    get isOpen() { return open; },
+    get npcId() { return shop ? shop.npc : null; },
+    get page() { return page; },
+    get qty() { return qty; },
+    get selected() { return selected; },
     show(s) {
       shop = s;
-      render();
+      rows = shopRows(shop, formatMoney);
+      page = 0;
+      selected = -1;
+      qty = 1;
       open = true;
-      root.style.display = 'block';
+      win.el.style.display = 'block';
+      mover?.restore('merchant');
+      draw();
     },
     hide() {
       open = false;
       shop = null;
-      root.style.display = 'none';
+      queue.fail();
+      win.el.style.display = 'none';
     },
     // setMoney redraws the prices that the character can and cannot afford.
     setMoney(c) {
       if (c === money) return;
       money = c;
-      if (open) render();
+      if (open) draw();
     },
+    // ack: the last unit was bought, ask for the next. fail: it was refused.
+    ack() { queue.ack(); },
+    fail() { queue.fail(); },
+    get pending() { return queue.pending; },
   };
 }

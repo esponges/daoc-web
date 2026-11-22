@@ -107,7 +107,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     const l = chatLine(m);
     say(l.text, l.kind);
   };
-  net.on.err = (m) => { say(m.text, 'err'); if (!stock) log?.(m.text, 'info'); };
+  // A refusal ends a run of buys: the quantity stops at the first the server turns down.
+  net.on.err = (m) => { say(m.text, 'err'); stockShop?.fail(); if (!stock) log?.(m.text, 'info'); };
 
   // --- vitals ---
   // The stock summary window replaces the built-in bars when it is there.
@@ -331,7 +332,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     }
     cash.textContent = 'Money: ' + money(net.inv.mo || 0);
   };
-  net.on.inv = renderInv;
+  // A change to the pack is a buy gone through, so the next of a quantity is asked for.
+  net.on.inv = (...a) => { renderInv(...a); stockShop?.ack(); };
   let toggleTasks = () => {}; // set where the task window is built
   const togglePack = () => {
     if (stockPack) { stockPack.toggle(); renderInv(); return; }
@@ -379,8 +381,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   root.appendChild(shopPanel);
   let stockShop = null;
   if (stock) {
-    stockShop = createStockShop(document, stock, { onBuy: (id) => net.buy(id), onClose: () => hideShop(), formatMoney: money });
-    Object.assign(stockShop.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-150px', zIndex: 15 });
+    stockShop = createStockShop(document, stock, { onBuy: (id) => net.buy(id), onClose: () => hideShop(), formatMoney: money, mover });
     root.appendChild(stockShop.el);
   }
   const shopOpen = () => (stockShop ? stockShop.isOpen : shopPanel.classList.contains('open'));
