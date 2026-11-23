@@ -2068,6 +2068,18 @@
       "status": "documented"
     },
     {
+      "id": "falling.damage",
+      "status": "provisional"
+    },
+    {
+      "id": "falling.safe-fall",
+      "status": "provisional"
+    },
+    {
+      "id": "falling.water",
+      "status": "provisional"
+    },
+    {
       "id": "loot.generic",
       "status": "provisional"
     },
@@ -2164,6 +2176,18 @@
       "status": "reference"
     },
     {
+      "id": "movement.jump",
+      "status": "provisional"
+    },
+    {
+      "id": "movement.sprint",
+      "status": "provisional"
+    },
+    {
+      "id": "movement.swim",
+      "status": "provisional"
+    },
+    {
       "id": "pet.charm",
       "status": "provisional"
     },
@@ -2189,6 +2213,10 @@
     },
     {
       "id": "power.regen",
+      "status": "provisional"
+    },
+    {
+      "id": "resting.seated",
       "status": "provisional"
     },
     {
@@ -2358,7 +2386,7 @@
   ],
   "rulesByStatus": {
     "documented": 26,
-    "provisional": 36,
+    "provisional": 43,
     "reference": 66
   },
   "placements": 29932,

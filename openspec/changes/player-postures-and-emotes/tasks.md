@@ -9,10 +9,10 @@
 
 ## 2. Rules
 
-- [ ] 2.1 `internal/server/rules/resting.go`: seated factor applied to health, power and endurance ticks. Table tests for each `rules-resting` scenario and the updated `rules-character-stats` / `rules-power` scenarios. Registry entries.
-- [ ] 2.2 `internal/server/rules/falling.go`: `FallDamage(height, maxHP, safeFallLevel)` and `SafeFallLevel(stealthSpec)`. Table tests and registry entries.
-- [ ] 2.3 `internal/server/rules/movement.go`: `SprintFactor`, `SprintCost`, `SwimSpeed`, `Gravity`, `JumpSpeed`, `StepDown`, `SwimDepth`. Table tests and registry entries.
-- [ ] 2.4 Write the `rules-resting`, `rules-falling` and `rules-movement` statuses and sources into the rule book registry, and check `cmd/parity` lists them.
+- [x] 2.1 `internal/server/rules/resting.go`: seated factor applied to health, power and endurance ticks. Table tests for each `rules-resting` scenario and the updated `rules-character-stats` / `rules-power` scenarios. Registry entries.
+- [x] 2.2 `internal/server/rules/falling.go`: `FallDamage(height, maxHP, safeFallLevel)` and `SafeFallLevel(stealthSpec)`. Table tests and registry entries.
+- [x] 2.3 `internal/server/rules/movement.go`: `SprintFactor`, `SprintCost`, `SwimSpeed`, `Gravity`, `JumpSpeed`, `StepDown`, `SwimDepth`. Table tests and registry entries.
+- [x] 2.4 Write the `rules-resting`, `rules-falling` and `rules-movement` statuses and sources into the rule book registry, and check `cmd/parity` lists them.
 
 ## 3. The movement step
 

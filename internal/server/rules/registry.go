@@ -57,6 +57,8 @@ var Sources = map[string]string{
 	"forum2001":      "a 2001 forum thread on Guard, Protect, Intercept and Engage (outline only)",
 	"herald-patches": "Camelot Herald patch notes (1.37c, 1.52, 1.65) and the spell texts of the community database, which are Mythic's",
 	"allakhazam":     "Allakhazam's song entries and the Camelot Herald class pages (one song at a time; a speed song does not work in combat)",
+	"patch-1.38":     "Camelot Herald 1.38 patch notes: falling damage on, Safe Fall in the Stealth line (shape only)",
+	"patch-1.87":     "the 1.87 patch notes as quoted on the Dawn of Light forum: standing regeneration doubled to match sitting",
 	"data":           "the imported community database",
 	"project":        "this project's choice",
 }

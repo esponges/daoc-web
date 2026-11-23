@@ -52,15 +52,15 @@
   - **On the ground:** if the new ground is more than `StepDown` below Z, go airborne with `VZ = 0`. Otherwise snap as today.
 - `StepDown` is 12 units a step. That lets a sprint down a 45° slope (7 units a step) stay grounded, while a ledge falls. The census check in task 3.6 runs every Midgard zone's start path to confirm no false falls.
 - Numbers (project, `rules-movement`):
-  - `Gravity = 500` u/s² and `JumpSpeed = 200` u/s;
-  - that gives a 40-unit apex and 0.8 s of air;
+  - `Gravity = 500` u/s² and `JumpSpeed = 210` u/s;
+  - that gives a 44-unit apex and 50 steps (0.83 s) of air;
   - it matches the 0.4 s rise clip plus the land clip.
 - The vectors gain cases: a jump in place, a running jump, a ledge, a slope that must not fall, and water entry and exit.
 - *Alternative:* a client-only cosmetic jump. Rejected because falling damage and ledges need server Z anyway.
 
 **D3. Water through the Ground interface.**
 - `Ground` gains `WaterAt(x, y) (surface float64, ok bool)`, built from the same `waters` boxes as `IsWet`. The JS ground gets the same from `man.waters`.
-- A body is swimming when `surface - ground > SwimDepth`. `SwimDepth` is 0.7 of a human figure's height and is a project constant.
+- A body is swimming when `surface - ground > SwimDepth`. `SwimDepth` is 50 units, a project constant.
 - A swimming body is held at `surface - SwimDepth` and moves at `SwimSpeed` (`rules-movement`).
 - Falling into water lands at the surface with no damage.
 

@@ -18,7 +18,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   battlegrounds          5, none implemented
   quests not classic     81 (an XP Item collection quest: an NPC pays experience for a creature's drop)
   levelling gear         0 gaps in 10 bands
-  rules: 26 documented, 66 reference, 36 provisional
+  rules: 26 documented, 66 reference, 43 provisional
 ```
 
 ## Creature spell types
@@ -365,6 +365,9 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | experience.group-split | provisional |
 | experience.kill | documented |
 | experience.table | documented |
+| falling.damage | provisional |
+| falling.safe-fall | provisional |
+| falling.water | provisional |
 | loot.generic | provisional |
 | loot.money | provisional |
 | los.cast | reference |
@@ -389,6 +392,9 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | melee.swing-speed | documented |
 | melee.weapon-proc | reference |
 | melee.weapon-skill | reference |
+| movement.jump | provisional |
+| movement.sprint | provisional |
+| movement.swim | provisional |
 | pet.charm | provisional |
 | pet.level | reference |
 | pet.minions | reference |
@@ -396,6 +402,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | power.cost | reference |
 | power.pool | reference |
 | power.regen | provisional |
+| resting.seated | provisional |
 | rez.sickness | reference |
 | rez.spare | documented |
 | rez.wait | reference |

@@ -29,11 +29,11 @@ A swimming player SHALL move at the swim speed whatever the run flag, and speed 
 - **THEN** they move at 120 units a second
 
 ### Requirement: Jump and gravity
-A jump SHALL start with a fixed upward speed, and every body in the air SHALL fall under one fixed gravity. The jump speed is 200 units a second and gravity 500 units a second squared. Both are chosen so a jump on flat ground lasts as long as the client's jump and land clips. Status: project. No source gives the client's numbers, and they decide no outcome beyond falling damage.
+A jump SHALL start with a fixed upward speed, and every body in the air SHALL fall under one fixed gravity. The jump speed is 210 units a second and gravity 500 units a second squared. Both are chosen so a jump on flat ground lasts as long as the client's jump and land clips. Status: project. No source gives the client's numbers, and they decide no outcome beyond falling damage.
 
 #### Scenario: Airtime
 - **WHEN** a player jumps on flat ground
-- **THEN** they are in the air for the number of steps the spec's constants give, the same on server and client
+- **THEN** they are in the air for 50 steps, 0.83 seconds, the same on server and client
 
 ### Requirement: Registered and tested
 Each rule in this spec SHALL have a table test in `internal/server/rules` for each numbered scenario and a registry entry so that `cmd/parity` counts it, with its sources and status.
