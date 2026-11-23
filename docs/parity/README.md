@@ -10,7 +10,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   Class spell types       73 of  73 implemented (987 of 987 spells)
   Style features          13 of  14 implemented (1382 of 1383 styles)
   Abilities               27 of  30 implemented (97 of 100 grants)
-  Creature kinds          24 of 110 implemented (29119 of 29932 placements, 7 kinds not classic)
+  Creature kinds          26 of 110 implemented (29123 of 29932 placements, 7 kinds not classic)
   quests                 0, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
@@ -18,7 +18,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   battlegrounds          5, none implemented
   quests not classic     81 (an XP Item collection quest: an NPC pays experience for a creature's drop)
   levelling gear         0 gaps in 10 bands
-  rules: 27 documented, 66 reference, 52 provisional
+  rules: 27 documented, 66 reference, 54 provisional
 ```
 
 ## Creature spell types
@@ -230,9 +230,9 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Trainer.RogueTrainer | 3 | yes |
 | DOL.GS.AlchemistsMaster | 2 |  |
 | DOL.GS.ArmorCraftingMaster | 2 |  |
-| DOL.GS.EmblemNPC | 2 |  |
+| DOL.GS.EmblemNPC | 2 | yes |
 | DOL.GS.FletchingMaster | 2 |  |
-| DOL.GS.GuildRegistrar | 2 |  |
+| DOL.GS.GuildRegistrar | 2 | yes |
 | DOL.GS.HitbackDummy | 2 |  |
 | DOL.GS.Keeps.GuardMerchant | 2 |  |
 | DOL.GS.Loken | 2 |  |
@@ -374,6 +374,8 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | falling.safe-fall | provisional |
 | falling.water | provisional |
 | ground.target | provisional |
+| guild.form | provisional |
+| guild.ranks | provisional |
 | loot.generic | provisional |
 | loot.money | provisional |
 | los.cast | reference |

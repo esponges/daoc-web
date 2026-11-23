@@ -205,6 +205,10 @@ A trade is two players in one zone. Each change to either offer arrives to both 
 
 `/follow` walks you after your targeted player at run speed until you press a movement key or repeat the command; while it lasts `you.fl` is true, the server places you each tick and the client must not predict. `/assist` takes your target's target, `/face` turns you to your target, `/inspect` lists your targeted player's worn items as `sys` lines.
 
+### Guilds
+
+`/gc <form|invite|remove|leave|promote|demote|motd|omotd|note|emblem|ally|allyoff|info>` runs the guild commands; `/gu`, `/o` and `/as` talk on the guild, officer and alliance channels (chat messages with `ch` `guild`, `officer` or `alliance`). `form <name>` at a Guild Registrar, by the leader of a group of 8 of one realm, asks every member to `/accept`; the fee is taken from the leader when all agree. Invitations and alliance offers are answered with `/accept` and `/decline`. `guild` is sent at login and when anything about your guild changes: `nm` (empty when you have none), `rk` and `ti` (your rank and its title), `motd`, `omotd` (officers only), `em` (emblem number), `al` (the leading guild of your alliance), `pm` (what your rank may do, as bits: 1 guild speak, 2 guild hear, 4 officer speak, 8 officer hear, 16 invite, 32 promote, 64 remove, 128 emblem, 256 message) and `mem` (`{nm, rk, nt, on, lv, cl}`, level and class for members in the game). A player in a guild has `<Name>` in `gd` on their entity and in `/who`.
+
 ### Poisons
 
 Send `use-item` with `slot` (a pack slot) to use an item; a poison item (`k` is `poison`) goes on the worn right-hand weapon when it has none, else the left, else replaces the right's. A poisoned weapon's `inv` item carries `ps`, the hits its poison has left, and says so in `d`. The poison fires on every hit and uses a charge; the last charge removes it ("Your weapon's poison is spent."). Refusals are `err` with `code` `use`.

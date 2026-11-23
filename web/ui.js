@@ -20,6 +20,7 @@ import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
 import { createVault, firstFreeVault } from './vault.js';
 import { createTrade, createFriends, createDuelPrompt } from './social.js';
+import { createGuild } from './guild.js';
 import { gameSeconds, clockFace } from './daynight.js';
 import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
@@ -477,6 +478,10 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   root.appendChild(friendsWin.el);
   net.on.friends = (m) => friendsWin.set(m);
   if (net.friends) friendsWin.set(net.friends); // one that came before this window existed
+  const guildWin = createGuild(document, { onCommand: (line) => net.chat('say', line), mover });
+  root.appendChild(guildWin.el);
+  net.on.guild = (m) => guildWin.set(m);
+  if (net.guild) guildWin.set(net.guild);
   const duelPrompt = createDuelPrompt(document, { onAnswer: (yes) => net.chat('say', yes ? '/accept' : '/decline') });
   root.appendChild(duelPrompt.el);
   net.on.duelask = (m) => duelPrompt.show(m.from, m.secs);
@@ -756,6 +761,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'KeyK' && !e.repeat) { concWin.toggle(); return true; } // the buffs held by concentration
     if (e.code === 'KeyP' && !e.repeat) { toggleSpells(); return true; } // the spellbook
     if (e.code === 'KeyO' && !e.repeat) { friendsWin.toggle(); return true; } // the friends list
+    if (e.code === 'KeyU' && !e.repeat) { guildWin.toggle(); return true; } // the guild
     if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera
     // Shift+1 to Shift+8 cast the spell on that slot of the spell bar.
     const sn = /^Digit([1-8])$/.exec(e.code);

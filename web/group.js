@@ -39,6 +39,9 @@ export function chatLine(m) {
         : { text: m.from + ' sends, "' + m.text + '"', kind: 'tell' };
     case 'emote': return { text: m.text, kind: 'emote' };
     case 'group': return { text: '[Group] ' + m.from + ': "' + m.text + '"', kind: 'group' };
+    case 'guild': return { text: m.from ? '[Guild] ' + m.from + ': "' + m.text + '"' : m.text, kind: 'guild' };
+    case 'officer': return { text: '[Officer] ' + m.from + ': "' + m.text + '"', kind: 'guild' };
+    case 'alliance': return { text: '[Alliance] ' + m.from + ': "' + m.text + '"', kind: 'guild' };
   }
   return { text: m.from + ': ' + m.text, kind: '' };
 }

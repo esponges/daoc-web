@@ -477,3 +477,15 @@ func TestDuelAsk(t *testing.T) {
 		t.Errorf("a challenge marshals as %s", b)
 	}
 }
+
+func TestGuildInfo(t *testing.T) {
+	b, _ := json.Marshal(GuildInfo{T: TGuild, Name: "Hammers", Rank: 0, Title: "Guildmaster", Perms: 511, Members: []GuildMember{{Name: "Thora", Rank: 0, On: true, Level: 20, Class: "Warrior"}}})
+	want := `{"t":"guild","nm":"Hammers","rk":0,"ti":"Guildmaster","pm":511,"mem":[{"nm":"Thora","rk":0,"on":true,"lv":20,"cl":"Warrior"}]}`
+	if string(b) != want {
+		t.Errorf("a guild marshals as %s, want %s", b, want)
+	}
+	none, _ := json.Marshal(GuildInfo{T: TGuild, Members: []GuildMember{}})
+	if string(none) != `{"t":"guild","rk":0,"pm":0,"mem":[]}` {
+		t.Errorf("no guild marshals as %s", none)
+	}
+}

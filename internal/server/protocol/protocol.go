@@ -77,6 +77,7 @@ const (
 	TVaultClose  = "vaultclose"  // the open vault is closed
 	TTrade       = "trade"       // the state of a trade you are in: both offers and both accepts
 	TTradeClose  = "tradeclose"  // your trade ended, with the reason
+	TGuild       = "guild"       // your guild, or an empty one when you have none
 	TDuelAsk     = "duelask"     // you have been challenged to a duel; answer with /accept or /decline
 	TFriends     = "friends"     // your friends list, with who is in the game
 	TTradeOp     = "tradeop"     // a request in a trade: open, add, remove, money, accept or cancel
@@ -803,6 +804,32 @@ type Cast struct {
 	T      string `json:"t"`
 	Spell  int    `json:"sp"`
 	Target int64  `json:"tg,omitempty"`
+}
+
+// GuildMember is one line of the guild window.
+type GuildMember struct {
+	Name  string `json:"nm"`
+	Rank  int    `json:"rk"`
+	Note  string `json:"nt,omitempty"`
+	On    bool   `json:"on,omitempty"`
+	Level int    `json:"lv,omitempty"` // online members only
+	Class string `json:"cl,omitempty"`
+}
+
+// GuildInfo is a player's guild as the guild window shows it. Name is empty
+// for a player in no guild. Perms is what your rank may do, as bits (see
+// docs/protocol.md).
+type GuildInfo struct {
+	T        string        `json:"t"`
+	Name     string        `json:"nm,omitempty"`
+	Rank     int           `json:"rk"`
+	Title    string        `json:"ti,omitempty"`
+	Motd     string        `json:"motd,omitempty"`
+	Omotd    string        `json:"omotd,omitempty"` // the officers' message, for ranks that hear officer chat
+	Emblem   int           `json:"em,omitempty"`
+	Alliance string        `json:"al,omitempty"` // the leading guild of your alliance
+	Perms    int           `json:"pm"`
+	Members  []GuildMember `json:"mem"`
 }
 
 // DuelAsk tells a player who challenged them.

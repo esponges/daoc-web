@@ -152,6 +152,7 @@ export class NetClient {
       case 'clock': this.clock = { gs: m.gs, at: this.now() }; this.on.clock?.(this.clock); break;
       case 'trade': this.trade = m; this.on.trade?.(m); break;
       case 'tradeclose': this.trade = null; this.on.tradeclose?.(m); break;
+      case 'guild': this.guild = m; this.on.guild?.(m); break;
       case 'friends': this.friends = m; this.on.friends?.(m); break;
       case 'duelask': this.on.duelask?.(m); break;
       case 'vault': this.vault = m; this.on.vault?.(m); break;

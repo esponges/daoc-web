@@ -34,7 +34,7 @@ imported at build time into `server/data/` (gitignored).
   ride the horse routes. Trade items and money with another player (/trade), duel
   them (/duel; the loser is left at 1 hit point, no experience changes hands), keep
   a friends list (O) and an ignore list, and use /anon, /afk, /lfg, /assist, /face,
-  /follow and /inspect.
+  /follow and /inspect. Found a guild at a Guild Registrar (a group of 8 and a fee: `/gc form <name>`), with ranks, guild, officer and alliance chat (`/gu`, `/o`, `/as`), invitations, a message of the day, an emblem number and alliances; the guild window is `U`.
 - See other players and creatures move and fight, a few hundred milliseconds
   behind the server.
 - Play through the game's own windows (menu bar, compass, chat, inventory,
@@ -53,14 +53,14 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Class spell types | 73 of 73 (987 of 987 spells) |
 | Style features | 13 of 14 (1,382 of 1,383 styles) |
 | Abilities | 27 of 30 (97 of 100 grants) |
-| Creature kinds | 24 of 110 (29,119 of 29,932 placements; 7 kinds left out as not classic) |
+| Creature kinds | 26 of 110 (29,123 of 29,932 placements; 7 kinds left out as not classic) |
 | Quests | 0 of 0 (the 81 XP Item data quests are marked not classic) |
 | Keep doors | 0 of 432 |
 | Keeps | 0 of 79 |
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 0 gaps in 10 five-level bands (31 to 50 is the project's added stock) |
-| Rules | 27 documented, 66 reference, 52 provisional |
+| Rules | 27 documented, 66 reference, 54 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for all twelve of
 Midgard's classes (trainers teach them), with pets and charm, bows, stealth,

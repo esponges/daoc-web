@@ -293,3 +293,50 @@ func TestSocialMarks(t *testing.T) {
 		t.Error("CharName")
 	}
 }
+
+func TestGuildsAreKept(t *testing.T) {
+	s, err := Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	a, _ := s.AccountFor("d:1", "one", false)
+	var ids []int64
+	for _, n := range []string{"Thora", "Bjorn", "Sigrid"} {
+		c := &Character{AccountID: a.ID, Name: n, Race: 6, Class: 22, Level: 1}
+		if err := s.CreateCharacter(c); err != nil {
+			t.Fatal(err)
+		}
+		ids = append(ids, c.ID)
+	}
+	g := &Guild{Name: "Hammers of Odin", Realm: 2}
+	g.Perms[0], g.Perms[9], g.Titles[0], g.Titles[9] = 511, 3, "Guildmaster", "Member"
+	if err := s.CreateGuild(g, ids[:2]); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.CreateGuild(&Guild{Name: "hammers of odin", Realm: 2}, ids[2:]); err != ErrGuildName {
+		t.Errorf("a name differing in case was taken twice: %v", err)
+	}
+	if err := s.CreateGuild(&Guild{Name: "Other", Realm: 2}, ids[:1]); err == nil {
+		t.Error("a character joined two guilds")
+	}
+	gs, _ := s.Guilds()
+	if len(gs) != 1 || gs[0].Name != "Hammers of Odin" || gs[0].Perms[0] != 511 || gs[0].Titles[9] != "Member" {
+		t.Errorf("guilds %+v", gs)
+	}
+	ms, _ := s.GuildMembers()
+	if len(ms) != 2 || ms[0].Rank != 0 || ms[1].Rank != 9 {
+		t.Errorf("members %+v", ms)
+	}
+	g.Emblem, g.Motd = 12, "Skål"
+	if err := s.SaveGuild(g); err != nil {
+		t.Fatal(err)
+	}
+	s.SetGuildMember(GuildMember{CharID: ids[2], GuildID: g.ID, Rank: 4, Note: "new"})
+	s.RemoveGuildMember(ids[1])
+	gs, _ = s.Guilds()
+	ms, _ = s.GuildMembers()
+	if gs[0].Emblem != 12 || gs[0].Motd != "Skål" || len(ms) != 2 {
+		t.Errorf("after changes: %+v %+v", gs[0], ms)
+	}
+}

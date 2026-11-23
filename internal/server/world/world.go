@@ -45,6 +45,7 @@ type World struct {
 	drops  map[int][]string
 
 	groups *groups
+	guilds *guildBook
 	rides  rides // riders in the middle of a zone change
 }
 
@@ -68,7 +69,9 @@ func New(c Config) *World {
 		c.DefaultZone = 100
 	}
 	ensureTaskItem(c.Cat)
-	return &World{Config: c, zones: map[int]*Zone{}, online: map[int64]*Player{}, drops: map[int][]string{}, groups: newGroups()}
+	w := &World{Config: c, zones: map[int]*Zone{}, online: map[int64]*Player{}, drops: map[int][]string{}, groups: newGroups(), guilds: newGuildBook()}
+	w.loadGuilds()
+	return w
 }
 
 // Zone returns the running zone, starting it if needed.
@@ -203,6 +206,7 @@ func (w *World) Join(acct *store.Account, charID int64) (*Player, error) {
 		return nil, errors.New("zone is shutting down; try again")
 	}
 	w.sendFriends(p)
+	w.guildLogin(p)
 	if _, zoned := w.zoned.LoadAndDelete(ch.ID); !zoned {
 		w.notifyFriends(p, "has entered the game.")
 	}
@@ -529,12 +533,20 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		z.UseAbility(p, f[0], f[1:]...)
 	case "duel":
 		z.Duel(p)
+	case "gc", "guild":
+		w.guildCmd(z, p, f, line)
+	case "gu", "gsay":
+		w.guildSay(p, "guild", restAfter(line, 1))
+	case "o", "osay":
+		w.guildSay(p, "officer", restAfter(line, 1))
+	case "as", "asay":
+		w.guildSay(p, "alliance", restAfter(line, 1))
 	case "accept":
-		if !z.answerDuel(p, true) {
+		if !z.answerDuel(p, true) && !w.answerGuild(p, true) {
 			w.AcceptInvite(p)
 		}
 	case "decline":
-		if !z.answerDuel(p, false) {
+		if !z.answerDuel(p, false) && !w.answerGuild(p, false) {
 			w.DeclineInvite(p)
 		}
 	case "disband", "leave":
@@ -580,6 +592,8 @@ func (w *World) GM(p *Player, line string) {
 		return v, err == nil
 	}
 	switch f[0] {
+	case "guild":
+		w.adminGuild(p, restAfter(line, 2))
 	case "goto":
 		v, ok := num(1)
 		info := w.Cat.Zones[int(v)]

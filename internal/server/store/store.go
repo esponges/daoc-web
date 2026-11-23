@@ -138,7 +138,7 @@ func Open(path string) (*Store, error) {
 		return nil, err
 	}
 	db.SetMaxOpenConns(1) // SQLite writers are serial; one connection keeps :memory: coherent too
-	if _, err := db.Exec(schema); err != nil {
+	if _, err := db.Exec(schema + guildSchema); err != nil {
 		db.Close()
 		return nil, err
 	}

@@ -220,6 +220,9 @@ func (w *World) who(z *Zone, p *Player) {
 		anon, lfg := o.social.anon, o.social.lfg
 		o.social.mu.Unlock()
 		s := o.Char.Name
+		if tag := guildLine(o); tag != "" {
+			s += " " + tag
+		}
 		if !anon || o == p || w.sameGroup(p.Char.ID, o.Char.ID) {
 			s += fmt.Sprintf(" (L%d %s)", o.Char.Level, o.sh.class.Name)
 		}

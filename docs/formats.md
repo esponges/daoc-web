@@ -1303,3 +1303,8 @@ where you started.
 and characters: killing a small grey wolf while its packmates join, standing in
 a large wolf pack until it kills you, and running a badger to its leash.
 
+
+
+## Guild emblems
+
+The install's `insignia/` folder holds the guild emblems as DDS textures: `b_emblem_001` to `b_emblem_084`, and the same for `h_` and `n_` (one set for each realm: Briton/Albion, Hibernia, Norse/Midgard), plus a `*_emblem_guard.dds` each, and `data/emblempick.bmp` is the emblem picker's sheet. The server keeps an emblem as its number, 1 to 84. This project does not yet paint it on cloaks and shields, since which part of a cloak or shield figure takes the texture has not been worked out; the number is shown in the guild window.

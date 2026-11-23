@@ -861,6 +861,11 @@ func IsVaultClass(classType string) bool {
 	return classType == "DOL.GS.GameVaultKeeper"
 }
 
+// IsGuildRegistrarClass reports whether a mob's class type is a Guild Registrar,
+// who founds guilds; IsEmblemClass whether it is an Emblem Maker.
+func IsGuildRegistrarClass(classType string) bool { return classType == "DOL.GS.GuildRegistrar" }
+func IsEmblemClass(classType string) bool         { return classType == "DOL.GS.EmblemNPC" }
+
 // IsSmithClass reports whether a mob's class type is a blacksmith, who
 // repairs worn items for money.
 func IsSmithClass(classType string) bool {

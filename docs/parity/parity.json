@@ -1510,7 +1510,7 @@
     {
       "name": "DOL.GS.EmblemNPC",
       "uses": 2,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.FletchingMaster",
@@ -1520,7 +1520,7 @@
     {
       "name": "DOL.GS.GuildRegistrar",
       "uses": 2,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.HitbackDummy",
@@ -2089,6 +2089,14 @@
       "status": "provisional"
     },
     {
+      "id": "guild.form",
+      "status": "provisional"
+    },
+    {
+      "id": "guild.ranks",
+      "status": "provisional"
+    },
+    {
       "id": "loot.generic",
       "status": "provisional"
     },
@@ -2411,7 +2419,7 @@
   ],
   "rulesByStatus": {
     "documented": 27,
-    "provisional": 52,
+    "provisional": 54,
     "reference": 66
   },
   "placements": 29932,

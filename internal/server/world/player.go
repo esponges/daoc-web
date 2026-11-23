@@ -123,6 +123,7 @@ type Player struct {
 	ride           *ride             // the horse route they are on, nil when walking
 	trade          *trade            // the trade this player is in
 	social         socialState       // friends, ignores, anon, away and looking for a group
+	guildTag       atomic.Value      // the "<Guild>" line other players see under the name
 	follow         int64             // the player being followed by /follow, 0 for none
 	duel           *duel             // the duel this player is in
 	duelOffer      *duelOffer        // a challenge waiting for this player's answer

@@ -2,11 +2,13 @@ package world
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math"
 
 	"daocweb/internal/importer"
 	"daocweb/internal/server/protocol"
+	"daocweb/internal/server/rules"
 	"daocweb/internal/server/store"
 )
 
@@ -39,6 +41,10 @@ func npcKind(classType string) string {
 		return KindVault
 	case importer.IsSmithClass(classType):
 		return KindSmith
+	case importer.IsGuildRegistrarClass(classType):
+		return KindGuildRegistrar
+	case importer.IsEmblemClass(classType):
+		return KindEmblem
 	case notClassic(classType):
 		return KindNotClassic
 	case importer.IsHealerClass(classType):
@@ -99,6 +105,10 @@ func (z *Zone) Interact(p *Player, id int64) {
 		z.openTrainer(p, n)
 	case KindHealer:
 		z.openHealer(p, n)
+	case KindGuildRegistrar:
+		sys(p, n.title()+" says: \"To found a guild, lead a group of "+fmt.Sprint(rules.GuildFormMembers)+" and type /gc form <name> here. It costs "+moneyText(rules.GuildFormFee)+".\"")
+	case KindEmblem:
+		sys(p, n.title()+" says: \"A guildmaster may choose an emblem here: /gc emblem <1-"+fmt.Sprint(rules.GuildEmblems)+">, for "+moneyText(EmblemFee)+".\"")
 	}
 }
 

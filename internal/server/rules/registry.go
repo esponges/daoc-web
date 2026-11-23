@@ -60,6 +60,7 @@ var Sources = map[string]string{
 	"patch-1.38":     "Camelot Herald 1.38 patch notes: falling damage on, Safe Fall in the Stealth line (shape only)",
 	"patch-1.87":     "the 1.87 patch notes as quoted on the Dawn of Light forum: standing regeneration doubled to match sitting",
 	"data":           "the imported community database",
+	"herald-guilds":  "Camelot Herald guild guide and wiki: the Guild Registrar, /gc form, ranks, guild, officer and alliance chat (shape only; no numbers)",
 	"herald-savage":  "Camelot Herald class library, Savage: the Savagery line modifies evade, parry, attack speed and DPS, and turns hit points into endurance",
 	"project":        "this project's choice",
 }
