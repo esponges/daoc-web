@@ -77,6 +77,7 @@ const (
 	TVaultClose  = "vaultclose"  // the open vault is closed
 	TTrade       = "trade"       // the state of a trade you are in: both offers and both accepts
 	TTradeClose  = "tradeclose"  // your trade ended, with the reason
+	TDuelAsk     = "duelask"     // you have been challenged to a duel; answer with /accept or /decline
 	TFriends     = "friends"     // your friends list, with who is in the game
 	TTradeOp     = "tradeop"     // a request in a trade: open, add, remove, money, accept or cancel
 	TStats       = "stats"       // the character sheet
@@ -802,6 +803,13 @@ type Cast struct {
 	T      string `json:"t"`
 	Spell  int    `json:"sp"`
 	Target int64  `json:"tg,omitempty"`
+}
+
+// DuelAsk tells a player who challenged them.
+type DuelAsk struct {
+	T    string `json:"t"`
+	From string `json:"from"`
+	Secs int    `json:"secs"` // how long the challenge waits
 }
 
 // Friend is one entry of the friends list.

@@ -137,6 +137,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       v.dead = e.state === 'dead';
       v.fight = e.state === 'fight';
       v.isPlayer = e.k === 'p';
+      v.foe = !!e.foe;
       v.grave = e.k === 'g';
       v.friendly = e.friendly;
       v.kind = e.kind || '';

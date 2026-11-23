@@ -470,3 +470,10 @@ func TestSocialFieldsAreAdditive(t *testing.T) {
 		t.Errorf("the follow flag: %s and %s", fl, none)
 	}
 }
+
+func TestDuelAsk(t *testing.T) {
+	b, _ := json.Marshal(DuelAsk{T: TDuelAsk, From: "Thora", Secs: 30})
+	if string(b) != `{"t":"duelask","from":"Thora","secs":30}` {
+		t.Errorf("a challenge marshals as %s", b)
+	}
+}

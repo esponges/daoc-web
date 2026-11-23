@@ -31,7 +31,10 @@ imported at build time into `server/data/` (gitignored).
   are timed abilities, and Shadowblades set a ground target (T, then click the ground)
   for Distraction.
 - Trade with merchants, keep things in the vault, talk in chat channels, group up,
-  ride the horse routes.
+  ride the horse routes. Trade items and money with another player (/trade), duel
+  them (/duel; the loser is left at 1 hit point, no experience changes hands), keep
+  a friends list (O) and an ignore list, and use /anon, /afk, /lfg, /assist, /face,
+  /follow and /inspect.
 - See other players and creatures move and fight, a few hundred milliseconds
   behind the server.
 - Play through the game's own windows (menu bar, compass, chat, inventory,

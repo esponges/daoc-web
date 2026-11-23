@@ -95,6 +95,8 @@ export class NetClient {
   // shoot draws a bow at the held target; mode is '', 'critical', 'rapid' or 'stop'.
   shoot(mode = '') { this._send({ t: 'shoot', ...(mode ? { mode } : {}) }); }
   // The ground target, for Distraction and the like: the server checks the range and the line of sight.
+  // A request in a trade: open (a player id, or your target), add or remove a pack slot, money (cu), accept, cancel.
+  tradeOp(op, extra = {}) { this._send({ t: 'tradeop', op, ...extra }); }
   setGround(x, y, z) { this._send({ t: 'gt', x, y, z }); }
   clearGround() { this._send({ t: 'gt', clear: true }); }
   release() { this._send({ t: 'release' }); }
@@ -148,6 +150,10 @@ export class NetClient {
       case 'smithclose': this.smith = null; this.on.smithclose?.(); break;
       case 'repairquote': this.on.repairquote?.(m); break;
       case 'clock': this.clock = { gs: m.gs, at: this.now() }; this.on.clock?.(this.clock); break;
+      case 'trade': this.trade = m; this.on.trade?.(m); break;
+      case 'tradeclose': this.trade = null; this.on.tradeclose?.(m); break;
+      case 'friends': this.friends = m; this.on.friends?.(m); break;
+      case 'duelask': this.on.duelask?.(m); break;
       case 'vault': this.vault = m; this.on.vault?.(m); break;
       case 'vaultclose': this.vault = null; this.on.vaultclose?.(); break;
       case 'stats': this.stats = m; this.on.stats?.(m); break;
@@ -216,6 +222,7 @@ export class NetClient {
     me.ride = !!s.rd;
     me.seated = !!s.sit;
     me.gt = groundTargetOf(s);
+    me.follow = !!s.fl; // the server is walking us after a player: no prediction
 
     const t = this.now();
     const seen = new Set();
@@ -235,6 +242,7 @@ export class NetClient {
       r.aggro = !!e.ag; r.loot = !!e.lt; r.friendly = !!e.fr; r.kind = e.ik || ''; r.back = !!e.bk; r.side = e.sd || 0;
       r.ride = !!e.rd; // on a horse route
       r.posture = e.ps || ''; // sit, air or swim
+      r.foe = !!e.foe; // the player you are in a duel with
       r.con = e.cc; r.own = !!e.own; // a creature's con colour to you; your own gravestone
       r.samples.push({ t, x: e.x, y: e.y, z: e.z, yaw: e.h });
       if (r.samples.length > 8) r.samples.shift();

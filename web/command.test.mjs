@@ -23,9 +23,9 @@ const doc = {
 };
 
 // The buttons that do something, and the ones greyed with a reason.
-assert.deepEqual(Object.values(COMMAND_ACTIONS).sort(), ['attack', 'pray', 'release', 'sit', 'sprint']);
-for (const ev of ['Follow', 'Stick', 'Face', 'Bonuses']) assert.ok(COMMAND_WHY[ev], ev + ' has a reason');
-assert.ok(!('Follow' in COMMAND_ACTIONS));
+assert.deepEqual(Object.values(COMMAND_ACTIONS).sort(), ['attack', 'face', 'follow', 'pray', 'release', 'sit', 'sprint']);
+for (const ev of ['Stick', 'Bonuses']) assert.ok(COMMAND_WHY[ev], ev + ' has a reason');
+assert.ok(!('Stick' in COMMAND_ACTIONS));
 console.log('ok: which command buttons work and which say why not');
 
 // Without the converted interface: two plain buttons.
@@ -33,13 +33,15 @@ console.log('ok: which command buttons work and which say why not');
   const asked = [];
   const w = createCommandWindow(doc, null, { onAction: (a) => asked.push(a) });
   const buttons = w.el.children;
-  assert.deepEqual(buttons.map((b) => b.textContent), ['Sit', 'Sprint']);
+  assert.deepEqual(buttons.map((b) => b.textContent), ['Sit', 'Sprint', 'Follow', 'Face']);
   buttons[0].listeners.click();
   buttons[1].listeners.click();
-  assert.deepEqual(asked, ['sit', 'sprint']);
+  buttons[2].listeners.click();
+  buttons[3].listeners.click();
+  assert.deepEqual(asked, ['sit', 'sprint', 'follow', 'face']);
   w.toggle(false);
   assert.equal(w.el.style.display, 'none');
-  console.log('ok: the plain command buttons sit and sprint');
+  console.log('ok: the plain command buttons sit, sprint, follow and face');
 }
 
 // On the stock frame, when the converter has been run.

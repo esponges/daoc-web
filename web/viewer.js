@@ -1197,7 +1197,11 @@ async function main() {
   function handleEvents(list, nowS) {
     const me = net.me;
     remote.events(list, me.id);
-    const the = (id) => (id === me.id ? 'you' : 'the ' + (remote.views.get(id)?.name || 'creature'));
+    const the = (id) => {
+      if (id === me.id) return 'you';
+      const v = remote.views.get(id);
+      return v && v.isPlayer ? v.name : 'the ' + (v?.name || 'creature'); // a player is named, a creature is "the" one
+    };
     const pets = petNames(net.pet);
     for (const ev of list) {
       const mine = ev.from === me.id, toMe = ev.to === me.id;
@@ -1290,7 +1294,7 @@ async function main() {
       el.style.top = ((1 - (cy / cw * 0.5 + 0.5)) * innerHeight).toFixed(0) + 'px';
       el.textContent = v.name + (v.level && !v.friendly ? '  ' + v.level : '') + (v.dead ? ' (dead)' : '');
       if (v.guild && !v.dead) { const g = document.createElement('div'); g.className = 'guild'; g.textContent = '<' + v.guild + '>'; el.append(g); }
-      el.style.color = v.isPlayer ? '#9fe3ff' : v.friendly ? '#c8d0da' : conColour(v.e.con) || conColor(v.level, me.level);
+      el.style.color = v.foe ? '#ff6a5c' : v.isPlayer ? '#9fe3ff' : v.friendly ? '#c8d0da' : conColour(v.e.con) || conColor(v.level, me.level);
       // A gravestone is only a label: click it to target it, then /pray.
       el.classList.toggle('grave', !!v.grave);
       if (v.grave) { el.textContent = '+ ' + v.name + (v.e.own ? ' (yours: /pray)' : ''); el.onclick = () => net.target(v.id); } else el.onclick = null;
@@ -1608,7 +1612,7 @@ async function main() {
       box.classList.toggle('on', !!t);
       if (t) {
         $('tgt-name').textContent = t.name + (combat.attacking && !t.dead ? ' (attacking)' : '');
-        if (net) $('tgt-name').style.color = t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColor(t.level, net.me.level);
+        if (net) $('tgt-name').style.color = t.foe ? '#ff6a5c' : t.isPlayer ? '#9fe3ff' : t.friendly ? '#c8d0da' : conColor(t.level, net.me.level);
         $('tgt-hp').textContent = t.dead ? 'dead'
           : (net ? Math.round(t.hp * 100) + '%' : Math.ceil(t.hp) + ' / ' + t.maxHp) + '  ·  ' + Math.round(Math.hypot(t.x - player.x, t.y - player.y)) + 'u';
         bar($('tgt-bar'), t.hp, t.maxHp);

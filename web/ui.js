@@ -19,6 +19,7 @@ import { createStockPack } from './pack.js';
 import { createStockLoot } from './loot.js';
 import { createStockShop } from './shop.js';
 import { createVault, firstFreeVault } from './vault.js';
+import { createTrade, createFriends, createDuelPrompt } from './social.js';
 import { gameSeconds, clockFace } from './daynight.js';
 import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
@@ -294,6 +295,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     stockPack = createStockPack(document, stock, {
       onMove: (from, to) => net.equip(from, to),
       onUse: (slot) => {
+        if (tradeOpen()) { net.tradeOp('add', { slot }); return; }
         if (shopOpen()) { net.sell(slot); return; }
         if (vaultOpen()) { toVault(slot); return; }
         const it = net.inv.items.find((i) => i.slot === slot);
@@ -335,6 +337,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
         c.title = it.nm + (it.d ? ' — ' + it.d : '') + '\nclick: equip · shift-click: destroy';
         c.addEventListener('click', (e) => {
           if (e.shiftKey) { net.equip(i, -1); return; }
+          if (tradeOpen()) { net.tradeOp('add', { slot: i }); return; }
           if (shopOpen()) { net.sell(i); return; }
           if (vaultOpen()) { toVault(i); return; }
           if (it.k === 'weapon' || it.k === 'shield' || it.k === 'armour') net.equip(i, -2);
@@ -459,6 +462,24 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (stockPack) { if (!stockPack.isOpen) togglePack(); } else if (!pack.classList.contains('open')) togglePack();
   };
   net.on.vaultclose = hideVault;
+
+  // --- trade, friends and the duel prompt ---
+  // Plain panels. A click on a pack item adds it to your offer while a trade is open.
+  const tradeWin = createTrade(document, { onOp: (op, x) => net.tradeOp(op, x), mover });
+  root.appendChild(tradeWin.el);
+  const tradeOpen = () => tradeWin.isOpen;
+  net.on.trade = (m) => {
+    tradeWin.show(m);
+    if (stockPack) { if (!stockPack.isOpen) togglePack(); } else if (!pack.classList.contains('open')) togglePack();
+  };
+  net.on.tradeclose = () => tradeWin.hide();
+  const friendsWin = createFriends(document, { onAdd: (n) => net.chat('say', '/friend ' + n), mover });
+  root.appendChild(friendsWin.el);
+  net.on.friends = (m) => friendsWin.set(m);
+  if (net.friends) friendsWin.set(net.friends); // one that came before this window existed
+  const duelPrompt = createDuelPrompt(document, { onAnswer: (yes) => net.chat('say', yes ? '/accept' : '/decline') });
+  root.appendChild(duelPrompt.el);
+  net.on.duelask = (m) => duelPrompt.show(m.from, m.secs);
 
   // --- blacksmith ---
   // What the player holds that has worn, with the price of each. A click asks
@@ -606,6 +627,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     onAction: (a) => {
       if (a === 'sit') sendLine('/sit');
       else if (a === 'sprint') sendLine('/sprint');
+      else if (a === 'follow') sendLine('/follow');
+      else if (a === 'face') sendLine('/face');
       else if (a === 'pray') sendLine('/pray');
       else if (a === 'release') net.release();
       else if (a === 'attack') {
@@ -699,6 +722,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     }
     if (stockBar) stockBar.update(me);
     castBox.update(cast, performance.now() / 1000);
+    if (duelPrompt && [...net.ents.values()].some((e) => e.foe)) duelPrompt.hide(); // the duel has begun, however it was answered
     if (stock) spellBar.update(me);
     else spellBar.el.querySelectorAll('.style').forEach((b) => {
       const id = spellSlots[Number(b.dataset.slot)];
@@ -731,6 +755,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'KeyM' && !e.repeat) { commandWin.toggle(); return true; } // the command window
     if (e.code === 'KeyK' && !e.repeat) { concWin.toggle(); return true; } // the buffs held by concentration
     if (e.code === 'KeyP' && !e.repeat) { toggleSpells(); return true; } // the spellbook
+    if (e.code === 'KeyO' && !e.repeat) { friendsWin.toggle(); return true; } // the friends list
     if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera
     // Shift+1 to Shift+8 cast the spell on that slot of the spell bar.
     const sn = /^Digit([1-8])$/.exec(e.code);

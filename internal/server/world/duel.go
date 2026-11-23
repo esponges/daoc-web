@@ -80,6 +80,7 @@ func (z *Zone) Duel(p *Player) {
 		o.duelOffer = &duelOffer{from: p, expires: z.now + DuelLapse}
 		sys(p, "You challenge "+o.Char.Name+" to a duel.")
 		sys(o, p.Char.Name+" challenges you to a duel. Type /accept to fight or /decline.")
+		o.send(protocol.DuelAsk{T: protocol.TDuelAsk, From: p.Char.Name, Secs: int(DuelLapse)})
 	}
 }
 
