@@ -106,6 +106,7 @@ const (
 	AbRapidFire    = "Rapid Fire"
 	AbDetectHidden = "Detect Hidden"
 	AbCamouflage   = "Camouflage"
+	AbSafeFall     = "Safe Fall"
 	AbPenetrating  = "Penetrating Arrow"
 )
 
@@ -113,7 +114,7 @@ const (
 // are known but have no effect yet.
 func ActiveAbility(key string) bool {
 	switch key {
-	case AbEvade, AbShield, AbMidArmor, AbGuard, AbProtect, AbIntercept, AbEngage, AbCriticalShot, AbRapidFire, AbPenetrating, AbDetectHidden, AbCamouflage:
+	case AbEvade, AbShield, AbMidArmor, AbGuard, AbProtect, AbIntercept, AbEngage, AbCriticalShot, AbRapidFire, AbPenetrating, AbDetectHidden, AbCamouflage, AbSafeFall:
 		return true
 	}
 	_, weapon := weaponryAbility[key]

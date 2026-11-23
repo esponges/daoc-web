@@ -509,8 +509,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
+      "implemented": true
     },
     {
       "name": "SavageDPSBuff",
@@ -518,8 +517,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
+      "implemented": true
     },
     {
       "name": "SavageEvadeBuff",
@@ -527,8 +525,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
+      "implemented": true
     },
     {
       "name": "SavageParryBuff",
@@ -536,8 +533,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
+      "implemented": true
     },
     {
       "name": "SavageSlashResistanceBuff",
@@ -545,8 +541,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
+      "implemented": true
     },
     {
       "name": "SavageThrustResistanceBuff",
@@ -554,8 +549,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
+      "implemented": true
     },
     {
       "name": "Amnesia",
@@ -666,8 +660,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell kind (a buff of the Savage's own); no source read for it yet"
+      "implemented": true
     },
     {
       "name": "SpiritResistBuff",
@@ -730,8 +723,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell that makes a creature hate the caster; no source read for it yet"
+      "implemented": true
     },
     {
       "name": "ColdResistDebuff",
@@ -774,8 +766,7 @@
       "classes": [
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Savage spell; no source read for it yet"
+      "implemented": true
     },
     {
       "name": "SpiritResistDebuff",
@@ -1000,8 +991,7 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false,
-      "reason": "this world has no fall damage for it to reduce"
+      "implemented": true
     },
     {
       "name": "Berserk",
@@ -2232,6 +2222,22 @@
       "status": "reference"
     },
     {
+      "id": "savage.buffs",
+      "status": "provisional"
+    },
+    {
+      "id": "savage.endurance-heal",
+      "status": "provisional"
+    },
+    {
+      "id": "savage.health-cost",
+      "status": "documented"
+    },
+    {
+      "id": "savage.taunt",
+      "status": "provisional"
+    },
+    {
       "id": "spec.abilities",
       "status": "documented"
     },
@@ -2385,8 +2391,8 @@
     }
   ],
   "rulesByStatus": {
-    "documented": 26,
-    "provisional": 43,
+    "documented": 27,
+    "provisional": 46,
     "reference": 66
   },
   "placements": 29932,

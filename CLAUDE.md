@@ -94,6 +94,9 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
   - The Camelot Herald 1.38 patch notes (falling damage on; Safe Fall in the Stealth line, one level per ten
     points) and the 1.87 notes as quoted on the Dawn of Light forum (standing regeneration doubled to match
     sitting): the shape of falling and resting; their numbers are this project's, provisional;
+  - The Camelot Herald Savage class page (camelotherald.com/node/194) and the 1.65H test patch notes
+    (gamebanshee.com/3ydp): the Savagery line and its health cost. Numbers read from the community
+    database; their reading as percents is provisional.
   - OpenDAoC-Core and DOLSharp, for reference-status rules only.
 
   If you use another source (a wiki, a format write-up, a community table), add

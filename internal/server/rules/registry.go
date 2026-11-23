@@ -55,11 +55,12 @@ var Sources = map[string]string{
 	"opendaoc":       "OpenDAoC-Core, read to understand (GPL; nothing copied)",
 	"dolsharp":       "DOLSharp, read to understand (GPL; nothing copied)",
 	"forum2001":      "a 2001 forum thread on Guard, Protect, Intercept and Engage (outline only)",
-	"herald-patches": "Camelot Herald patch notes (1.37c, 1.52, 1.65) and the spell texts of the community database, which are Mythic's",
+	"herald-patches": "Camelot Herald patch notes (1.37c, 1.52, 1.65; the 1.65H test notes on Savage buffs costing a share of maximum health) and the spell texts of the community database, which are Mythic's",
 	"allakhazam":     "Allakhazam's song entries and the Camelot Herald class pages (one song at a time; a speed song does not work in combat)",
 	"patch-1.38":     "Camelot Herald 1.38 patch notes: falling damage on, Safe Fall in the Stealth line (shape only)",
 	"patch-1.87":     "the 1.87 patch notes as quoted on the Dawn of Light forum: standing regeneration doubled to match sitting",
 	"data":           "the imported community database",
+	"herald-savage":  "Camelot Herald class library, Savage: the Savagery line modifies evade, parry, attack speed and DPS, and turns hit points into endurance",
 	"project":        "this project's choice",
 }
 

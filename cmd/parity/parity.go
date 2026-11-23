@@ -314,15 +314,12 @@ func styleFeatures(r *importer.Row) []string {
 var gapReasons = map[string]string{
 	"Distraction":               "it is aimed at a ground target, which this world has no way to aim",
 	"Danger Sense":              "it warns of enemies the player cannot see; nothing here hides from a player",
-	"Safe Fall":                 "this world has no fall damage for it to reduce",
 	"Climb Walls":               "this world has no climbable walls",
 	"Berserk":                   "a Berserker ability; no source read for it yet",
 	"Charge":                    "a Berserker and Savage ability; no source read for it yet",
 	"Enhanced Evade":            "a Berserker and Savage evade boost; no source read for it yet",
 	"QuickCast":                 "a casting-speed ability of the Mystic classes; no source read for it yet",
 	"Call of a thousand storms": "no source for the name or its effect",
-	"Taunt":                     "a Savage spell that makes a creature hate the caster; no source read for it yet",
-	"SavageEnduranceHeal":       "a Savage spell; no source read for it yet",
 	"opening: after result 3":   "one style whose opening result no source identifies",
 }
 

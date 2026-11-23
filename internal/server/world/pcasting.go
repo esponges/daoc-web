@@ -49,7 +49,7 @@ func spellSupported(sp *SpellDef) bool {
 // trains, the spells that open at or below the spec's level, by spec then level.
 func (w *World) buildBook(p *Player) []bookSpell {
 	var out []bookSpell
-	if !p.sh.class.Casts || w.Cat == nil {
+	if !(p.sh.class.Casts || p.sh.class.HealthSpells) || w.Cat == nil {
 		return nil
 	}
 	for _, spec := range w.Cat.TrainableSpecs(p.Char.Class) {
@@ -72,7 +72,36 @@ func (w *World) buildBook(p *Player) []bookSpell {
 // powerCost is what a spell draws from this caster's pool: the spell's power
 // as it is, or a share of the pool when the data gives it negative.
 func (p *Player) powerCost(sp *SpellDef) int {
+	if rules.PaysHealth(sp.Type) {
+		return rules.HealthCost(sp.Power, p.sh.maxHP)
+	}
 	return rules.SpellPowerCost(sp.Power, p.sh.maxPower)
+}
+
+// canPay says whether the caster has what a spell costs: power from the pool,
+// or for a Savage spell hit points the cost would not take to nothing.
+func (p *Player) canPay(sp *SpellDef) bool {
+	if rules.PaysHealth(sp.Type) {
+		return rules.CanPayHealth(p.hp, p.powerCost(sp))
+	}
+	return p.power >= float64(p.powerCost(sp))
+}
+
+// lacks is what the caster is told when canPay is false.
+func lacks(sp *SpellDef) string {
+	if rules.PaysHealth(sp.Type) {
+		return "You don't have enough health."
+	}
+	return "You don't have enough power."
+}
+
+// pay takes a spell's cost from the caster.
+func (p *Player) pay(sp *SpellDef) {
+	if rules.PaysHealth(sp.Type) {
+		p.hp -= float64(p.powerCost(sp))
+		return
+	}
+	p.power -= float64(p.powerCost(sp))
 }
 
 // bookMsg is the spellbook as the protocol carries it.
@@ -85,7 +114,7 @@ func (p *Player) bookMsg(cat *Catalog) protocol.Book {
 		l := &m.Lines[len(m.Lines)-1]
 		l.Spells = append(l.Spells, protocol.BookSpell{ID: b.Spell.ID, Name: b.Spell.Name, Level: b.Level, Cost: p.powerCost(b.Spell),
 			Cast: b.Spell.CastTime, Range: int(b.Spell.Range), Type: b.Spell.Type, Target: b.Spell.Target, OK: spellSupported(b.Spell),
-			Icon: b.Spell.Icon, Recast: int(b.Spell.Recast), Pulse: b.Spell.pulsing()})
+			Icon: b.Spell.Icon, Recast: int(b.Spell.Recast), Pulse: b.Spell.pulsing(), HP: rules.PaysHealth(b.Spell.Type)})
 	}
 	return m
 }
@@ -163,8 +192,8 @@ func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 	if target == nil {
 		return
 	}
-	if cost := p.powerCost(sp); p.power < float64(cost) {
-		p.errMsg("cast", "You don't have enough power.")
+	if !p.canPay(sp) {
+		p.errMsg("cast", lacks(sp))
 		return
 	}
 	tx, ty := target.position()
@@ -321,15 +350,15 @@ func (z *Zone) continuePlayerCast(p *Player) {
 		sys(p, rules.SightMessage)
 		return
 	}
-	if p.power < float64(cost) {
-		sys(p, "You don't have enough power.")
+	if !p.canPay(sp) {
+		sys(p, lacks(sp))
 		return
 	}
 	if msg := z.concRefusal(p, sp, c.target); msg != "" {
 		sys(p, msg)
 		return
 	}
-	p.power -= float64(cost)
+	p.pay(sp)
 	p.spellReady[sp.ID] = z.now + sp.Recast
 	if sp.Hostile() {
 		p.combatUntil = z.now + CombatLinger

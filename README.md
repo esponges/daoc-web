@@ -44,9 +44,9 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | | implemented |
 | --- | --- |
 | Creature spell types | 15 of 15 |
-| Class spell types | 64 of 73 (939 of 987 spells) |
+| Class spell types | 73 of 73 (987 of 987 spells) |
 | Style features | 13 of 14 (1,382 of 1,383 styles) |
-| Abilities | 21 of 30 (83 of 100 grants) |
+| Abilities | 22 of 30 (88 of 100 grants) |
 | Creature kinds | 23 of 110 (29,118 of 29,932 placements; 7 kinds left out as not classic) |
 | Quests | 0 of 0 (the 81 XP Item data quests are marked not classic) |
 | Keep doors | 0 of 432 |
@@ -54,7 +54,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 0 gaps in 10 five-level bands (31 to 50 is the project's added stock) |
-| Rules | 26 documented, 66 reference, 43 provisional |
+| Rules | 27 documented, 66 reference, 46 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for all twelve of
 Midgard's classes (trainers teach them), with pets and charm, bows, stealth,
@@ -370,6 +370,12 @@ Sources the rules come from:
   [Dawn of Light forum](https://dolserver.sourceforge.net/viewtopic.php?p=90942) (standing regeneration
   doubled to match sitting). They give the shape of falling and resting; the numbers are this project's
   and provisional.
+- The Camelot Herald class library page for the Savage
+  ([camelotherald.com/node/194](https://www.camelotherald.com/node/194): the Savagery line modifies evade,
+  parry, attack speed and DPS, and turns hit points into endurance) and the 1.65H test patch notes
+  ([gamebanshee.com/3ydp](https://gamebanshee.com/3ydp): Savage buffs take a percent of maximum health). The
+  community database gives each Savage spell's cost, value and duration; reading the values as percents and a
+  Taunt's hate scale are this project's, provisional.
 - [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
   understand rules that no public page gives a number for. Nothing is copied
   from it.

@@ -288,6 +288,7 @@ func (p *Player) combatant(cat *Catalog) *rules.Combatant {
 	} else {
 		cb.Unarmed = true
 	}
+	p.savageBuffs(cb)
 	if p.hasSpec(cat, "Parry") {
 		cb.ParrySpec = p.combatSpec("Parry")
 	}
@@ -314,4 +315,28 @@ func (p *Player) hasSpec(cat *Catalog, key string) bool {
 		}
 	}
 	return false
+}
+
+// savageBuffs puts what a Savage's own buffs give on the player's combatant:
+// extra melee damage, extra evade and parry, and a share off crush, slash and
+// thrust blows. Of each kind the strongest counts; the resists stop at the cap
+// buffs have.
+func (p *Player) savageBuffs(cb *rules.Combatant) {
+	for _, e := range p.effects {
+		switch e.kind {
+		case effDPS:
+			cb.DamageBonus = math.Max(cb.DamageBonus, rules.SavagePercent(e.spell.Value))
+		case effSavEv:
+			cb.EvadeBonus = math.Max(cb.EvadeBonus, rules.SavagePercent(e.spell.Value))
+		case effSavPar:
+			cb.ParryBonus = math.Max(cb.ParryBonus, rules.SavagePercent(e.spell.Value))
+		case effPhys:
+			if t, ok := rules.SavageResistType(e.spell.Type); ok {
+				if cb.Resists == nil {
+					cb.Resists = map[int]float64{}
+				}
+				cb.Resists[t] = math.Max(cb.Resists[t], math.Min(e.spell.Value, rules.BuffResistCap))
+			}
+		}
+	}
 }

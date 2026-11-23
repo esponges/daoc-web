@@ -56,6 +56,7 @@ type Class struct {
 	Base                         string // the base class it grows from (a Warrior is a Viking until 5 in 1.65)
 	Races                        []int
 	Casts                        bool // has a power pool and a spellbook
+	HealthSpells                 bool // has a spellbook paid for in hit points, not power (the Savage)
 	Acuity                       Stat // the stat that sets the pool
 }
 
@@ -85,7 +86,7 @@ var Classes = map[int]Class{
 	ClassBerserker: {ID: ClassBerserker, Name: "Berserker", Primary: STR, Secondary: CON, Tertiary: DEX,
 		BaseHP: 880, WeaponSkillBase: 440, SpecMultiplier: 20, Base: "Viking", Races: []int{5, 6, 7, 14}},
 	ClassSavage: {ID: ClassSavage, Name: "Savage", Primary: STR, Secondary: CON, Tertiary: DEX,
-		BaseHP: 880, WeaponSkillBase: 440, SpecMultiplier: 15, Base: "Viking", Races: []int{5, 8, 6, 7, 14}},
+		BaseHP: 880, WeaponSkillBase: 440, SpecMultiplier: 15, Base: "Viking", Races: []int{5, 8, 6, 7, 14}, HealthSpells: true},
 	ClassHealer: {ID: ClassHealer, Name: "Healer", Primary: PIE, Secondary: CON, Tertiary: DEX,
 		BaseHP: 720, WeaponSkillBase: 340, SpecMultiplier: 10, Base: "Seer", Races: []int{5, 7}, Casts: true, Acuity: PIE},
 	ClassShaman: {ID: ClassShaman, Name: "Shaman", Primary: PIE, Secondary: CON, Tertiary: DEX,

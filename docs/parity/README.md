@@ -7,9 +7,9 @@ How much of classic 1.65 Midgard the server implements, measured against the com
 ```
 Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    15 of  15 implemented (2585 of 2585 placements x spells)
-  Class spell types       64 of  73 implemented (939 of 987 spells)
+  Class spell types       73 of  73 implemented (987 of 987 spells)
   Style features          13 of  14 implemented (1382 of 1383 styles)
-  Abilities               21 of  30 implemented (83 of 100 grants)
+  Abilities               22 of  30 implemented (88 of 100 grants)
   Creature kinds          23 of 110 implemented (29118 of 29932 placements, 7 kinds not classic)
   quests                 0, none implemented
   keep doors             432, none implemented
@@ -18,7 +18,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   battlegrounds          5, none implemented
   quests not classic     81 (an XP Item collection quest: an NPC pays experience for a creature's drop)
   levelling gear         0 gaps in 10 bands
-  rules: 26 documented, 66 reference, 43 provisional
+  rules: 27 documented, 66 reference, 46 provisional
 ```
 
 ## Creature spell types
@@ -82,12 +82,12 @@ Midgard (regions 100, 101, 151): 29932 placements
 | BodyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 6 | yes |
 | DexterityBuff (Healer, Seer, Shaman) | 6 | yes |
 | Resurrect (Healer, Seer, Shaman, Spiritmaster) | 6 | yes |
-| SavageCrushResistanceBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
-| SavageDPSBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
-| SavageEvadeBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
-| SavageParryBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
-| SavageSlashResistanceBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
-| SavageThrustResistanceBuff (Savage) | 6 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
+| SavageCrushResistanceBuff (Savage) | 6 | yes |
+| SavageDPSBuff (Savage) | 6 | yes |
+| SavageEvadeBuff (Savage) | 6 | yes |
+| SavageParryBuff (Savage) | 6 | yes |
+| SavageSlashResistanceBuff (Savage) | 6 | yes |
+| SavageThrustResistanceBuff (Savage) | 6 | yes |
 | Amnesia (Healer) | 5 | yes |
 | ArmorAbsorptionBuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 | yes |
 | BodyResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
@@ -98,19 +98,19 @@ Midgard (regions 100, 101, 151): 29932 placements
 | MatterResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | Nearsight (Bonedancer, Mystic, Runemaster, Spiritmaster) | 5 | yes |
 | PowerRegenBuff (Healer) | 5 | yes |
-| SavageCombatSpeedBuff (Savage) | 5 | no: a Savage spell kind (a buff of the Savage's own); no source read for it yet |
+| SavageCombatSpeedBuff (Savage) | 5 | yes |
 | SpiritResistBuff (Healer, Seer, Shaman, Skald) | 5 | yes |
 | SummonHunterPet (Hunter) | 5 | yes |
 | SummonSpiritFighter (Spiritmaster) | 5 | yes |
 | AcuityBuff (Healer, Seer, Shaman) | 4 | yes |
 | CureNearsightCustom (Healer, Seer, Shaman) | 4 | yes |
 | SummonCommander (Bonedancer) | 4 | yes |
-| Taunt (Savage) | 4 | no: a Savage spell that makes a creature hate the caster; no source read for it yet |
+| Taunt (Savage) | 4 | yes |
 | ColdResistDebuff (Runemaster) | 3 | yes |
 | EnergyResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 | yes |
 | HeatResistDebuff (Runemaster) | 3 | yes |
 | MatterResistDebuff (Runemaster) | 3 | yes |
-| SavageEnduranceHeal (Savage) | 3 | no: a Savage spell; no source read for it yet |
+| SavageEnduranceHeal (Savage) | 3 | yes |
 | SpiritResistDebuff (Bonedancer, Mystic, Runemaster, Spiritmaster) | 3 | yes |
 | SpreadHeal (Healer, Seer, Shaman) | 3 | yes |
 | CureDisease (Healer, Seer, Shaman) | 2 | yes |
@@ -147,7 +147,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | Critical Shot (Hunter) | 9 | yes |
 | Protect (Berserker, Skald, Thane, Warrior) | 8 | yes |
 | Shield (Berserker, Healer, Savage, Seer, Shadowblade, Shaman, Skald, Thane, Viking, Warrior) | 8 | yes |
-| Safe Fall (Shadowblade) | 5 | no: this world has no fall damage for it to reduce |
+| Safe Fall (Shadowblade) | 5 | yes |
 | Berserk (Berserker) | 4 | no: a Berserker ability; no source read for it yet |
 | Guard (Thane, Warrior) | 4 | yes |
 | Weaponry: Staves (Berserker, Bonedancer, Healer, Hunter, Midgard Rogue, Mystic, Runemaster, Savage, Seer, Shadowblade, Shaman, Skald, Spiritmaster, Thane, Viking, Warrior) | 4 | yes |
@@ -406,6 +406,10 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | rez.sickness | reference |
 | rez.spare | documented |
 | rez.wait | reference |
+| savage.buffs | provisional |
+| savage.endurance-heal | provisional |
+| savage.health-cost | documented |
+| savage.taunt | provisional |
 | spec.abilities | documented |
 | spec.items | documented |
 | spec.migration | documented |

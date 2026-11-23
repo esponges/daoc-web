@@ -35,6 +35,12 @@ const (
 	effBuff = "buff"
 	effAdd  = "dmgadd"
 
+	// What a Savage's own buffs leave.
+	effPhys   = "physresist" // a share off crush, slash or thrust blows
+	effDPS    = "dps"        // extra melee damage
+	effSavEv  = "savevade"   // extra evade chance
+	effSavPar = "savparry"   // extra parry chance
+
 	// What songs and chants leave: a speed boost, extra health on each tick, a
 	// resist.
 	effSpeed  = "speed"
@@ -60,6 +66,16 @@ func effectKind(spellType string) string {
 		return effBuff
 	case rules.SpellCombatSpeedBuff:
 		return effHaste
+	case rules.SpellSavageSpeed:
+		return effHaste
+	case rules.SpellSavageCrush, rules.SpellSavageSlash, rules.SpellSavageThrust:
+		return effPhys
+	case rules.SpellSavageDPS:
+		return effDPS
+	case rules.SpellSavageEvade:
+		return effSavEv
+	case rules.SpellSavageParry:
+		return effSavPar
 	case rules.SpellDamageShield:
 		return effShield
 	case rules.SpellEnduranceRegen:
@@ -273,6 +289,16 @@ func (z *Zone) castSpellAs(caster, target combatant, sp *SpellDef, level int, ro
 		}
 	case rules.SpellCurePoison, rules.SpellCureDisease, rules.SpellCureMezz, rules.SpellCureNearsight:
 		z.cure(caster, target, sp)
+	case rules.SpellSavageEndHeal:
+		if cp, ok := caster.(*Player); ok {
+			cp.end = math.Min(rules.MaxEndurance, cp.end+rules.EnduranceHealed(sp.Value, rules.MaxEndurance))
+			z.event(protocol.Event{K: "spell", From: cp.ID, To: cp.ID, Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
+		}
+	case rules.SpellTaunt:
+		if n, ok := target.(*NPC); ok {
+			n.addHate(caster, rules.TauntHate(sp.Value))
+			z.event(protocol.Event{K: "spell", From: caster.entityID(), To: n.ID, Text: sp.Name, FX: sp.ClientEffect}, tx, ty)
+		}
 	case rules.SpellSpreadHeal:
 		if cp, ok := caster.(*Player); ok {
 			z.spreadHeal(cp, sp)

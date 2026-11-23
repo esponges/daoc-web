@@ -106,6 +106,11 @@ type Combatant struct {
 
 	// EngageBlock is added to a player's block chance while they engage the attacker.
 	EngageBlock float64
+
+	// What a Savage's buffs and Berserk put on a player: a share of extra
+	// melee damage, chances added to evade and parry, and the share of evade,
+	// parry and block that is lost.
+	DamageBonus, EvadeBonus, ParryBonus, DefencePenalty float64
 }
 
 // Style is a style as a swing uses it.
@@ -170,6 +175,9 @@ func Resolve(s Swing, r Rolls) Outcome {
 		o.Chance.Parry = 0
 	}
 	o.Chance.Block = BlockChance(d, s.InFront)
+	if p := d.DefencePenalty; p > 0 {
+		o.Chance.Evade, o.Chance.Parry, o.Chance.Block = o.Chance.Evade*(1-p), o.Chance.Parry*(1-p), o.Chance.Block*(1-p)
+	}
 	switch {
 	case s.NoDefence:
 	case dice[0] < o.Chance.Evade:
@@ -203,6 +211,9 @@ func Resolve(s Swing, r Rolls) Outcome {
 	if s.Effectiveness > 0 {
 		o.Damage = max(1, int(float64(o.Damage)*s.Effectiveness))
 	}
+	if a.DamageBonus > 0 {
+		o.Damage = int(float64(o.Damage) * (1 + a.DamageBonus))
+	}
 	if a.Player && dice[6] < CriticalChance {
 		top := 1.0
 		if d.Player {
@@ -231,7 +242,7 @@ func EvadeChance(d *Combatant, inFront bool, attackers int) float64 {
 		return 0
 	}
 	c := perMille((900 + d.Stats[QUI] + d.Stats[DEX]) * d.EvadeLevel * 5 / 100)
-	return c / (1 + float64(max(1, attackers)-1)/3)
+	return c/(1+float64(max(1, attackers)-1)/3) + d.EvadeBonus
 }
 
 // skillDefence is the parry and block base in tenths of a percent.
@@ -252,7 +263,7 @@ func ParryChance(d *Combatant, inFront bool, attackers int, twoHanded bool) floa
 	if twoHanded {
 		c /= 2
 	}
-	return math.Max(0, c)
+	return math.Max(0, c+d.ParryBonus)
 }
 
 // BlockChance is the defender's chance to block this blow.

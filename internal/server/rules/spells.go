@@ -58,7 +58,9 @@ func ImplementedPlayerSpell(spellType string) bool {
 		SpellSpiritResistDebuff, SpellDisease, SpellNearsight, SpellConfusion, SpellAmnesia, SpellBladeturn, SpellAblativeArmor,
 		SpellArmorAbsorbBuff, SpellLifeTransfer, SpellDDWithDebuff, SpellDamageSpeedDecr, SpellUnbreakableSlow,
 		SpellFatigueDebuff, SpellSummonMinion, SpellSummonCommander, SpellSummonSpirit, SpellSummonHunterPet, SpellCharm,
-		SpellMezDurationBuff, SpellOffensiveProc:
+		SpellMezDurationBuff, SpellOffensiveProc,
+		SpellSavageCrush, SpellSavageSlash, SpellSavageThrust, SpellSavageDPS, SpellSavageEvade, SpellSavageParry,
+		SpellSavageSpeed, SpellSavageEndHeal, SpellTaunt:
 		return true
 	}
 	return ImplementedSpell(spellType)

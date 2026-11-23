@@ -819,4 +819,5 @@ type BookSpell struct {
 	Icon   int     `json:"ic"`           // the data's number; not drawn
 	Recast int     `json:"rc,omitempty"` // seconds before it can be cast again
 	Pulse  bool    `json:"pl,omitempty"` // a song or chant: casting it turns it on, and casting it again off
+	HP     bool    `json:"hp,omitempty"` // the cost is hit points, not power (a Savage spell)
 }
