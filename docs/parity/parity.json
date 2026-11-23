@@ -1254,27 +1254,31 @@
     {
       "name": "DOL.GS.Scripts.Myling",
       "uses": 194,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Keeps.GuardFighter",
       "uses": 139,
-      "implemented": false
+      "implemented": false,
+      "reason": "a keep guard: owned by the frontiers-and-keeps change"
     },
     {
       "name": "DOL.GS.NightSpawn",
       "uses": 71,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Scripts.ShiveringPresence",
       "uses": 51,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Keeps.GuardArcher",
       "uses": 49,
-      "implemented": false
+      "implemented": false,
+      "reason": "a keep guard: owned by the frontiers-and-keeps change"
     },
     {
       "name": "DOL.GS.GameHastener",
@@ -1285,7 +1289,8 @@
     {
       "name": "DOL.GS.Keeps.GuardCommander",
       "uses": 26,
-      "implemented": false
+      "implemented": false,
+      "reason": "a keep guard: owned by the frontiers-and-keeps change"
     },
     {
       "name": "DOL.GS.Blacksmith",
@@ -1300,7 +1305,8 @@
     {
       "name": "DOL.GS.QueenMajorAdd",
       "uses": 22,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.GameHealer",
@@ -1322,17 +1328,20 @@
     {
       "name": "DOL.GS.Enchanter",
       "uses": 14,
-      "implemented": false
+      "implemented": false,
+      "reason": "an item service: whether 1.65 had it is unsettled; spawns as a plain creature"
     },
     {
       "name": "DOL.GS.StripeAdd",
       "uses": 13,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.ZritZritAdd",
       "uses": 13,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Keeps.FrontierHastener",
@@ -1348,17 +1357,20 @@
     {
       "name": "DOL.GS.OonaUndeadSoldier",
       "uses": 9,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Keeps.GuardStaticArcher",
       "uses": 8,
-      "implemented": false
+      "implemented": false,
+      "reason": "a keep guard: owned by the frontiers-and-keeps change"
     },
     {
       "name": "DOL.GS.RainbowSpriteWhite",
       "uses": 8,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Trainer.BerserkerTrainer",
@@ -1418,22 +1430,26 @@
     {
       "name": "DOL.GS.Keeps.GuardCorpseSummoner",
       "uses": 7,
-      "implemented": false
+      "implemented": false,
+      "reason": "a keep guard: owned by the frontiers-and-keeps change"
     },
     {
       "name": "DOL.GS.Keeps.GuardLord",
       "uses": 7,
-      "implemented": false
+      "implemented": false,
+      "reason": "a keep guard: owned by the frontiers-and-keeps change"
     },
     {
       "name": "DOL.GS.RainbowSpriteBlue",
       "uses": 7,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.RainbowSpriteTan",
       "uses": 7,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Trainer.SavageTrainer",
@@ -1443,12 +1459,14 @@
     {
       "name": "DOL.GS.RainbowSpriteGreen",
       "uses": 6,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Recharger",
       "uses": 5,
-      "implemented": false
+      "implemented": false,
+      "reason": "an item service: whether 1.65 had it is unsettled; spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Trainer.SeerTrainer",
@@ -1463,7 +1481,8 @@
     {
       "name": "DOL.GS.DPSDummy",
       "uses": 4,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a test dummy: a developer's target"
     },
     {
       "name": "DOL.GS.Trainer.MysticTrainer",
@@ -1479,7 +1498,8 @@
     {
       "name": "DOL.GS.MidgardSITeleporter",
       "uses": 3,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a teleporter: Shrouded Isles travel the horse routes replace"
     },
     {
       "name": "DOL.GS.Scripts.OFTeleporter",
@@ -1490,7 +1510,8 @@
     {
       "name": "DOL.GS.SnarlsAdd",
       "uses": 3,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Trainer.RogueTrainer",
@@ -1500,12 +1521,14 @@
     {
       "name": "DOL.GS.AlchemistsMaster",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "reason": "a crafting master: owned by the crafting change"
     },
     {
       "name": "DOL.GS.ArmorCraftingMaster",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "reason": "a crafting master: owned by the crafting change"
     },
     {
       "name": "DOL.GS.EmblemNPC",
@@ -1515,7 +1538,8 @@
     {
       "name": "DOL.GS.FletchingMaster",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "reason": "a crafting master: owned by the crafting change"
     },
     {
       "name": "DOL.GS.GuildRegistrar",
@@ -1525,37 +1549,44 @@
     {
       "name": "DOL.GS.HitbackDummy",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a test dummy: a developer's target"
     },
     {
       "name": "DOL.GS.Keeps.GuardMerchant",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "reason": "a keep guard: owned by the frontiers-and-keeps change"
     },
     {
       "name": "DOL.GS.Loken",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Scripts.OFMerchantHome",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a home merchant of the Origin Fantasy server"
     },
     {
       "name": "DOL.GS.Scripts.Recharger",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "reason": "an item service: whether 1.65 had it is unsettled; spawns as a plain creature"
     },
     {
       "name": "DOL.GS.TailoringMaster",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "reason": "a crafting master: owned by the crafting change"
     },
     {
       "name": "DOL.GS.WeaponCraftingMaster",
       "uses": 2,
-      "implemented": false
+      "implemented": false,
+      "reason": "a crafting master: owned by the crafting change"
     },
     {
       "name": "DOL.GS.AccountVaultKeeper",
@@ -1566,157 +1597,187 @@
     {
       "name": "DOL.GS.Alina",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Basilius",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Boligar",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.ChiefTarek",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Cronk",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Dalgo",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.DaySpawn",
       "uses": 1,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.EffectNPC",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "an effect carrier: a scripted visual, not a creature"
     },
     {
       "name": "DOL.GS.GiantLemer",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.GlacierGiant",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Goretooth",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.HealDummy",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a test dummy: a developer's target"
     },
     {
       "name": "DOL.GS.Hugi",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.MidGjalpinulva",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Mortufoghus",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.NameRegistrar",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Njessi",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Oona",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.QueenMajor",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.RaumarikRevenant",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.RoyalTreasuryClerk",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Runil",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.ScoutArgyle",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Scripts.AtlasTrainer",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a trainer of the Atlas server: a convenience service"
     },
     {
       "name": "DOL.GS.Scripts.InlandTeleporter",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a teleporter: Live-era travel the horse routes replace"
     },
     {
       "name": "DOL.GS.Shredclaw",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.SimpleTeleporter",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "notClassic": "a teleporter: Live-era travel the horse routes replace"
     },
     {
       "name": "DOL.GS.Snarls",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.SpellCraftingMaster",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "a crafting master: owned by the crafting change"
     },
     {
       "name": "DOL.GS.Steinolf",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Stripe",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Trainer.MidgardRogueTrainer",
@@ -1726,72 +1787,86 @@
     {
       "name": "DOL.GS.Ulfketill",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Valmak",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Vasrem",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterArachite",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterCrab",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterIce",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterJotun",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterLich",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterOgre",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterRaumarik",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterScorp",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.WrethOfWinterSpider",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.Yar",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     },
     {
       "name": "DOL.GS.ZritZrit",
       "uses": 1,
-      "implemented": false
+      "implemented": false,
+      "reason": "behaviour unsourced: spawns as a plain creature"
     }
   ],
   "content": [

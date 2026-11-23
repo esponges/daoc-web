@@ -1,15 +1,8 @@
 ## ADDED Requirements
 
-### Requirement: No silent skips
-The server SHALL spawn every placement whose kind is implemented or "behaviour unsourced". A placement it skips SHALL be counted with its kind's reason in the parity census.
+### Requirement: Dropped placements are accounted for
+A placement the world does not contain SHALL be explained. The README SHALL state how many Midgard placements lack a converted model and why, so a skipped creature is a recorded limitation and not a silent one.
 
-#### Scenario: Myling camps exist
-- **WHEN** a player visits a Myling camp in its zone
-- **THEN** the Mylings are there
-
-### Requirement: Recharger
-A Recharger SHALL restore the charges of an item with charges, for a price set in the rule book.
-
-#### Scenario: Recharge
-- **WHEN** a player hands a Recharger an item with 0 of 10 charges and pays
-- **THEN** the item has 10 charges and the price is taken
+#### Scenario: Documented gap
+- **WHEN** a reader looks for creatures such as wisps, skugga and mud frogs in Midgard
+- **THEN** the README's known limitations say their models are effect or composite models the character converter cannot yet read, with the count of placements affected

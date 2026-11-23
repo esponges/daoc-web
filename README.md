@@ -53,7 +53,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Class spell types | 73 of 73 (987 of 987 spells) |
 | Style features | 13 of 14 (1,382 of 1,383 styles) |
 | Abilities | 27 of 30 (97 of 100 grants) |
-| Creature kinds | 26 of 110 (29,123 of 29,932 placements; 7 kinds left out as not classic) |
+| Creature kinds | 28 of 110 (29,195 of 29,932 placements; 16 kinds left out as not classic) |
 | Quests | 0 of 0 (the 81 XP Item data quests are marked not classic) |
 | Keep doors | 0 of 432 |
 | Keeps | 0 of 79 |
@@ -591,6 +591,7 @@ builder cannot draw is named once on the console.
   not are `_p00` files with a bad header, none of them placed by
   `city.csv`. The other realms' cities and dungeons convert but, like
   their outdoor zones, have only been measured.
+- **About 7% of Midgard's creatures are not in the world.** 1,693 of 24,134 placements in Midgard's regions have no converted model, across 35 models (measured 2026-11-23): wisps, spirits and ghost lights are effect models with no skinned mesh (`charconv` says "no shapes selected"), and the morvalt skugga, mud frogs, carrion crawlers and keep guards are composite figures ("no geometry or no skin"). Their placements are dropped at import. Named creatures that do spawn have no scripted behaviour: no public source says what they do, so they act as their template says; `docs/parity` lists each kind with its reason.
 - **Faces, not hair.** A humanoid's head wears the Face skin from
   `monsters.csv`; the hair is a separate style number that is not mapped, so
   a head shows only what its face texture paints.

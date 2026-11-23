@@ -30,6 +30,15 @@ var NotClassicKinds = map[string]NotClassic{
 	"DOL.GS.GameEmeraldSealsMerchant":  {"a seals merchant: Atlas-era currency", noSource},
 	"DOL.GS.GameDiamondSealsMerchant":  {"a seals merchant: Atlas-era currency", noSource},
 	"DOL.GS.GameBountyMerchant":        {"a bounty merchant: a later reward shop", noSource},
+	"DOL.GS.DPSDummy":                  {"a test dummy: a developer's target", noSource},
+	"DOL.GS.HitbackDummy":              {"a test dummy: a developer's target", noSource},
+	"DOL.GS.HealDummy":                 {"a test dummy: a developer's target", noSource},
+	"DOL.GS.EffectNPC":                 {"an effect carrier: a scripted visual, not a creature", noSource},
+	"DOL.GS.Scripts.AtlasTrainer":      {"a trainer of the Atlas server: a convenience service", noSource},
+	"DOL.GS.Scripts.OFMerchantHome":    {"a home merchant of the Origin Fantasy server", noSource},
+	"DOL.GS.MidgardSITeleporter":       {"a teleporter: Shrouded Isles travel the horse routes replace", noSource},
+	"DOL.GS.SimpleTeleporter":          {"a teleporter: Live-era travel the horse routes replace", noSource},
+	"DOL.GS.Scripts.InlandTeleporter":  {"a teleporter: Live-era travel the horse routes replace", noSource},
 }
 
 // NotClassicQuest says whether a data quest is not part of the 1.65 world: the

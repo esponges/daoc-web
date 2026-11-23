@@ -2,71 +2,28 @@
 
 ## Why
 
-The parity census counts 110 creature kinds in Midgard's data. 23 are implemented and 7 are marked not classic. The rest are left out of the world entirely: the server skips any placement whose kind it does not know. Most of them are named monsters and their helpers, which give a zone its landmarks and camps.
+The parity census counts 110 creature kinds in Midgard's data and called 23 of them implemented. Looking at what the server actually does showed the picture was wrong in both directions:
 
-The biggest gaps by placement count:
-
-| kind | placements |
-| --- | --- |
-| Myling | 194 |
-| NightSpawn / DaySpawn | 72 |
-| ShiveringPresence | 51 |
-| QueenMajorAdd | 22 |
-| Enchanter | 14 |
-| StripeAdd, ZritZritAdd | 13 each |
-| OonaUndeadSoldier | 9 |
-| RainbowSprite (four colours) | 28 |
-
-There are also about 40 single named creatures, each with a script of its own:
-
-- Stripe, ZritZrit, Snarls, Oona and QueenMajor;
-- Goretooth, Shredclaw and Steinolf;
-- the Wreth of Winter set;
-- GlacierGiant, GiantLemer, RaumarikRevenant, Mortufoghus;
-- and others.
-
-Service NPCs are also missing:
-
-- Recharger: recharges an item's charges;
-- Enchanter: enchants an item;
-- NameRegistrar and RoyalTreasuryClerk.
-
-The keep guard kinds belong to `frontiers-and-keeps`, the crafting masters to `crafting` and the GuildRegistrar and EmblemNPC to `player-guilds`.
+- Night and day creatures (NightSpawn, DaySpawn) already work, but the census called them unimplemented.
+- The other kinds (Myling, ShiveringPresence, the named bosses and their adds, Enchanter, Recharger and others) spawn as plain creatures. The community data gives only a class type and a brain name for them, and public searches found nothing on what they do. A behaviour engine would have no rows.
+- The real hole in the world is not behaviour but models: about 7% of Midgard's placements have no converted model, and none of the 35 models converts with the current character converter.
 
 ## What Changes
 
-- **A behaviour layer for creatures.** A creature kind can add behaviours on top of the standard NPC:
-  - time-of-day presence;
-  - adds that spawn at health thresholds;
-  - fleeing and calling for help;
-  - one or more scripted abilities on a timer;
-  - shape or colour cycling.
-
-  Each scripted kind is described as data, a table of behaviours, not as one-off code where avoidable.
-- **The common kinds:**
-  - Myling;
-  - NightSpawn and DaySpawn, folded into the existing night-only presence;
-  - ShiveringPresence;
-  - RainbowSprite;
-  - the add kinds of the named bosses.
-- **The named creatures.** Each is implemented from what its 1.65 behaviour is known to be, with a source in the rule book, or is spawned as a plain creature with its template and marked "behaviour unsourced" in the census.
-- **Services:**
-  - Recharger, for items with charges;
-  - Enchanter, which adds the item bonus enchanting gave before crafting covered it, if 1.65 had it; otherwise marked not classic;
-  - NameRegistrar and RoyalTreasuryClerk, after checking whether they are classic.
-- **Left out:** the test dummies (DPSDummy, HitbackDummy, HealDummy), AtlasTrainer, OFMerchantHome, EffectNPC and the SI teleporters. They are marked not classic with reasons.
+- **Census:** NightSpawn and DaySpawn count as implemented. Every other unimplemented kind carries its reason: owned by `frontiers-and-keeps` (keep guards), owned by `crafting` (crafting masters), an unsettled item service (Enchanter, Recharger), not classic (test dummies, other servers' teleporters, effect carriers), or behaviour unsourced.
+- **Not-classic list:** gains the test dummies, the effect carrier, and the teleporters and trainers of other servers; the server already answers their interaction with a line.
+- **Known limitation:** the README states how many Midgard placements lack a convertible model and why.
+- **Deferred:** the behaviour layer (adds, flee, call for help, timed abilities). It waits for the first creature with a public source, and is written with that row.
 
 ## Capabilities
 
 ### New Capabilities
-- `creature-behaviours`: time-of-day presence, adds, fleeing and calling for help, timed scripted abilities, and how a creature kind maps to a set of them.
+- `creature-behaviours`: time-of-day presence, and the rule that behaviour beyond a creature's template needs a source.
 
 ### Modified Capabilities
-- `server-npcs`: every creature kind is either spawned or recorded as not classic, and service NPCs (recharger, enchanter) serve.
+- `server-npcs`: dropped placements are accounted for in the README.
 
 ## Impact
 
-- **Server:** `world/npc.go` and `world/zone.go`, plus a new `world/behaviours.go` with its tests.
-- **Import:** `internal/importer` keeps the kind name and the script parameters it can read. `world.db` is re-imported.
-- **Census:** `cmd/parity` creature-kind table and not-classic reasons.
-- **Converters:** the charconv recipe covers the models of these kinds.
+- `cmd/parity` (reasons and the not-classic counting), `internal/importer/notclassic.go`, the README table and known limitations, `docs/parity`.
+- No server behaviour changes.

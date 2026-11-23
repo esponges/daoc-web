@@ -10,7 +10,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   Class spell types       73 of  73 implemented (987 of 987 spells)
   Style features          13 of  14 implemented (1382 of 1383 styles)
   Abilities               27 of  30 implemented (97 of 100 grants)
-  Creature kinds          26 of 110 implemented (29123 of 29932 placements, 7 kinds not classic)
+  Creature kinds          28 of 110 implemented (29195 of 29932 placements, 16 kinds not classic)
   quests                 0, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
@@ -180,27 +180,27 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.GameNPC | 28412 | yes |
 | DOL.GS.GameMerchant | 324 | yes |
 | DOL.GS.GameGuard | 197 | yes |
-| DOL.GS.Scripts.Myling | 194 |  |
-| DOL.GS.Keeps.GuardFighter | 139 |  |
-| DOL.GS.NightSpawn | 71 |  |
-| DOL.GS.Scripts.ShiveringPresence | 51 |  |
-| DOL.GS.Keeps.GuardArcher | 49 |  |
+| DOL.GS.Scripts.Myling | 194 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Keeps.GuardFighter | 139 | no: a keep guard: owned by the frontiers-and-keeps change |
+| DOL.GS.NightSpawn | 71 | yes |
+| DOL.GS.Scripts.ShiveringPresence | 51 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Keeps.GuardArcher | 49 | no: a keep guard: owned by the frontiers-and-keeps change |
 | DOL.GS.GameHastener | 27 | not classic: a hastener: a speed boost on request |
-| DOL.GS.Keeps.GuardCommander | 26 |  |
+| DOL.GS.Keeps.GuardCommander | 26 | no: a keep guard: owned by the frontiers-and-keeps change |
 | DOL.GS.Blacksmith | 23 | yes |
 | DOL.GS.GameStableMaster | 23 | yes |
-| DOL.GS.QueenMajorAdd | 22 |  |
+| DOL.GS.QueenMajorAdd | 22 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.GameHealer | 18 | yes |
 | DOL.GS.Scripts.OFAssistant | 18 | not classic: a teleporter's assistant |
 | DOL.GS.Scripts.LiveTeleporter | 15 | not classic: a teleporter: Live-era travel the horse routes replace |
-| DOL.GS.Enchanter | 14 |  |
-| DOL.GS.StripeAdd | 13 |  |
-| DOL.GS.ZritZritAdd | 13 |  |
+| DOL.GS.Enchanter | 14 | no: an item service: whether 1.65 had it is unsettled; spawns as a plain creature |
+| DOL.GS.StripeAdd | 13 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.ZritZritAdd | 13 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Keeps.FrontierHastener | 11 | not classic: a hastener: a speed boost on request |
 | DOL.GS.GameVaultKeeper | 9 | yes |
-| DOL.GS.OonaUndeadSoldier | 9 |  |
-| DOL.GS.Keeps.GuardStaticArcher | 8 |  |
-| DOL.GS.RainbowSpriteWhite | 8 |  |
+| DOL.GS.OonaUndeadSoldier | 9 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Keeps.GuardStaticArcher | 8 | no: a keep guard: owned by the frontiers-and-keeps change |
+| DOL.GS.RainbowSpriteWhite | 8 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Trainer.BerserkerTrainer | 8 | yes |
 | DOL.GS.Trainer.BonedancerTrainer | 8 | yes |
 | DOL.GS.Trainer.HealerTrainer | 8 | yes |
@@ -212,81 +212,81 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Trainer.SpiritmasterTrainer | 8 | yes |
 | DOL.GS.Trainer.ThaneTrainer | 8 | yes |
 | DOL.GS.Trainer.WarriorTrainer | 8 | yes |
-| DOL.GS.Keeps.GuardCorpseSummoner | 7 |  |
-| DOL.GS.Keeps.GuardLord | 7 |  |
-| DOL.GS.RainbowSpriteBlue | 7 |  |
-| DOL.GS.RainbowSpriteTan | 7 |  |
+| DOL.GS.Keeps.GuardCorpseSummoner | 7 | no: a keep guard: owned by the frontiers-and-keeps change |
+| DOL.GS.Keeps.GuardLord | 7 | no: a keep guard: owned by the frontiers-and-keeps change |
+| DOL.GS.RainbowSpriteBlue | 7 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.RainbowSpriteTan | 7 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Trainer.SavageTrainer | 7 | yes |
-| DOL.GS.RainbowSpriteGreen | 6 |  |
-| DOL.GS.Recharger | 5 |  |
+| DOL.GS.RainbowSpriteGreen | 6 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Recharger | 5 | no: an item service: whether 1.65 had it is unsettled; spawns as a plain creature |
 | DOL.GS.Trainer.SeerTrainer | 5 | yes |
 | DOL.GS.Trainer.VikingTrainer | 5 | yes |
-| DOL.GS.DPSDummy | 4 |  |
+| DOL.GS.DPSDummy | 4 | not classic: a test dummy: a developer's target |
 | DOL.GS.Trainer.MysticTrainer | 4 | yes |
 | DOL.GS.GameBountyMerchant | 3 | not classic: a bounty merchant: a later reward shop |
-| DOL.GS.MidgardSITeleporter | 3 |  |
+| DOL.GS.MidgardSITeleporter | 3 | not classic: a teleporter: Shrouded Isles travel the horse routes replace |
 | DOL.GS.Scripts.OFTeleporter | 3 | not classic: a teleporter: Origin Fantasy convenience travel |
-| DOL.GS.SnarlsAdd | 3 |  |
+| DOL.GS.SnarlsAdd | 3 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Trainer.RogueTrainer | 3 | yes |
-| DOL.GS.AlchemistsMaster | 2 |  |
-| DOL.GS.ArmorCraftingMaster | 2 |  |
+| DOL.GS.AlchemistsMaster | 2 | no: a crafting master: owned by the crafting change |
+| DOL.GS.ArmorCraftingMaster | 2 | no: a crafting master: owned by the crafting change |
 | DOL.GS.EmblemNPC | 2 | yes |
-| DOL.GS.FletchingMaster | 2 |  |
+| DOL.GS.FletchingMaster | 2 | no: a crafting master: owned by the crafting change |
 | DOL.GS.GuildRegistrar | 2 | yes |
-| DOL.GS.HitbackDummy | 2 |  |
-| DOL.GS.Keeps.GuardMerchant | 2 |  |
-| DOL.GS.Loken | 2 |  |
-| DOL.GS.Scripts.OFMerchantHome | 2 |  |
-| DOL.GS.Scripts.Recharger | 2 |  |
-| DOL.GS.TailoringMaster | 2 |  |
-| DOL.GS.WeaponCraftingMaster | 2 |  |
+| DOL.GS.HitbackDummy | 2 | not classic: a test dummy: a developer's target |
+| DOL.GS.Keeps.GuardMerchant | 2 | no: a keep guard: owned by the frontiers-and-keeps change |
+| DOL.GS.Loken | 2 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Scripts.OFMerchantHome | 2 | not classic: a home merchant of the Origin Fantasy server |
+| DOL.GS.Scripts.Recharger | 2 | no: an item service: whether 1.65 had it is unsettled; spawns as a plain creature |
+| DOL.GS.TailoringMaster | 2 | no: a crafting master: owned by the crafting change |
+| DOL.GS.WeaponCraftingMaster | 2 | no: a crafting master: owned by the crafting change |
 | DOL.GS.AccountVaultKeeper | 1 | not classic: an account vault: shared storage across characters |
-| DOL.GS.Alina | 1 |  |
-| DOL.GS.Basilius | 1 |  |
-| DOL.GS.Boligar | 1 |  |
-| DOL.GS.ChiefTarek | 1 |  |
-| DOL.GS.Cronk | 1 |  |
-| DOL.GS.Dalgo | 1 |  |
-| DOL.GS.DaySpawn | 1 |  |
-| DOL.GS.EffectNPC | 1 |  |
-| DOL.GS.GiantLemer | 1 |  |
-| DOL.GS.GlacierGiant | 1 |  |
-| DOL.GS.Goretooth | 1 |  |
-| DOL.GS.HealDummy | 1 |  |
-| DOL.GS.Hugi | 1 |  |
-| DOL.GS.MidGjalpinulva | 1 |  |
-| DOL.GS.Mortufoghus | 1 |  |
-| DOL.GS.NameRegistrar | 1 |  |
-| DOL.GS.Njessi | 1 |  |
-| DOL.GS.Oona | 1 |  |
-| DOL.GS.QueenMajor | 1 |  |
-| DOL.GS.RaumarikRevenant | 1 |  |
-| DOL.GS.RoyalTreasuryClerk | 1 |  |
-| DOL.GS.Runil | 1 |  |
-| DOL.GS.ScoutArgyle | 1 |  |
-| DOL.GS.Scripts.AtlasTrainer | 1 |  |
-| DOL.GS.Scripts.InlandTeleporter | 1 |  |
-| DOL.GS.Shredclaw | 1 |  |
-| DOL.GS.SimpleTeleporter | 1 |  |
-| DOL.GS.Snarls | 1 |  |
-| DOL.GS.SpellCraftingMaster | 1 |  |
-| DOL.GS.Steinolf | 1 |  |
-| DOL.GS.Stripe | 1 |  |
+| DOL.GS.Alina | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Basilius | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Boligar | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.ChiefTarek | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Cronk | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Dalgo | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.DaySpawn | 1 | yes |
+| DOL.GS.EffectNPC | 1 | not classic: an effect carrier: a scripted visual, not a creature |
+| DOL.GS.GiantLemer | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.GlacierGiant | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Goretooth | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.HealDummy | 1 | not classic: a test dummy: a developer's target |
+| DOL.GS.Hugi | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.MidGjalpinulva | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Mortufoghus | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.NameRegistrar | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Njessi | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Oona | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.QueenMajor | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.RaumarikRevenant | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.RoyalTreasuryClerk | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Runil | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.ScoutArgyle | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Scripts.AtlasTrainer | 1 | not classic: a trainer of the Atlas server: a convenience service |
+| DOL.GS.Scripts.InlandTeleporter | 1 | not classic: a teleporter: Live-era travel the horse routes replace |
+| DOL.GS.Shredclaw | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.SimpleTeleporter | 1 | not classic: a teleporter: Live-era travel the horse routes replace |
+| DOL.GS.Snarls | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.SpellCraftingMaster | 1 | no: a crafting master: owned by the crafting change |
+| DOL.GS.Steinolf | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Stripe | 1 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Trainer.MidgardRogueTrainer | 1 | yes |
-| DOL.GS.Ulfketill | 1 |  |
-| DOL.GS.Valmak | 1 |  |
-| DOL.GS.Vasrem | 1 |  |
-| DOL.GS.WrethOfWinterArachite | 1 |  |
-| DOL.GS.WrethOfWinterCrab | 1 |  |
-| DOL.GS.WrethOfWinterIce | 1 |  |
-| DOL.GS.WrethOfWinterJotun | 1 |  |
-| DOL.GS.WrethOfWinterLich | 1 |  |
-| DOL.GS.WrethOfWinterOgre | 1 |  |
-| DOL.GS.WrethOfWinterRaumarik | 1 |  |
-| DOL.GS.WrethOfWinterScorp | 1 |  |
-| DOL.GS.WrethOfWinterSpider | 1 |  |
-| DOL.GS.Yar | 1 |  |
-| DOL.GS.ZritZrit | 1 |  |
+| DOL.GS.Ulfketill | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Valmak | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Vasrem | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterArachite | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterCrab | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterIce | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterJotun | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterLich | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterOgre | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterRaumarik | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterScorp | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.WrethOfWinterSpider | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.Yar | 1 | no: behaviour unsourced: spawns as a plain creature |
+| DOL.GS.ZritZrit | 1 | no: behaviour unsourced: spawns as a plain creature |
 
 ## Levelling gear
 

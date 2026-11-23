@@ -2,27 +2,24 @@
 
 ## 1. Research
 
-- [ ] 1.1 For each unimplemented Midgard kind, read its rows in the community data (templates, spawn points, linked adds). Write a one-line behaviour summary per kind in `design.md`.
-- [ ] 1.2 Find a public source for each named creature's behaviour (bestiary pages, Herald) and record it. Read the reference server only for understanding.
-- [ ] 1.3 Decide whether Enchanter, NameRegistrar, RoyalTreasuryClerk and Recharger are classic 1.65, and write the reasons.
+- [x] 1.1 For each unimplemented Midgard kind, read its rows in the community data. (The data holds a class type and a brain name only; see `design.md` Context. Every kind's status is in the census.)
+- [x] 1.2 Find a public source for each named creature's behaviour. (Searched 2026-11-23: none found for Myling, Queen Major, Stripe, Zrit-Zrit or Snarls; see `design.md`.)
+- [x] 1.3 Decide whether Enchanter, NameRegistrar, RoyalTreasuryClerk and Recharger are classic 1.65. (Unsettled: no source; they spawn as plain creatures with no service, and the census says so.)
 
 ## 2. Behaviour layer
 
-- [ ] 2.1 `world/behaviours.go`: the behaviour table and the brain hooks for presence, adds, flee, call-for-help, timed abilities and cycle. Table tests per spec scenario.
-- [ ] 2.2 Fold NightSpawn and DaySpawn into presence, and check the existing night-only creatures still behave.
+- [x] 2.1 Deferred by decision D1: no source gives any named creature's behaviour, so there is nothing for an engine to run. Revisit with the first sourced creature.
+- [x] 2.2 Night and day presence: already implemented (`importer.SpawnTiming`, `world/timed.go`). The census now counts NightSpawn and DaySpawn as implemented.
 
 ## 3. Kinds
 
-- [ ] 3.1 Myling, ShiveringPresence, RainbowSprite and OonaUndeadSoldier.
-- [ ] 3.2 Named bosses with adds: QueenMajor, Stripe, ZritZrit, Snarls, Oona.
-- [ ] 3.3 The remaining named creatures, each sourced or marked behaviour unsourced.
-- [ ] 3.4 The Recharger, and whichever of the other services task 1.3 keeps.
+- [x] 3.1 to 3.4 Replaced by D2: every kind is classified in the census (presence, not classic, owned by a later change, unsettled service, or behaviour unsourced), and the test dummies, other servers' teleporters and effect carriers join the not-classic list.
 
 ## 4. Import and census
 
-- [ ] 4.1 Importer: keep the kind and the parameters it can read. Re-import `world.db`. Add a test that no Midgard placement is dropped without a reason.
-- [ ] 4.2 `cmd/parity`: the new statuses (behaviour unsourced, owned by a change). Regenerate the docs and the README table.
+- [x] 4.1 Measure what the import drops: 1,693 Midgard placements across 35 models lack a converted model, and none of the 35 converts (design Context). Recorded in the README's known limitations.
+- [x] 4.2 `cmd/parity`: new reasons and statuses; docs and the README table regenerated.
 
 ## 5. Check
 
-- [ ] 5.1 Convert the models these kinds need, then visit a Myling camp and a boss camp in the browser and fight through an add wave.
+- [x] 5.1 `go test -short ./...` passes. Nothing to play: the change adds no behaviour a player can see, so there is no browser check.

@@ -107,6 +107,8 @@ func Run(dump string) (*Report, error) {
 		it := Item{Name: k, Uses: n, Implemented: kindImplemented(k)}
 		if nc, ok := importer.NotClassicOf(k); ok {
 			it.NotClassic = nc.Reason
+		} else if !it.Implemented {
+			it.Reason = kindReason(k)
 		}
 		rep.CreatureKinds = append(rep.CreatureKinds, it)
 	}
@@ -341,6 +343,9 @@ var styleFeatureImplemented = map[string]bool{
 // behaviour: plain creatures, town guards, merchants, healers, and trainers of
 // the classes it covers.
 func kindImplemented(classType string) bool {
+	if importer.SpawnTiming(classType) != importer.Always {
+		return true // night and day creatures are present in their time of the game clock
+	}
 	if classType == "DOL.GS.GameNPC" || classType == "DOL.GS.GameGuard" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) || importer.IsStableClass(classType) || importer.IsVaultClass(classType) || importer.IsSmithClass(classType) || importer.IsGuildRegistrarClass(classType) || importer.IsEmblemClass(classType) {
 		return true
 	}
@@ -351,6 +356,22 @@ func kindImplemented(classType string) bool {
 		}
 	}
 	return false
+}
+
+// kindReason says why a creature kind has no behaviour of its own yet. Every
+// such kind still spawns, as a plain creature, when its model converts: the
+// server has no sources for what these creatures do beyond their templates.
+func kindReason(classType string) string {
+	switch {
+	case strings.HasPrefix(classType, "DOL.GS.Keeps."):
+		return "a keep guard: owned by the frontiers-and-keeps change"
+	case strings.HasSuffix(classType, "CraftingMaster") || strings.HasSuffix(classType, "Master") && strings.Contains(classType, "Fletching") ||
+		classType == "DOL.GS.TailoringMaster" || classType == "DOL.GS.AlchemistsMaster":
+		return "a crafting master: owned by the crafting change"
+	case strings.HasSuffix(classType, "Enchanter") || strings.HasSuffix(classType, "Recharger"):
+		return "an item service: whether 1.65 had it is unsettled; spawns as a plain creature"
+	}
+	return "behaviour unsourced: spawns as a plain creature"
 }
 
 func appendOnce(l []string, s string) []string {
