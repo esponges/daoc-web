@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"daocweb/internal/gamedata"
 )
 
 func gamePath(t *testing.T) string {
@@ -235,5 +237,42 @@ func TestCastClipsAreLazyAndShareFiles(t *testing.T) {
 	}
 	if strings.Contains(string(idx), "cast3") {
 		t.Error("the clip that does not exist was listed")
+	}
+}
+
+func TestPlayerFigureIsNotACreatureModel(t *testing.T) {
+	data := t.TempDir()
+	os.WriteFile(filepath.Join(data, "races.json"), []byte(`{"races":{"6":{"m":"m137","f":"m145"}}}`), 0o644)
+	for dir, want := range map[string]bool{
+		"norseman":      true,
+		"troll-warrior": true,
+		"mage":          true,
+		"m137":          true, // a race base
+		"m145":          true,
+		"m100":          false, // a creature
+		"m1051":         false, // not in this races.json
+	} {
+		if got := playerFigure(filepath.Join(data, "char", dir)); got != want {
+			t.Errorf("playerFigure(%q) = %v, want %v", dir, got, want)
+		}
+	}
+}
+
+// Every player role names a column the tables have, and an emote has its own
+// clip name.
+func TestPlayerRolesNameRealColumns(t *testing.T) {
+	game := gamePath(t)
+	tb, err := gamedata.Load(game)
+	if err != nil {
+		t.Skipf("the game tables are not readable: %v", err)
+	}
+	set := 24 // the male troll's anim set, a player race
+	for _, r := range playerRoles {
+		if !r.player {
+			t.Errorf("%s is a player role not marked so", r.out)
+		}
+		if _, ok := tb.SetClip(set, r.column); !ok {
+			t.Errorf("anim set %d has no %q clip for %s", set, r.column, r.out)
+		}
 	}
 }

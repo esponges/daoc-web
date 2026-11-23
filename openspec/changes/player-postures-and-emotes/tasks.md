@@ -39,7 +39,7 @@
 ## 6. Client
 
 - [ ] 6.1 Keys: jump (Space), sit toggle, and a free sprint key after checking `ui.js`/`viewer.js` for clashes; document them in the key help. `net.js` sends the jump flag and predicts sprint from `spr`.
-- [ ] 6.2 `cmd/animconv`: new table roles `jump`, `land`, `sitdown`, `sit`, `standup`, `swim`, and lazy `em_<name>` clips for the classic set. Tests in `main_test.go` (roles resolved for a player set, emote clips lazy). Re-run over every player figure.
+- [x] 6.2 `cmd/animconv`: new table roles `jump`, `land`, `sitdown`, `sit`, `standup`, `swim`, and lazy `em_<name>` clips for the classic set. Tests in `main_test.go` (roles resolved for a player set, emote clips lazy). Re-run over every player figure.
 - [ ] 6.3 `viewer.js` (own figure) and `remote.js` (others): the clip priority in D5, the sit-down → seated → stand-up sequence, jump while rising and land on touchdown, swim, and emotes as one-shots cleared by movement, with fallbacks for missing clips. Node tests for the clip choice.
 - [ ] 6.4 `effects.js`/chat: emote lines on the emote channel with the stock Emote colour and tab, fall-damage and sit/stand/sprint lines, and the plain fallback colour.
 - [ ] 6.5 `chrome.js`: the stock Command window (D8) with SIT, SPRINT, ATTACK, PRAY and RELEASE wired, the rest greyed with reasons, and a toggle key. Plain Sit/Sprint buttons without `web/data/ui/`. Check it in `/uidemo.html`.

@@ -133,25 +133,56 @@ type job struct {
 type tableRole struct {
 	out, column string
 	combat      bool
+	// player marks a role only a humanoid figure gets, and written lazy: the
+	// postures and emotes of the player races.
+	player bool
 }
 
 var tableRoles = []tableRole{
-	{"idle", "idle", false},
-	{"walk", "walk", false},
-	{"run", "run", false},
-	{"back", "back", false},
-	{"strafeL", "slide left", false},
-	{"strafeR", "slide right", false},
-	{"death", "death", false},
-	{"cidle", "c-idle", true},
-	{"flinch", "flinch", true},
-	{"attack1", "att med", true},
-	{"attack2", "att high", true},
-	{"attack3", "att low", true},
+	{"idle", "idle", false, false},
+	{"walk", "walk", false, false},
+	{"run", "run", false, false},
+	{"back", "back", false, false},
+	{"strafeL", "slide left", false, false},
+	{"strafeR", "slide right", false, false},
+	{"death", "death", false, false},
+	{"cidle", "c-idle", true, false},
+	{"flinch", "flinch", true, false},
+	{"attack1", "att med", true, false},
+	{"attack2", "att high", true, false},
+	{"attack3", "att low", true, false},
 	// Only for a figure with a shield on its arm; see shieldOnly.
-	{"block", "block h", true},
+	{"block", "block h", true, false},
 	// Held while a creature casts; the server says when it ends.
-	{"cast", "cast mid", false},
+	{"cast", "cast mid", false, false},
+}
+
+// playerRoles are the clips of a player's body beyond walking and fighting:
+// jumping, sitting, swimming, and the classic emotes. An emote is called
+// em_<name>, the name its command has (server world/emotes.go).
+var playerRoles = []tableRole{
+	{"jump", "jump", false, true},
+	{"land", "land", false, true},
+	{"sitdown", "sit down", false, true},
+	{"sit", "sit idle", false, true},
+	{"standup", "stand up", false, true},
+	{"swim", "crawl", false, true},
+	{"em_beckon", "em beckon", false, true},
+	{"em_blush", "em blush", false, true},
+	{"em_bow", "em bow", false, true},
+	{"em_cheer", "em cheer", false, true},
+	{"em_clap", "em clap", false, true},
+	{"em_cry", "em cry", false, true},
+	{"em_curtsey", "em curtsey", false, true},
+	{"em_dance", "em dance", false, true},
+	{"em_flex", "em flex", false, true},
+	{"em_kiss", "em kiss", false, true},
+	{"em_laugh", "em laugh", false, true},
+	{"em_point", "em point", false, true},
+	{"em_salute", "em salute", false, true},
+	{"em_bang", "em shield", false, true},
+	{"em_victory", "em victory", false, true},
+	{"em_wave", "em wave", false, true},
 }
 
 // unarmedAttacks replace the three attacks for an empty-handed player-race
@@ -196,8 +227,11 @@ func fromAnimSet(game, char string) ([]job, error) {
 		shield = shield || e.Slot == "left"
 	}
 	var jobs []job
-	for _, r := range tableRoles {
+	for _, r := range append(append([]tableRole{}, tableRoles...), playerRoles...) {
 		col := r.column
+		if r.player && !playerFigure(char) {
+			continue
+		}
 		if r.out == "block" && !shield {
 			continue
 		}
@@ -224,7 +258,7 @@ func fromAnimSet(game, char string) ([]job, error) {
 				continue
 			}
 		}
-		jobs = append(jobs, job{src: strings.TrimSuffix(an.File, filepath.Ext(an.File)), out: r.out, rate: an.Rate(), loop: an.Loop, length: an.Length()})
+		jobs = append(jobs, job{src: strings.TrimSuffix(an.File, filepath.Ext(an.File)), out: r.out, rate: an.Rate(), loop: an.Loop, length: an.Length(), alias: r.player})
 		mode := "once"
 		if an.Loop {
 			mode = "loop"
@@ -236,6 +270,36 @@ func fromAnimSet(game, char string) ([]job, error) {
 	}
 	jobs = append(jobs, castJobs(t, m.AnimSet)...)
 	return jobs, nil
+}
+
+// playerFigure says whether a converted character directory is a player's
+// body: an outfit named by hand (norseman, troll-plate) or one of the race
+// bases web/data/races.json lists (m137, the male troll). A creature model
+// (m100) has no use for sitting or emotes.
+func playerFigure(char string) bool {
+	clean := filepath.Clean(char)
+	base := filepath.Base(clean)
+	if !(len(base) > 1 && base[0] == 'm' && strings.Trim(base[1:], "0123456789") == "") {
+		return true
+	}
+	b, err := os.ReadFile(filepath.Join(filepath.Dir(filepath.Dir(clean)), "races.json"))
+	if err != nil {
+		return false
+	}
+	var rs struct {
+		Races map[string]map[string]string `json:"races"`
+	}
+	if json.Unmarshal(b, &rs) != nil {
+		return false
+	}
+	for _, r := range rs.Races {
+		for _, model := range r {
+			if model == base {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // castNumbers lists the animation numbers any spell uses for its caster, sorted.
