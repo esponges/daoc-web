@@ -91,6 +91,9 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
     timer) and Mythic's Grab Bag answer that concentration depends on level and the
     casting stat, not the spec; the community database's own spell texts, which are
     Mythic's (a resurrection "eliminates the experience penalty and con loss");
+  - The Camelot Herald 1.38 patch notes (falling damage on; Safe Fall in the Stealth line, one level per ten
+    points) and the 1.87 notes as quoted on the Dawn of Light forum (standing regeneration doubled to match
+    sitting): the shape of falling and resting; their numbers are this project's, provisional;
   - OpenDAoC-Core and DOLSharp, for reference-status rules only.
 
   If you use another source (a wiki, a format write-up, a community table), add

@@ -365,6 +365,11 @@ Sources the rules come from:
   answer that the concentration pool depends on level and casting stat, not spec.
   The spell texts in the community database are Mythic's own, and say that a
   resurrection spares the release penalty.
+- The 1.38 patch notes ([release notes](https://gamebanshee.com/38kh): falling damage on, Safe Fall in the
+  Stealth line) and the 1.87 notes as quoted on the
+  [Dawn of Light forum](https://dolserver.sourceforge.net/viewtopic.php?p=90942) (standing regeneration
+  doubled to match sitting). They give the shape of falling and resting; the numbers are this project's
+  and provisional.
 - [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
   understand rules that no public page gives a number for. Nothing is copied
   from it.
