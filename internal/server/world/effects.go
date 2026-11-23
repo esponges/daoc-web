@@ -164,8 +164,11 @@ func held(c combatant) bool {
 func speedFactor(c combatant) float64 {
 	var slows []float64
 	boost := 1.0
+	charging := false
 	for _, e := range *effectsOf(c) {
 		switch e.kind {
+		case effCharge:
+			charging = true
 		case effSlow:
 			slows = append(slows, rules.SlowFactor(e.spell.Value))
 		case effDisease:
@@ -173,6 +176,9 @@ func speedFactor(c combatant) float64 {
 		case effSpeed:
 			boost = math.Max(boost, rules.BoostFactor(e.spell.Value))
 		}
+	}
+	if charging { // no slow takes hold while a Charge lasts
+		slows, boost = nil, math.Max(boost, rules.ChargeFactor)
 	}
 	return rules.WithBoost(rules.SpeedFactor(held(c), slows...), boost) * stealthFactor(c)
 }

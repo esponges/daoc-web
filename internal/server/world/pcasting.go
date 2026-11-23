@@ -211,10 +211,10 @@ func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 	}
 	z.unstealth(p, "You are no longer hidden.")
 	z.standUp(p)
-	p.casting = &playerCast{spell: sp, target: target, ends: rules.CastEnds(z.now, sp.CastTime), x: p.Body.X, y: p.Body.Y}
+	p.casting = &playerCast{spell: sp, target: target, ends: rules.CastEnds(z.now, z.castSeconds(p, sp)), x: p.Body.X, y: p.Body.Y}
 	p.pending = -1
-	z.event(protocol.Event{K: "cast", From: p.ID, To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect, Dur: sp.CastTime}, p.Body.X, p.Body.Y)
-	if sp.CastTime <= 0 {
+	z.event(protocol.Event{K: "cast", From: p.ID, To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect, Dur: z.castSeconds(p, sp)}, p.Body.X, p.Body.Y)
+	if z.castSeconds(p, sp) <= 0 {
 		z.continuePlayerCast(p)
 	}
 }
@@ -359,6 +359,7 @@ func (z *Zone) continuePlayerCast(p *Player) {
 		return
 	}
 	p.pay(sp)
+	z.spendQuickCast(p)
 	p.spellReady[sp.ID] = z.now + sp.Recast
 	if sp.Hostile() {
 		p.combatUntil = z.now + CombatLinger

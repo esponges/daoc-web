@@ -31,8 +31,8 @@ All twelve Midgard classes can be created and trained, but the parity census (`g
 - **Berserker and Savage abilities:**
   - Berserk: a timed stance with a damage bonus, lower defence and a reuse timer;
   - Charge: a timed speed boost that combat does not cancel, with a reuse timer;
-  - Enhanced Evade: a raised evade chance.
-- **QuickCast:** the next spell casts instantly, with a reuse timer, and can be interrupted only by its own rules.
+  - Enhanced Evade: searched, no source says what it did, so it is left out and listed in the census with that reason;
+- **QuickCast:** the next spell casts instantly, with a reuse timer.
 - **Safe Fall:** the census counts it, since the falling rules already apply it. The ability is shown on the character sheet.
 - **Ground target:**
   - a player can set a ground target by clicking terrain with the ground-target key (as the stock client does);
@@ -40,7 +40,7 @@ All twelve Midgard classes can be created and trained, but the parity census (`g
   - Distraction uses it.
 - **Danger Sense:** the Shadowblade is warned when a hidden player of an enemy realm comes within range. It is inert until realm-versus-realm play exists, but the rule and message are in place.
 - **Climb Walls:** left out, with the reason kept: the 1.65 world has no climbable walls outside keeps. It is revisited by `frontiers-and-keeps`.
-- **Call of a thousand storms:** researched. It is implemented if a source names its effect, and marked not classic otherwise.
+- **Call of a thousand storms:** searched, nothing found; it is granted at level 51, above this world's cap, so it stays a recorded gap.
 - **The opening "after result 3":** researched, or left recorded as unidentified.
 - **The Midgard Rogue trainer:** served like the other base-class trainers.
 
@@ -50,7 +50,7 @@ All twelve Midgard classes can be created and trained, but the parity census (`g
 - `ground-target`: setting, showing and validating a ground target, and its range.
 
 ### Modified Capabilities
-- `rules-abilities`: Berserk, Charge, Enhanced Evade, QuickCast, Danger Sense, Distraction and Safe Fall entries.
+- `rules-abilities`: Berserk, Charge, QuickCast, Danger Sense, Distraction and Safe Fall entries, and the reason Enhanced Evade is left out.
 - `rules-spell-effects`: the Savage spell kinds, Taunt and the endurance heal.
 - `midgard-classes`: the Savage is complete, and the Midgard Rogue trainer serves.
 

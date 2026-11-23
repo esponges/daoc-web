@@ -15,6 +15,7 @@
 // No WebGL here: net.test.mjs drives it headlessly against a fake server.
 
 import { stepBody, isSwimming, STEP_DT, RUN, FLAG_RUN, FLAG_JUMP } from './move.js';
+import { groundTargetOf } from './groundtarget.js';
 
 export const PROTOCOL = 1;
 
@@ -93,6 +94,9 @@ export class NetClient {
   useItem(slot) { this._send({ t: 'use-item', slot }); }
   // shoot draws a bow at the held target; mode is '', 'critical', 'rapid' or 'stop'.
   shoot(mode = '') { this._send({ t: 'shoot', ...(mode ? { mode } : {}) }); }
+  // The ground target, for Distraction and the like: the server checks the range and the line of sight.
+  setGround(x, y, z) { this._send({ t: 'gt', x, y, z }); }
+  clearGround() { this._send({ t: 'gt', clear: true }); }
   release() { this._send({ t: 'release' }); }
   // rezAnswer accepts or declines the resurrection offered to a dead character.
   // concCancel lets go of one of the buffs the character holds by concentration.
@@ -211,6 +215,7 @@ export class NetClient {
     me.serverSpeed = s.sp;
     me.ride = !!s.rd;
     me.seated = !!s.sit;
+    me.gt = groundTargetOf(s);
 
     const t = this.now();
     const seen = new Set();

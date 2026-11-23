@@ -65,6 +65,14 @@ ok(bar && Math.abs(bar.f - 0.5) < 1e-9, 'the bar is half full halfway through th
   ok(g.ask(6, 1500) === true, 'the same spell after the gap is a new press');
 }
 
+// A Savage spell is paid in hit points, and the book says so.
+{
+  const v = spellsView({ lines: [{ nm: 'Savagery', sp: [{ id: 10503, nm: 'Barbs of Kelgor', lv: 18, pw: 56, ct: 0, ok: true, hp: true }] }] });
+  ok(/56 hp,/.test(v.find((r) => r.id === 10503).text), 'a health-cost spell shows its cost in hit points');
+  const w = spellsView({ lines: [{ nm: 'Mending', sp: [{ id: 1, nm: 'Heal', lv: 1, pw: 5, ct: 2, ok: true }] }] });
+  ok(/5 pw,/.test(w.find((r) => r.id === 1).text), 'a power spell still shows power');
+}
+
 if (failed) { console.log(`\n${failed} failed`); process.exit(1); }
 
 // The stock cast bar is built from the Timer window when the interface is there.

@@ -312,15 +312,10 @@ func styleFeatures(r *importer.Row) []string {
 // gapReasons says why a spell type, ability or style feature is still not
 // implemented, for the census. Every gap has one.
 var gapReasons = map[string]string{
-	"Distraction":               "it is aimed at a ground target, which this world has no way to aim",
-	"Danger Sense":              "it warns of enemies the player cannot see; nothing here hides from a player",
 	"Climb Walls":               "this world has no climbable walls",
-	"Berserk":                   "a Berserker ability; no source read for it yet",
-	"Charge":                    "a Berserker and Savage ability; no source read for it yet",
-	"Enhanced Evade":            "a Berserker and Savage evade boost; no source read for it yet",
-	"QuickCast":                 "a casting-speed ability of the Mystic classes; no source read for it yet",
-	"Call of a thousand storms": "no source for the name or its effect",
-	"opening: after result 3":   "one style whose opening result no source identifies",
+	"Enhanced Evade":            "searched 2026-11-23: no source says what it did or that 1.65 had it; the data grants it at 35 in a light tank line",
+	"Call of a thousand storms": "searched 2026-11-23: no source names it; the data grants it at level 51, above the level 50 this world goes to",
+	"opening: after result 3":   "searched 2026-11-23: no source says what opens Aurora Borealis (the data gives it the parry code with no defence requirement)",
 }
 
 func reasonFor(name string) string {

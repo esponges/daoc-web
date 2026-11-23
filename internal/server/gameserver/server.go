@@ -363,6 +363,8 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { s.World.GroupOp(p, m) })
 	case *protocol.Cast:
 		z.Do(func() { z.Cast(p, m.Spell, m.Target) })
+	case *protocol.GroundTarget:
+		z.Do(func() { z.SetGroundTarget(p, m.X, m.Y, m.Z, m.Clear) })
 	case *protocol.AskTask:
 		z.Do(func() { z.AskTask(p, m.ID) })
 	case *protocol.UseItem:

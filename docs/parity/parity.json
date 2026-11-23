@@ -908,7 +908,7 @@
       "name": "opening: after result 3",
       "uses": 1,
       "implemented": false,
-      "reason": "one style whose opening result no source identifies"
+      "reason": "searched 2026-11-23: no source says what opens Aurora Borealis (the data gives it the parry code with no defence requirement)"
     }
   ],
   "abilities": [
@@ -999,8 +999,7 @@
       "classes": [
         "Berserker"
       ],
-      "implemented": false,
-      "reason": "a Berserker ability; no source read for it yet"
+      "implemented": true
     },
     {
       "name": "Guard",
@@ -1059,8 +1058,7 @@
         "Berserker",
         "Savage"
       ],
-      "implemented": false,
-      "reason": "a Berserker and Savage ability; no source read for it yet"
+      "implemented": true
     },
     {
       "name": "Intercept",
@@ -1132,7 +1130,7 @@
         "Thane"
       ],
       "implemented": false,
-      "reason": "no source for the name or its effect"
+      "reason": "searched 2026-11-23: no source names it; the data grants it at level 51, above the level 50 this world goes to"
     },
     {
       "name": "Camouflage",
@@ -1157,8 +1155,7 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false,
-      "reason": "it warns of enemies the player cannot see; nothing here hides from a player"
+      "implemented": true
     },
     {
       "name": "Detect Hidden",
@@ -1174,8 +1171,7 @@
       "classes": [
         "Shadowblade"
       ],
-      "implemented": false,
-      "reason": "it is aimed at a ground target, which this world has no way to aim"
+      "implemented": true
     },
     {
       "name": "Engage",
@@ -1194,7 +1190,7 @@
         "Savage"
       ],
       "implemented": false,
-      "reason": "a Berserker and Savage evade boost; no source read for it yet"
+      "reason": "searched 2026-11-23: no source says what it did or that 1.65 had it; the data grants it at 35 in a light tank line"
     },
     {
       "name": "QuickCast",
@@ -1204,8 +1200,7 @@
         "Runemaster",
         "Spiritmaster"
       ],
-      "implemented": false,
-      "reason": "a casting-speed ability of the Mystic classes; no source read for it yet"
+      "implemented": true
     },
     {
       "name": "Weaponry: Composite Bows",
@@ -1834,6 +1829,22 @@
   ],
   "rules": [
     {
+      "id": "ability.berserk",
+      "status": "provisional"
+    },
+    {
+      "id": "ability.charge",
+      "status": "provisional"
+    },
+    {
+      "id": "ability.danger-sense",
+      "status": "provisional"
+    },
+    {
+      "id": "ability.distraction",
+      "status": "provisional"
+    },
+    {
       "id": "ability.engage",
       "status": "reference"
     },
@@ -1852,6 +1863,10 @@
     {
       "id": "ability.protect",
       "status": "reference"
+    },
+    {
+      "id": "ability.quickcast",
+      "status": "provisional"
     },
     {
       "id": "ability.target",
@@ -2067,6 +2082,10 @@
     },
     {
       "id": "falling.water",
+      "status": "provisional"
+    },
+    {
+      "id": "ground.target",
       "status": "provisional"
     },
     {
@@ -2392,7 +2411,7 @@
   ],
   "rulesByStatus": {
     "documented": 27,
-    "provisional": 46,
+    "provisional": 52,
     "reference": 66
   },
   "placements": 29932,

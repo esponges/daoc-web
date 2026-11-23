@@ -496,7 +496,7 @@ func (w *World) command(z *Zone, p *Player, line string) {
 			mode = strings.ToLower(f[1])
 		}
 		z.Shoot(p, mode)
-	case "guard", "protect", "intercept", "engage":
+	case "guard", "protect", "intercept", "engage", "berserk", "charge", "quickcast", "distraction":
 		z.UseAbility(p, f[0], f[1:]...)
 	case "accept":
 		w.AcceptInvite(p)

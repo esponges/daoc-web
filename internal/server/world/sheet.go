@@ -289,6 +289,7 @@ func (p *Player) combatant(cat *Catalog) *rules.Combatant {
 		cb.Unarmed = true
 	}
 	p.savageBuffs(cb)
+	p.stanceBonuses(cb)
 	if p.hasSpec(cat, "Parry") {
 		cb.ParrySpec = p.combatSpec("Parry")
 	}

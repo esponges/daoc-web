@@ -413,3 +413,27 @@ func TestJumpIsAFlagBit(t *testing.T) {
 		t.Errorf("flags run %d jump %d, want 1 and 2", FlagRun, FlagJump)
 	}
 }
+
+func TestGroundTargetIsAdditive(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"gt","x":100.5,"y":200,"z":30}`))
+	g, ok := v.(*GroundTarget)
+	if err != nil || typ != TGroundTarget || !ok || g.X != 100.5 || g.Y != 200 || g.Z != 30 || g.Clear {
+		t.Fatalf("a ground target decodes as %v %#v %v", typ, v, err)
+	}
+	_, v, _ = Decode([]byte(`{"t":"gt","clear":true}`))
+	if g, ok := v.(*GroundTarget); !ok || !g.Clear {
+		t.Errorf("a clear request decodes as %#v", v)
+	}
+	with, _ := json.Marshal(Self{Ground: []float64{1, 2, 3}})
+	if !strings.Contains(string(with), `"gt":[1,2,3]`) {
+		t.Errorf("a ground target marshals as %s", with)
+	}
+	without, _ := json.Marshal(Self{})
+	if strings.Contains(string(without), `"gt"`) {
+		t.Errorf("no ground target marshals as %s", without)
+	}
+	book, _ := json.Marshal(BookSpell{ID: 1, HP: true})
+	if !strings.Contains(string(book), `"hp":true`) {
+		t.Errorf("a spell paid in health marshals as %s", book)
+	}
+}

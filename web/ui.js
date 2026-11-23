@@ -272,7 +272,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     for (const a of sheetView(net.stats).abilities) {
       if (!a.use) continue;
       const b = el('button', 'style', a.text);
-      b.title = 'Use on your target (/' + a.use + ')';
+      b.title = ['berserk', 'charge', 'quickcast'].includes(a.use) ? 'Use (/' + a.use + ')'
+        : a.use === 'distraction' ? 'Use on your ground target (/distraction); set one with T, then click the ground'
+        : 'Use on your target (/' + a.use + ')';
       const shot = { 'critical shot': 'critical', 'rapid fire': 'rapid' }[a.use];
       b.title = shot ? 'Draw a ' + a.text + ' (shift+B for Critical Shot, N for Rapid Fire)' : b.title;
       b.addEventListener('click', () => (shot ? net.shoot(shot) : net.chat('say', '/' + a.use)));
@@ -701,7 +703,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     else spellBar.el.querySelectorAll('.style').forEach((b) => {
       const id = spellSlots[Number(b.dataset.slot)];
       const s = id && findSpell(net.book, id);
-      b.classList.toggle('poor', !!s && me.power < s.pw);
+      b.classList.toggle('poor', !!s && (s.hp ? me.hp <= s.pw : me.power < s.pw)); // a Savage spell is paid in hit points
     });
     bar.querySelectorAll('.style').forEach((b) => {
       const i = Number(b.dataset.slot);

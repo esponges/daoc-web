@@ -161,6 +161,9 @@ func (z *Zone) Tick() {
 	}
 	z.sweepPets()
 	z.tickEffects()
+	for _, p := range z.players {
+		z.dangerSense(p)
+	}
 	z.tickPets()
 	if z.tick%TickRate == 0 {
 		z.groupTick()
@@ -359,7 +362,7 @@ func (z *Zone) selfOf(p *Player) protocol.Self {
 		Target: p.target, Attacking: p.attacking, Dead: p.dead, Correct: p.correct,
 		Back: p.motion.Back, Side: p.motion.Side, Speed: p.motion.Speed,
 		Fighting: z.now < p.combatUntil, Ride: p.ride != nil,
-		Air: p.Body.Air, VZ: p.Body.VZ, Peak: p.Body.PeakZ, Jumped: p.Body.Jumped, Seated: p.seated,
+		Air: p.Body.Air, VZ: p.Body.VZ, Peak: p.Body.PeakZ, Jumped: p.Body.Jumped, Seated: p.seated, Ground: p.groundMsg(),
 	}
 	if c.Level >= MaxLevel {
 		s.XP, s.XPNext = 1, 1

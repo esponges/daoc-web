@@ -23,35 +23,36 @@ const StepsPerSecond = 60
 
 // Message types, client to server.
 const (
-	THello       = "hello"  // first message: protocol version and the character to play
-	TInput       = "input"  // a run of fixed movement steps
-	TChat        = "chat"   // say or broadcast
-	TTarget      = "target" // select an entity
-	TAttack      = "attack" // auto-attack on or off
-	TStyle       = "style"  // use a style by its slot on the bar
-	TLoot        = "loot"   // take an item from a corpse
-	TEquip       = "equip"  // move an item between slots
-	TUse         = "use"    // use a zone exit, etc.
-	TGM          = "gm"     // an administrator's command
-	TPing        = "ping"
-	TRelease     = "release"      // a dead character asks to be stood up now rather than when the timer ends
-	TInteract    = "interact"     // ask an NPC to do what it does (open a merchant's shop)
-	TBuy         = "buy"          // buy an item from the open shop
-	TSell        = "sell"         // sell a pack item to the open shop
-	TBarSet      = "barset"       // put a style on a bar slot
-	TRepair      = "repair"       // ask the open blacksmith for a repair price, or accept it
-	TTrain       = "train"        // raise a spec at the trainer
-	TRestore     = "restore"      // pay a healer to restore lost constitution
-	TPray        = "pray"         // pray at the targeted gravestone
-	TGroupOp     = "groupop"      // invite, accept, decline, leave or remove from a group
-	TCast        = "cast"         // cast a spell from the spellbook
-	TRezAnswer   = "rez-answer"   // accept or decline a resurrection offer
-	TConcCancel  = "conc-cancel"  // let go of one of the buffs the caster holds
-	TPetCmd      = "pet-cmd"      // an order to your pet: attack, follow, stay, release, or a stance
-	TAskTask     = "ask-task"     // talk to an NPC about tasks: ask for one, or hand one in
-	TAbandonTask = "abandon-task" // give up the task you hold
-	TUseItem     = "use-item"     // use the item in a pack slot (a poison goes on a weapon)
-	TShoot       = "shoot"        // draw a bow at the held target, switch Critical Shot or Rapid Fire, or stop
+	THello        = "hello"  // first message: protocol version and the character to play
+	TInput        = "input"  // a run of fixed movement steps
+	TChat         = "chat"   // say or broadcast
+	TTarget       = "target" // select an entity
+	TAttack       = "attack" // auto-attack on or off
+	TStyle        = "style"  // use a style by its slot on the bar
+	TLoot         = "loot"   // take an item from a corpse
+	TEquip        = "equip"  // move an item between slots
+	TUse          = "use"    // use a zone exit, etc.
+	TGM           = "gm"     // an administrator's command
+	TPing         = "ping"
+	TRelease      = "release"      // a dead character asks to be stood up now rather than when the timer ends
+	TInteract     = "interact"     // ask an NPC to do what it does (open a merchant's shop)
+	TBuy          = "buy"          // buy an item from the open shop
+	TSell         = "sell"         // sell a pack item to the open shop
+	TBarSet       = "barset"       // put a style on a bar slot
+	TRepair       = "repair"       // ask the open blacksmith for a repair price, or accept it
+	TTrain        = "train"        // raise a spec at the trainer
+	TRestore      = "restore"      // pay a healer to restore lost constitution
+	TPray         = "pray"         // pray at the targeted gravestone
+	TGroupOp      = "groupop"      // invite, accept, decline, leave or remove from a group
+	TCast         = "cast"         // cast a spell from the spellbook
+	TRezAnswer    = "rez-answer"   // accept or decline a resurrection offer
+	TConcCancel   = "conc-cancel"  // let go of one of the buffs the caster holds
+	TGroundTarget = "gt"           // set or clear the point abilities that need a ground target aim at
+	TPetCmd       = "pet-cmd"      // an order to your pet: attack, follow, stay, release, or a stance
+	TAskTask      = "ask-task"     // talk to an NPC about tasks: ask for one, or hand one in
+	TAbandonTask  = "abandon-task" // give up the task you hold
+	TUseItem      = "use-item"     // use the item in a pack slot (a poison goes on a weapon)
+	TShoot        = "shoot"        // draw a bow at the held target, switch Critical Shot or Rapid Fire, or stop
 )
 
 // Message types, server to client.
@@ -311,11 +312,12 @@ type Self struct {
 	// The body's vertical state, so the client's prediction can pick up where
 	// the server is: in the air, its speed up, its highest point, and whether
 	// the air began with a jump.
-	Air    bool    `json:"air,omitempty"`
-	VZ     float64 `json:"vz,omitempty"`
-	Peak   float64 `json:"pk,omitempty"`
-	Jumped bool    `json:"jp,omitempty"`
-	Seated bool    `json:"sit,omitempty"` // you are sitting
+	Air    bool      `json:"air,omitempty"`
+	VZ     float64   `json:"vz,omitempty"`
+	Peak   float64   `json:"pk,omitempty"`
+	Jumped bool      `json:"jp,omitempty"`
+	Seated bool      `json:"sit,omitempty"` // you are sitting
+	Ground []float64 `json:"gt,omitempty"`  // your ground target, x y z, when one is set
 }
 
 // Snap is the world as one player sees it.
@@ -580,6 +582,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Cast{}
 	case TRezAnswer:
 		v = &RezAnswer{}
+	case TGroundTarget:
+		v = &GroundTarget{}
 	case TConcCancel:
 		v = &ConcCancel{}
 	case TPetCmd:
@@ -790,6 +794,16 @@ type Cast struct {
 	T      string `json:"t"`
 	Spell  int    `json:"sp"`
 	Target int64  `json:"tg,omitempty"`
+}
+
+// GroundTarget sets the player's ground target to a point, or clears it when
+// Clear is set.
+type GroundTarget struct {
+	T     string  `json:"t"`
+	X     float64 `json:"x"`
+	Y     float64 `json:"y"`
+	Z     float64 `json:"z"`
+	Clear bool    `json:"clear,omitempty"`
 }
 
 // Book is the spellbook: the spells the character knows, by spec line.

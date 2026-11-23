@@ -11,6 +11,7 @@ import { createCharacter, modelMatrix } from './character.js';
 import { createProps } from './props.js';
 import { createNPCs, bodyRadius, pickNPC } from './npc.js';
 import { createRing } from './ring.js';
+import { pickGround } from './groundtarget.js';
 import { createCombat } from './combat.js';
 import { Animator } from './animator.js';
 import { LIGHT_GLSL, LIGHT_UNIFORMS, bindLight, createShadows, setSkyLight, setInteriorLight, setPointLights, SUN_DIR } from './lighting.js';
@@ -1004,6 +1005,7 @@ async function main() {
   let detailOn = true;
   // Running is the default; R toggles walking.
   let walkMode = false;
+  let groundArmed = false; // T was pressed: the next click on the ground sets the ground target
   // The developer panel (zone, grid, triangles, key help) is out of the way
   // while playing; the backquote key brings it back. The offline viewer, which
   // is a developer's tool, starts with it up.
@@ -1030,7 +1032,12 @@ async function main() {
     if (net && e.code === 'KeyH' && !e.repeat) net.chat('say', '/stealth');
     if (net && e.code === 'KeyX' && !e.repeat) net.chat('say', '/sit');
     if (net && e.code === 'KeyZ' && !e.repeat) net.chat('say', '/sprint');
+    if (net && e.code === 'KeyT' && !e.repeat) { // the ground target: T, then click the ground; shift-T drops it
+      if (e.shiftKey) { net.clearGround(); groundArmed = false; log('You clear your ground target.', 'info'); }
+      else { groundArmed = true; log('Click the ground to set your ground target (Esc cancels).', 'info'); }
+    }
     if (net && e.code === 'Space') e.preventDefault(); // jump, not a page scroll
+    if (e.code === 'Escape') groundArmed = false;
     if (combat && e.code === 'Escape') combat.clearTarget();
     if (e.code === 'KeyC') {
       followMode = !followMode;
@@ -1077,6 +1084,12 @@ async function main() {
     const u = [s[1] * f[2] - s[2] * f[1], s[2] * f[0] - s[0] * f[2], s[0] * f[1] - s[1] * f[0]];
     const k = Math.tan(FOV / 2), aspect = r.width / r.height;
     const dir = [0, 1, 2].map((i) => f[i] + s[i] * nx * k * aspect + u[i] * ny * k);
+    if (groundArmed && net && e.button === 0) {
+      groundArmed = false;
+      const g = pickGround(view.eye, dir, groundAt);
+      if (g) net.setGround(g.x, g.y, g.z); else log('There is no ground there.', 'info');
+      return;
+    }
     let hit = pickNPC(npcs.npcs, view.eye, dir, groundAt);
     if (!hit && remote) {
       // A corpse can be clicked to loot it.
@@ -1554,6 +1567,9 @@ async function main() {
       const color = tgt.dead ? [0.55, 0.55, 0.55] : hostile ? [0.95, 0.25, 0.2] : [1.0, 0.82, 0.25];
       ring.draw(vp, tgt.x, tgt.y, tgt.body * 1.15 + 10, groundAt, color, now / 1000);
     }
+
+    const gtp = net && net.me && net.me.gt;
+    if (gtp && ring) ring.draw(vp, gtp.x, gtp.y, 48, groundAt, [0.4, 0.85, 1.0], now / 1000);
 
     world.drawWater({ vp, eye, fogColor, fogStart, fogEnd, time: now / 1000 });
     if (net) updateLabels(vp);

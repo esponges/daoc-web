@@ -9,7 +9,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   Creature spell types    15 of  15 implemented (2585 of 2585 placements x spells)
   Class spell types       73 of  73 implemented (987 of 987 spells)
   Style features          13 of  14 implemented (1382 of 1383 styles)
-  Abilities               22 of  30 implemented (88 of 100 grants)
+  Abilities               27 of  30 implemented (97 of 100 grants)
   Creature kinds          24 of 110 implemented (29119 of 29932 placements, 7 kinds not classic)
   quests                 0, none implemented
   keep doors             432, none implemented
@@ -18,7 +18,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   battlegrounds          5, none implemented
   quests not classic     81 (an XP Item collection quest: an NPC pays experience for a creature's drop)
   levelling gear         0 gaps in 10 bands
-  rules: 27 documented, 66 reference, 46 provisional
+  rules: 27 documented, 66 reference, 52 provisional
 ```
 
 ## Creature spell types
@@ -136,7 +136,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | opening: after an evade | 18 | yes |
 | opening: from the front | 7 | yes |
 | stealth opener | 3 | yes |
-| opening: after result 3 | 1 | no: one style whose opening result no source identifies |
+| opening: after result 3 | 1 | no: searched 2026-11-23: no source says what opens Aurora Borealis (the data gives it the parry code with no defence requirement) |
 
 ## Abilities
 
@@ -148,26 +148,26 @@ Midgard (regions 100, 101, 151): 29932 placements
 | Protect (Berserker, Skald, Thane, Warrior) | 8 | yes |
 | Shield (Berserker, Healer, Savage, Seer, Shadowblade, Shaman, Skald, Thane, Viking, Warrior) | 8 | yes |
 | Safe Fall (Shadowblade) | 5 | yes |
-| Berserk (Berserker) | 4 | no: a Berserker ability; no source read for it yet |
+| Berserk (Berserker) | 4 | yes |
 | Guard (Thane, Warrior) | 4 | yes |
 | Weaponry: Staves (Berserker, Bonedancer, Healer, Hunter, Midgard Rogue, Mystic, Runemaster, Savage, Seer, Shadowblade, Shaman, Skald, Spiritmaster, Thane, Viking, Warrior) | 4 | yes |
 | Penetrating Arrow (Hunter) | 3 | yes |
 | Weaponry: Thrown (Berserker, Shadowblade, Warrior) | 3 | yes |
-| Charge (Berserker, Savage) | 2 | no: a Berserker and Savage ability; no source read for it yet |
+| Charge (Berserker, Savage) | 2 | yes |
 | Intercept (Thane, Warrior) | 2 | yes |
 | Rapid Fire (Hunter) | 2 | yes |
 | Weaponry: Axes (Berserker, Savage, Shadowblade, Skald, Thane, Viking, Warrior) | 2 | yes |
 | Weaponry: Hammers (Berserker, Healer, Savage, Seer, Shaman, Skald, Thane, Viking, Warrior) | 2 | yes |
 | Weaponry: Swords (Berserker, Hunter, Midgard Rogue, Savage, Shadowblade, Skald, Thane, Viking, Warrior) | 2 | yes |
-| Call of a thousand storms (Thane) | 1 | no: no source for the name or its effect |
+| Call of a thousand storms (Thane) | 1 | no: searched 2026-11-23: no source names it; the data grants it at level 51, above the level 50 this world goes to |
 | Camouflage (Hunter) | 1 | yes |
 | Climb Walls (Shadowblade) | 1 | no: this world has no climbable walls |
-| Danger Sense (Shadowblade) | 1 | no: it warns of enemies the player cannot see; nothing here hides from a player |
+| Danger Sense (Shadowblade) | 1 | yes |
 | Detect Hidden (Shadowblade) | 1 | yes |
-| Distraction (Shadowblade) | 1 | no: it is aimed at a ground target, which this world has no way to aim |
+| Distraction (Shadowblade) | 1 | yes |
 | Engage (Thane, Warrior) | 1 | yes |
-| Enhanced Evade (Berserker, Savage) | 1 | no: a Berserker and Savage evade boost; no source read for it yet |
-| QuickCast (Bonedancer, Runemaster, Spiritmaster) | 1 | no: a casting-speed ability of the Mystic classes; no source read for it yet |
+| Enhanced Evade (Berserker, Savage) | 1 | no: searched 2026-11-23: no source says what it did or that 1.65 had it; the data grants it at 35 in a light tank line |
+| QuickCast (Bonedancer, Runemaster, Spiritmaster) | 1 | yes |
 | Weaponry: Composite Bows (Hunter) | 1 | yes |
 | Weaponry: Hand to Hand (Savage) | 1 | yes |
 | Weaponry: Left Axes (Shadowblade) | 1 | yes |
@@ -309,11 +309,16 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 
 | rule | status |
 | --- | --- |
+| ability.berserk | provisional |
+| ability.charge | provisional |
+| ability.danger-sense | provisional |
+| ability.distraction | provisional |
 | ability.engage | reference |
 | ability.gained | documented |
 | ability.guard | reference |
 | ability.intercept | reference |
 | ability.protect | reference |
+| ability.quickcast | provisional |
 | ability.target | reference |
 | archery.abilities | provisional |
 | archery.damage | provisional |
@@ -368,6 +373,7 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | falling.damage | provisional |
 | falling.safe-fall | provisional |
 | falling.water | provisional |
+| ground.target | provisional |
 | loot.generic | provisional |
 | loot.money | provisional |
 | los.cast | reference |

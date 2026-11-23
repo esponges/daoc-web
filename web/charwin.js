@@ -94,7 +94,7 @@ export function spellGroups(book, song = 0, open = {}) {
       const cast = s.ct ? s.ct + 's' : 'instant';
       return {
         id: s.id,
-        text: s.nm + '  ' + s.lv + ', ' + s.pw + ' pw, ' + cast + (s.ok ? '' : ' (not yet)') + (song && s.id === song ? '  (playing)' : ''),
+        text: s.nm + '  ' + s.lv + ', ' + s.pw + (s.hp ? ' hp, ' : ' pw, ') + cast + (s.ok ? '' : ' (not yet)') + (song && s.id === song ? '  (playing)' : ''),
         icon: SPELL_ICON[spellKind(s.tp, s.tg)],
         on: !!s.ok,
         drag: s.ok ? 'spell:' + s.id : undefined,

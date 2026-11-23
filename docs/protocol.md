@@ -112,6 +112,7 @@ Casters (Healer, Shaman, Runemaster) also have a spell power pool: `pw` and `mpw
 | `chat` | `ch`, `text` | `say` (3,000 units) or `all`; a leading `/` is a command (`/who`, `/pray`, `/bind`, `/gm ...`, the group commands, `/send` or `/tell <name> <text>` to one player of your realm in any zone, `/g <text>` to your group in any zone) |
 | `groupop` | `op`, `id`, `name` | group requests: `invite` the player with `id` (in your zone) or `name` (anywhere, any case), `accept` or `decline` your invitation, `leave` the group, or, for the leader, `remove` the member `name`. Refusals come as `sys` chat lines. The same are typed as `/invite [name]` (your target without a name), `/accept`, `/decline`, `/disband` and `/remove <name>` |
 | `gm` | `line` | an administrator's command: `goto`, `tp`, `level`, `heal`, `give`, `kill`, `where` |
+| `gt` | `x`, `y`, `z`, `clear` | set the ground target for abilities aimed at the ground (Distraction): refused beyond 2,000 units or out of sight, with `err` `groundtarget`; `clear: true` drops it. The point comes back as `gt` in `you` (`[x, y, z]`); it is forgotten when you change zone |
 | `ping` | | answered with `pong` |
 
 Everything a request asks is decided by the server: it can refuse (`err` with a
@@ -186,6 +187,10 @@ Send `shoot` to use a bow (a bow in the ranged slot, arrows in a quiver slot). `
 ### Stealth
 
 A player with the Stealth spec hides and unhides with the chat command `/stealth` (or `/hide`). Hidden, the player has an effect of kind `stealth` (no end: `left` and `of` are 0) and `speed` in `effects` falls to the stealth speed, so predicted movement agrees. Other players are sent a hidden player in `ents` only while they are inside the detection range of the hider's Stealth spec against the viewer's level (a viewer with Detect Hidden sees further), and aggressive creatures take them as prey only inside theirs. Attacking, casting, shooting or taking damage ends stealth. Refusals are `err` with `code` `stealth`.
+
+### Savage spells and timed abilities
+
+A Savage's book (`book`) lists the Savagery line. Its self-buffs and endurance heal are paid in hit points: their entries carry `hp: true` and `pw` is the hit points the cast takes (a share of maximum health). A cast the character cannot pay is refused with `err` `cast` ("You don't have enough health."); the cost may not take them to 0. Their effects have kinds `physresist`, `dps`, `savevade` and `savparry` (the combat speed buff is `haste`). Berserk, Charge and QuickCast leave effects of kind `berserk`, `charge` and `quickcast`. The abilities are used with `/berserk`, `/charge`, `/quickcast` and `/distraction`; a refusal is a `sys` chat line.
 
 ### Poisons
 

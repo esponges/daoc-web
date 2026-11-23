@@ -26,7 +26,10 @@ imported at build time into `server/data/` (gitignored).
   life drain, stat and armour buffs, damage add, area spells, and the Skald's
   songs and chants (speed, regeneration, resists, damage add), which pulse on
   the group until turned off. A SPELLS window, spell bar and cast bar; power
-  regenerates and is spent.
+  regenerates and is spent. The Savage casts its Savagery buffs for hit points
+  instead of power; Berserk (Berserkers), Charge (Berserkers and Savages) and QuickCast (the Mystic casters)
+  are timed abilities, and Shadowblades set a ground target (T, then click the ground)
+  for Distraction.
 - Trade with merchants, keep things in the vault, talk in chat channels, group up,
   ride the horse routes.
 - See other players and creatures move and fight, a few hundred milliseconds
@@ -46,7 +49,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Creature spell types | 15 of 15 |
 | Class spell types | 73 of 73 (987 of 987 spells) |
 | Style features | 13 of 14 (1,382 of 1,383 styles) |
-| Abilities | 22 of 30 (88 of 100 grants) |
+| Abilities | 27 of 30 (97 of 100 grants) |
 | Creature kinds | 24 of 110 (29,119 of 29,932 placements; 7 kinds left out as not classic) |
 | Quests | 0 of 0 (the 81 XP Item data quests are marked not classic) |
 | Keep doors | 0 of 432 |
@@ -54,7 +57,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 0 gaps in 10 five-level bands (31 to 50 is the project's added stock) |
-| Rules | 27 documented, 66 reference, 46 provisional |
+| Rules | 27 documented, 66 reference, 52 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for all twelve of
 Midgard's classes (trainers teach them), with pets and charm, bows, stealth,

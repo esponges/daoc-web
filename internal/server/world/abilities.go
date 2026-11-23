@@ -16,10 +16,12 @@ type abilityState struct {
 	guard, protect, intercept int64
 	engage                    int64
 	interceptReadyAt          float64
+	ready                     map[string]float64 // when each timed ability can be used again
 }
 
 var abilityNames = map[string]string{"guard": rules.AbGuard, "protect": rules.AbProtect,
-	"intercept": rules.AbIntercept, "engage": rules.AbEngage}
+	"intercept": rules.AbIntercept, "engage": rules.AbEngage, "berserk": rules.AbBerserk, "charge": rules.AbCharge,
+	"quickcast": rules.AbQuickCast, "distraction": rules.AbDistraction}
 
 // UseAbility runs a player's use of Guard, Protect, Intercept or Engage on
 // their target. Using one again on the same target ends it.
@@ -44,6 +46,9 @@ func (z *Zone) UseAbility(p *Player, name string, who ...string) {
 		return
 	case held(p):
 		sys(p, "You cannot act while you are held.")
+		return
+	}
+	if z.useStance(p, key, lv) {
 		return
 	}
 	a := &p.ab

@@ -15,7 +15,7 @@ export function spellsView(book, song = 0) {
       const cast = s.ct ? s.ct + 's' : 'instant';
       rows.push({
         id: s.id,
-        text: s.nm + '  ' + s.lv + ', ' + s.pw + ' pw, ' + cast + (s.ok ? '' : ' (not yet)') + (song && s.id === song ? '  (playing)' : ''),
+        text: s.nm + '  ' + s.lv + ', ' + s.pw + (s.hp ? ' hp, ' : ' pw, ') + cast + (s.ok ? '' : ' (not yet)') + (song && s.id === song ? '  (playing)' : ''),
         on: !!s.ok,
         playing: !!song && s.id === song,
         draggable: !!s.ok,
@@ -153,7 +153,7 @@ export function createSpellBar(doc, { onCast, onAssign, onClear } = {}) {
         const s = id ? findSpell(book, id) : null;
         const b = el(doc, 'button', 'style' + (s ? '' : ' empty') + (s && ((song && s.id === song) || (held && held.has(s.id))) ? ' on' : ''));
         b.dataset.slot = i;
-        b.append(el(doc, 'span', 'key', '⇧' + (i + 1)), el(doc, 'span', 'nm', s ? s.nm : ''), el(doc, 'span', 'cost', s ? s.pw + ' pw' : ''));
+        b.append(el(doc, 'span', 'key', '⇧' + (i + 1)), el(doc, 'span', 'nm', s ? s.nm : ''), el(doc, 'span', 'cost', s ? s.pw + (s.hp ? ' hp' : ' pw') : ''));
         if (s) {
           b.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + (held && held.has(s.id) ? ' · you hold this buff' : '') + ' · right-click to remove';
           b.addEventListener('click', () => onCast?.(id));
