@@ -306,6 +306,13 @@ type Self struct {
 	Ride      bool    `json:"rd,omitempty"` // on a horse route: inputs do nothing
 	Fighting  bool    `json:"fg,omitempty"`
 	Avail     []int   `json:"av,omitempty"` // style bar slots usable right now
+	// The body's vertical state, so the client's prediction can pick up where
+	// the server is: in the air, its speed up, its highest point, and whether
+	// the air began with a jump.
+	Air    bool    `json:"air,omitempty"`
+	VZ     float64 `json:"vz,omitempty"`
+	Peak   float64 `json:"pk,omitempty"`
+	Jumped bool    `json:"jp,omitempty"`
 }
 
 // Snap is the world as one player sees it.

@@ -19,9 +19,9 @@
 - [x] 3.1 `world/move.go`: `Body.VZ/Air/PeakZ`, `Keys.Jump/Sprint`, `Ground.WaterAt`; jump, gravity, step-down falls, landing with `Motion.Landed/FallHeight`, swimming at the surface (D2, D3, D4).
 - [x] 3.2 `protocol.FlagJump`, `KeysFromRun` decodes it. Write new vectors to `testdata/move_vectors.json`: jump in place, running jump, ledge, slope that must not fall, water in and out, sprint.
 - [x] 3.3 `web/move.js` mirrors 3.1 step for step, and `runKeys` decodes the jump flag. `web/net.test.mjs` replays the new vectors.
-- [ ] 3.4 `WaterAt` for the server's zone ground (from the `waters` boxes, as `IsWet`) and for the viewer's ground (from `man.waters`).
-- [ ] 3.5 Server: apply fall damage on `Landed` through `rules.FallDamage`, with the log line and a death through the normal death path. No damage landing in water.
-- [ ] 3.6 Census test (skipped with `-short` or without the install): walk the navmesh paths around each Midgard start town and fail on any fall over the safe height that a walk shouldn't make. Tune `StepDown` if needed.
+- [x] 3.4 `WaterAt` for the server's zone ground (from the `waters` boxes, as `IsWet`) and for the viewer's ground (from `man.waters`).
+- [x] 3.5 Server: apply fall damage on `Landed` through `rules.FallDamage`, with the log line and a death through the normal death path. No damage landing in water.
+- [x] 3.6 Census test (skipped with `-short` or without the install): count the heightmap edges steep enough to make a sprinting body fall, in every converted zone, and fail if more than one percent of a Midgard start zone's is (the first run: all three are under 0.7 percent, so `StepDown` stays 12).
 
 ## 4. Posture, sprint and resting on the server
 

@@ -67,6 +67,10 @@ function waterAt(ground, x, y) {
   return s === null || s === undefined ? null : s;
 }
 
+// isSwimming says whether a body standing at (x, y) floats: the water over it
+// is deeper than a swimmer's depth.
+export function isSwimming(ground, x, y) { return swimming(ground, x, y); }
+
 function swimming(ground, x, y) {
   const surface = waterAt(ground, x, y);
   return surface !== null && surface - ground.groundAt(x, y, surface) > SWIM_DEPTH;

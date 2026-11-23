@@ -19,7 +19,7 @@ A player who lands after a fall SHALL take no damage when the fall is no higher 
 
 #### Scenario: A fall can kill
 - **WHEN** a player at low health lands from a fall that costs more than they have
-- **THEN** they die as from any other death, with the usual penalty
+- **THEN** they die, and lose no experience, since only a creature's kill costs it
 
 ### Requirement: Safe Fall
 Safe Fall SHALL be one level for each ten points of Stealth specialization (at most 5). Each level SHALL raise the safe height by 240 units and take 15 percent off the damage. Status: documented in patch 1.38 for the shape and the one level per ten points; the amounts per level are provisional.

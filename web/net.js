@@ -14,7 +14,7 @@
 //
 // No WebGL here: net.test.mjs drives it headlessly against a fake server.
 
-import { stepBody, STEP_DT, RUN } from './move.js';
+import { stepBody, isSwimming, STEP_DT, RUN, FLAG_RUN, FLAG_JUMP } from './move.js';
 
 export const PROTOCOL = 1;
 
@@ -161,6 +161,7 @@ export class NetClient {
         this.effects = { list: m.list || [], at: this.now() };
         this.slow = 1 - (m.speed ?? 1);
         this.held = !!m.held;
+        this.sprint = !!m.spr;
         {
           const song = m.song || 0, changed = song !== this.song;
           this.song = song;
@@ -193,7 +194,7 @@ export class NetClient {
     // Reconcile: the server's body at the last acknowledged step, then the
     // steps it has not seen yet, replayed on top.
     this.history = this.history.filter((h) => h.seq > m.ack);
-    const b = { x: s.x, y: s.y, z: s.z, yaw: s.h };
+    const b = { x: s.x, y: s.y, z: s.z, yaw: s.h, vz: s.vz || 0, peakZ: s.pk || 0, air: !!s.air, jumped: !!s.jp };
     for (const h of this.history) stepBody(this.ground, b, h.k, this.mover);
     const ex = me.x - b.x, ey = me.y - b.y;
     if (s.fix || Math.hypot(ex, ey) > SNAP_ERROR) {
@@ -202,6 +203,7 @@ export class NetClient {
       this.err.x += ex; this.err.y += ey; // shown, then eased away
     }
     me.x = b.x; me.y = b.y; me.z = b.z; me.yaw = b.yaw;
+    me.vz = b.vz; me.peakZ = b.peakZ; me.air = b.air; me.jumped = b.jumped;
     me.hp = s.hp; me.maxHp = s.mhp; me.end = s.end; me.maxEnd = s.mend; me.power = s.pw || 0; me.maxPower = s.mpw || 0;
     me.level = s.lv; me.xp = s.xp; me.xpNext = s.xpn; me.money = s.mo;
     me.target = s.tg; me.attacking = s.at; me.dead = !!s.dead; me.fighting = !!s.fg;
@@ -248,18 +250,21 @@ export class NetClient {
     const t = this.now();
     this.acc = Math.min(this.acc + dt, 0.25);
     // A rider is carried by the server along a route; their keys do nothing.
-    const moving = !me.ride && (keys.fwd || keys.strafe || keys.turn);
+    // Held keys, or a jump or a fall in progress, which goes on without any.
+    const moving = !me.ride && (keys.fwd || keys.strafe || keys.turn || keys.jump || me.air);
     while (this.acc >= STEP_DT) {
       this.acc -= STEP_DT;
       if (!moving || me.dead) continue;
-      const k = { fwd: keys.fwd, strafe: keys.strafe, turn: keys.turn, run: !!keys.run, slow: this.slow };
-      const b = { x: me.x, y: me.y, z: me.z, yaw: me.yaw };
+      const k = { fwd: keys.fwd, strafe: keys.strafe, turn: keys.turn, run: !!keys.run, jump: !!keys.jump, sprint: !!this.sprint, slow: this.slow };
+      const b = { x: me.x, y: me.y, z: me.z, yaw: me.yaw, vz: me.vz || 0, peakZ: me.peakZ || 0, air: !!me.air, jumped: !!me.jumped };
       const m = stepBody(this.ground, b, k, this.mover);
       me.x = b.x; me.y = b.y; me.z = b.z; me.yaw = b.yaw;
+      me.vz = b.vz; me.peakZ = b.peakZ; me.air = b.air; me.jumped = b.jumped;
+      if (m.landed) this.landed = { height: m.fallHeight, water: m.water, at: t };
       this.sent++;
       this.history.push({ seq: this.sent, k });
       this._queue(k);
-      if (m.speed > 0 || k.turn) { this.motion = m; this.motionAt = t; }
+      if (m.speed > 0 || k.turn || m.air || m.landed) { this.motion = m; this.motionAt = t; }
     }
     if (this.pendingSteps > 0 && (t - this.lastSend >= SEND_EVERY || this.pendingSteps >= 6)) this._flush(t);
     if (me.ride) { this.motion = { speed: RUN, back: false, side: 0 }; this.motionAt = t; } // drawn running
@@ -292,6 +297,12 @@ export class NetClient {
     return this.motion;
   }
 
+  // Whether the player floats in water right now.
+  get swimming() {
+    const me = this.me;
+    return !!me && !me.air && isSwimming(this.ground, me.x, me.y);
+  }
+
   // The player as drawn: the predicted body plus the error still easing out.
   get shown() {
     const me = this.me;
@@ -299,7 +310,7 @@ export class NetClient {
   }
 
   _queue(k) {
-    const flags = k.run ? 1 : 0;
+    const flags = (k.run ? FLAG_RUN : 0) | (k.jump ? FLAG_JUMP : 0);
     const last = this.pendingRuns[this.pendingRuns.length - 1];
     if (last && last[1] === k.fwd && last[2] === k.strafe && last[3] === k.turn && last[4] === flags) last[0]++;
     else this.pendingRuns.push([1, k.fwd, k.strafe, k.turn, flags]);

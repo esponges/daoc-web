@@ -588,6 +588,11 @@ async function loadOutdoor(gl, man) {
   });
   const isWet = (wx, wy) => wetBoxes.some((b) =>
     wx >= b.x0 && wx <= b.x1 && wy >= b.y0 && wy <= b.y1 && groundAt(wx, wy) < b.h);
+  // The surface over a point, or null: the height a swimmer floats at.
+  const waterAt = (wx, wy) => {
+    const b = wetBoxes.find((q) => wx >= q.x0 && wx <= q.x1 && wy >= q.y0 && wy <= q.y1 && groundAt(wx, wy) < q.h);
+    return b ? b.h : null;
+  };
 
 
   // Spawn on the rising ground south-east of the lake, which is open enough
@@ -679,6 +684,7 @@ async function loadOutdoor(gl, man) {
     heightAtCell: (cx, cy) => H(Math.round(cx), Math.round(cy)),
     groundAt: (wx, wy) => groundAt(wx, wy),
     isWet,
+    waterAt,
     clamp: (x, y) => [Math.max(0, Math.min(extent, x)), Math.max(0, Math.min(extent, y))],
     drawGround, drawWater,
   };
@@ -702,11 +708,11 @@ async function main() {
   // --- the game server ---
   // Joined before anything is loaded, since the server says which zone this
   // character is in and which character to draw.
-  let groundFn = (x, y, z) => z || 0, clampFn = (x, y) => [x, y];
+  let groundFn = (x, y, z) => z || 0, clampFn = (x, y) => [x, y], waterFn = () => null;
   let net = null, welcome = null;
   if (PLAY) {
     const ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
-    net = new NetClient({ ws, ground: { groundAt: (x, y, z) => groundFn(x, y, z), clamp: (x, y) => clampFn(x, y) } });
+    net = new NetClient({ ws, ground: { groundAt: (x, y, z) => groundFn(x, y, z), clamp: (x, y) => clampFn(x, y), waterAt: (x, y) => waterFn(x, y) } });
     try {
       welcome = await net.hello(Number(PLAY));
     } catch (e) {
@@ -727,7 +733,7 @@ async function main() {
     ? await loadInterior(man, ZONE, { fetchJSON, fetchBuffer })
     : await loadOutdoor(gl, man);
   const { cell, grid, extent, groundAt, isWet } = world;
-  groundFn = world.groundAt; clampFn = world.clamp;
+  groundFn = world.groundAt; clampFn = world.clamp; waterFn = world.waterAt || (() => null);
   // Prediction walks into the same trees and walls the server's player does.
   if (net) {
     net.mover = world.kind === 'outdoor'
@@ -1204,6 +1210,7 @@ async function main() {
           if (v && !v.isPlayer && Math.hypot(v.x - player.x, v.y - player.y) < 1800) log(cap(the(ev.to)) + ' dies!', 'kill');
           break;
         }
+        case 'fall': if (toMe) log(ev.x || 'You take ' + ev.n + ' damage from the fall!', 'hit-in'); break;
         case 'xp': if (toMe) log('You gain ' + ev.n + ' experience points.', 'xp'); break;
         case 'level': if (toMe) log(ev.x, 'level'); break;
         case 'loot': if (toMe) log(ev.x === 'money' ? 'You pick up ' + money(ev.n) + '.' : 'You pick up ' + ev.x + '.', 'loot'); break;

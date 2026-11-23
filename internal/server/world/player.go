@@ -167,6 +167,8 @@ type Player struct {
 	lastHit     bool
 	lastHitAt   float64
 	regenAt     float64
+	sprint      bool    // sprint is on: running forward goes faster and costs endurance
+	lastStepAt  float64 // when a step from the client last ran
 	healAt      float64
 
 	inv         map[int]*invItem
@@ -293,7 +295,13 @@ func (p *Player) applyInput(z *Zone) {
 		r := &p.queue[0]
 		k := r.k
 		k.Slow = 1 - speedFactor(p)
+		k.Sprint = p.sprint
 		m := Step(z.G, z.Mv, &p.Body, k)
+		z.landing(p, m)
+		if p.dead { // the fall killed them, which cleared their queue
+			break
+		}
+		p.lastStepAt = z.now
 		if m.Speed > 0 {
 			moved = true
 			last = m
@@ -314,6 +322,7 @@ func (p *Player) applyInput(z *Zone) {
 	} else {
 		p.motion = Motion{}
 	}
+	z.settleAir(p)
 	// The client says where its own simulation ended up after the steps it
 	// has sent. Once we have caught up with them, a position far from ours is
 	// a prediction gone wrong -- or a lie -- and the client is told to snap.
