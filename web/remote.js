@@ -12,6 +12,7 @@
 
 import { createCharacter, modelMatrix } from './character.js';
 import { Animator } from './animator.js';
+import { PostureClips, POSTURE_CLIPS } from './posture.js';
 import { bodyRadius } from './npc.js';
 import { createGear } from './gear.js';
 import { loadRaces, candidates } from './race.js';
@@ -20,6 +21,26 @@ import { loadRaces, candidates } from './race.js';
 const DRAW_DISTANCE = 14000;
 const FADE = 0.3;
 const LOCOMOTION = new Set(['walk', 'run', 'back', 'strafeL', 'strafeR']);
+
+// playEmote plays an emote's clip on a figure, fetching it first if it has not
+// been used before (the clips are written lazy).
+export function playEmote(anim, name) {
+  const clip = 'em_' + name;
+  if (anim.has(clip)) { anim.play(clip); return; }
+  const ch = anim.ch;
+  if (ch && ch.loadClip) ch.loadClip(clip).then((c) => { if (c) anim.play(clip); });
+}
+
+// postureFor makes the posture clips of a figure, and starts fetching the
+// clips it will want.
+export function postureFor(anim) {
+  const ch = anim.ch;
+  if (ch && ch.loadClip) for (const n of POSTURE_CLIPS) if (ch.hasClip && ch.hasClip(n)) ch.loadClip(n);
+  return new PostureClips({
+    has: (n) => anim.has(n),
+    seconds: (n) => (ch.clipDuration(n) / (ch.clipRate(n) || 1)) || 0,
+  });
+}
 
 // The clip an event plays on the entity it happened to or came from.
 export function eventAnim(anim, ev, moving, rng = Math.random) {
@@ -46,6 +67,7 @@ export function eventAnim(anim, ev, moving, rng = Math.random) {
       break;
     case 'evade':
       break;
+    case 'emote': playEmote(anim, ev.x); break;
     default: break;
   }
 }
@@ -129,6 +151,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
           v.dressed = e.k !== 'p' || choice.key !== e.char;
           v.type = { ch: t.ch, ...t };
           v.anim = new Animator(t.ch, { fade: FADE, carry: LOCOMOTION });
+          v.posture = e.k === 'p' ? postureFor(v.anim) : null;
           v.scale = t.ch.scale * (e.scale || 1);
           v.body = bodyRadius(t.ch, v.scale);
         }
@@ -166,6 +189,9 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       const sp = e.ride ? Math.min(e.speed || 0, t.run * v.scale) : (e.speed || 0);
       v.moving = sp > 5;
       let base = 'idle';
+      const pb = v.posture && !v.dead ? v.posture.step(dt, { posture: e.posture || '', moving: v.moving }) : null;
+      // An emote ends when its player moves or changes posture.
+      if (a.act && a.act.startsWith('em_') && (v.moving || e.posture)) a.clear();
       if (v.moving && !v.dead) {
         if (e.back && a.has('back')) base = 'back';
         else if (e.side && a.has(e.side > 0 ? 'strafeR' : 'strafeL')) base = e.side > 0 ? 'strafeR' : 'strafeL';
@@ -174,6 +200,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       } else if (v.fight && a.has('cidle')) {
         base = 'cidle';
       }
+      if (pb && a.has(pb)) base = pb;
       a.setBase(base);
       a.update(dt, (name) => {
         if (name === 'walk') return (e.back && !a.has('back') ? -1 : 1) * Math.max(sp, 1) / (t.walk * v.scale);

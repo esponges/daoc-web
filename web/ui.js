@@ -9,6 +9,7 @@ const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'D
 import { createStockChat, createStockSummary, createStockBar, createStockRelease, RESPAWN_SECONDS } from './hud.js';
 import { releaseLine } from './effects.js';
 import { createConcWindow, heldSpells } from './conc.js';
+import { createCommandWindow } from './command.js';
 import { createPetWindow } from './pet.js';
 import { createSpellQuickbar, quickbarPlace, BAR_W } from './quickbar.js';
 import { styleIconNumber } from './uiwin.js';
@@ -597,6 +598,23 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     grouped = members.length > 0;
   };
   net.on.groupinv = (m) => invite.show(m.from, m.secs);
+  // The Command window (M): sit, sprint, attack, pray and release in one place.
+  const commandWin = createCommandWindow(document, stock, {
+    mover,
+    onAction: (a) => {
+      if (a === 'sit') sendLine('/sit');
+      else if (a === 'sprint') sendLine('/sprint');
+      else if (a === 'pray') sendLine('/pray');
+      else if (a === 'release') net.release();
+      else if (a === 'attack') {
+        const t = getTarget ? getTarget() : null;
+        if (net.me.attacking) net.attack(false);
+        else if (t && !t.dead) { net.target(t.id); net.attack(true); } else say('You have no target.', 'sys');
+      }
+    },
+  });
+  if (!stock) Object.assign(commandWin.el.style, { position: 'fixed', left: '12px', top: '34%', zIndex: 12 });
+  root.appendChild(commandWin.el);
   // The buffs a caster holds by concentration: a list to open (K), marked on the spell bar.
   const concWin = createConcWindow(document, stock, { onCancel: (id) => net.concCancel(id), mover });
   if (stock && !stock.window('concentration')) Object.assign(concWin.el.style, { left: '12px', top: '300px', zIndex: 14 });
@@ -708,6 +726,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'Slash') { openChat('/'); e.preventDefault(); return true; }
     if (e.code === 'KeyI' && !e.repeat) { togglePack(); return true; }
     if (e.code === 'KeyJ' && !e.repeat) { toggleTasks(); return true; }
+    if (e.code === 'KeyM' && !e.repeat) { commandWin.toggle(); return true; } // the command window
     if (e.code === 'KeyK' && !e.repeat) { concWin.toggle(); return true; } // the buffs held by concentration
     if (e.code === 'KeyP' && !e.repeat) { toggleSpells(); return true; } // the spellbook
     if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera

@@ -52,6 +52,7 @@ console.log('ok: group rows');
 // Chat lines by channel.
 assert.deepEqual(chatLine({ ch: 'tell', from: 'Ragnar', text: 'hi' }), { text: 'Ragnar sends, "hi"', kind: 'tell' });
 assert.deepEqual(chatLine({ ch: 'tell', to: 'Sigrid', text: 'hi' }), { text: 'You send, "hi" to Sigrid.', kind: 'tell' });
+assert.deepEqual(chatLine({ ch: 'emote', text: 'You wave.' }), { text: 'You wave.', kind: 'emote' });
 assert.deepEqual(chatLine({ ch: 'group', from: 'Sigrid', text: 'pull now' }), { text: '[Group] Sigrid: "pull now"', kind: 'group' });
 assert.deepEqual(chatLine({ ch: 'sys', text: 'You are not in a group.' }), { text: 'You are not in a group.', kind: 'sys' });
 assert.deepEqual(chatLine({ ch: 'say', from: 'Ragnar', text: 'hello' }), { text: 'Ragnar: hello', kind: '' });

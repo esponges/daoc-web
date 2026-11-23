@@ -210,6 +210,7 @@ export class NetClient {
     me.avail = s.av || [];
     me.serverSpeed = s.sp;
     me.ride = !!s.rd;
+    me.seated = !!s.sit;
 
     const t = this.now();
     const seen = new Set();
@@ -228,6 +229,7 @@ export class NetClient {
       r.speed = e.sp || 0; r.hp = e.hp; r.state = e.st || ''; r.scale = e.sc || 0;
       r.aggro = !!e.ag; r.loot = !!e.lt; r.friendly = !!e.fr; r.kind = e.ik || ''; r.back = !!e.bk; r.side = e.sd || 0;
       r.ride = !!e.rd; // on a horse route
+      r.posture = e.ps || ''; // sit, air or swim
       r.con = e.cc; r.own = !!e.own; // a creature's con colour to you; your own gravestone
       r.samples.push({ t, x: e.x, y: e.y, z: e.z, yaw: e.h });
       if (r.samples.length > 8) r.samples.shift();

@@ -22,7 +22,7 @@ import { createSpellFx, createDirector, bonePoint } from './spellfx.js';
 import { loadInterior } from './interior.js';
 import { NetClient } from './net.js';
 import { loadOutdoorCollision } from './collision.js';
-import { createRemote, eventAnim } from './remote.js';
+import { createRemote, eventAnim, postureFor } from './remote.js';
 import { candidates } from './race.js';
 import { createUI, conColor, money } from './ui.js';
 import { ownCastLine } from './spells.js';
@@ -816,6 +816,7 @@ async function main() {
   }
 
   const anim = new Animator(char, { carry: LOCOMOTION, fade: FADE });
+  const postureClips = net ? postureFor(anim) : null;
   // Ground speed of each step clip at 1x, in model units per second.
   const stepPace = {};
   for (const n of STEPS) if (char.clips[n]) stepPace[n] = char.groundSpeed(n);
@@ -1027,6 +1028,9 @@ async function main() {
     if (net && e.code === 'KeyB' && !e.repeat) net.shoot(e.shiftKey ? 'critical' : (net.me && net.me.drawing ? 'stop' : ''));
     if (net && e.code === 'KeyN' && !e.repeat) net.shoot('rapid');
     if (net && e.code === 'KeyH' && !e.repeat) net.chat('say', '/stealth');
+    if (net && e.code === 'KeyX' && !e.repeat) net.chat('say', '/sit');
+    if (net && e.code === 'KeyZ' && !e.repeat) net.chat('say', '/sprint');
+    if (net && e.code === 'Space') e.preventDefault(); // jump, not a page scroll
     if (combat && e.code === 'Escape') combat.clearTarget();
     if (e.code === 'KeyC') {
       followMode = !followMode;
@@ -1191,6 +1195,9 @@ async function main() {
         case 'swing':
           if (mine) eventAnim(anim, ev, player.gait > 0);
           break;
+        case 'emote':
+          if (mine) eventAnim(anim, ev, false);
+          break;
         case 'hit':
           if (toMe) eventAnim(anim, ev, player.gait > 0);
           if (mine) log('You hit ' + the(ev.to) + (ev.x ? ' with ' + ev.x : '') + ' for ' + (ev.n || 0) + ' damage!' + (ev.c ? ' Critical!' : ''), ev.x ? 'style' : 'hit');
@@ -1304,7 +1311,7 @@ async function main() {
         if (Math.abs(d) > 0.06) turn = d > 0 ? 1 : -1;
       }
       const m = net.update(dt, control
-        ? { fwd: fwdKey, strafe: sideKey, turn, run: !walkMode }
+        ? { fwd: fwdKey, strafe: sideKey, turn, run: !walkMode, jump: keys.has('Space') }
         : { fwd: 0, strafe: 0, turn: 0, run: false });
       const sh = net.shown;
       player.x = sh.x; player.y = sh.y; player.yaw = sh.yaw;
@@ -1371,10 +1378,21 @@ async function main() {
     const still = fighting && anim.has('cidle') ? 'cidle' : 'idle';
     const forward = player.gait <= WALK ? 'walk' : 'run';
     const strafe = player.side > 0 ? 'strafeR' : 'strafeL';
-    anim.setBase(player.gait === 0 ? still
+    let base = player.gait === 0 ? still
       : player.back ? (anim.has('back') ? 'back' : 'walk')
       : player.side ? (anim.has(strafe) ? strafe : forward)
-      : forward);
+      : forward;
+    // Sitting, the air and the water have clips of their own (posture.js).
+    if (postureClips) {
+      const me = net.me;
+      const posture = me.dead ? '' : me.seated ? 'sit'
+        : me.air && (me.jumped || me.peakZ - me.z > 60) ? 'air' : net.swimming ? 'swim' : '';
+      const pb = postureClips.step(dt, { posture, moving: player.gait > 0 });
+      if (pb && anim.has(pb)) base = pb;
+      // An emote ends when you move or change posture.
+      if (anim.act && anim.act.startsWith('em_') && (player.gait > 0 || posture)) anim.clear();
+    }
+    anim.setBase(base);
     // A recorded clip is authored for one speed. Advancing its own clock in
     // proportion to how fast the character is actually moving keeps the feet
     // planted instead of skating -- the same rule as the procedural phase,
@@ -1399,7 +1417,8 @@ async function main() {
       char.pose(player.phase, intensity);
     }
 
-    const playerGround = groundAt(player.x, player.y, player.z);
+    // In the air or afloat the body is not on the ground: the server's height.
+    const playerGround = net && (net.me.air || net.swimming) ? net.me.z : groundAt(player.x, player.y, player.z);
     player.z = playerGround;
     // A small vertical bob, twice per stride, sells the weight transfer. The
     // recorded clips already carry their own, so this is only for the

@@ -18,10 +18,12 @@ const LINE_COLOR = {
   spell: '#c9a8ff', 'spell-in': '#ff9ad0', heal: '#8fe39a',
   // Tells and the group channel.
   tell: '#ff8cff', group: '#7fe0e0',
+  // What a player does, rather than says.
+  emote: '#e8d27a',
 };
 // Lines people write; everything else is a game message. The Chat tab shows
 // only the first kind, Main shows both, and Group only the group channel.
-const SPEECH_KINDS = new Set(['', 'all', 'tell', 'group']);
+const SPEECH_KINDS = new Set(['', 'all', 'tell', 'group', 'emote']);
 const TAB_KINDS = { main: null, chat: SPEECH_KINDS, group: new Set(['group']) };
 
 // createStockChat builds the stock chat window: lines in its text area (500

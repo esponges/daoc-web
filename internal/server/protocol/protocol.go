@@ -315,6 +315,7 @@ type Self struct {
 	VZ     float64 `json:"vz,omitempty"`
 	Peak   float64 `json:"pk,omitempty"`
 	Jumped bool    `json:"jp,omitempty"`
+	Seated bool    `json:"sit,omitempty"` // you are sitting
 }
 
 // Snap is the world as one player sees it.

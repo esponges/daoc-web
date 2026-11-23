@@ -8,6 +8,7 @@
 .game-ui .chat .lines .err { color: #ff9a8a; }
 .game-ui .chat .lines .tell { color: #ff8cff; }
 .game-ui .chat .lines .group { color: #7fe0e0; }
+.game-ui .chat .lines .emote { color: #e8d27a; }
 .game-ui .chat .line { display: none; width: 100%; margin-top: 4px; font: inherit; color: #fff;
   background: rgba(8,14,22,.85); border: 1px solid rgba(120,170,220,.5); border-radius: 5px; padding: 4px 7px; }
 .game-ui .chat.open .line { display: block; }

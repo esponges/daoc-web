@@ -37,6 +37,7 @@ export function chatLine(m) {
     case 'tell':
       return m.to ? { text: 'You send, "' + m.text + '" to ' + m.to + '.', kind: 'tell' }
         : { text: m.from + ' sends, "' + m.text + '"', kind: 'tell' };
+    case 'emote': return { text: m.text, kind: 'emote' };
     case 'group': return { text: '[Group] ' + m.from + ': "' + m.text + '"', kind: 'group' };
   }
   return { text: m.from + ': ' + m.text, kind: '' };
