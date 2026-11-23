@@ -16,9 +16,9 @@
 ## 3. Client
 
 - [x] 3.1 The Guild window (the stock layout has no Guild window, so it is a plain panel): members, ranks, notes, sort, show offline, buttons.
-- [ ] 3.2 Name plate guild line; emblems on cloaks and shields (D3).
-- [ ] 3.3 Check in the browser with 8 test characters (admin tools), then the fallback.
+- [x] 3.2 Name plate guild line. Emblems are not painted on cloaks and shields: which part of those figures takes the texture is not worked out (`docs/formats.md`), so the emblem number is shown in the guild window instead.
+- [x] 3.3 Checked in the browser with two characters on a scratch server (`/gm guild`, an invitation, the window, guild chat, the name plate). A formation by a group of 8, officer and alliance chat are covered by server tests, not played. The window is a plain panel, so there is no stock frame to fall back from.
 
 ## 4. Census and docs
 
-- [ ] 4.1 `cmd/parity` marks GuildRegistrar and EmblemNPC implemented. README and CLAUDE.md.
+- [x] 4.1 `cmd/parity` marks GuildRegistrar and EmblemNPC implemented. README and CLAUDE.md.

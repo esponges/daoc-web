@@ -227,3 +227,41 @@ func TestNamePlateAndWho(t *testing.T) {
 		t.Errorf("/who does not show the guild: %v", out)
 	}
 }
+
+func TestAdminGuildKeepsTheWholeName(t *testing.T) {
+	g, ps := guildRig(t, 1)
+	ps[0].Admin = true
+	g.w.GM(ps[0], "guild Hammers of Odin")
+	if gd, _, ok := g.w.guildOf(ps[0].Char.ID); !ok || gd.Name != "Hammers of Odin" {
+		t.Errorf("the guild is %q", gd.Name)
+	}
+}
+
+func TestEmblemIsBoughtAtAnEmblemMaker(t *testing.T) {
+	r := newRig(t, wolf(1, 30040, 30000, 5))
+	p := r.player("Thora", 20, 30000, 30000, false)
+	r.w.omu.Lock()
+	r.w.online[p.Char.ID] = p
+	r.w.omu.Unlock()
+	if err := r.w.makeGuild("Hammers of Odin", p.Arch.Realm, []int64{p.Char.ID}); err != nil {
+		t.Fatal(err)
+	}
+	p.Char.Money = 20000
+	lines(p)
+	r.w.command(r.z, p, "gc emblem 12")
+	if !containsLine(lines(p), "Emblem Maker") {
+		t.Error("an emblem was refused for the wrong reason, or not refused away from the maker")
+	}
+	r.z.npcs[0].Kind = KindEmblem
+	r.w.command(r.z, p, "gc emblem 12")
+	if g, _, _ := r.w.guildOf(p.Char.ID); g.Emblem != 12 {
+		t.Fatalf("the emblem is %d", g.Emblem)
+	}
+	if p.Char.Money != 20000-EmblemFee {
+		t.Errorf("the fee: %d left", p.Char.Money)
+	}
+	r.w.command(r.z, p, "gc emblem 99")
+	if g, _, _ := r.w.guildOf(p.Char.ID); g.Emblem != 12 {
+		t.Error("an emblem past 84 was accepted")
+	}
+}

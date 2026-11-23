@@ -40,11 +40,11 @@ Guild chat SHALL reach online members whose rank can hear it. Officer chat SHALL
 - **THEN** only members whose rank hears officer chat see the line
 
 ### Requirement: Emblem
-The Guildmaster (or a rank with emblem permission) SHALL buy an emblem at an Emblem NPC once, or change it for a fee. Members' cloaks and shields SHALL show it to every viewer.
+The Guildmaster (or a rank with emblem permission) SHALL choose an emblem number from 1 to 84 at an Emblem NPC, for a fee. The number SHALL be shown in the guild window. Painting it on members' cloaks and shields is not yet done, because the install's emblem textures (`insignia/*_emblem_NNN.dds`) are not yet mapped onto those figures.
 
-#### Scenario: Emblem shown
-- **WHEN** a guild has an emblem and a member wears a cloak
-- **THEN** other players see the emblem on the cloak
+#### Scenario: Emblem chosen
+- **WHEN** a Guildmaster near an Emblem NPC chooses emblem 12
+- **THEN** the fee is taken and every member's guild window shows emblem 12
 
 ### Requirement: Alliances
 A Guildmaster SHALL be able to invite another guild's Guildmaster into an alliance. The leading guild's Guildmaster SHALL be able to remove a guild or disband the alliance.

@@ -593,7 +593,7 @@ func (w *World) GM(p *Player, line string) {
 	}
 	switch f[0] {
 	case "guild":
-		w.adminGuild(p, restAfter(line, 2))
+		w.adminGuild(p, restAfter(line, 1))
 	case "goto":
 		v, ok := num(1)
 		info := w.Cat.Zones[int(v)]
