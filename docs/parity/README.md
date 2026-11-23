@@ -10,7 +10,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   Class spell types       73 of  73 implemented (987 of 987 spells)
   Style features          13 of  14 implemented (1382 of 1383 styles)
   Abilities               22 of  30 implemented (88 of 100 grants)
-  Creature kinds          23 of 110 implemented (29118 of 29932 placements, 7 kinds not classic)
+  Creature kinds          24 of 110 implemented (29119 of 29932 placements, 7 kinds not classic)
   quests                 0, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
@@ -272,7 +272,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.SpellCraftingMaster | 1 |  |
 | DOL.GS.Steinolf | 1 |  |
 | DOL.GS.Stripe | 1 |  |
-| DOL.GS.Trainer.MidgardRogueTrainer | 1 |  |
+| DOL.GS.Trainer.MidgardRogueTrainer | 1 | yes |
 | DOL.GS.Ulfketill | 1 |  |
 | DOL.GS.Valmak | 1 |  |
 | DOL.GS.Vasrem | 1 |  |

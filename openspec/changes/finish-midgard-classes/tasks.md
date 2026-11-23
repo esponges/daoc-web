@@ -18,7 +18,7 @@
 - [ ] 3.3 Berserk, Charge, Enhanced Evade and QuickCast as abilities with effects and reuse timers (D2). Tests per scenario.
 - [ ] 3.4 The ground target: request, range and sight check, storage, clearing on zone change, `gt` in own state. Protocol additions in `protocol.go`, `docs/protocol.md` and a protocol test.
 - [ ] 3.5 Distraction on the ground target, and Danger Sense on the stealth tick (D4).
-- [ ] 3.6 Serve the Midgard Rogue trainer like the other base trainers.
+- [x] 3.6 Serve the Midgard Rogue trainer like the other base trainers.
 
 ## 4. Census
 

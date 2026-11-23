@@ -1726,7 +1726,7 @@
     {
       "name": "DOL.GS.Trainer.MidgardRogueTrainer",
       "uses": 1,
-      "implemented": false
+      "implemented": true
     },
     {
       "name": "DOL.GS.Ulfketill",

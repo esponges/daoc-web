@@ -47,7 +47,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Class spell types | 73 of 73 (987 of 987 spells) |
 | Style features | 13 of 14 (1,382 of 1,383 styles) |
 | Abilities | 22 of 30 (88 of 100 grants) |
-| Creature kinds | 23 of 110 (29,118 of 29,932 placements; 7 kinds left out as not classic) |
+| Creature kinds | 24 of 110 (29,119 of 29,932 placements; 7 kinds left out as not classic) |
 | Quests | 0 of 0 (the 81 XP Item data quests are marked not classic) |
 | Keep doors | 0 of 432 |
 | Keeps | 0 of 79 |

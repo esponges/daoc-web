@@ -880,7 +880,11 @@ func TrainerClass(classType string) string {
 	if !strings.HasPrefix(classType, pre) || !strings.HasSuffix(classType, suf) {
 		return ""
 	}
-	return strings.TrimSuffix(strings.TrimPrefix(classType, pre), suf)
+	name := strings.TrimSuffix(strings.TrimPrefix(classType, pre), suf)
+	if name == "MidgardRogue" {
+		return "Rogue" // the data's name for the Rogue trainer of Midgard
+	}
+	return name
 }
 
 // convertedZones reads which zone folders exist under web/data. nil means unknown.

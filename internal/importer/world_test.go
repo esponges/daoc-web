@@ -272,6 +272,9 @@ func TestClassKinds(t *testing.T) {
 	if TrainerClass("DOL.GS.Trainer.WarriorTrainer") != "Warrior" || TrainerClass("DOL.GS.GameNPC") != "" {
 		t.Error("trainer class types")
 	}
+	if TrainerClass("DOL.GS.Trainer.MidgardRogueTrainer") != "Rogue" {
+		t.Error("the Midgard Rogue trainer teaches the Rogue base class")
+	}
 	if !IsHealerClass("DOL.GS.GameHealer") || IsHealerClass("DOL.GS.GameMerchant") {
 		t.Error("healer class type")
 	}
