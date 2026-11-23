@@ -15,8 +15,9 @@ import (
 // flat is level ground with a lake in one corner.
 type flat struct{}
 
-func (flat) GroundAt(x, y, _ float64) float64 { return 5000 }
-func (flat) IsWet(x, y float64) bool          { return x < 2000 && y < 2000 }
+func (flat) GroundAt(x, y, _ float64) float64     { return 5000 }
+func (flat) IsWet(x, y float64) bool              { return x < 2000 && y < 2000 }
+func (flat) WaterAt(x, y float64) (float64, bool) { return 0, false }
 func (flat) Clamp(x, y float64) (float64, float64) {
 	return math.Max(0, math.Min(65280, x)), math.Max(0, math.Min(65280, y))
 }

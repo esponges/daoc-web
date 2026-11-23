@@ -100,7 +100,8 @@ type Hello struct {
 
 // Move flag bits in a step run.
 const (
-	FlagRun = 1 << iota // run rather than walk (backing and strafing always walk)
+	FlagRun  = 1 << iota // run rather than walk (backing and strafing always walk)
+	FlagJump             // jump, if on the ground and free to
 )
 
 // Input is a batch of movement. Steps is a list of runs, each

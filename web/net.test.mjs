@@ -6,7 +6,7 @@
 // stepBody lands on the same numbers as the server's Step.
 
 import { readFileSync } from 'node:fs';
-import { stepBody, runKeys, planeGround, STEP_DT } from './move.js';
+import { stepBody, runKeys, planeGround, cliffGround, lakeGround, STEP_DT } from './move.js';
 import { NetClient } from './net.js';
 
 let failed = 0;
@@ -14,16 +14,27 @@ const ok = (cond, msg) => { if (!cond) { failed++; console.error('FAIL: ' + msg)
 
 // --- shared vectors ---
 const vectors = JSON.parse(readFileSync(new URL('../internal/server/world/testdata/move_vectors.json', import.meta.url)));
+const grounds = { plane: planeGround, cliff: cliffGround, lake: lakeGround };
 for (const v of vectors) {
-  const b = { x: v.start[0], y: v.start[1], z: v.start[2], yaw: v.start[3] };
+  const b = { x: v.start[0], y: v.start[1], z: v.start[2], yaw: v.start[3], vz: 0, peakZ: 0, air: false, jumped: false };
+  const g = grounds[v.ground || 'plane'];
+  const landed = [];
+  let swim = false;
   for (const r of v.runs) {
     const { count, keys } = runKeys(r);
     keys.slow = v.slow || 0;
-    for (let i = 0; i < count; i++) stepBody(planeGround, b, keys);
+    keys.sprint = !!v.sprint;
+    for (let i = 0; i < count; i++) {
+      const m = stepBody(g, b, keys);
+      if (m.landed) landed.push(Math.round(m.fallHeight * 1e6) / 1e6);
+      swim = m.swim;
+    }
   }
   const got = [b.x, b.y, b.z, b.yaw];
   const worst = Math.max(...got.map((g, i) => Math.abs(g - v.end[i])));
   ok(worst < 1e-6, `vector "${v.name}" agrees with the server (worst difference ${worst.toExponential(1)})`);
+  if (v.air !== undefined || b.air) ok(!!v.air === b.air && Math.abs((v.vz || 0) - b.vz) < 1e-6, `vector "${v.name}": the air state agrees`);
+  ok(JSON.stringify(landed) === JSON.stringify(v.landed || []) && swim === !!v.swim, `vector "${v.name}": landings and swimming agree`);
 }
 
 // --- a fake server and a virtual clock ---

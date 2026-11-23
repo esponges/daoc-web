@@ -20,6 +20,9 @@ type Ground interface {
 	GroundAt(x, y, z float64) float64
 	// IsWet reports whether (x, y) is under a body of water.
 	IsWet(x, y float64) bool
+	// WaterAt is the height of the water surface over (x, y), and whether
+	// there is any: inside a lake's box with the floor below its surface.
+	WaterAt(x, y float64) (surface float64, ok bool)
 	// Clamp keeps a point inside the zone.
 	Clamp(x, y float64) (float64, float64)
 	// Extent is the zone's size, for sanity checks.
@@ -132,6 +135,16 @@ func (t *Terrain) IsWet(x, y float64) bool {
 		}
 	}
 	return false
+}
+
+// WaterAt is the surface of the lake over (x, y), if there is one.
+func (t *Terrain) WaterAt(x, y float64) (float64, bool) {
+	for _, b := range t.wet {
+		if x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1 && t.GroundAt(x, y, 0) < b.h {
+			return b.h, true
+		}
+	}
+	return 0, false
 }
 
 func (t *Terrain) Clamp(x, y float64) (float64, float64) {

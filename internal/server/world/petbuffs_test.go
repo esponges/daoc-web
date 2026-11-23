@@ -152,7 +152,8 @@ func TestMesmerizeDurationBuffShortensMezOnThePet(t *testing.T) {
 // river is flat ground with a river across x 30300 to 30600.
 type river struct{ flat }
 
-func (river) IsWet(x, y float64) bool { return x > 30300 && x < 30600 }
+func (river) IsWet(x, y float64) bool              { return x > 30300 && x < 30600 }
+func (river) WaterAt(x, y float64) (float64, bool) { return 0, false }
 
 func TestAPetGivesUpOnATargetItCannotReach(t *testing.T) {
 	r, h, _, sp := petRig(t)

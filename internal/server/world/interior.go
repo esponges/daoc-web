@@ -65,6 +65,9 @@ func (in *Interior) GroundAt(x, y, z float64) float64 {
 
 func (*Interior) IsWet(x, y float64) bool { return false }
 
+// WaterAt: there is no water indoors.
+func (*Interior) WaterAt(x, y float64) (float64, bool) { return 0, false }
+
 func (in *Interior) Clamp(x, y float64) (float64, float64) {
 	return math.Max(in.min[0], math.Min(in.max[0], x)), math.Max(in.min[1], math.Min(in.max[1], y))
 }
