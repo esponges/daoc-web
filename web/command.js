@@ -49,6 +49,7 @@ export function createCommandWindow(doc, data, { onAction, mover } = {}) {
 function createStockCommand(doc, data, { onAction, mover }) {
   let open = false;
   const win = buildWindow(doc, data, 'command', {
+    captions: true, labels: true,
     onClick: (id, ev) => { if (COMMAND_ACTIONS[ev]) onAction?.(COMMAND_ACTIONS[ev]); },
     disabled: (ev) => !COMMAND_ACTIONS[ev],
     tooltip: (ev) => COMMAND_WHY[ev] || '',

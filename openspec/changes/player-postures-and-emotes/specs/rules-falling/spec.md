@@ -7,7 +7,7 @@ The rule book's entry for falling: when a drop hurts a player, how much, and how
 ## ADDED Requirements
 
 ### Requirement: Falling damage
-A player who lands after a fall SHALL take no damage when the fall is no higher than the safe height. Above it they SHALL lose a share of their maximum health that grows with the height beyond the safe height, capped at a lethal fall. The safe height is 480 units. Above it the loss is the share (height − safe) / 1920 of maximum health, at most all of it. Status: documented that falls hurt since patch 1.38 and that Safe Fall exists; the numbers are this project's, provisional, because no published source gives them.
+A landing SHALL cost nothing when the fall is no higher than the safe height, 480 units. Above it the loss SHALL be (height − 480) / 1920 of maximum health, at most all of it. Status: documented that falls hurt since patch 1.38; the numbers are this project's and provisional.
 
 #### Scenario: A short drop
 - **WHEN** a player lands from a fall below the safe height

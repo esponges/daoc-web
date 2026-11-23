@@ -54,7 +54,7 @@ the figures are checked against `docs/parity/parity.json` by `go test ./cmd/pari
 | Relics | 0 of 6 |
 | Battlegrounds | 0 of 5 |
 | Levelling gear | 0 gaps in 10 five-level bands (31 to 50 is the project's added stock) |
-| Rules | 26 documented, 66 reference, 36 provisional |
+| Rules | 26 documented, 66 reference, 43 provisional |
 
 So: the solo-and-small-group player-versus-environment loop works, for all twelve of
 Midgard's classes (trainers teach them), with pets and charm, bows, stealth,
@@ -255,7 +255,7 @@ interpolated.
 Keys in network mode: `W/S/A/D/Q/E` and the mouse as before, `Enter` to talk
 (`!` to shout, `/who`, `/pray`, `/bind`, `/invite`, `/disband`, `/tell`, `/g`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
 usable), `I` the pack, `C` the character sheet (`Shift+C` the free camera), a
-click on a corpse to loot it, a right-click on a merchant, trainer or healer. Administrators: `/gm goto
+click on a corpse to loot it, a right-click on a merchant, trainer or healer. `Space` jumps, `X` (or `/sit`) sits and stands, `Z` (or `/sprint`) turns sprint on and off, `M` opens the Command window, and the classic emotes are slash commands (`/wave`, `/bow`, `/dance`, `/cheer`, `/clap`, `/cry`, `/curtsey`, `/flex`, `/kiss`, `/laugh`, `/point`, `/salute`, `/bang`, `/victory`, `/beckon`, `/blush`). A seated character regains health, power and endurance twice as fast, and stands up to do anything else; a long fall costs health, and a lake is swum, not walked. The numbers are the rule book's `rules-resting`, `rules-falling` and `rules-movement`, all provisional. Administrators: `/gm goto
 103`, `/gm tp x y`, `/gm level n`, `/gm give <item id>`.
 
 ### Where the world's content comes from
@@ -526,11 +526,11 @@ builder cannot draw is named once on the console.
 - **Two textures are missing from the install.** `BAG.nif` names `mfiga6.dds`
   and `mheada3.dds`, which exist nowhere in the game directory; those three
   props draw white.
-- **Few of the game's animation clips are used.** Idle, walk, run, death, the
-  combat stance, flinch and three attacks are converted per race; the other
-  ~2000 humanoid clips (emotes, swimming, jumping) are reachable by name
-  through `animconv` but not wired to anything. Sprint reuses the run cycle,
-  played faster.
+- **Most of the game's animation clips are still unused.** Idle, walk, run, death, the
+  combat stance, flinch, three attacks, casting, jumping, landing, sitting, swimming and
+  the sixteen classic emotes are converted per race; the other ~2000 humanoid clips
+  (the later emotes, the other sit poses, ladders, boats) are reachable by name through
+  `animconv` but not wired to anything.
 - **5 of 4032 `.kfa` files do not parse**, each with a non-finite value in
   its keyframe data. `-list` reports them; none is in the humanoid
   locomotion set.

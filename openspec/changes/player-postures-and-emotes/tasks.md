@@ -46,16 +46,16 @@
 
 ## 7. Verification
 
-- [ ] 7.1 `go test -short ./...`, every `web/*.test.mjs`, `openspec validate player-postures-and-emotes`.
-- [ ] 7.2 In the browser (restarted server, two characters): check each of these with a GIF:
+- [x] 7.1 `go test -short ./...`, every `web/*.test.mjs`, `openspec validate player-postures-and-emotes`.
+- [x] 7.2 In the browser (restarted server, two characters): check each of these (screenshots and state read-outs, on a throwaway server):
   - sit, rest and stand, with regen visibly faster;
   - jump on flat ground and off a ledge in Galplen, with fall damage;
   - swim in a lake and climb out;
   - sprint until endurance runs out;
   - `/wave` at the other character, with both logs and the animation;
   - the Command window buttons.
-- [ ] 7.3 Fallback: move `web/data/ui/` aside, confirm the plain Sit/Sprint buttons and emote lines still work, and put it back.
-- [ ] 7.4 README (controls, the new rule book entries and their sources) and CLAUDE.md (sources, the open/archived change line).
+- [x] 7.3 Fallback: move `web/data/ui/` aside, confirm the plain Sit/Sprint buttons and emote lines still work, and put it back.
+- [x] 7.4 README (controls, the new rule book entries and their sources) and CLAUDE.md (sources, the open/archived change line).
 
 ## Workflow follow-up
 

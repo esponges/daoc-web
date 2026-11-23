@@ -7,7 +7,7 @@ The rule book's entry for resting: how much faster a seated player regains healt
 ## ADDED Requirements
 
 ### Requirement: Seated regeneration
-A seated player out of combat SHALL regain health, power and endurance at twice the out-of-combat amount per tick. The ticks stay as `rules-character-stats` and `rules-power` give them. Status: provisional. The later patch that doubled standing regeneration "to match the bonus while sitting" implies a factor of two at 1.65. Sources: the 1.87 patch notes as quoted on the Dawn of Light forum (standing ticks doubled to match sitting, so sitting was twice the standing bonus before it). No 1.65-era page gives the number itself, so the status stays provisional.
+A seated player out of combat SHALL regain health, power and endurance at twice the standing amount per tick, the ticks being those of `rules-character-stats` and `rules-power`. Status: provisional. The 1.87 notes, as quoted on the Dawn of Light forum, doubled standing ticks to match sitting; no 1.65 page gives the factor itself.
 
 #### Scenario: Level 20 seated
 - **WHEN** a level 20 Warrior below full health sits out of combat for 30 seconds

@@ -1435,7 +1435,10 @@ async function main() {
     if (followMode) {
       const op = Math.cos(orbit.pitch), os = Math.sin(orbit.pitch);
       const look = [Math.sin(orbit.yaw) * op, -os, -Math.cos(orbit.yaw) * op];
-      target = [player.x, playerGround + char.height * char.scale * 0.62, player.y];
+      // A seated figure is low: the camera looks lower with it, so it is not
+      // left behind the chat window.
+      player.seat = (player.seat || 0) + ((net && net.me.seated ? 1 : 0) - (player.seat || 0)) * Math.min(1, dt * 4);
+      target = [player.x, playerGround + char.height * char.scale * 0.62 * (1 - 0.5 * player.seat), player.y];
       eye = [
         target[0] - look[0] * orbit.dist,
         target[1] - look[1] * orbit.dist,
