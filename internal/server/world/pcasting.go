@@ -181,6 +181,7 @@ func (z *Zone) Cast(p *Player, spellID int, targetID int64) {
 		return
 	}
 	z.unstealth(p, "You are no longer hidden.")
+	z.standUp(p)
 	p.casting = &playerCast{spell: sp, target: target, ends: rules.CastEnds(z.now, sp.CastTime), x: p.Body.X, y: p.Body.Y}
 	p.pending = -1
 	z.event(protocol.Event{K: "cast", From: p.ID, To: target.entityID(), Text: sp.Name, FX: sp.ClientEffect, Dur: sp.CastTime}, p.Body.X, p.Body.Y)

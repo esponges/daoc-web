@@ -167,6 +167,8 @@ type Player struct {
 	lastHit     bool
 	lastHitAt   float64
 	regenAt     float64
+	seated      bool    // sitting: regenerates faster, stands up to do anything else
+	movedSecond bool    // the body moved since the last endurance tick
 	sprint      bool    // sprint is on: running forward goes faster and costs endurance
 	lastStepAt  float64 // when a step from the client last ran
 	healAt      float64
@@ -294,6 +296,9 @@ func (p *Player) applyInput(z *Zone) {
 	for p.budget >= 1 && len(p.queue) > 0 {
 		r := &p.queue[0]
 		k := r.k
+		if p.seated && (k.Fwd != 0 || k.Strafe != 0 || k.Turn != 0 || k.Jump) {
+			z.standUp(p)
+		}
 		k.Slow = 1 - speedFactor(p)
 		k.Sprint = p.sprint
 		m := Step(z.G, z.Mv, &p.Body, k)
@@ -304,6 +309,7 @@ func (p *Player) applyInput(z *Zone) {
 		p.lastStepAt = z.now
 		if m.Speed > 0 {
 			moved = true
+			p.movedSecond = true
 			last = m
 		}
 		p.motion = m

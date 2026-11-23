@@ -235,23 +235,31 @@ func (z *Zone) tickPlayer(p *Player) {
 		p.regenAt = z.now + 1
 		z.tickTask(p)
 		fighting := z.now < p.combatUntil
-		gain := float64(rules.EnduranceRegenOut)
-		if fighting {
-			gain = rules.EnduranceRegenIn
+		moved := p.movedSecond
+		p.movedSecond = false
+		if p.sprint && moved {
+			z.tickSprint(p, true) // a sprinting second pays for itself and regains nothing
+		} else {
+			gain := float64(rules.EnduranceRegenOut)
+			if fighting {
+				gain = rules.EnduranceRegenIn
+			}
+			gain = rules.SeatedRegen(gain, p.seated, fighting)
+			gain = rules.EnduranceRegenGain(gain, p.strongest(effEndRegen))
+			p.end = math.Min(float64(rules.MaxEndurance), p.end+gain)
+			z.tickSprint(p, false)
 		}
-		gain = rules.EnduranceRegenGain(gain, p.strongest(effEndRegen))
-		p.end = math.Min(float64(rules.MaxEndurance), p.end+gain)
 	}
 	if z.now >= p.powerAt {
 		p.powerAt = z.now + rules.PowerRegenPeriod
 		if mp := p.sh.maxPower; mp > 0 && p.power < float64(mp) {
-			p.power = math.Min(float64(mp), p.power+rules.PowerRegenGain(p.Char.Level, p.strongest(effPowRegen)))
+			p.power = math.Min(float64(mp), p.power+rules.SeatedRegen(rules.PowerRegen(p.Char.Level), p.seated, z.now < p.combatUntil)+float64(p.strongest(effPowRegen)))
 		}
 	}
 	if z.now >= p.healAt {
 		p.healAt = z.now + rules.HealthRegenPeriod
 		if p.hp < float64(p.maxHP()) {
-			p.hp = math.Min(float64(p.maxHP()), p.hp+float64(rules.HealthRegenBuffed(p.Char.Level, z.now < p.combatUntil, p.regenBuff())))
+			p.hp = math.Min(float64(p.maxHP()), p.hp+z.healthTick(p))
 		}
 	}
 	// A character whose connection closed in a fight lingers, then goes.
@@ -375,6 +383,7 @@ func (z *Zone) playerEntity(o *Player) protocol.Entity {
 		ID: o.ID, K: "p", Name: o.Char.Name, Char: o.Arch.Key, Race: o.Char.Race, Female: o.Char.Gender == 1, Level: o.Char.Level,
 		X: o.Body.X, Y: o.Body.Y, Z: o.Body.Z, Yaw: o.Body.Yaw, Speed: o.motion.Speed,
 		HP: math.Max(0, o.hp/float64(o.maxHP())), State: st, Back: o.motion.Back, Side: o.motion.Side, Ride: o.ride != nil,
+		Posture: z.posture(o), VZ: ifAir(o),
 	}
 }
 

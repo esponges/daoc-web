@@ -543,7 +543,7 @@ func (z *Zone) effectsChanged(c combatant) {
 		p.buffed = buffed
 		z.W.recalc(p) // buffs raise stats and armour
 	}
-	m := protocol.Effects{T: protocol.TEffects, List: []protocol.EffectView{}, Speed: speedFactor(p), Held: held(p)}
+	m := protocol.Effects{T: protocol.TEffects, List: []protocol.EffectView{}, Speed: speedFactor(p), Held: held(p), Spr: p.sprint}
 	if p.song != nil {
 		m.Song = p.song.spell.ID
 	}

@@ -326,6 +326,7 @@ func (z *Zone) SetAttack(p *Player, on bool) {
 		p.errMsg("target", "You cannot attack "+n.title()+".")
 		return
 	}
+	z.standUp(p)
 	p.attacking, p.ab.engage = true, 0
 	if p.swingAt < z.now {
 		p.swingAt = z.now + 0.4
@@ -517,6 +518,7 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 
 // npcHitsPlayer resolves a creature's blow against a player.
 func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
+	z.standUp(p) // anything swinging at a seated player stands them up
 	z.event(protocol.Event{K: "swing", From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
 	member := p
 	w := z.interceptFor(p)

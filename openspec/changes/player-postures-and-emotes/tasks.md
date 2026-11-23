@@ -25,11 +25,11 @@
 
 ## 4. Posture, sprint and resting on the server
 
-- [ ] 4.1 `world/posture.go`: `sit`, `stand`, `standUp(p)` with messages. Refuse sitting dead, in the air or swimming. Add `posture`/`sprint` requests and `/sit`, `/stand`, `/sprint` commands.
-- [ ] 4.2 Call `standUp` from movement or jump input, attack on, cast start, bow draw, style use, and being swung at (D1). A test for each trigger.
-- [ ] 4.3 Regen in `zone.go` reads the seated factor. Tests: seated vs standing health, power and endurance over a fixed time.
-- [ ] 4.4 Sprint: toggle, speed through `Keys.Sprint`, endurance drain in the one-second tick only while moving, off at zero with a message, refused seated, swimming or dead. Add `spr` to the `effects` message. Tests.
-- [ ] 4.5 Entity fields `ps` and `vz` in snapshots. Protocol additions in `protocol.go` and `docs/protocol.md`, plus a protocol test.
+- [x] 4.1 `world/posture.go`: `sit`, `stand`, `standUp(p)` with messages. Refuse sitting dead, in the air or swimming. The commands are `/sit`, `/stand` and `/sprint`; no new request messages.
+- [x] 4.2 Call `standUp` from movement or jump input, attack on, cast start, bow draw, style use, and being swung at (D1). A test for each trigger.
+- [x] 4.3 Regen in `zone.go` reads the seated factor. Tests: seated vs standing health, power and endurance over a fixed time.
+- [x] 4.4 Sprint: toggle, speed through `Keys.Sprint`, endurance drain in the one-second tick only while moving, off at zero with a message, refused seated, swimming or dead. Add `spr` to the `effects` message. Tests.
+- [x] 4.5 Entity fields `ps` and `vz` in snapshots. Protocol additions in `protocol.go` and `docs/protocol.md`, plus a protocol test.
 
 ## 5. Emotes on the server
 

@@ -264,6 +264,8 @@ type Entity struct {
 	Own      bool     `json:"own,omitempty"`
 	Ride     bool     `json:"rd,omitempty"` // a player on a horse
 	Owner    string   `json:"ow,omitempty"` // the name of a pet's owner
+	Posture  string   `json:"ps,omitempty"` // a player's posture: "sit", "air" or "swim"; absent standing
+	VZ       float64  `json:"vz,omitempty"` // a player in the air: vertical speed, units a second
 }
 
 // Event is something that happened this tick, for the log and the animations.
@@ -623,6 +625,7 @@ type Effects struct {
 	Speed float64      `json:"speed"`
 	Held  bool         `json:"held,omitempty"` // stunned or mesmerized: no moving, swinging or styles
 	Song  int          `json:"song,omitempty"` // the spell id of the song or chant you have on; absent when none
+	Spr   bool         `json:"spr,omitempty"`  // sprint is on: prediction runs faster
 }
 
 // Group operations a client may ask for.

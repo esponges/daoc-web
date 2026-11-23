@@ -31,7 +31,7 @@ same maths the browser predicts with (`web/move.js`, `move.go`):
 ```
 
 Each run is `[count, fwd, strafe, turn, flags]`: that many steps with those
-keys held (`fwd`/`strafe` -1..1, `turn` -1 left, 1 right, `flags` bit 0 = run).
+keys held (`fwd`/`strafe` -1..1, `turn` -1 left, 1 right, `flags` bit 0 = run, bit 1 = jump).
 `seq` is the cumulative step count including these. `px`, `py` are the
 client's predicted position, which the server only compares.
 
@@ -45,6 +45,12 @@ A slow scales every step's distance by the speed factor the server last sent
 in `effects` (`speed`, 1 when free), and a held character (`speed` 0) neither
 moves nor turns. The server applies its own factor when it steps the inputs,
 so a client that ignores `effects` is corrected.
+
+### Posture
+
+The step also moves a body up and down: a jump starts with the flag bit 1 on the ground, a body in the air falls under gravity, ground that drops away by more than 12 units in a step makes it fall, and deep water holds it afloat at the surface. A client keeps stepping (with no keys) while it is in the air, and a body whose client stops sending is stepped down by the server after half a second. `you` carries the vertical state so the client's replay picks up where the server is: `air` (true in the air), `vz` (vertical speed), `pk` (the highest point of this stretch of air) and `jp` (the air began with a jump). A landing from a height costs hit points by the rule (`rules-falling`) and arrives as a `fall` event with `n` the damage and `x` the line.
+
+Sitting, standing and sprinting are the chat commands `/sit` (a toggle), `/stand` and `/sprint` (a toggle). A player entity carries `ps`, its posture: `sit`, `air` or `swim`, absent when standing on the ground, and `vz` while in the air. `effects` has `spr` true while sprint is on: predict running steps at 1.25 times run speed.
 
 ## Snapshots
 

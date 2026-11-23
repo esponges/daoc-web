@@ -382,3 +382,34 @@ func TestEventClientEffectIsAdditive(t *testing.T) {
 		t.Errorf("an event with none marshals as %s", without)
 	}
 }
+
+func TestPostureFieldsAreAdditive(t *testing.T) {
+	with, _ := json.Marshal(Entity{ID: 1, K: "p", Posture: "air", VZ: 120.5})
+	if !strings.Contains(string(with), `"ps":"air"`) || !strings.Contains(string(with), `"vz":120.5`) {
+		t.Errorf("a player in the air marshals as %s", with)
+	}
+	without, _ := json.Marshal(Entity{ID: 1, K: "p"})
+	if strings.Contains(string(without), `"ps"`) || strings.Contains(string(without), `"vz"`) {
+		t.Errorf("a standing player marshals as %s", without)
+	}
+	self, _ := json.Marshal(Self{Air: true, VZ: 5, Peak: 9000, Jumped: true})
+	for _, k := range []string{`"air":true`, `"vz":5`, `"pk":9000`, `"jp":true`} {
+		if !strings.Contains(string(self), k) {
+			t.Errorf("your vertical state lacks %s: %s", k, self)
+		}
+	}
+	plain, _ := json.Marshal(Self{})
+	if strings.Contains(string(plain), `"air"`) || strings.Contains(string(plain), `"jp"`) {
+		t.Errorf("a body on the ground marshals as %s", plain)
+	}
+	fx, _ := json.Marshal(Effects{T: TEffects, Spr: true})
+	if !strings.Contains(string(fx), `"spr":true`) {
+		t.Errorf("effects while sprinting marshal as %s", fx)
+	}
+}
+
+func TestJumpIsAFlagBit(t *testing.T) {
+	if FlagRun != 1 || FlagJump != 2 {
+		t.Errorf("flags run %d jump %d, want 1 and 2", FlagRun, FlagJump)
+	}
+}

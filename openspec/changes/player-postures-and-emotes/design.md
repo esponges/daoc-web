@@ -98,7 +98,7 @@
 
 **D7. Protocol, additive only.**
 - `FlagJump = 1 << 1` on input runs.
-- Requests: `posture` {`sit`: bool} and `sprint` {`on`: bool}; the slash commands use the same paths.
+- No new requests: `/sit`, `/stand` and `/sprint` are chat commands, as `/stealth` is. `you` gains `air`, `vz`, `pk` and `jp` so prediction can resume where the server is.
 - Entity fields: `ps` ("sit", "air", "swim") and `vz`.
 - Event: `emote` {from, to, x: name}.
 - Chat channel: "emote".

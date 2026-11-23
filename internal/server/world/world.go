@@ -480,6 +480,12 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		z.PetCommand(p, strings.ToLower(f[1]))
 	case "task":
 		z.TaskCommand(p, f[1:])
+	case "sit":
+		z.Sit(p)
+	case "stand":
+		z.Stand(p)
+	case "sprint":
+		z.Sprint(p)
 	case "stealth", "hide":
 		z.Stealth(p)
 	case "camouflage":
