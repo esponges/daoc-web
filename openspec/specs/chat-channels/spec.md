@@ -40,3 +40,10 @@ The existing per-player rate limit and line length limit SHALL apply to tells an
 #### Scenario: Flooding tells
 - **WHEN** a player sends tells faster than the rate limit
 - **THEN** they are told they are talking too fast and the extra lines are dropped
+
+### Requirement: The Emote channel
+Emote lines SHALL be sent on their own channel ("emote"). The client SHALL colour and tab them as the stock chat window's Emote filter does, and fall back to the say colour without the converted interface.
+
+#### Scenario: An emote line
+- **WHEN** a nearby player waves
+- **THEN** the line arrives on the emote channel and shows in the Emote colour
