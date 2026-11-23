@@ -93,7 +93,7 @@
   - taunt, rude, hug, letsgo, meditate, no, raise, shrug, slap, slit, surrender, yes;
   - beg, induct, dismiss, knock;
   - the "Classic_em_*" set: yawn, rofl, …
-- The command-to-column table lives in one Go file, and the client gets the emote by name on the event.
+- The command-to-column table lives in one Go file (`world/emotes.go`), and the client gets the emote by name on the event. The `anims.csv` columns (as `EM ...`): beckon, blush, bow, cheer, clap, cry, curtsey, dance, flex (the small one), kiss, laugh, point, salute, Shield (the `bang` command), victory and wave. `animconv` writes each as `em_<name>`.
 - The lines are this project's own wording, one pair (with and without a target) per emote.
 
 **D7. Protocol, additive only.**

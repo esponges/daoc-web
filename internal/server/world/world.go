@@ -511,6 +511,9 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		}
 		w.RemoveMember(p, f[1])
 	default:
+		if z.TryEmote(p, f[0]) {
+			return
+		}
 		p.errMsg("chat", "Unknown command /"+f[0]+".")
 	}
 }

@@ -33,8 +33,8 @@
 
 ## 5. Emotes on the server
 
-- [ ] 5.1 `world/emotes.go`: the classic set table (name → animation column, lines with and without a target). Commands route through `command()`.
-- [ ] 5.2 Refusals (dead, in combat, air, swim), stand-up when seated, the shared chat rate limit. The `emote` event goes to viewers, and the lines go on the "emote" channel to the emoter, the target and onlookers in say range. Tests per scenario in the `emotes` spec.
+- [x] 5.1 `world/emotes.go`: the classic set table (name → animation column, lines with and without a target). Commands route through `command()`.
+- [x] 5.2 Refusals (dead, in combat, air, swim), stand-up when seated, the shared chat rate limit. The `emote` event goes to viewers, and the lines go on the "emote" channel to the emoter, the target and onlookers in say range. Tests per scenario in the `emotes` spec.
 
 ## 6. Client
 
