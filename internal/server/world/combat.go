@@ -289,7 +289,7 @@ func (z *Zone) SetTarget(p *Player, id int64) {
 		}
 		return
 	}
-	// Another player can be targeted, to invite them; not to fight.
+	// Another player can be targeted, to invite them, and fought in a duel.
 	if o := z.players[id]; o != nil && o != p {
 		p.target, p.attacking, p.pending = id, false, -1
 		return
@@ -317,6 +317,14 @@ func (z *Zone) SetAttack(p *Player, on bool) {
 		p.errMsg("target", "You cannot fight while riding.")
 		return
 	}
+	if o := z.duelTarget(p); o != nil && !p.dead {
+		z.standUp(p)
+		p.attacking, p.ab.engage = true, 0
+		if p.swingAt < z.now {
+			p.swingAt = z.now + 0.4
+		}
+		return
+	}
 	n := z.byID[p.target]
 	if p.dead || n == nil || n.dead() {
 		p.errMsg("target", "You need a target.")
@@ -336,6 +344,10 @@ func (z *Zone) SetAttack(p *Player, on bool) {
 // combatPlayer runs a player's side of a fight for the tick.
 func (z *Zone) combatPlayer(p *Player) {
 	if !p.attacking {
+		return
+	}
+	if o := z.duelTarget(p); o != nil {
+		z.combatDuel(p, o)
 		return
 	}
 	n := z.byID[p.target]
@@ -519,6 +531,7 @@ func (z *Zone) npcHitsNPC(n, t *NPC) {
 // npcHitsPlayer resolves a creature's blow against a player.
 func (z *Zone) npcHitsPlayer(n *NPC, p *Player) {
 	z.standUp(p) // anything swinging at a seated player stands them up
+	z.duelInterference(p)
 	z.event(protocol.Event{K: "swing", From: n.ID, To: p.ID}, n.Body.X, n.Body.Y)
 	member := p
 	w := z.interceptFor(p)

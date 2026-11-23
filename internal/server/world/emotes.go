@@ -108,6 +108,9 @@ func (z *Zone) TryEmote(p *Player, cmd string) bool {
 	}
 	send(p, you)
 	for _, o := range z.players {
+		if o != p && o.ignoring(p) {
+			continue
+		}
 		switch {
 		case o == p:
 		case o == tplayer:

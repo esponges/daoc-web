@@ -113,6 +113,7 @@ Casters (Healer, Shaman, Runemaster) also have a spell power pool: `pw` and `mpw
 | `groupop` | `op`, `id`, `name` | group requests: `invite` the player with `id` (in your zone) or `name` (anywhere, any case), `accept` or `decline` your invitation, `leave` the group, or, for the leader, `remove` the member `name`. Refusals come as `sys` chat lines. The same are typed as `/invite [name]` (your target without a name), `/accept`, `/decline`, `/disband` and `/remove <name>` |
 | `gm` | `line` | an administrator's command: `goto`, `tp`, `level`, `heal`, `give`, `kill`, `where` |
 | `gt` | `x`, `y`, `z`, `clear` | set the ground target for abilities aimed at the ground (Distraction): refused beyond 2,000 units or out of sight, with `err` `groundtarget`; `clear: true` drops it. The point comes back as `gt` in `you` (`[x, y, z]`); it is forgotten when you change zone |
+| `tradeop` | `op`, `id`, `slot`, `cu` | a request in a trade: `open` with the player `id` (your target when 0; same zone and realm, within 512 units, neither in combat), `add` or `remove` a pack `slot`, set your offered money with `money` (`cu` copper), `accept` the offer as it stands, or `cancel`. `/trade` in chat opens one with your target. Refusals are `err` with `code` `trade` |
 | `ping` | | answered with `pong` |
 
 Everything a request asks is decided by the server: it can refuse (`err` with a
@@ -191,6 +192,18 @@ A player with the Stealth spec hides and unhides with the chat command `/stealth
 ### Savage spells and timed abilities
 
 A Savage's book (`book`) lists the Savagery line. Its self-buffs and endurance heal are paid in hit points: their entries carry `hp: true` and `pw` is the hit points the cast takes (a share of maximum health). A cast the character cannot pay is refused with `err` `cast` ("You don't have enough health."); the cost may not take them to 0. Their effects have kinds `physresist`, `dps`, `savevade` and `savparry` (the combat speed buff is `haste`). Berserk, Charge and QuickCast leave effects of kind `berserk`, `charge` and `quickcast`. The abilities are used with `/berserk`, `/charge`, `/quickcast` and `/distraction`; a refusal is a `sys` chat line.
+
+### Trade
+
+A trade is two players in one zone. Each change to either offer arrives to both as `trade` (`with`, and `mine` and `theirs`, each `{items, mo, ok}` with the items as in `inv` and `ok` set once that side has accepted) and clears both accepts; an offer is at most 10 items. When both have accepted, the server checks that each still holds what they offered and has pack room for what they get, then moves everything in one transaction: `tradeclose` with `done: true`, followed by `inv`. Otherwise nothing moves, and `tradeclose` carries `why` (not enough room, someone moved out of range, died, entered combat or cancelled).
+
+### Duels, friends and following
+
+`/duel` challenges your targeted player (same realm, within 1,500 units, neither in combat); they answer `/accept` or `/decline` within 30 seconds. In a duel the two may attack each other (auto-attack, styles, hostile spells) and no one else may harm either; an entity in `ents` carries `foe: true` for the player you are dueling. A blow that would kill a duellist leaves them at 1 hit point and ends the duel with a zone-wide `sys` line; a duel gives no experience. It also ends with no winner when a creature strikes either, the two are over 2,500 units apart, or one leaves. Bows and pets do not take part in duels.
+
+`/friend <name>` toggles a friend and `/ignore <name>` an ignore (both kept in the player store). `friends` (`list` of `{nm, on}`) is sent at login and whenever the list or a friend's presence changes; a friend coming or going is also a `sys` line. An ignored player's say, shout, emote and tells do not reach you. `/anon` hides your level and class from `/who`, `/lfg` marks you `[LFG]` there, `/afk [text]` answers tells with the text until you speak or move.
+
+`/follow` walks you after your targeted player at run speed until you press a movement key or repeat the command; while it lasts `you.fl` is true, the server places you each tick and the client must not predict. `/assist` takes your target's target, `/face` turns you to your target, `/inspect` lists your targeted player's worn items as `sys` lines.
 
 ### Poisons
 

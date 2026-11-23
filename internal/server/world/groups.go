@@ -430,8 +430,14 @@ func (w *World) tell(p *Player, name, text string) {
 		sys(p, name+" is not in the game.")
 		return
 	}
-	to.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "tell", From: p.Char.Name, Text: text})
+	p.clearAway()
+	if !to.ignoring(p) { // an ignored sender sees their tell go and nothing comes of it
+		to.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "tell", From: p.Char.Name, Text: text})
+	}
 	p.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "tell", To: to.Char.Name, Text: text})
+	if msg, away := to.awayNote(); away && !to.ignoring(p) {
+		p.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "sys", Text: to.Char.Name + " is AFK: " + msg})
+	}
 }
 
 // groupSay sends a line to every member of the sender's group, in any zone.

@@ -231,6 +231,9 @@ func (z *Zone) castTarget(p *Player, sp *SpellDef, id int64) combatant {
 	}
 	switch sp.Target {
 	case "Enemy":
+		if o := z.players[id]; z.mayHarmPlayer(p, o) {
+			return o
+		}
 		n := z.byID[id]
 		if n == nil || n.dead() || n.gone {
 			p.errMsg("cast", "You need an enemy target.")

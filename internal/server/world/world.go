@@ -39,6 +39,7 @@ type World struct {
 
 	omu    sync.Mutex
 	online map[int64]*Player // by character id
+	zoned  sync.Map          // character ids that just left a zone to join another, so it is not a logout
 
 	dropMu sync.Mutex
 	drops  map[int][]string
@@ -155,6 +156,7 @@ func (w *World) Join(acct *store.Account, charID int64) (*Player, error) {
 	}
 	p := newPlayer(acct, ch)
 	w.leaveUnsafeStart(p)
+	w.loadSocial(p)
 	w.omu.Lock()
 	if old := w.online[ch.ID]; old != nil && !old.closed.Load() {
 		if !old.disconnected.Load() {
@@ -200,6 +202,10 @@ func (w *World) Join(acct *store.Account, charID int64) (*Player, error) {
 		w.forget(p)
 		return nil, errors.New("zone is shutting down; try again")
 	}
+	w.sendFriends(p)
+	if _, zoned := w.zoned.LoadAndDelete(ch.ID); !zoned {
+		w.notifyFriends(p, "has entered the game.")
+	}
 	return p, nil
 }
 
@@ -217,6 +223,9 @@ func (w *World) Leave(p *Player) {
 	if !p.zoning.Load() {
 		w.logoutGroup(p.Char.ID)
 		w.rides.take(p.Char.ID)
+		w.notifyFriends(p, "has left the game.")
+	} else {
+		w.zoned.Store(p.Char.ID, true) // the next join is the same session moving on
 	}
 	z := p.Zone
 	if z == nil {
@@ -404,6 +413,7 @@ func (w *World) Chat(p *Player, ch, text string) {
 		w.command(z, p, text[1:])
 		return
 	}
+	p.clearAway()
 	m := protocol.ChatMsg{T: protocol.TChatMsg, Ch: ch, From: p.Char.Name, Text: text}
 	if ch == "all" {
 		w.mu.Lock()
@@ -415,13 +425,17 @@ func (w *World) Chat(p *Player, ch, text string) {
 		for _, zz := range zs {
 			if zz == z {
 				for _, o := range z.players {
-					o.send(m)
+					if !o.ignoring(p) {
+						o.send(m)
+					}
 				}
 				continue
 			}
 			zz.Do(func() {
 				for _, o := range zz.players {
-					o.send(m)
+					if !o.ignoring(p) {
+						o.send(m)
+					}
 				}
 			})
 		}
@@ -429,7 +443,7 @@ func (w *World) Chat(p *Player, ch, text string) {
 	}
 	m.Ch = "say"
 	for _, o := range z.players {
-		if math.Hypot(o.Body.X-p.Body.X, o.Body.Y-p.Body.Y) <= SayRange {
+		if math.Hypot(o.Body.X-p.Body.X, o.Body.Y-p.Body.Y) <= SayRange && !o.ignoring(p) {
 			o.send(m)
 		}
 	}
@@ -443,12 +457,25 @@ func (w *World) command(z *Zone, p *Player, line string) {
 	}
 	switch f[0] {
 	case "who":
-		var names []string
-		for _, o := range z.players {
-			names = append(names, o.Char.Name)
-		}
-		sort.Strings(names)
-		p.send(protocol.ChatMsg{T: protocol.TChatMsg, Ch: "sys", From: "", Text: fmt.Sprintf("In %s: %s", z.Name, strings.Join(names, ", "))})
+		w.who(z, p)
+	case "friend", "friends":
+		w.friendCmd(p, restAfter(line, 1))
+	case "ignore":
+		w.ignoreCmd(p, restAfter(line, 1))
+	case "anon":
+		p.toggleAnon()
+	case "lfg":
+		p.toggleLFG()
+	case "afk":
+		p.setAway(restAfter(line, 1))
+	case "assist":
+		z.Assist(p)
+	case "face":
+		z.Face(p)
+	case "follow":
+		z.Follow(p)
+	case "inspect":
+		z.Inspect(p)
 	case "gm":
 		w.GM(p, strings.Join(f[1:], " "))
 	case "pray":
@@ -496,12 +523,20 @@ func (w *World) command(z *Zone, p *Player, line string) {
 			mode = strings.ToLower(f[1])
 		}
 		z.Shoot(p, mode)
+	case "trade":
+		z.TradeOp(p, &protocol.TradeOp{Op: "open"})
 	case "guard", "protect", "intercept", "engage", "berserk", "charge", "quickcast", "distraction":
 		z.UseAbility(p, f[0], f[1:]...)
+	case "duel":
+		z.Duel(p)
 	case "accept":
-		w.AcceptInvite(p)
+		if !z.answerDuel(p, true) {
+			w.AcceptInvite(p)
+		}
 	case "decline":
-		w.DeclineInvite(p)
+		if !z.answerDuel(p, false) {
+			w.DeclineInvite(p)
+		}
 	case "disband", "leave":
 		w.LeaveGroup(p.Char.ID)
 	case "remove":

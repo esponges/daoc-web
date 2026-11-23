@@ -253,3 +253,43 @@ INSERT INTO item(char_id,item_id,slot,count,created) VALUES(1,'old_sword',40,1,1
 		t.Errorf("saved conditions %+v, want 5000 and 8731", items)
 	}
 }
+
+func TestSocialMarks(t *testing.T) {
+	s, err := Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	a, _ := s.AccountFor("d:1", "one", false)
+	c1 := &Character{AccountID: a.ID, Name: "Thora", Race: 6, Class: 22, Level: 1}
+	c2 := &Character{AccountID: a.ID, Name: "Bjorn", Race: 6, Class: 22, Level: 1}
+	if err := s.CreateCharacter(c1); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.CreateCharacter(c2); err != nil {
+		t.Fatal(err)
+	}
+	id, name := s.CharID("bJoRn")
+	if id != c2.ID || name != "Bjorn" {
+		t.Errorf("CharID(bJoRn) = %d %q", id, name)
+	}
+	if id, _ := s.CharID("Nobody"); id != 0 {
+		t.Error("an unknown name has an id")
+	}
+	s.SetSocial(c1.ID, c2.ID, SocialFriend, true)
+	s.SetSocial(c1.ID, c2.ID, SocialFriend, true) // twice is once
+	s.SetSocial(c1.ID, c2.ID, SocialIgnore, true)
+	if f, _ := s.Social(c1.ID, SocialFriend); len(f) != 1 || f[0] != c2.ID {
+		t.Errorf("friends %v", f)
+	}
+	s.SetSocial(c1.ID, c2.ID, SocialFriend, false)
+	if f, _ := s.Social(c1.ID, SocialFriend); len(f) != 0 {
+		t.Errorf("friends after removing %v", f)
+	}
+	if ig, _ := s.Social(c1.ID, SocialIgnore); len(ig) != 1 {
+		t.Errorf("ignores %v", ig)
+	}
+	if s.CharName(c1.ID) != "Thora" {
+		t.Error("CharName")
+	}
+}

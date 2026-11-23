@@ -118,6 +118,9 @@ CREATE TABLE IF NOT EXISTS task(
   receiver TEXT NOT NULL DEFAULT '', receiver_id INTEGER NOT NULL DEFAULT 0, place TEXT NOT NULL DEFAULT '',
   item_name TEXT NOT NULL DEFAULT '', killed INTEGER NOT NULL DEFAULT 0, expires INTEGER NOT NULL DEFAULT 0,
   done INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS social(
+  char_id INTEGER NOT NULL REFERENCES character(id) ON DELETE CASCADE, other_id INTEGER NOT NULL,
+  kind TEXT NOT NULL, PRIMARY KEY(char_id, other_id, kind));
 `
 
 // Store is the player database.

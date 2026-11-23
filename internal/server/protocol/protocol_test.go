@@ -437,3 +437,36 @@ func TestGroundTargetIsAdditive(t *testing.T) {
 		t.Errorf("a spell paid in health marshals as %s", book)
 	}
 }
+
+func TestTradeMessages(t *testing.T) {
+	typ, v, err := Decode([]byte(`{"t":"tradeop","op":"add","slot":3}`))
+	op, ok := v.(*TradeOp)
+	if err != nil || typ != TTradeOp || !ok || op.Op != "add" || op.Slot != 3 {
+		t.Fatalf("a trade request decodes as %v %#v %v", typ, v, err)
+	}
+	b, _ := json.Marshal(Trade{T: TTrade, With: "Bjorn", Mine: TradeSide{Items: []InvItem{}, Money: 5, OK: true}, Theirs: TradeSide{Items: []InvItem{}}})
+	if string(b) != `{"t":"trade","with":"Bjorn","mine":{"items":[],"mo":5,"ok":true},"theirs":{"items":[],"mo":0}}` {
+		t.Errorf("a trade marshals as %s", b)
+	}
+	c, _ := json.Marshal(TradeClose{T: TTradeClose, Why: "Too far."})
+	if string(c) != `{"t":"tradeclose","why":"Too far."}` {
+		t.Errorf("a cancelled trade marshals as %s", c)
+	}
+}
+
+func TestSocialFieldsAreAdditive(t *testing.T) {
+	b, _ := json.Marshal(Friends{T: TFriends, List: []Friend{{Name: "Bjorn", On: true}, {Name: "Sigrid"}}})
+	if string(b) != `{"t":"friends","list":[{"nm":"Bjorn","on":true},{"nm":"Sigrid"}]}` {
+		t.Errorf("a friends list marshals as %s", b)
+	}
+	foe, _ := json.Marshal(Entity{ID: 1, K: "p", Foe: true})
+	plain, _ := json.Marshal(Entity{ID: 1, K: "p"})
+	if !strings.Contains(string(foe), `"foe":true`) || strings.Contains(string(plain), `"foe"`) {
+		t.Errorf("the duel flag: %s and %s", foe, plain)
+	}
+	fl, _ := json.Marshal(Self{Follow: true})
+	none, _ := json.Marshal(Self{})
+	if !strings.Contains(string(fl), `"fl":true`) || strings.Contains(string(none), `"fl"`) {
+		t.Errorf("the follow flag: %s and %s", fl, none)
+	}
+}

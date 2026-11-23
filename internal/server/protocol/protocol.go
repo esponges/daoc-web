@@ -75,6 +75,10 @@ const (
 	TClock       = "clock"       // the game time of day, on entering and once a minute
 	TVault       = "vault"       // the character's own vault, sent when a vault keeper opens it
 	TVaultClose  = "vaultclose"  // the open vault is closed
+	TTrade       = "trade"       // the state of a trade you are in: both offers and both accepts
+	TTradeClose  = "tradeclose"  // your trade ended, with the reason
+	TFriends     = "friends"     // your friends list, with who is in the game
+	TTradeOp     = "tradeop"     // a request in a trade: open, add, remove, money, accept or cancel
 	TStats       = "stats"       // the character sheet
 	TTrainer     = "trainer"     // a trainer's offer: the character's specs and their costs
 	THealer      = "healer"      // a healer's offer to restore lost constitution
@@ -263,10 +267,11 @@ type Entity struct {
 	Kind     string   `json:"ik,omitempty"` // what interacting does: "merchant", "trainer", "healer", "stable", "vault", "smith", "notclassic"; absent for nothing
 	Con      *int     `json:"cc,omitempty"` // a creature's con colour to you, -3 grey to 3 purple
 	Own      bool     `json:"own,omitempty"`
-	Ride     bool     `json:"rd,omitempty"` // a player on a horse
-	Owner    string   `json:"ow,omitempty"` // the name of a pet's owner
-	Posture  string   `json:"ps,omitempty"` // a player's posture: "sit", "air" or "swim"; absent standing
-	VZ       float64  `json:"vz,omitempty"` // a player in the air: vertical speed, units a second
+	Ride     bool     `json:"rd,omitempty"`  // a player on a horse
+	Owner    string   `json:"ow,omitempty"`  // the name of a pet's owner
+	Posture  string   `json:"ps,omitempty"`  // a player's posture: "sit", "air" or "swim"; absent standing
+	Foe      bool     `json:"foe,omitempty"` // the player you are in a duel with
+	VZ       float64  `json:"vz,omitempty"`  // a player in the air: vertical speed, units a second
 }
 
 // Event is something that happened this tick, for the log and the animations.
@@ -318,6 +323,7 @@ type Self struct {
 	Jumped bool      `json:"jp,omitempty"`
 	Seated bool      `json:"sit,omitempty"` // you are sitting
 	Ground []float64 `json:"gt,omitempty"`  // your ground target, x y z, when one is set
+	Follow bool      `json:"fl,omitempty"`  // the server is walking you after who you follow: do not predict
 }
 
 // Snap is the world as one player sees it.
@@ -584,6 +590,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &RezAnswer{}
 	case TGroundTarget:
 		v = &GroundTarget{}
+	case TTradeOp:
+		v = &TradeOp{}
 	case TConcCancel:
 		v = &ConcCancel{}
 	case TPetCmd:
@@ -794,6 +802,51 @@ type Cast struct {
 	T      string `json:"t"`
 	Spell  int    `json:"sp"`
 	Target int64  `json:"tg,omitempty"`
+}
+
+// Friend is one entry of the friends list.
+type Friend struct {
+	Name string `json:"nm"`
+	On   bool   `json:"on,omitempty"` // in the game now
+}
+
+// Friends is a player's friends list, sent when it changes or a friend comes or goes.
+type Friends struct {
+	T    string   `json:"t"`
+	List []Friend `json:"list"`
+}
+
+// TradeOp is a request in a trade. Open names the player (ID, or your target
+// when 0); add and remove name a pack Slot; money sets your offered Copper;
+// accept and cancel need nothing.
+type TradeOp struct {
+	T      string `json:"t"`
+	Op     string `json:"op"`
+	ID     int64  `json:"id,omitempty"`
+	Slot   int    `json:"slot,omitempty"`
+	Copper int64  `json:"cu,omitempty"`
+}
+
+// TradeSide is one side of a trade: the items offered and the money.
+type TradeSide struct {
+	Items []InvItem `json:"items"`
+	Money int64     `json:"mo"`
+	OK    bool      `json:"ok,omitempty"` // this side has accepted
+}
+
+// Trade is a trade as one of its two players sees it: Mine and Theirs.
+type Trade struct {
+	T      string    `json:"t"`
+	With   string    `json:"with"`
+	Mine   TradeSide `json:"mine"`
+	Theirs TradeSide `json:"theirs"`
+}
+
+// TradeClose says the trade is over: Done when it went through, else Why.
+type TradeClose struct {
+	T    string `json:"t"`
+	Done bool   `json:"done,omitempty"`
+	Why  string `json:"why,omitempty"`
 }
 
 // GroundTarget sets the player's ground target to a point, or clears it when

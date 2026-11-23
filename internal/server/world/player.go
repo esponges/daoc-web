@@ -121,6 +121,11 @@ type Player struct {
 	stealthAt      float64           // when stealth last changed
 	song           *songState        // the song or chant they have on, nil when none
 	ride           *ride             // the horse route they are on, nil when walking
+	trade          *trade            // the trade this player is in
+	social         socialState       // friends, ignores, anon, away and looking for a group
+	follow         int64             // the player being followed by /follow, 0 for none
+	duel           *duel             // the duel this player is in
+	duelOffer      *duelOffer        // a challenge waiting for this player's answer
 	ab             abilityState      // Guard, Protect, Intercept and Engage in force
 	ground         *groundTarget     // the point set for Distraction and other ground-aimed abilities
 	sensed         map[int64]float64 // when Danger Sense last announced each hidden enemy
@@ -288,6 +293,12 @@ func (p *Player) QueueInput(in *protocol.Input) {
 
 // applyInput consumes this tick's share of queued steps.
 func (p *Player) applyInput(z *Zone) {
+	if z.followStep(p) {
+		return
+	}
+	if len(p.queue) > 0 {
+		p.clearAway() // moving ends being away
+	}
 	p.budget += float64(protocol.StepsPerSecond) * TickDT
 	if p.budget > 20 {
 		p.budget = 20

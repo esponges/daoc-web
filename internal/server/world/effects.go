@@ -424,12 +424,21 @@ func (z *Zone) hurt(target, by combatant, amount int) {
 	if amount <= 0 || !target.fightable(z) {
 		return
 	}
+	if by != nil && !z.mayHarm(by, target) {
+		return
+	}
 	z.damaged(target)
 	switch t := target.(type) {
 	case *Player:
+		if t.duel != nil && by != nil && !dueling(ownerOf(by), t) {
+			z.duelInterference(t) // someone else has struck a duellist
+		}
 		t.combatUntil = z.now + CombatLinger
 		t.hp -= float64(amount)
 		if t.hp <= 0 {
+			if z.duelDefeat(t) {
+				return
+			}
 			n, _ := by.(*NPC)
 			z.killPlayer(t, n)
 		}
