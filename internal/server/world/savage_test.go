@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"daocweb/internal/server/protocol"
 	"daocweb/internal/server/rules"
 )
 
@@ -125,4 +126,25 @@ func TestSavageBuffsCostHealthAndWork(t *testing.T) {
 			t.Errorf("hate after %s: %+v, want at least %v", sp.Name, e, rules.TauntHate(sp.Value))
 		}
 	})
+}
+
+// A Savage buff has a recast: when it lands the caster is told the spell and
+// its seconds, so the spell bar can show them.
+func TestCastSendsRecast(t *testing.T) {
+	cat, err := LoadCatalog(filepath.Join("..", "..", "..", "server", "data", "world.db"))
+	if err != nil {
+		t.Skip("no world store: run go run ./cmd/dbimport")
+	}
+	r, p, n := realCaster(t, cat, rules.ClassSavage)
+	sp := bestOfType(p, rules.SpellSavageParry)
+	if sp == nil || sp.Recast <= 0 {
+		t.Fatalf("no parry buff with a recast: %+v", sp)
+	}
+	p.hp = float64(p.maxHP())
+	r.z.Cast(p, sp.ID, n.entityID())
+	r.ticks(int(sp.CastTime*TickRate) + 10)
+	got := sentOf[protocol.Recast](p, protocol.TRecast)
+	if len(got) != 1 || got[0].ID != sp.ID || got[0].Secs != sp.Recast {
+		t.Errorf("recast messages %+v, want one for spell %d of %v s", got, sp.ID, sp.Recast)
+	}
 }

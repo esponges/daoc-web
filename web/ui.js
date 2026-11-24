@@ -31,7 +31,7 @@ import { createStockQuiver } from './quiverwin.js';
 import { createStockTrainer, pairLeft } from './trainwin.js';
 import { createStockTalk, healerTalk } from './talk.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
-import { createSpellPanel, createSpellBar, createCastBar, castGuard, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, SPELL_SLOTS } from './spells.js';
+import { createSpellPanel, createSpellBar, createCastBar, castGuard, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, slotState, SPELL_SLOTS } from './spells.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -782,11 +782,16 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (stockBar) stockBar.update(me);
     castBox.update(cast, performance.now() / 1000);
     if (duelPrompt && [...net.ents.values()].some((e) => e.foe)) duelPrompt.hide(); // the duel has begun, however it was answered
-    if (stock) spellBar.update(me);
+    const nowS = performance.now() / 1000;
+    if (stock) spellBar.update(me, net.recasts, nowS);
     else spellBar.el.querySelectorAll('.style').forEach((b) => {
       const id = spellSlots[Number(b.dataset.slot)];
       const s = id && findSpell(net.book, id);
-      b.classList.toggle('poor', !!s && (s.hp ? me.hp <= s.pw : me.power < s.pw)); // a Savage spell is paid in hit points
+      const { poor, wait } = slotState(s, me, net.recasts, nowS); // a Savage spell is paid in hit points
+      b.classList.toggle('poor', poor);
+      b.classList.toggle('wait', wait > 0);
+      const cost = b.querySelector('.cost');
+      if (cost && s) cost.textContent = wait ? wait + 's' : s.pw + (s.hp ? ' hp' : ' pw');
     });
     bar.querySelectorAll('.style').forEach((b) => {
       const i = Number(b.dataset.slot);

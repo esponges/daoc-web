@@ -127,17 +127,20 @@ func (z *Zone) computeBar(p *Player) {
 	if z.W.Cat == nil {
 		return
 	}
+	var hands rules.Held
+	if p.weapon != nil {
+		hands.Main = p.weapon.ObjectType
+	}
+	if p.shield != nil {
+		hands.Left = ObjShield
+	} else if p.left != nil {
+		hands.Left = p.left.ObjectType
+	}
 	for _, s := range z.W.Cat.StylesFor(p.Char.Class) {
 		if s.SpecLevel > p.specLevel(s.Spec) {
 			continue
 		}
-		switch {
-		case s.WeaponReq == ObjShield:
-			if p.shield == nil {
-				p.barAlso = append(p.barAlso, s)
-				continue
-			}
-		case p.weapon == nil || p.weapon.ObjectType != s.WeaponReq:
+		if !rules.StyleWeaponOK(s.WeaponReq, s.Spec, hands) {
 			p.barAlso = append(p.barAlso, s)
 			continue
 		}
@@ -197,7 +200,7 @@ func (p *Player) sendBar(c *Catalog) {
 	for i := range p.barAlso {
 		s := &p.barAlso[i]
 		b.Also = append(b.Also, protocol.BarSlot{Slot: -1, ID: s.ID, Name: s.Name, Icon: s.Icon, Spec: s.Spec, Cost: p.styleCost(s),
-			Opens: c.openingText(s), Level: s.SpecLevel, Locked: true})
+			Opens: c.openingText(s), Level: s.SpecLevel, Locked: true, Needs: rules.StyleWeaponNeeds(s.WeaponReq, s.Spec)})
 	}
 	p.send(b)
 }

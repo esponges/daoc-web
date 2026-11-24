@@ -46,6 +46,7 @@ export class NetClient {
     this.inv = { items: [], mo: 0 };
     this.bar = [];
     this.book = { lines: [] }; // the spellbook, as the server sent it
+    this.recasts = new Map(); // spell id -> when its recast has passed, in seconds of the page's clock
     this.corpse = null;
     this.zone = 0;
     this.sent = 0;             // steps sent so far
@@ -147,6 +148,7 @@ export class NetClient {
       case 'chatmsg': this.on.chat?.(m); break;
       case 'inv': this.inv = m; this.eq = m.eq || []; this.on.inv?.(m); break;
       case 'book': this.book = { lines: m.lines || [] }; this.on.book?.(this.book); break;
+      case 'recast': this.recasts.set(m.id, performance.now() / 1000 + (m.s || 0)); this.on.recast?.(m); break;
       case 'bar': this.bar = m.slots || []; this.barAlso = m.also || []; this.on.bar?.(this.bar); break;
       case 'corpse': this.corpse = m; this.on.corpse?.(m); break;
       case 'shop': this.shop = m; this.on.shop?.(m); break;

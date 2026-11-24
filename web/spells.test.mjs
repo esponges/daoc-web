@@ -1,7 +1,7 @@
 // Headless checks of the spellbook's pure parts.
 //   node web/spells.test.mjs
 
-import { spellsView, findSpell, spellDragId, slotsFor, assignSlot, castBar, castEventEffect, ownCastLine, castGuard, SPELL_SLOTS } from './spells.js';
+import { spellsView, findSpell, spellDragId, slotsFor, assignSlot, castBar, castEventEffect, ownCastLine, castGuard, slotState, SPELL_SLOTS } from './spells.js';
 
 let failed = 0;
 const ok = (cond, name, extra = '') => {
@@ -93,4 +93,18 @@ if (failed) { console.log(`\n${failed} failed`); process.exit(1); }
     ok(bar.el.style.display === 'none', 'stock cast bar hidden with no cast');
     console.log('ok: the stock cast bar shows only while casting');
   } else console.log('skip stock cast bar (run go run ./cmd/uiconv)');
+}
+
+// slotState: a Savage's spell is paid in hit points, not power; a recast counts down.
+{
+  const nails = { id: 7, nm: 'Nails of Kelgor', pw: 12, hp: true };
+  const savage = { hp: 300, maxHp: 400, power: 0 };
+  ok(!slotState(nails, savage, new Map(), 0).poor, 'a Savage with health to spare can pay a health spell, with no power');
+  ok(slotState(nails, { ...savage, hp: 12 }, new Map(), 0).poor, 'a health cost may not take the Savage to 0');
+  ok(slotState({ id: 8, pw: 10 }, { hp: 100, power: 5 }, null, 0).poor, 'a power spell needs the power');
+  const rc = new Map([[7, 105]]);
+  ok(slotState(nails, savage, rc, 100).wait === 5, 'cast at 100 with a 5 s recast: 5 left');
+  ok(slotState(nails, savage, rc, 102.5).wait === 3, 'part of a second left counts as a whole one');
+  ok(slotState(nails, savage, rc, 105).wait === 0, 'after its recast the spell is ready again');
+  console.log('ok: spell bar slots shade by the right pool and count down their recast');
 }

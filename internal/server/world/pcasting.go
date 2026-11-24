@@ -364,6 +364,9 @@ func (z *Zone) continuePlayerCast(p *Player) {
 	p.pay(sp)
 	z.spendQuickCast(p)
 	p.spellReady[sp.ID] = z.now + sp.Recast
+	if sp.Recast > 0 {
+		p.send(protocol.Recast{T: protocol.TRecast, ID: sp.ID, Secs: sp.Recast})
+	}
 	if sp.Hostile() {
 		p.combatUntil = z.now + CombatLinger
 	}

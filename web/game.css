@@ -127,3 +127,4 @@
 .pet .pet-orders, .pet .pet-stances { display: flex; gap: 4px; margin: 3px 0; }
 .pet button.on { outline: 1px solid #c9a227; }
 .pet .pet-minion { font-size: 11px; opacity: 0.9; }
+.stylebar .style.wait { opacity: .55; }

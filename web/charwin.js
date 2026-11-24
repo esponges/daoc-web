@@ -58,7 +58,7 @@ export function stylesView(slots, also) {
     byLine.get(line).push({ id: s.id, text: s.nm + '  ' + s.opens + ', ' + s.cost + ' end', slot: i, line, spec: s.spec, draggable: true });
   });
   const usable = [...byLine.keys()].sort().flatMap((line) => [{ header: line }, ...byLine.get(line).sort((a, b) => a.slot - b.slot)]);
-  const locked = (also || []).map((s) => ({ id: s.id, text: s.nm + '  (needs ' + (s.spec || 'another weapon') + ')', draggable: false, spec: s.spec }));
+  const locked = (also || []).map((s) => ({ id: s.id, text: s.nm + '  (needs ' + (s.nd || s.spec || 'another weapon') + ')', draggable: false, spec: s.spec }));
   return { usable, locked };
 }
 

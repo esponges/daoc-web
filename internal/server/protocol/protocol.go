@@ -100,6 +100,7 @@ const (
 	TConc        = "conc"        // the concentration a caster holds: pool, use and the buffs
 	TPet         = "pet"         // your pet: its name, level, health, stance and orders; closed when it is gone
 	TTask        = "task"        // your task: what it is, its progress and time left; on false when you hold none
+	TRecast      = "recast"      // a spell you cast has a recast: its id and the seconds until it is ready
 )
 
 // Envelope reads just the type of a message.
@@ -484,16 +485,17 @@ type BarSlot struct {
 	Opens  string `json:"opens"` // "anytime", "after block", ...
 	Level  int    `json:"lv"`
 	Locked bool   `json:"locked,omitempty"`
+	Needs  string `json:"nd,omitempty"` // a locked style: what it needs in the hands ("a hand to hand weapon in each hand")
 }
 
 // SpecRow is one spec on the character sheet or a trainer's list.
 type SpecRow struct {
-	Key   string `json:"key"`
-	Name  string `json:"nm"`
-	Level int    `json:"lv"`
-	Bonus int    `json:"bonus,omitempty"` // from items, as combat counts it
-	Cost  int    `json:"cost,omitempty"`  // of the next level, on a trainer's list
-	Can   bool   `json:"can,omitempty"`   // the next level can be trained now
+	Key   string   `json:"key"`
+	Name  string   `json:"nm"`
+	Level int      `json:"lv"`
+	Bonus int      `json:"bonus,omitempty"` // from items, as combat counts it
+	Cost  int      `json:"cost,omitempty"`  // of the next level, on a trainer's list
+	Can   bool     `json:"can,omitempty"`   // the next level can be trained now
 	Gives []Unlock `json:"gives,omitempty"` // on a trainer's list: up to five unlocks above the level
 }
 
@@ -1076,4 +1078,12 @@ type BookSpell struct {
 	Recast int     `json:"rc,omitempty"` // seconds before it can be cast again
 	Pulse  bool    `json:"pl,omitempty"` // a song or chant: casting it turns it on, and casting it again off
 	HP     bool    `json:"hp,omitempty"` // the cost is hit points, not power (a Savage spell)
+}
+
+// Recast tells a caster that a spell they cast cannot be cast again for Secs
+// seconds.
+type Recast struct {
+	T    string  `json:"t"`
+	ID   int     `json:"id"`
+	Secs float64 `json:"s"`
 }

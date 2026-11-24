@@ -10,6 +10,7 @@
 
 import { icon, text, paint } from './uiwin.js';
 import { SPELL_ICON, spellKind } from './charwin.js';
+import { slotState } from './spells.js';
 
 // The picture of a book spell: by what it does, as in the spells window.
 const spellIconOf = (s) => SPELL_ICON[spellKind(s.tp, s.tg)];
@@ -43,8 +44,9 @@ export function slotFrame(doc, data, size = SLOT) {
 // always shown, empty slots as bare frames.
 //   onCast(id)  the slot was pressed        onAssign(id, slot)  a spell was dropped
 //   onClear(slot)  the slot was right-clicked
-// set(slots, book, song, held) redraws it; update(me, slots, book) shades a slot
-// the character cannot pay for.
+// set(slots, book, song, held) redraws it; update(me, recasts, nowS) shades a
+// slot red while the character cannot pay for it, and darkens it with the
+// seconds left while its recast runs.
 export function createSpellQuickbar(doc, data, { onCast, onAssign, onClear, findSpell, dragId } = {}) {
   const root = doc.createElement('div');
   Object.assign(root.style, { position: 'fixed', zIndex: 11, display: 'flex', width: BAR_W + 'px', justifyContent: 'center' });
@@ -91,14 +93,28 @@ export function createSpellQuickbar(doc, data, { onCast, onAssign, onClear, find
           if (sid) onAssign?.(sid, i);
         });
         root.appendChild(cell);
-        return { cell, id, spell: s };
+        // The recast: a dark square over the picture and the seconds left on it.
+        const shade = s ? doc.createElement('div') : null;
+        if (shade) {
+          Object.assign(shade.style, { position: 'absolute', left: '2px', top: '2px', width: (SLOT - 4) + 'px', height: (SLOT - 4) + 'px', pointerEvents: 'none', display: 'none', background: 'rgba(0,0,0,.6)' });
+          cell.appendChild(shade);
+        }
+        return { cell, id, spell: s, shade, wait: 0, waitLabel: null };
       });
     },
-    // update shades a slot whose spell costs more power than the character has.
-    update(me, slots, book) {
+    // update shades a slot the character cannot pay for (power, or hit points for
+    // a Savage spell) and darkens one whose recast is running, with its seconds.
+    update(me, recasts = null, nowS = 0) {
       if (!me) return;
-      cells.forEach(({ cell, spell }) => {
-        cell.style.filter = spell && me.power < spell.pw ? 'brightness(0.55) sepia(1) hue-rotate(-50deg) saturate(3)' : '';
+      cells.forEach((c) => {
+        const { poor, wait } = slotState(c.spell, me, recasts, nowS);
+        c.cell.style.filter = poor ? 'brightness(0.55) sepia(1) hue-rotate(-50deg) saturate(3)' : '';
+        if (!c.shade || wait === c.wait) return;
+        c.wait = wait;
+        c.shade.style.display = wait ? 'block' : 'none';
+        if (c.waitLabel) c.waitLabel.remove();
+        c.waitLabel = wait ? label(String(wait), SLOT / 2 - 4, SLOT / 2 - 6, 'rgb(255,215,106)') : null;
+        if (c.waitLabel) c.cell.appendChild(c.waitLabel);
       });
     },
   };

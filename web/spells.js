@@ -44,6 +44,19 @@ export function spellDragId(data) {
 
 export const SPELL_SLOTS = 8;
 
+// slotState is what stops a spell on the bar being cast now: poor when the
+// character cannot pay for it (power, or for a Savage spell hit points, which
+// may not go to 0), and wait, the whole seconds left of its recast (0 when it is
+// ready). recasts maps a spell id to when its recast has passed; nowS is the
+// same clock, in seconds.
+export function slotState(s, me, recasts, nowS) {
+  if (!s || !me) return { poor: false, wait: 0 };
+  const poor = s.hp ? me.hp <= s.pw : me.power < s.pw;
+  const until = recasts && recasts.get ? recasts.get(s.id) : undefined;
+  const wait = until > nowS ? Math.ceil(until - nowS) : 0;
+  return { poor, wait };
+}
+
 // slotsFor keeps a bar's slot assignments to spells the character still has:
 // a slot holds a spell id, or 0.
 export function slotsFor(saved, book) {

@@ -298,3 +298,50 @@ func contains(list []string, s string) bool {
 	}
 	return false
 }
+
+// A Savage's Hand to Hand styles need a claw in each hand: with the kit's axe
+// and shield they are held back and say so; with two claws they are on the bar.
+// On the imported data.
+func TestSavageHandToHandStylesNeedTwoClaws(t *testing.T) {
+	cat, err := LoadCatalog(filepath.Join("..", "..", "..", "server", "data", "world.db"))
+	if err != nil {
+		t.Skip("no world store: run go run ./cmd/dbimport")
+	}
+	r := newRig(t)
+	r.w.Cat = cat
+	p := r.player("Savage", 10, 30000, 30000, false)
+	p.Char.Class = rules.ClassSavage
+	p.Char.Specs = map[string]int{"Hand to Hand": 4}
+	if err := r.w.GiveStarterKit(p.Char); err != nil {
+		t.Fatal(err)
+	}
+	r.w.loadInventory(p)
+	r.w.recalc(p)
+	r.z.computeBar(p)
+	h2h := func(list []StyleDef) int {
+		n := 0
+		for _, s := range list {
+			if s.Spec == "Hand to Hand" {
+				n++
+			}
+		}
+		return n
+	}
+	if h2h(p.bar) != 0 || h2h(p.barAlso) == 0 {
+		t.Fatalf("with the kit: %d Hand to Hand styles usable, %d held back", h2h(p.bar), h2h(p.barAlso))
+	}
+	for _, s := range p.barAlso {
+		if s.Spec == "Hand to Hand" {
+			if nd := rules.StyleWeaponNeeds(s.WeaponReq, s.Spec); nd != "a hand to hand weapon in each hand" {
+				t.Errorf("%s needs %q", s.Name, nd)
+			}
+		}
+	}
+	p.inv[SlotWeapon] = &invItem{ID: "bronze_moon_fang", Slot: SlotWeapon, Count: 1, Cond: 10000}
+	p.inv[SlotShield] = &invItem{ID: "bronze_moon_fang", Slot: SlotShield, Count: 1, Cond: 10000}
+	r.w.recalc(p)
+	r.z.computeBar(p)
+	if p.left == nil || h2h(p.bar) == 0 || h2h(p.barAlso) != 0 {
+		t.Errorf("with two claws: left %v, %d Hand to Hand styles usable, %d held back", p.left != nil, h2h(p.bar), h2h(p.barAlso))
+	}
+}
