@@ -17,9 +17,11 @@ import (
 // Config says where the world's data is.
 type Config struct {
 	WebData string // converted zones, web/data
-	Cat     *Catalog
-	Store   *store.Store
-	Log     func(format string, a ...any)
+	// QuestDir holds the quest data files (server/quests); "" means no quests.
+	QuestDir string
+	Cat      *Catalog
+	Store    *store.Store
+	Log      func(format string, a ...any)
 	// Mover builds the collision for an outdoor zone; nil means none.
 	Collision func(webData string, zone int) Mover
 	// DefaultZone is where a character with nowhere better starts.
@@ -44,6 +46,7 @@ type World struct {
 	dropMu sync.Mutex
 	drops  map[int][]string
 
+	Quests *Quests // the quests, loaded from QuestDir
 	groups *groups
 	guilds *guildBook
 	rides  rides // riders in the middle of a zone change
@@ -71,6 +74,15 @@ func New(c Config) *World {
 	ensureTaskItem(c.Cat)
 	w := &World{Config: c, zones: map[int]*Zone{}, online: map[int64]*Player{}, drops: map[int][]string{}, groups: newGroups(), guilds: newGuildBook()}
 	w.loadGuilds()
+	qs, err := LoadQuests(c.QuestDir)
+	if err != nil {
+		c.Log("quests: %v", err)
+		qs, _ = LoadQuests("")
+	}
+	w.Quests = qs
+	if c.Cat != nil && c.Cat.Items != nil {
+		ensureQuestItems(c.Cat, qs)
+	}
 	return w
 }
 
@@ -288,6 +300,7 @@ func (z *Zone) join(p *Player) {
 	p.end = float64(rules.MaxEndurance)
 	w.loadInventory(p) // computes the sheet, and so the hit points
 	w.loadCraft(p)
+	w.loadQuests(p)
 	if c.HP <= 0 {
 		c.HP = p.maxHP()
 	}
@@ -587,7 +600,7 @@ func (w *World) GM(p *Player, line string) {
 	}
 	f := strings.Fields(line)
 	if len(f) == 0 {
-		say("gm: goto <zone> | tp <x> <y> | level <n> | heal | give <item> [n] | kill | where")
+		say("gm: goto <zone> | tp <x> <y> | level <n> | heal | give <item> [n] | money <gold> | kill | where")
 		return
 	}
 	num := func(i int) (float64, bool) {
@@ -651,6 +664,15 @@ func (w *World) GM(p *Player, line string) {
 		if _, err := w.addItem(p, f[1], n); err != nil {
 			say(err.Error())
 		}
+	case "money":
+		v, ok := num(1)
+		if !ok || v <= 0 || v > 1000000 {
+			say("money <gold> (1 to 1000000; 1 gold = 10000 copper)")
+			return
+		}
+		p.Char.Money += int64(v * 10000)
+		p.sendInv(z.W.Cat, p.Char.Money)
+		w.savePlayer(p)
 	case "kill":
 		if n := z.byID[p.target]; n != nil && !n.dead() {
 			n.hurtBy[p.ID] += n.HP

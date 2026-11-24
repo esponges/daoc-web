@@ -25,3 +25,8 @@
 ## 4. Census and docs
 
 - [ ] 4.1 `cmd/parity` quests row counts the authored quests. README and CLAUDE.md.
+
+## Outcome (engine done, content just begun)
+
+- Done: 1.1 to 1.5 as a plain panel (the stock journal is not wired), and one quest, Simple Misgivings (`server/quests/midgard/`), checked against the world data by `TestQuestDataResolves`.
+- Not done: the epic lines (2.x) and the town quests (3.x). Each needs a public description to retell; the web search found scattered pages, not lists. 4.1 (a census row) waits for more content.

@@ -79,6 +79,10 @@ const (
 	TTradeClose  = "tradeclose"  // your trade ended, with the reason
 	TGuild       = "guild"       // your guild, or an empty one when you have none
 	TDuelAsk     = "duelask"     // you have been challenged to a duel; answer with /accept or /decline
+	TQuestOp     = "questop"     // accept or decline an offered quest, abandon one, choose a reward, ask for the journal
+	TQuests      = "quests"      // the quest journal: active quests with their step, and those done
+	TQuestOffer  = "questoffer"  // an NPC offers a quest
+	TQuestReward = "questreward" // a finished quest offers a choice of items
 	TCraftOp     = "craftop"     // open the crafting window, join a profession, make an item or cancel
 	TCraft       = "craft"       // the crafting window: your skills and what you can make
 	TCraftProg   = "craftprog"   // a craft began: how long it takes
@@ -604,6 +608,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &GroundTarget{}
 	case TCraftOp:
 		v = &CraftOp{}
+	case TQuestOp:
+		v = &QuestOp{}
 	case TTradeOp:
 		v = &TradeOp{}
 	case TConcCancel:
@@ -904,6 +910,59 @@ type GroundTarget struct {
 	Y     float64 `json:"y"`
 	Z     float64 `json:"z"`
 	Clear bool    `json:"clear,omitempty"`
+}
+
+// QuestOp is a quest request: Op is "accept" or "decline" (the offered quest,
+// ID), "abandon" (ID), "choose" (a reward item, ID and N, an index of the
+// offered choices) or "journal".
+type QuestOp struct {
+	T  string `json:"t"`
+	Op string `json:"op"`
+	ID string `json:"id,omitempty"`
+	N  int    `json:"n,omitempty"`
+}
+
+// QuestLine is one active quest in the journal: its current step's text and,
+// for a counted step, how many you have of how many it needs.
+type QuestLine struct {
+	ID    string `json:"id"`
+	Title string `json:"nm"`
+	Text  string `json:"text"`
+	Have  int    `json:"have,omitempty"`
+	Need  int    `json:"need,omitempty"`
+}
+
+// Quests is the journal.
+type Quests struct {
+	T      string      `json:"t"`
+	Active []QuestLine `json:"active"`
+	Done   []string    `json:"done"` // titles
+}
+
+// QuestOffer is a quest an NPC offers you; answer with questop accept or decline.
+type QuestOffer struct {
+	T      string `json:"t"`
+	ID     string `json:"id"`
+	Title  string `json:"nm"`
+	NPC    string `json:"npc"`
+	Text   string `json:"text"`
+	Reward string `json:"reward,omitempty"`
+}
+
+// QuestChoice is one item offered as a reward.
+type QuestChoice struct {
+	N    int    `json:"n"`
+	ID   string `json:"id"`
+	Name string `json:"nm"`
+}
+
+// QuestReward offers a choice of items for a finished quest; answer with
+// questop choose.
+type QuestReward struct {
+	T      string        `json:"t"`
+	ID     string        `json:"id"`
+	Title  string        `json:"nm"`
+	Choose []QuestChoice `json:"choose"`
 }
 
 // CraftOp is a crafting request: Op is "open", "join" (the profession of the

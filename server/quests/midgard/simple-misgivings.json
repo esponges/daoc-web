@@ -1,0 +1,31 @@
+{
+  "id": "simple-misgivings",
+  "title": "Simple Misgivings",
+  "source": "camelot.allakhazam.com/quests.html?cquest=69 (retold in our own words; levels, the 480 experience and 5 silver from its completion log)",
+  "min_level": 7,
+  "max_level": 50,
+  "giver": "Hilde",
+  "offer": "My old helper Quirk took my forge plans and ran off to a huldu camp. Bring them back to me and I will pay you for the trouble.",
+  "complete": "These are the very plans. You have my thanks, and a little coin for the walk.",
+  "items": [
+    { "id": "quest_forge_plans", "name": "Hilde's forge plans" }
+  ],
+  "steps": [
+    {
+      "kind": "item",
+      "target": "Quirk",
+      "item": "quest_forge_plans",
+      "count": 1,
+      "chance": 100,
+      "text": "Find Quirk in the huldu camp west of Mularn and take back Hilde's forge plans."
+    },
+    {
+      "kind": "deliver",
+      "npc": "Hilde",
+      "item": "quest_forge_plans",
+      "count": 1,
+      "text": "Bring the forge plans to Hilde."
+    }
+  ],
+  "rewards": { "xp_pct": 2.2, "money": 500 }
+}

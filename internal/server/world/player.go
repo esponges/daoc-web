@@ -146,8 +146,10 @@ type Player struct {
 	out          chan []byte
 	closed       atomic.Bool
 	disconnected atomic.Bool
-	zoning       atomic.Bool // closed to load another zone, not logging out
-	craft        *craftState // tradeskills and the craft under way
+	zoning       atomic.Bool             // closed to load another zone, not logging out
+	craft        *craftState             // tradeskills and the craft under way
+	quests       map[string]*store.Quest // quest progress by quest id
+	questOffer   string                  // the quest last offered, which accept answers
 	// graceEnd is when a disconnected character in a fight leaves the world.
 	graceEnd float64
 

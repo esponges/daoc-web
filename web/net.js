@@ -114,6 +114,8 @@ export class NetClient {
   buy(id) { this._send({ t: 'buy', id }); }
   // craftOp opens the crafting window, joins the profession of the master by you,
   // makes the recipe of a product, or cancels the craft under way.
+  // questOp answers a quest offer (accept, decline), abandons one, picks a reward (n) or asks for the journal.
+  questOp(op, id, n) { this._send({ t: 'questop', op, ...(id ? { id } : {}), ...(n !== undefined ? { n } : {}) }); }
   craftOp(op, id) { this._send({ t: 'craftop', op, ...(id ? { id } : {}) }); }
   sell(slot) { this._send({ t: 'sell', slot }); }
   // repair asks the open blacksmith for the price of repairing a slot, or, with
@@ -155,6 +157,9 @@ export class NetClient {
       case 'clock': this.clock = { gs: m.gs, at: this.now() }; this.on.clock?.(this.clock); break;
       case 'trade': this.trade = m; this.on.trade?.(m); break;
       case 'tradeclose': this.trade = null; this.on.tradeclose?.(m); break;
+      case 'quests': this.quests = m; this.on.quests?.(m); break;
+      case 'questoffer': this.on.questoffer?.(m); break;
+      case 'questreward': this.on.questreward?.(m); break;
       case 'craft': this.craft = m; this.on.craft?.(m); break;
       case 'craftprog': this.on.craftprog?.(m); break;
       case 'craftdone': this.on.craftdone?.(m); break;

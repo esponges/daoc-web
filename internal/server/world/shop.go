@@ -83,6 +83,9 @@ func (z *Zone) Interact(p *Player, id int64) {
 	if n.inReach(p) && z.taskTouch(p, n) {
 		return // a task ends here
 	}
+	if n.inReach(p) && z.questTouch(p, n) {
+		return // a quest step ends here
+	}
 	if n.Kind == "" {
 		p.errMsg("interact", "You cannot interact with that.")
 		return

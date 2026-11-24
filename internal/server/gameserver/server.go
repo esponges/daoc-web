@@ -372,6 +372,8 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { z.Cast(p, m.Spell, m.Target) })
 	case *protocol.TradeOp:
 		z.Do(func() { z.TradeOp(p, m) })
+	case *protocol.QuestOp:
+		z.Do(func() { z.QuestOp(p, m) })
 	case *protocol.CraftOp:
 		z.Do(func() { z.Craft(p, m) })
 	case *protocol.GroundTarget:

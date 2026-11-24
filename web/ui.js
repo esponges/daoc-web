@@ -22,6 +22,7 @@ import { createVault, firstFreeVault } from './vault.js';
 import { createTrade, createFriends, createDuelPrompt } from './social.js';
 import { createGuild } from './guild.js';
 import { createCraft } from './craft.js';
+import { createQuests } from './quest.js';
 import { gameSeconds, clockFace } from './daynight.js';
 import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
@@ -483,6 +484,11 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   root.appendChild(guildWin.el);
   net.on.guild = (m) => guildWin.set(m);
   if (net.guild) guildWin.set(net.guild);
+  const questWin = createQuests(document, { onOp: (op, id, n) => net.questOp(op, id, n), mover });
+  root.appendChild(questWin.el);
+  net.on.quests = (m) => questWin.set(m);
+  net.on.questoffer = (m) => questWin.offer(m);
+  net.on.questreward = (m) => questWin.reward(m);
   const craftWin = createCraft(document, { onOp: (op, id) => net.craftOp(op, id), mover });
   root.appendChild(craftWin.el);
   net.on.craft = (m) => { craftWin.set(m); if (m.offer && !craftWin.isOpen) craftWin.show(); };
@@ -762,7 +768,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'Enter') { openChat(); e.preventDefault(); return true; }
     if (e.code === 'Slash') { openChat('/'); e.preventDefault(); return true; }
     if (e.code === 'KeyI' && !e.repeat) { togglePack(); return true; }
-    if (e.code === 'KeyJ' && !e.repeat) { toggleTasks(); return true; }
+    if (e.code === 'KeyJ' && !e.repeat) { toggleTasks(); questWin.toggle(); return true; }
     if (e.code === 'KeyM' && !e.repeat) { commandWin.toggle(); return true; } // the command window
     if (e.code === 'KeyK' && !e.repeat) { concWin.toggle(); return true; } // the buffs held by concentration
     if (e.code === 'KeyP' && !e.repeat) { toggleSpells(); return true; } // the spellbook

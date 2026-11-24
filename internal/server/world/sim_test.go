@@ -674,6 +674,15 @@ func TestAdminCommandsNeedAdmin(t *testing.T) {
 	if p.Body.X != 40000 || p.Body.Y != 41000 {
 		t.Errorf("tp: %v,%v", p.Body.X, p.Body.Y)
 	}
+	before := p.Char.Money
+	r.w.GM(p, "money 5")
+	if p.Char.Money != before+50000 {
+		t.Errorf("money 5 gold: %d -> %d, want +50000 copper", before, p.Char.Money)
+	}
+	r.w.GM(p, "money -3")
+	if p.Char.Money != before+50000 {
+		t.Error("a negative amount changed the purse")
+	}
 }
 
 func TestPackmatesJoin(t *testing.T) {

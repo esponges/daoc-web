@@ -34,6 +34,7 @@ import (
 func main() {
 	addr := flag.String("addr", env("DAOC_ADDR", "localhost:8777"), "address to listen on (use :8777 for the whole network)")
 	webDir := flag.String("web", "web", "the viewer and converted zones")
+	questDir := flag.String("quests", filepath.Join("server", "quests"), "the quest data files")
 	dataDir := flag.String("data", filepath.Join("server", "data"), "where the world and player databases live")
 	flag.Parse()
 
@@ -102,7 +103,7 @@ func main() {
 		clock = func() time.Time { return time.Now().Add(time.Duration(sec) * time.Second) }
 		log.Printf("game clock shifted by %d seconds (DAOC_CLOCK_SHIFT)", sec)
 	}
-	w := world.New(world.Config{WebData: webData, Cat: cat, Store: st, Log: log.Printf,
+	w := world.New(world.Config{QuestDir: *questDir, WebData: webData, Cat: cat, Store: st, Log: log.Printf,
 		Collision: world.OutdoorCollision, Clock: clock})
 	srv := &gameserver.Server{Auth: a, World: w, Store: st, WebDir: *webDir, Log: log.Printf}
 	hs := &http.Server{Addr: *addr, Handler: srv.Handler(), ReadHeaderTimeout: 10 * time.Second}

@@ -640,7 +640,8 @@ func (z *Zone) respawnPlayer(p *Player) {
 
 // killNPC finishes a creature: experience, loot and the clock to its return.
 func (z *Zone) killNPC(n *NPC) {
-	defer z.taskKilled(n) // kill tasks count creatures by name, once the kill's credit is settled
+	defer z.questKilled(n) // quest kills and drops, likewise
+	defer z.taskKilled(n)  // kill tasks count creatures by name, once the kill's credit is settled
 	if n.isPet() {
 		charmed := n.pet.charmed
 		z.releasePet(n, "Your "+n.title()+" dies.")
