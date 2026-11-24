@@ -278,6 +278,7 @@ type Entity struct {
 	Posture  string   `json:"ps,omitempty"`  // a player's posture: "sit", "air" or "swim"; absent standing
 	Foe      bool     `json:"foe,omitempty"` // the player you are in a duel with
 	VZ       float64  `json:"vz,omitempty"`  // a player in the air: vertical speed, units a second
+	Torch    bool     `json:"tc,omitempty"`  // a player whose torch is lit: a light around them at night
 }
 
 // Event is something that happened this tick, for the log and the animations.
@@ -330,6 +331,7 @@ type Self struct {
 	Seated bool      `json:"sit,omitempty"` // you are sitting
 	Ground []float64 `json:"gt,omitempty"`  // your ground target, x y z, when one is set
 	Follow bool      `json:"fl,omitempty"`  // the server is walking you after who you follow: do not predict
+	Torch  bool      `json:"tc,omitempty"`  // your torch is lit
 }
 
 // Snap is the world as one player sees it.

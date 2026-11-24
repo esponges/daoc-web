@@ -30,6 +30,7 @@ import { ownCastLine } from './spells.js';
 import { eventLine, conColour } from './sheet.js';
 import { effectRows, effectChangeLines, spellLine, castLine, petLine, petNames } from './effects.js';
 import { loadUI, registerFonts } from './uiwin.js';
+import { torchStrength, torchLights, nearestLights, savedTorch, saveTorch } from './torch.js';
 
 // The game's typeface for page text (the zone picker, names over heads), when
 // the interface has been converted; the offline viewer has no stock windows
@@ -906,6 +907,7 @@ async function main() {
     else console.info('stock interface not converted (go run ./cmd/uiconv); using the built-in one');
     ui = createUI(net, { log, stock, getTarget: () => combat.target });
     if (stock) { chatOut = (t, k) => ui.say(t, k); logEl.style.display = 'none'; }
+    if (savedTorch(window.localStorage) === 'off') net.chat('say', '/torch off');
     log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack, J your task, ` shows developer info.', 'info');
     // Lasting spells: a row of badges by kind under the vitals, counting down,
     // and a line when a hold or slow begins or ends.
@@ -1016,7 +1018,7 @@ async function main() {
     if (e.code === 'Backquote' && !e.repeat) devPanel.style.display = devPanel.style.display === 'none' ? '' : 'none';
     keys.add(e.code);
     if (e.code === 'KeyF') wireframe = !wireframe;
-    if (e.code === 'KeyG') detailOn = !detailOn;
+    if (!net && e.code === 'KeyG') detailOn = !detailOn;
     if (e.code === 'KeyL' && shadows && shadows.ok && world.kind === 'outdoor') shadowsOn = !shadowsOn;
     if (e.code === 'KeyV') grassOn = !grassOn;
     if (e.code === 'KeyR' && !e.repeat) walkMode = !walkMode;
@@ -1032,7 +1034,11 @@ async function main() {
     if (net && e.code === 'KeyH' && !e.repeat) net.chat('say', '/stealth');
     if (net && e.code === 'KeyX' && !e.repeat) net.chat('say', '/sit');
     if (net && e.code === 'KeyZ' && !e.repeat) net.chat('say', '/sprint');
-    if (net && e.code === 'KeyT' && !e.repeat) { // the ground target: T, then click the ground; shift-T drops it
+    if (net && e.code === 'KeyT' && !e.repeat) { // the torch (the stock keyboard's Torch action)
+      saveTorch(window.localStorage, !net.me.torch);
+      net.chat('say', '/torch');
+    }
+    if (net && e.code === 'KeyG' && !e.repeat) { // the ground target: G, then click the ground; shift-G drops it
       if (e.shiftKey) { net.clearGround(); groundArmed = false; log('You clear your ground target.', 'info'); }
       else { groundArmed = true; log('Click the ground to set your ground target (Esc cancels).', 'info'); }
     }
@@ -1545,8 +1551,26 @@ async function main() {
       if (spellfx && !shadowPass) spellfx.draw(ctx, locateFx);
     };
 
-    // Inside, the zone's own lights nearest the eye.
-    if (world.lightsNear) setPointLights(world.lightsNear(eye));
+    // Inside, the zone's own lights nearest the eye; after dark (and always
+    // inside), the lit torches of the players in view, yours among them.
+    {
+      const zoneLights = world.lightsNear ? world.lightsNear(eye) : [];
+      let torches = [];
+      if (net) {
+        const indoor = world.kind !== 'outdoor';
+        const strength = torchStrength(indoor || !net.clock ? 0 : nightness(gameSeconds(net.clock, net.now())), indoor);
+        if (strength > 0) {
+          const bearers = [];
+          if (net.me.torch) bearers.push({ x: player.x, y: player.y, h: playerGround });
+          for (const r of net.ents.values()) {
+            if (r.k === 'p' && r.torch) bearers.push({ x: r.x, y: r.y, h: r.posture === 'air' || r.posture === 'swim' ? r.z : groundAt(r.x, r.y, r.z) });
+          }
+          torches = torchLights(bearers, strength, eye);
+        }
+      }
+      if (world.lightsNear || torches.length) setPointLights(nearestLights([zoneLights, torches], eye));
+      else setPointLights([]);
+    }
 
     // --- shadow pass ---
     // Centred on the player, or under the free camera.

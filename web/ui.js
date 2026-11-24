@@ -275,7 +275,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       if (!a.use) continue;
       const b = el('button', 'style', a.text);
       b.title = ['berserk', 'charge', 'quickcast'].includes(a.use) ? 'Use (/' + a.use + ')'
-        : a.use === 'distraction' ? 'Use on your ground target (/distraction); set one with T, then click the ground'
+        : a.use === 'distraction' ? 'Use on your ground target (/distraction); set one with G, then click the ground'
         : 'Use on your target (/' + a.use + ')';
       const shot = { 'critical shot': 'critical', 'rapid fire': 'rapid' }[a.use];
       b.title = shot ? 'Draw a ' + a.text + ' (shift+B for Critical Shot, N for Rapid Fire)' : b.title;

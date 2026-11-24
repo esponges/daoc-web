@@ -97,6 +97,8 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
   - The Camelot Herald Savage class page (camelotherald.com/node/194) and the 1.65H test patch notes
     (gamebanshee.com/3ydp): the Savagery line and its health cost. Numbers read from the community
     database; their reading as percents is provisional.
+  - The official interface guide (darkageofcamelot.com/using-and-understanding-interface): T turns
+    your torch on and off; the client's keyboard actions ("Torch", torchmode) agree.
   - OpenDAoC-Core and DOLSharp, for reference-status rules only.
 
   If you use another source (a wiki, a format write-up, a community table), add

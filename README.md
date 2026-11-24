@@ -28,7 +28,7 @@ imported at build time into `server/data/` (gitignored).
   the group until turned off. A SPELLS window, spell bar and cast bar; power
   regenerates and is spent. The Savage casts its Savagery buffs for hit points
   instead of power; Berserk (Berserkers), Charge (Berserkers and Savages) and QuickCast (the Mystic casters)
-  are timed abilities, and Shadowblades set a ground target (T, then click the ground)
+  are timed abilities, and Shadowblades set a ground target (G, then click the ground)
   for Distraction.
 - Trade with merchants, keep things in the vault, talk in chat channels, group up,
   ride the horse routes. Trade items and money with another player (/trade), duel
@@ -261,7 +261,7 @@ interpolated.
 Keys in network mode: `W/S/A/D/Q/E` and the mouse as before, `Enter` to talk
 (`!` to shout, `/who`, `/pray`, `/bind`, `/invite`, `/disband`, `/tell`, `/g`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
 usable), `I` the pack, `C` the character sheet (`Shift+C` the free camera), a
-click on a corpse to loot it, a right-click on a merchant, trainer or healer. `Space` jumps, `X` (or `/sit`) sits and stands, `Z` (or `/sprint`) turns sprint on and off, `M` opens the Command window, and the classic emotes are slash commands (`/wave`, `/bow`, `/dance`, `/cheer`, `/clap`, `/cry`, `/curtsey`, `/flex`, `/kiss`, `/laugh`, `/point`, `/salute`, `/bang`, `/victory`, `/beckon`, `/blush`). A seated character regains health, power and endurance twice as fast, and stands up to do anything else; a long fall costs health, and a lake is swum, not walked. The numbers are the rule book's `rules-resting`, `rules-falling` and `rules-movement`, all provisional. Administrators: `/gm goto
+click on a corpse to loot it, a right-click on a merchant, trainer or healer. `Space` jumps, `X` (or `/sit`) sits and stands, `Z` (or `/sprint`) turns sprint on and off, `T` (or `/torch`) lights and puts out your torch (others see its light at night; put it out to be harder to spot), `G` then a click on the ground sets a ground target, `M` opens the Command window, and the classic emotes are slash commands (`/wave`, `/bow`, `/dance`, `/cheer`, `/clap`, `/cry`, `/curtsey`, `/flex`, `/kiss`, `/laugh`, `/point`, `/salute`, `/bang`, `/victory`, `/beckon`, `/blush`). A seated character regains health, power and endurance twice as fast, and stands up to do anything else; a long fall costs health, and a lake is swum, not walked. The numbers are the rule book's `rules-resting`, `rules-falling` and `rules-movement`, all provisional. Administrators: `/gm goto
 103`, `/gm tp x y`, `/gm level n`, `/gm give <item id>`.
 
 ### Where the world's content comes from
@@ -382,6 +382,9 @@ Sources the rules come from:
   ([gamebanshee.com/3ydp](https://gamebanshee.com/3ydp): Savage buffs take a percent of maximum health). The
   community database gives each Savage spell's cost, value and duration; reading the values as percents and a
   Taunt's hate scale are this project's, provisional.
+- The official [interface guide](https://www.darkageofcamelot.com/using-and-understanding-interface/):
+  T turns your torch on and off at night. The client's own keyboard actions ("Torch") and its
+  `torchmode` setting agree; the light's colour and reach are this project's.
 - [OpenDAoC-Core](https://github.com/OpenDAoC/OpenDAoC-Core) (GPL-3.0), read to
   understand rules that no public page gives a number for. Nothing is copied
   from it.

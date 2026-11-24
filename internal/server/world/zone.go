@@ -365,7 +365,7 @@ func (z *Zone) selfOf(p *Player) protocol.Self {
 		Target: p.target, Attacking: p.attacking, Dead: p.dead, Correct: p.correct,
 		Back: p.motion.Back, Side: p.motion.Side, Speed: p.motion.Speed,
 		Fighting: z.now < p.combatUntil, Ride: p.ride != nil,
-		Air: p.Body.Air, VZ: p.Body.VZ, Peak: p.Body.PeakZ, Jumped: p.Body.Jumped, Seated: p.seated, Ground: p.groundMsg(), Follow: p.follow != 0,
+		Air: p.Body.Air, VZ: p.Body.VZ, Peak: p.Body.PeakZ, Jumped: p.Body.Jumped, Seated: p.seated, Ground: p.groundMsg(), Follow: p.follow != 0, Torch: !p.torchOut && !p.dead,
 	}
 	if c.Level >= MaxLevel {
 		s.XP, s.XPNext = 1, 1
@@ -389,7 +389,7 @@ func (z *Zone) playerEntity(o *Player) protocol.Entity {
 		ID: o.ID, K: "p", Name: o.Char.Name, Char: o.Arch.Key, Race: o.Char.Race, Female: o.Char.Gender == 1, Face: o.Char.Face, Hair: o.Char.Hair, Level: o.Char.Level,
 		X: o.Body.X, Y: o.Body.Y, Z: o.Body.Z, Yaw: o.Body.Yaw, Speed: o.motion.Speed,
 		HP: math.Max(0, o.hp/float64(o.maxHP())), State: st, Back: o.motion.Back, Side: o.motion.Side, Ride: o.ride != nil,
-		Posture: z.posture(o), VZ: ifAir(o), Guild: guildLine(o),
+		Posture: z.posture(o), VZ: ifAir(o), Guild: guildLine(o), Torch: !o.torchOut && !o.dead,
 	}
 }
 

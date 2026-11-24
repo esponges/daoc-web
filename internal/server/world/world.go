@@ -517,6 +517,12 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		z.Stand(p)
 	case "sprint":
 		z.Sprint(p)
+	case "torch":
+		arg := ""
+		if len(f) > 1 {
+			arg = strings.ToLower(f[1])
+		}
+		z.Torch(p, arg)
 	case "stealth", "hide":
 		z.Stealth(p)
 	case "camouflage":

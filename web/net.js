@@ -222,6 +222,7 @@ export class NetClient {
     me.serverSpeed = s.sp;
     me.ride = !!s.rd;
     me.seated = !!s.sit;
+    me.torch = !!s.tc; // your torch is lit
     me.gt = groundTargetOf(s);
     me.follow = !!s.fl; // the server is walking us after a player: no prediction
 
@@ -243,6 +244,7 @@ export class NetClient {
       r.aggro = !!e.ag; r.loot = !!e.lt; r.friendly = !!e.fr; r.kind = e.ik || ''; r.back = !!e.bk; r.side = e.sd || 0;
       r.ride = !!e.rd; // on a horse route
       r.posture = e.ps || ''; // sit, air or swim
+      r.torch = !!e.tc; // a player whose torch is lit
       r.foe = !!e.foe; // the player you are in a duel with
       r.con = e.cc; r.own = !!e.own; // a creature's con colour to you; your own gravestone
       r.samples.push({ t, x: e.x, y: e.y, z: e.z, yaw: e.h });

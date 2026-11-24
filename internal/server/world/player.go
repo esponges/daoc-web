@@ -178,6 +178,7 @@ type Player struct {
 	seated      bool    // sitting: regenerates faster, stands up to do anything else
 	movedSecond bool    // the body moved since the last endurance tick
 	sprint      bool    // sprint is on: running forward goes faster and costs endurance
+	torchOut    bool    // the torch is put out (lit is the default): see torch.go
 	lastStepAt  float64 // when a step from the client last ran
 	healAt      float64
 

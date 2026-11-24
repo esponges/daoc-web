@@ -52,6 +52,8 @@ The step also moves a body up and down: a jump starts with the flag bit 1 on the
 
 Sitting, standing and sprinting are the chat commands `/sit` (a toggle), `/stand` and `/sprint` (a toggle). A player entity carries `ps`, its posture: `sit`, `air` or `swim`, absent when standing on the ground, and `vz` while in the air. `effects` has `spr` true while sprint is on: predict running steps at 1.25 times run speed.
 
+The torch is the chat command `/torch` (a toggle; `/torch on` and `/torch off` set it). It is lit unless put out. A player entity carries `tc` true while its torch is lit, and `you` carries `tc` for your own; a dead player's torch is not lit. The client draws a lit torch as a light around its bearer after dusk, and always inside.
+
 ## Snapshots
 
 Twenty a second:
