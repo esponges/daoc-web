@@ -127,10 +127,14 @@ func sameGear(a, b [][4]int) bool {
 }
 
 func itemView(slot int, it *Item, count int) protocol.InvItem {
-	v := protocol.InvItem{Slot: slot, ID: it.ID, Name: it.Name, Count: count, Level: it.Level, Model: it.Model}
+	v := protocol.InvItem{Slot: slot, ID: it.ID, Name: it.Name, Count: count, Level: it.Level, Model: it.Model,
+		ObjType: it.ObjectType, ItemType: it.ItemType}
 	switch {
 	case it.IsShield():
 		v.Kind, v.Detail = "shield", fmt.Sprintf("shield, level %d", it.Level)
+		if it.DamageType >= 1 && it.DamageType <= 3 {
+			v.Size = it.DamageType // the table keeps a shield's size where a weapon keeps its damage type
+		}
 	case it.IsWeapon():
 		v.Kind, v.Detail = "weapon", fmt.Sprintf("%.1f dps, %.1fs swing, level %d", it.DPS, it.Speed, it.Level)
 		v.Line = map[int]string{11: "Sword", 12: "Hammer", 13: "Axe"}[it.ObjectType]

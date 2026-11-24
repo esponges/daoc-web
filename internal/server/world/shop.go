@@ -81,9 +81,11 @@ func (z *Zone) Interact(p *Player, id int64) {
 		return
 	}
 	if n.inReach(p) && z.taskTouch(p, n) {
+		n.greet(z, p)
 		return // a task ends here
 	}
 	if n.inReach(p) && z.questTouch(p, n) {
+		n.greet(z, p)
 		return // a quest step ends here
 	}
 	if n.Kind == "" {
@@ -94,6 +96,7 @@ func (z *Zone) Interact(p *Player, id int64) {
 		p.errMsg("interact", "You are too far away to interact with the "+n.Name+".")
 		return
 	}
+	n.greet(z, p)
 	switch n.Kind {
 	case KindMerchant:
 		z.openShop(p, n)

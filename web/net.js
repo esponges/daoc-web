@@ -93,6 +93,9 @@ export class NetClient {
   abandonTask() { this._send({ t: 'abandon-task' }); }
   // useItem uses the item in a pack slot: a poison goes on a worn weapon.
   useItem(slot) { this._send({ t: 'use-item', slot }); }
+  // delve asks what an item, spell or style is (right-click). from is 'inv', 'shop',
+  // 'loot', 'spell' or 'style'; what names it: { slot }, { id }, { corpse, slot }.
+  delve(from, what = {}) { this._send({ t: 'delve', from, ...what }); }
   // shoot draws a bow at the held target; mode is '', 'critical', 'rapid' or 'stop'.
   shoot(mode = '') { this._send({ t: 'shoot', ...(mode ? { mode } : {}) }); }
   // The ground target, for Distraction and the like: the server checks the range and the line of sight.
@@ -146,6 +149,7 @@ export class NetClient {
         break;
       case 'zone': this.shop = null; this.vault = null; this.smith = null; this.on.zone?.(m); break;
       case 'chatmsg': this.on.chat?.(m); break;
+      case 'delveinfo': this.on.delveinfo?.(m); break;
       case 'inv': this.inv = m; this.eq = m.eq || []; this.on.inv?.(m); break;
       case 'book': this.book = { lines: m.lines || [] }; this.on.book?.(this.book); break;
       case 'recast': this.recasts.set(m.id, performance.now() / 1000 + (m.s || 0)); this.on.recast?.(m); break;

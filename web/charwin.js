@@ -5,6 +5,7 @@
 
 import { buildWindow } from './uiwin.js';
 import { STAT_NAMES } from './sheet.js';
+import { DELVE_HINT } from './delve.js';
 
 // --- what each window shows (pure, so node can test it) ---
 
@@ -98,7 +99,7 @@ export function spellGroups(book, song = 0, open = {}) {
         icon: SPELL_ICON[spellKind(s.tp, s.tg)],
         on: !!s.ok,
         drag: s.ok ? 'spell:' + s.id : undefined,
-        title: s.ok ? 'Double-click to cast, drag to the spell bar' : 'You cannot cast this yet',
+        title: (s.ok ? 'Double-click to cast, drag to the spell bar' : 'You cannot cast this yet') + ' · ' + DELVE_HINT,
       };
     }),
   }));
@@ -112,7 +113,7 @@ export function styleGroups(slots, also, iconOf = () => 0, open = {}) {
   const groups = [];
   for (const r of v.usable) {
     if (r.header) { groups.push({ title: r.header, open: open[r.header] !== false, rows: [] }); continue; }
-    groups[groups.length - 1].rows.push({ id: r.id, text: r.text, icon: iconOf(r.spec), drag: 'style:' + r.id, title: 'Drag onto the style bar' });
+    groups[groups.length - 1].rows.push({ id: r.id, text: r.text, icon: iconOf(r.spec), drag: 'style:' + r.id, title: 'Drag onto the style bar · ' + DELVE_HINT });
   }
   if (v.locked.length) {
     const t = 'Not usable now';
@@ -129,10 +130,11 @@ export function styleGroups(slots, also, iconOf = () => 0, open = {}) {
 // "skills", "styles", "spells").
 //   onCast(id)          a spell was double-clicked
 //   onAssign(id)        a spell was asked for the spell bar
+//   onDelve(kind, id)   a spell or style row was right-clicked ("spell" or "style")
 //   onAction(name)      a window button: "concentration", "pet", "quiver",
 //                       "pray", "bind"
 //   mover               makes the windows draggable and remembers their places
-export function createStockCharWindows(doc, data, { onCast, onAssign, onAction, mover, styleIcon = () => 0 } = {}) {
+export function createStockCharWindows(doc, data, { onCast, onAssign, onAction, onDelve, mover, styleIcon = () => 0 } = {}) {
   const closeOf = (name) => () => api.toggle(name, false);
   const attrib = buildWindow(doc, data, 'StatsAttributes', {
     captions: true, labels: true, onClose: closeOf('attributes'),
@@ -173,6 +175,9 @@ export function createStockCharWindows(doc, data, { onCast, onAssign, onAction, 
   watch(styles, '1000', 'styles');
   const dbl = spells.tree('1000');
   if (dbl) dbl.onActivate((i, row) => { if (row.id && row.on !== false) onCast?.(row.id); });
+  if (dbl) dbl.onContext((i, row) => { if (row.id) onDelve?.('spell', row.id); });
+  const styleTree = styles.tree('1000');
+  if (styleTree) styleTree.onContext((i, row) => { if (row.id) onDelve?.('style', row.id); });
 
   let last = {};
   const fill = (win, adapter, value) => win.setText(adapter, value);

@@ -24,6 +24,10 @@ func TestRoundTrip(t *testing.T) {
 		&Sell{T: TSell, Slot: 4},
 		&Train{T: TTrain, Spec: "Hammer", N: 2},
 		&Restore{T: TRestore, NPC: 31},
+		&Delve{T: TDelve, From: "inv", Slot: 3},
+		&Delve{T: TDelve, From: "shop", ID: "bronze_hammer"},
+		&Delve{T: TDelve, From: "loot", Corpse: 9, Slot: 1},
+		&Delve{T: TDelve, From: "spell", ID: "4242"},
 	}
 	for _, c := range cases {
 		b, err := json.Marshal(c)
@@ -56,6 +60,23 @@ func TestBadJSON(t *testing.T) {
 	}
 	if _, _, err := Decode([]byte(`{"t":"input","steps":"nope"}`)); err == nil {
 		t.Error("a malformed body must be an error")
+	}
+}
+
+func TestDelveInfoMarshals(t *testing.T) {
+	d := DelveInfo{T: TDelveInfo, Name: "bronze hammer", Level: 2, Con: true, Lines: []string{"Level 2", "Damage: 1.8 DPS"}}
+	b, err := json.Marshal(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"t":"delveinfo"`, `"nm":"bronze hammer"`, `"lv":2`, `"con":true`, `"ln":["Level 2"`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("%s lacks %s", b, want)
+		}
+	}
+	var back DelveInfo
+	if err := json.Unmarshal(b, &back); err != nil || !reflect.DeepEqual(back, d) {
+		t.Errorf("round trip: %v %+v", err, back)
 	}
 }
 

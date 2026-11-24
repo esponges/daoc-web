@@ -41,13 +41,14 @@ const doc = fakeDoc();
   console.log('ok: a slot frame is drawn from the skin');
 }
 
-// The spell bar: always eight slots, spells drawn by kind with their cost, drop to assign, right-click to clear.
+// The spell bar: always eight slots, spells drawn by kind with their cost, drop to assign, right-click for
+// details and Shift+right-click to clear (the stock client's way).
 {
   const book = { lines: [{ nm: 'Darkness', sp: [{ id: 3, nm: 'Minor Dusk Dart', lv: 1, pw: 2, ct: 2.6, ok: true, tp: 'DirectDamage' }, { id: 7, nm: 'Song', lv: 2, pw: 4, ct: 0, ok: true, tp: 'Buff', pl: true }] }] };
   const findSpell = (b, id) => b.lines.flatMap((l) => l.sp).find((s) => s.id === id) || null;
   const log = [];
   const bar = createSpellQuickbar(doc, data, {
-    onCast: (id) => log.push(['cast', id]), onAssign: (id, slot) => log.push(['assign', id, slot]), onClear: (slot) => log.push(['clear', slot]),
+    onCast: (id) => log.push(['cast', id]), onAssign: (id, slot) => log.push(['assign', id, slot]), onClear: (slot) => log.push(['clear', slot]), onDelve: (id) => log.push(['delve', id]),
     findSpell, dragId: (d) => { const m = /^spell:(\d+)$/.exec(d || ''); return m ? Number(m[1]) : null; },
   });
   bar.set([3, 0, 0, 0, 0, 0, 0, 7], book, 7, null);
@@ -58,13 +59,15 @@ const doc = fakeDoc();
   assert.equal(full.title.includes('Minor Dusk Dart'), true);
   full.listeners.click();
   full.listeners.contextmenu({ preventDefault() {} });
-  assert.deepEqual(log, [['cast', 3], ['clear', 0]]);
+  full.listeners.contextmenu({ preventDefault() {}, shiftKey: true });
+  assert.deepEqual(log, [['cast', 3], ['delve', 3], ['clear', 0]]);
+  assert.ok(full.title.includes('Right-click for more information.') && full.title.includes('Shift+Right-click to remove.'));
   assert.equal(bar.el.children[7].style.outline, '2px solid #3ec7c1', 'the song that is on is ringed');
   assert.ok(bar.el.children[7].title.includes('playing'));
   const empty = bar.el.children[2];
   empty.listeners.drop({ preventDefault() {}, dataTransfer: { getData: () => 'spell:3' } });
   empty.listeners.drop({ preventDefault() {}, dataTransfer: { getData: () => 'style:5' } });
-  assert.deepEqual(log.slice(2), [['assign', 3, 2]], 'a spell dropped on a slot is assigned; a style is not');
+  assert.deepEqual(log.slice(3), [['assign', 3, 2]], 'a spell dropped on a slot is assigned; a style is not');
   empty.listeners.click;
   // Not enough power: shaded.
   bar.update({ power: 1 }, [3], book);

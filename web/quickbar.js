@@ -11,6 +11,7 @@
 import { icon, text, paint } from './uiwin.js';
 import { SPELL_ICON, spellKind } from './charwin.js';
 import { slotState } from './spells.js';
+import { rightClick, DELVE_HINT, REMOVE_HINT } from './delve.js';
 
 // The picture of a book spell: by what it does, as in the spells window.
 const spellIconOf = (s) => SPELL_ICON[spellKind(s.tp, s.tg)];
@@ -43,11 +44,11 @@ export function slotFrame(doc, data, size = SLOT) {
 // skin's frame, the spell's picture by kind, its key and its power cost. It is
 // always shown, empty slots as bare frames.
 //   onCast(id)  the slot was pressed        onAssign(id, slot)  a spell was dropped
-//   onClear(slot)  the slot was right-clicked
+//   onClear(slot)  the slot was Shift+right-clicked      onDelve(id)  it was right-clicked
 // set(slots, book, song, held) redraws it; update(me, recasts, nowS) shades a
 // slot red while the character cannot pay for it, and darkens it with the
 // seconds left while its recast runs.
-export function createSpellQuickbar(doc, data, { onCast, onAssign, onClear, findSpell, dragId } = {}) {
+export function createSpellQuickbar(doc, data, { onCast, onAssign, onClear, onDelve, findSpell, dragId } = {}) {
   const root = doc.createElement('div');
   Object.assign(root.style, { position: 'fixed', zIndex: 11, display: 'flex', width: BAR_W + 'px', justifyContent: 'center' });
   let cells = [];
@@ -79,9 +80,13 @@ export function createSpellQuickbar(doc, data, { onCast, onAssign, onClear, find
           cell.appendChild(label(String(s.pw), SLOT - 16, SLOT - 12));
           const on = (song && s.id === song) || (held && held.has(s.id));
           if (on) cell.style.outline = '2px solid #3ec7c1';
-          cell.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + (held && held.has(s.id) ? ' · you hold this buff' : '') + ' · right-click to remove';
+          cell.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + (held && held.has(s.id) ? ' · you hold this buff' : '') + ' · ' + DELVE_HINT + ' ' + REMOVE_HINT;
           cell.addEventListener('click', () => onCast?.(id));
-          cell.addEventListener('contextmenu', (e) => { if (e.preventDefault) e.preventDefault(); onClear?.(i); });
+          cell.addEventListener('contextmenu', (e) => {
+            if (e.preventDefault) e.preventDefault();
+            if (rightClick(e, { clearable: true }) === 'clear') onClear?.(i);
+            else onDelve?.(id);
+          });
         }
         // The key is Shift and the number; the bitmap font has no arrow for Shift, so the
         // number is drawn in the spell bar's colour and the tooltip says the rest.

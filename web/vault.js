@@ -45,7 +45,7 @@ export function vaultRows(vault) {
 // createStockVault is the vault on the stock Vault window: a list of what is
 // held. A click on a row takes the item to the pack, a row can be dragged to a
 // pack slot, and a pack item dropped on the window goes into the vault.
-function createStockVault(doc, data, { onMove, onClose, getInv, mover }) {
+function createStockVault(doc, data, { onMove, onClose, onDelve, getInv, mover }) {
   const win = buildWindow(doc, data, 'vault_window', { captions: true, labels: true, onClose: () => onClose?.() });
   Object.assign(win.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-150px', zIndex: 15, display: 'none' });
   mover?.makeMovable(win.el, 'vault');
@@ -57,6 +57,7 @@ function createStockVault(doc, data, { onMove, onClose, getInv, mover }) {
     const free = firstFreePack(getInv());
     if (free >= 0) onMove?.(r.slot, free);
   });
+  if (list) list.onContext((i) => { const r = rows[i]; if (r) onDelve?.(r.slot); });
   win.el.addEventListener('dragover', (e) => e.preventDefault());
   win.el.addEventListener('drop', (e) => {
     e.preventDefault();
@@ -83,8 +84,9 @@ function createStockVault(doc, data, { onMove, onClose, getInv, mover }) {
 // createVault builds the window, hidden.
 //   onMove(from, to)  an item was clicked or dragged
 //   onClose()         the Close button was pressed
-export function createVault(doc, data, { onMove, onClose, getInv = () => null, mover } = {}) {
-  if (data && data.window && data.window('vault_window')) return createStockVault(doc, data, { onMove, onClose, getInv, mover });
+//   onDelve(slot)     an item was right-clicked
+export function createVault(doc, data, { onMove, onClose, onDelve, getInv = () => null, mover } = {}) {
+  if (data && data.window && data.window('vault_window')) return createStockVault(doc, data, { onMove, onClose, onDelve, getInv, mover });
   const root = doc.createElement('div');
   root.className = data ? 'vault-stock' : 'panel vault';
   if (data) Object.assign(root.style, { position: 'relative', width: WIDTH + 'px', height: HEIGHT + 'px', display: 'none' });
@@ -100,7 +102,8 @@ export function createVault(doc, data, { onMove, onClose, getInv = () => null, m
       wordBreak: 'break-word', background: c.item ? 'rgba(255,255,255,.07)' : 'transparent' });
     if (c.item) {
       d.textContent = c.item.nm + (c.item.n > 1 ? ' ×' + c.item.n : '');
-      d.title = c.item.nm + (c.item.d ? ' — ' + c.item.d : '') + '\nclick: take it to your pack';
+      d.title = c.item.nm + (c.item.d ? ' — ' + c.item.d : '') + '\nclick: take it to your pack · right-click for more information';
+      d.addEventListener('contextmenu', (e) => { e.preventDefault(); onDelve?.(c.slot); });
       d.draggable = true;
       d.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', String(c.slot)));
       d.addEventListener('click', () => {

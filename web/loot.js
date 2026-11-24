@@ -26,7 +26,8 @@ export function lootRows(corpse, formatMoney) {
 
 // createStockLoot builds the window, hidden. show(corpse) fills and opens it.
 //   onTake(corpseId, slot)  a row was clicked; slot -1 is the money
-export function createStockLoot(doc, data, { onTake, formatMoney = String } = {}) {
+//   onDelve(corpseId, slot) an item's row was right-clicked
+export function createStockLoot(doc, data, { onTake, onDelve, formatMoney = String } = {}) {
   const root = doc.createElement('div');
   Object.assign(root.style, { position: 'relative', width: WIDTH + 'px', display: 'none' });
   let corpse = null;
@@ -56,6 +57,11 @@ export function createStockLoot(doc, data, { onTake, formatMoney = String } = {}
       row.addEventListener('pointerenter', () => (row.style.background = 'rgba(255,255,255,.10)'));
       row.addEventListener('pointerleave', () => (row.style.background = 'transparent'));
       row.addEventListener('click', () => corpse && onTake?.(corpse.id, r.slot));
+      row.addEventListener('contextmenu', (e) => {
+        if (e.preventDefault) e.preventDefault();
+        if (corpse && r.item) onDelve?.(corpse.id, r.slot);
+      });
+      if (r.item) row.title = 'Right-click for more information.';
       if (r.item) row.appendChild(icon(doc, data, itemIconNumber(r.item), 2, 1));
       const name = text(doc, data, 'arial11', r.name, r.money ? 'rgb(255,215,106)' : 'rgb(255,255,255)');
       name.style.left = (r.item ? 40 : 6) + 'px';

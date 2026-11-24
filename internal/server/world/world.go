@@ -495,6 +495,8 @@ func (w *World) command(z *Zone, p *Player, line string) {
 		z.Face(p)
 	case "follow":
 		z.Follow(p)
+	case "stick":
+		z.Stick(p)
 	case "inspect":
 		z.Inspect(p)
 	case "gm":

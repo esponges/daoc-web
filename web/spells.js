@@ -4,6 +4,7 @@
 // absent, and the bar and cast bar in both cases.
 
 import { buildWindow } from './uiwin.js';
+import { rightClick, DELVE_HINT, REMOVE_HINT } from './delve.js';
 // spellsView is the spells window's content: for each spec line a header and
 // its spells, each with its level, power and cast time. A spell the server
 // cannot cast yet is greyed (on: false) and cannot be dragged.
@@ -121,8 +122,8 @@ const el = (doc, tag, cls, text) => {
 
 // createSpellPanel builds the plain spells panel: the book's lines with each
 // spell; a click casts it, a drag (or shift-click) puts it on the spell bar.
-//   onCast(id)  onAssign(id)
-export function createSpellPanel(doc, { onCast, onAssign } = {}) {
+//   onCast(id)  onAssign(id)  onDelve(id) on right-click
+export function createSpellPanel(doc, { onCast, onAssign, onDelve } = {}) {
   const panel = el(doc, 'div', 'panel spells');
   panel.append(el(doc, 'h2', '', 'Spells'));
   const list = el(doc, 'div', 'spell-list');
@@ -140,10 +141,11 @@ export function createSpellPanel(doc, { onCast, onAssign } = {}) {
         const d = el(doc, 'div', 'spell' + (r.on ? '' : ' off') + (r.playing ? ' playing' : ''), r.text);
         if (r.on) {
           d.draggable = true;
-          d.title = 'Click to cast at your target · shift-click or drag onto the spell bar';
+          d.title = 'Click to cast at your target · shift-click or drag onto the spell bar · ' + DELVE_HINT;
           d.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', r.drag));
           d.addEventListener('click', (e) => (e.shiftKey ? onAssign?.(r.id) : onCast?.(r.id)));
-        } else d.title = 'This kind of spell does not work yet.';
+        } else d.title = 'This kind of spell does not work yet. ' + DELVE_HINT;
+        d.addEventListener('contextmenu', (e) => { e.preventDefault(); onDelve?.(r.id); });
         list.appendChild(d);
       }
     },
@@ -153,8 +155,8 @@ export function createSpellPanel(doc, { onCast, onAssign } = {}) {
 // createSpellBar builds the row of spell slots (Shift+1 to Shift+8). set(slots,
 // book) refills it; a slot's click casts, and a spell dropped on a slot is
 // assigned to it.
-//   onCast(id)  onAssign(id, slot)  onClear(slot)
-export function createSpellBar(doc, { onCast, onAssign, onClear } = {}) {
+//   onCast(id)  onAssign(id, slot)  onClear(slot) on Shift+right-click  onDelve(id) on right-click
+export function createSpellBar(doc, { onCast, onAssign, onClear, onDelve } = {}) {
   const bar = el(doc, 'div', 'stylebar spellbar');
   return {
     el: bar,
@@ -168,9 +170,13 @@ export function createSpellBar(doc, { onCast, onAssign, onClear } = {}) {
         b.dataset.slot = i;
         b.append(el(doc, 'span', 'key', '⇧' + (i + 1)), el(doc, 'span', 'nm', s ? s.nm : ''), el(doc, 'span', 'cost', s ? s.pw + (s.hp ? ' hp' : ' pw') : ''));
         if (s) {
-          b.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + (held && held.has(s.id) ? ' · you hold this buff' : '') + ' · right-click to remove';
+          b.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + (held && held.has(s.id) ? ' · you hold this buff' : '') + ' · ' + DELVE_HINT + ' ' + REMOVE_HINT;
           b.addEventListener('click', () => onCast?.(id));
-          b.addEventListener('contextmenu', (e) => { e.preventDefault(); onClear?.(i); });
+          b.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (rightClick(e, { clearable: true }) === 'clear') onClear?.(i);
+            else onDelve?.(id);
+          });
         }
         b.addEventListener('dragover', (e) => e.preventDefault());
         b.addEventListener('drop', (e) => {

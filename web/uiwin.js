@@ -130,7 +130,52 @@ const LINE_ICON = { Sword: 622, Hammer: 634, Axe: 700 };
 export const SHIELD_ICON = 705;
 export const MISC_ICON = 1236;
 
+// The server also sends the item table's object type (ot), item type (ty) and a
+// shield's size (sz), and the picture is chosen from those: each cell below was
+// picked by eye from the install's weapon sheets (wpn_900, wpn_1000: the plain
+// grey-backed pictures, not the coloured variants) and item sheets (itm_1200,
+// itm_1300), never from the imported icon number. A sheet's number is its first
+// icon's; add the cell's place on it.
+const WEAPON_ICON = {
+  // object type: [one-handed, two-handed]
+  11: [902, 1030], // sword
+  12: [911, 940],  // hammer
+  13: [900, 910],  // axe
+  14: [907, 907],  // spear
+  8: [996, 996],   // staff
+  15: [924, 924],  // composite bow
+  16: [901, 901],  // thrown
+  17: [916, 916],  // left axe
+  25: [933, 933],  // hand to hand: claws and fists
+  45: [928, 928],  // instrument
+};
+// Armour by worn slot, then by material: 32 cloth, 33 leather, 34 studded, 35 chain, 36 plate.
+const ARMOUR_ICON = {
+  47: { 32: 1228, 33: 1200, 34: 1201, 35: 1203, 36: 1202 }, // head
+  42: { 32: 1218, 33: 1207, 34: 1261, 35: 1204, 36: 1206 }, // torso
+  44: { 32: 1210, 33: 1211, 34: 1264, 35: 1212, 36: 1213 }, // arms
+  46: { 32: 1214, 33: 1215, 34: 1265, 35: 1216, 36: 1217 }, // hands
+  43: { 32: 1220, 33: 1221, 34: 1266, 35: 1222, 36: 1223 }, // legs
+  45: { 32: 1224, 33: 1225, 34: 1267, 35: 1226, 36: 1227 }, // feet
+};
+// The worn slot of an armour item type, for when the server did not say.
+const ARMOUR_SLOT = { 21: 47, 22: 46, 23: 45, 25: 42, 27: 43, 28: 44 };
+const SHIELD_BY_SIZE = { 1: 1230, 2: 1231, 3: 1233 };
+// Magical items by item type: cloak, necklace, belt, bracer, ring, potion.
+const MAGICAL_ICON = { 26: 1219, 29: 1241, 32: 1347, 33: 1348, 35: 1243, 40: 1268 };
+const OBJECT_ICON = { 43: 925, 46: 1300, 47: 1304, 48: 1250 }; // arrow, poison, tincture, gem or rune
+
 export function itemIconNumber(it) {
+  if (it.ot) {
+    if (WEAPON_ICON[it.ot]) return WEAPON_ICON[it.ot][it.ty === 12 ? 1 : 0];
+    if (it.ot === 42) return SHIELD_BY_SIZE[it.sz] ?? 1231;
+    if (it.ot >= 32 && it.ot <= 36) {
+      const slot = it.w || ARMOUR_SLOT[it.ty];
+      if (ARMOUR_ICON[slot]) return ARMOUR_ICON[slot][it.ot];
+    }
+    if (OBJECT_ICON[it.ot]) return OBJECT_ICON[it.ot];
+    if (it.ot === 41 && MAGICAL_ICON[it.ty]) return MAGICAL_ICON[it.ty];
+  }
   if (it.k === 'shield') return SHIELD_ICON;
   if (it.k === 'weapon') return LINE_ICON[it.line] ?? 634;
   if (it.k === 'armour') return WORN_ICON[it.w] ?? 1204;

@@ -73,6 +73,8 @@ type NPC struct {
 	spellReady map[int]float64 // spell id -> when it may be cast again
 	casting    *castState      // the spell it is casting, nil when none
 	swingAt    float64
+	talkTo     int64   // the player it is turned toward after an interaction
+	talkUntil  float64 // until when it keeps facing them; 0 when it has not been talked to
 	returning  bool
 	hurtBy     map[int64]int // damage dealt by each player, for experience and loot
 	tagger     int64
@@ -198,6 +200,7 @@ func (n *NPC) reset() {
 	n.loot, n.money, n.lootOwner = nil, 0, 0
 	n.gone = false
 	n.speedNow = 0
+	n.talkTo, n.talkUntil = 0, 0
 }
 
 func (n *NPC) dead() bool { return n.state == npcDead }
@@ -292,7 +295,9 @@ func (n *NPC) update(z *Zone) {
 		return
 	}
 	if n.Friendly && !n.Guard {
-		n.wander(z, false)
+		if !n.attend(z) {
+			n.wander(z, false)
+		}
 		return
 	}
 	// It fights whoever it hates most; with nobody left to fight, it goes home.
@@ -328,8 +333,45 @@ func (n *NPC) update(z *Zone) {
 			n.speedNow = 0
 		}
 	default:
-		n.wander(z, true)
+		if !n.attend(z) {
+			n.wander(z, true)
+		}
 	}
+}
+
+// NPCTalkHold is how long an NPC keeps facing a player after they last interacted with it.
+const NPCTalkHold = 15.0
+
+// greet turns the NPC toward a player who interacts with it. It then stands
+// facing them for NPCTalkHold seconds, and turns back to its spawn heading.
+func (n *NPC) greet(z *Zone, p *Player) {
+	n.talkTo = p.ID
+	n.talkUntil = z.now + NPCTalkHold
+	n.speedNow = 0
+}
+
+// attend runs the greeting: it reports whether the NPC is busy with it, so
+// it neither wanders nor does anything else this tick.
+func (n *NPC) attend(z *Zone) bool {
+	if n.talkUntil == 0 {
+		return false
+	}
+	n.speedNow = 0
+	if z.now < n.talkUntil {
+		if p := z.players[n.talkTo]; p != nil && !p.closed.Load() {
+			n.Body.Yaw = turnToward(n.Body.Yaw, angleTo(n.Body.X, n.Body.Y, p.Body.X, p.Body.Y), 6*TickDT)
+		}
+		return true
+	}
+	// Quiet again: back to the heading it was spawned with.
+	home := float64(n.Spawn.Heading) / 4096 * 2 * math.Pi
+	n.Body.Yaw = turnToward(n.Body.Yaw, home, 3.5*TickDT)
+	if angleOff(home, n.Body.Yaw) < 0.02 {
+		n.Body.Yaw = home
+		n.talkUntil, n.talkTo = 0, 0
+		return false
+	}
+	return true
 }
 
 func (n *NPC) corpseTime() float64 {

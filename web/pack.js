@@ -28,10 +28,14 @@ export const PACK_SLOTS = 40;
 export const PAGE_SLOTS = 8;
 const TAB_Y = [295, 320, 347, 371, 396]; // sack tab centres on the art
 
-// bagCell places pack slot i on the page it belongs to: four across, two down.
+// bagCell places pack slot i on the page it belongs to: one row of eight, as the
+// art draws them. The art's icon boxes are 16 pixels at x 12, 17 apart from y 278
+// (measured from skin1/pperdoll.bmp); the row runs on to the right for the name.
+export const ROW_ICON = 16;
+export const ROW_PITCH = 17;
 export function bagCell(i) {
   const k = i % PAGE_SLOTS;
-  return { page: Math.floor(i / PAGE_SLOTS), x: 14 + (k % 4) * 38, y: 282 + Math.floor(k / 4) * 38 };
+  return { page: Math.floor(i / PAGE_SLOTS), x: 12, y: 278 + k * ROW_PITCH, w: 152, h: ROW_ICON };
 }
 
 // coins splits an amount in copper into the five denominations of the game:
@@ -53,7 +57,8 @@ export function coins(c) {
 //   onUse(slot)       click on a pack item
 //   onDestroy(slot)   shift-click
 //   onUnequip(slot)   click on a worn item
-export function createStockPack(doc, data, { onMove, onUse, onDestroy, onUnequip } = {}) {
+//   onDelve(slot)     right-click on an item, worn or in the pack
+export function createStockPack(doc, data, { onMove, onUse, onDestroy, onUnequip, onDelve } = {}) {
   const art = data.art('skin1/pperdoll.bmp');
   const root = doc.createElement('div');
   Object.assign(root.style, { position: 'relative', width: (art ? art.w : 192) + 'px', height: (art ? art.h : 448) + 'px', display: 'none' });
@@ -79,7 +84,7 @@ export function createStockPack(doc, data, { onMove, onUse, onDestroy, onUnequip
   for (const [s, r] of Object.entries(WORN_SLOTS)) cell(Number(s), r.x, r.y, r.w, r.h).title = r.name;
   for (let i = 0; i < PACK_SLOTS; i++) {
     const b = bagCell(i);
-    cell(i, b.x, b.y, 32, 32);
+    cell(i, b.x, b.y, b.w, b.h).style.overflow = 'hidden';
   }
 
   const tabs = TAB_Y.map((y, p) => {
@@ -156,7 +161,13 @@ export function createStockPack(doc, data, { onMove, onUse, onDestroy, onUnequip
     doc.addEventListener('pointerup', up);
     doc.addEventListener('pointercancel', up);
   }
-  for (const [slot, e] of cells) e.addEventListener('pointerdown', (ev) => press(slot, ev));
+  for (const [slot, e] of cells) {
+    e.addEventListener('pointerdown', (ev) => { if (ev.button === 2) return; press(slot, ev); });
+    e.addEventListener('contextmenu', (ev) => {
+      if (ev.preventDefault) ev.preventDefault();
+      if (items.has(slot)) onDelve?.(slot);
+    });
+  }
 
   // render takes the server's inventory: items with slot, nm, n, k, d, w, line.
   function render(inv) {
@@ -170,7 +181,27 @@ export function createStockPack(doc, data, { onMove, onUse, onDestroy, onUnequip
         continue;
       }
       e.style.cursor = 'grab';
-      e.title = it.nm + (it.d ? ' — ' + it.d : '') + (slot >= PACK_SLOTS ? '\nclick: take off' : '\nclick: equip · shift-click: destroy');
+      e.title = it.nm + (it.d ? ' — ' + it.d : '') + (slot >= PACK_SLOTS ? '\nclick: take off · right-click for more information' : '\nclick: equip · shift-click: destroy · right-click for more information');
+      if (slot < PACK_SLOTS) {
+        // A pack row: the icon at half size in the art's box, then the name and the count.
+        const pic = icon(doc, data, itemIconNumber(it));
+        Object.assign(pic.style, { transform: `scale(${ROW_ICON / 32})`, transformOrigin: '0 0', pointerEvents: 'none' });
+        e.appendChild(pic);
+        const label = it.nm + (it.n > 1 ? ' x' + it.n : '');
+        const t = text(doc, data, 'arial9', label, 'rgb(255,255,255)');
+        t.style.left = ROW_ICON + 6 + 'px';
+        t.style.top = '2px';
+        t.style.pointerEvents = 'none';
+        e.appendChild(t);
+        if (it.ps > 0) {
+          const p = text(doc, data, 'arial9', String(it.ps), 'rgb(120,230,90)');
+          p.style.left = '136px';
+          p.style.top = '2px';
+          p.style.pointerEvents = 'none';
+          e.appendChild(p);
+        }
+        continue;
+      }
       e.appendChild(icon(doc, data, itemIconNumber(it)));
       if (it.ps > 0) {
         // A poisoned weapon: the hits its poison has left, in green in the corner.

@@ -290,7 +290,7 @@ export function createControls(h) {
     inner.style.overflow = 'hidden';
     root.appendChild(inner);
     const view = Math.max(1, Math.floor((r.h - pad * 2) / rowH));
-    let rows = [], top = 0, selected = -1, onSelect = null, onActivate = null, bar = null;
+    let rows = [], top = 0, selected = -1, onSelect = null, onActivate = null, onContext = null, bar = null;
     const draw = () => {
       inner.textContent = '';
       rows.slice(top, top + view).forEach((row, k) => {
@@ -337,6 +337,11 @@ export function createControls(h) {
           if (!row.header) api.select(i);
         });
         line.addEventListener('dblclick', () => { if (!row.header && onActivate) onActivate(i, row); });
+        // A right-click on a row is for the window to answer (delve); the browser's own menu never shows.
+        line.addEventListener('contextmenu', (e) => {
+          if (e.preventDefault) e.preventDefault();
+          if (!row.header && onContext) onContext(i, row, e);
+        });
         inner.appendChild(line);
       });
       if (bar) bar.set({ total: rows.length, view, top });
@@ -361,6 +366,7 @@ export function createControls(h) {
       scrollTo(i) { top = clampTop(i, rows.length, view); draw(); },
       onSelect(fn) { onSelect = fn; },
       onActivate(fn) { onActivate = fn; },
+      onContext(fn) { onContext = fn; },
     };
     if (cfg.scroll) {
       bar = scrollBar(env, cfg.scroll, r.h - 4, (t) => api.scrollTo(t));
@@ -382,7 +388,7 @@ export function createControls(h) {
   // the wheel, a selected row, and rows that can be dragged. win.list(adapter
   // or control id) gives
   //   setRows(rows)  select(i)  selected  onSelect(fn(i, row))  onActivate(fn)
-  //   top  scrollTo(i)  rows
+  //   onContext(fn(i, row, event)) for a right-click      top  scrollTo(i)  rows
   D.ListBoxDef = (env, c, r) => {
     const { data } = env;
     const tpl = data.tpl('ListBoxTemplate', str(c, 'TemplateName'));

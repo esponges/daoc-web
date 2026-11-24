@@ -158,11 +158,12 @@ export function createStockChat(doc, data, { onSend, onToggle, onResize, width =
   const lineEl = (e) => {
     const l = doc.createElement('div');
     l.textContent = e.text;
-    l.style.color = LINE_COLOR[e.kind] || LINE_COLOR[''];
+    l.style.color = e.color || LINE_COLOR[e.kind] || LINE_COLOR[''];
     return l;
   };
-  const say = (text, kind = '') => {
-    const e = { text, kind };
+  // A line has a kind, which colours it, or a colour of its own (an item's con colour).
+  const say = (text, kind = '', color) => {
+    const e = { text, kind, color };
     pushRing(buffer, e, maxLines);
     if (!shown(e)) return;
     const stick = atBottom(lines.scrollTop, lines.clientHeight, lines.scrollHeight);
@@ -291,8 +292,8 @@ export function styleDragId(data) {
 // createStockBar builds the style bar: one stock icon per style with its key
 // and endurance cost. A style that cannot be used now is shaded, one the
 // character cannot pay for is shaded red, one ready to use gets a gold frame.
-//   onUse(slot)  the player clicked a style
-export function createStockBar(doc, data, { onUse, onDrop, keys = [] } = {}) {
+//   onUse(slot)  the player clicked a style      onDelve(id)  it was right-clicked
+export function createStockBar(doc, data, { onUse, onDrop, onDelve, keys = [] } = {}) {
   const root = doc.createElement('div');
   Object.assign(root.style, { display: 'flex', gap: '3px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '92vw' });
   let slots = [];
@@ -313,7 +314,8 @@ export function createStockBar(doc, data, { onUse, onDrop, keys = [] } = {}) {
     cells = slots.map((s, i) => {
       const cell = doc.createElement('div');
       Object.assign(cell.style, { position: 'relative', width: '36px', height: '36px', cursor: 'pointer' });
-      cell.title = `${s.nm} (${s.opens}, level ${s.lv}, ${s.cost} endurance)`;
+      cell.title = `${s.nm} (${s.opens}, level ${s.lv}, ${s.cost} endurance) · Right-click for more information.`;
+      cell.addEventListener('contextmenu', (e) => { e.preventDefault?.(); onDelve?.(s.id); });
       cell.appendChild(slotFrame(doc, data));
       cell.appendChild(icon(doc, data, styleIconNumber(s.spec), 2, 2));
       const shade = doc.createElement('div');

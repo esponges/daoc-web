@@ -3,6 +3,7 @@ package world
 import (
 	"database/sql"
 	"encoding/json"
+	"math"
 	"math/rand"
 	"path/filepath"
 	"strings"
@@ -130,6 +131,101 @@ func TestInteractOpensShopWithStockInOrder(t *testing.T) {
 	}
 	if p.shop != merchantID {
 		t.Error("the server must remember the open shop")
+	}
+}
+
+func TestInteractTurnsTheNPCToThePlayerAndBack(t *testing.T) {
+	r := shopRig(t)
+	n := r.z.byID[merchantID]
+	home := n.Body.Yaw
+	p := r.player("Alice", 5, 30100, 30000, false) // east of the merchant
+	r.z.Interact(p, merchantID)
+	r.ticks(int(2 / TickDT))
+	want := angleTo(n.Body.X, n.Body.Y, p.Body.X, p.Body.Y)
+	if angleOff(want, n.Body.Yaw) > 0.05 {
+		t.Fatalf("after interacting the merchant faces %.2f, want %.2f", n.Body.Yaw, want)
+	}
+	// Still talked to just before the hold ends: it has not turned away.
+	r.ticks(int((NPCTalkHold - 4) / TickDT))
+	if angleOff(want, n.Body.Yaw) > 0.05 {
+		t.Errorf("during the hold the merchant faces %.2f, want %.2f", n.Body.Yaw, want)
+	}
+	// Left alone, it goes back to its spawn heading.
+	r.ticks(int(10 / TickDT))
+	if angleOff(home, n.Body.Yaw) > 0.05 || n.talkUntil != 0 {
+		t.Errorf("after the hold the merchant faces %.2f (talkUntil %.1f), want %.2f", n.Body.Yaw, n.talkUntil, home)
+	}
+	// A plain creature does not turn to someone who cannot interact with it.
+	g := r.z.byID[merchantID+1]
+	gy := g.Body.Yaw
+	r.z.Interact(p, merchantID+1)
+	r.ticks(int(2 / TickDT))
+	if g.Body.Yaw != gy {
+		t.Errorf("a guard turned from %.2f to %.2f", gy, g.Body.Yaw)
+	}
+}
+
+func TestStickKeepsInMeleeRangeFacingAndEnds(t *testing.T) {
+	r := shopRig(t)
+	n := r.z.byID[merchantID]
+	p := r.player("Alice", 5, 30400, 30000, false)
+	hasMsg := func(sub string) bool {
+		_, raws := sent(p)
+		for _, b := range raws {
+			if strings.Contains(string(b), sub) {
+				return true
+			}
+		}
+		return false
+	}
+	run := func(secs float64) { r.ticks(int(secs / TickDT)); sent(p) }
+
+	// No target: refused.
+	r.z.Stick(p)
+	if p.follow != 0 || !hasMsg("Target something") {
+		t.Fatalf("stick without a target: follow %d", p.follow)
+	}
+
+	// Stick to a creature: close in, then stay facing it as it walks off.
+	p.target = n.ID
+	r.z.Stick(p)
+	if p.follow != n.ID || !p.stick {
+		t.Fatalf("not sticking: follow %d stick %v", p.follow, p.stick)
+	}
+	run(3)
+	if d := p.Body.X - n.Body.X; d > StickGap+n.Reach*0.5+40 || d < 0 {
+		t.Errorf("sticker stands %.0f from the creature, want inside %.0f", d, StickGap+n.Reach*0.5)
+	}
+	n.Body.X, n.Body.Y = 30000, 30900 // it moves off to the side
+	run(8)
+	if d := math.Hypot(p.Body.X-n.Body.X, p.Body.Y-n.Body.Y); d > StickGap+n.Reach*0.5+40 {
+		t.Errorf("sticker did not keep up: %.0f away", d)
+	}
+	if off := angleOff(angleTo(p.Body.X, p.Body.Y, n.Body.X, n.Body.Y), p.Body.Yaw); off > 0.05 {
+		t.Errorf("sticker is %.2f rad off facing the creature", off)
+	}
+
+	// The command again ends it.
+	r.z.Stick(p)
+	if p.follow != 0 || p.stick || !hasMsg("You stop sticking") {
+		t.Errorf("second /stick: follow %d stick %v", p.follow, p.stick)
+	}
+
+	// A movement key ends it.
+	r.z.Stick(p)
+	p.queue = []stepRun{{n: 1, k: Keys{Fwd: 1}}}
+	r.ticks(1)
+	if p.follow != 0 || p.stick {
+		t.Error("a movement key did not end the stick")
+	}
+
+	// A target that gets too far is lost.
+	p.queue, p.queuedSteps = nil, 0
+	r.z.Stick(p)
+	n.Body.X = p.Body.X + StickBreak + 500
+	run(1)
+	if p.follow != 0 || p.stick {
+		t.Error("the stick held to a creature far out of range")
 	}
 }
 

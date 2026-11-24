@@ -53,6 +53,7 @@ const (
 	TAbandonTask  = "abandon-task" // give up the task you hold
 	TUseItem      = "use-item"     // use the item in a pack slot (a poison goes on a weapon)
 	TShoot        = "shoot"        // draw a bow at the held target, switch Critical Shot or Rapid Fire, or stop
+	TDelve        = "delve"        // right-click: ask for the details of an item, spell or style
 )
 
 // Message types, server to client.
@@ -101,6 +102,7 @@ const (
 	TPet         = "pet"         // your pet: its name, level, health, stance and orders; closed when it is gone
 	TTask        = "task"        // your task: what it is, its progress and time left; on false when you hold none
 	TRecast      = "recast"      // a spell you cast has a recast: its id and the seconds until it is ready
+	TDelveInfo   = "delveinfo"   // the details a delve asked for
 )
 
 // Envelope reads just the type of a message.
@@ -392,6 +394,13 @@ type InvItem struct {
 	Detail string `json:"d,omitempty"`
 	Price  int64  `json:"pr,omitempty"` // in copper, on a shop's items
 	Poison int    `json:"ps,omitempty"` // a poisoned weapon: the hits the poison has left
+	// What the item is in the item table's own numbers, so the client can pick its picture:
+	// ot the object type (11 sword, 12 hammer, 13 axe, 14 spear, 15 composite bow, 43 arrow, ...),
+	// ty the item type (12 for a two-handed weapon, 21 to 28 the armour slots, ...) and sz a
+	// shield's size, 1 to 3.
+	ObjType  int `json:"ot,omitempty"`
+	ItemType int `json:"ty,omitempty"`
+	Size     int `json:"sz,omitempty"`
 }
 
 // Inv is a full inventory.
@@ -605,6 +614,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &Buy{}
 	case TSell:
 		v = &Sell{}
+	case TDelve:
+		v = &Delve{}
 	case TRepair:
 		v = &Repair{}
 	case TBarSet:
@@ -731,6 +742,28 @@ type AskTask struct {
 type UseItem struct {
 	T    string `json:"t"`
 	Slot int    `json:"slot"`
+}
+
+// Delve asks for the details of one thing, as right-click does in the stock
+// client. From says where it is shown: "inv" (a pack, worn or vault slot, by
+// Slot), "shop" (an item of the open shop, by ID), "loot" (a corpse's item,
+// by Corpse and Slot as its index), "spell" or "style" (by ID).
+type Delve struct {
+	T      string `json:"t"`
+	From   string `json:"from"`
+	Slot   int    `json:"slot,omitempty"`
+	ID     string `json:"id,omitempty"`
+	Corpse int64  `json:"corpse,omitempty"`
+}
+
+// DelveInfo is what a delve found. Con is true for a piece of gear: the client
+// colours its name by Level against the player's own, as it does a creature's.
+type DelveInfo struct {
+	T     string   `json:"t"`
+	Name  string   `json:"nm"`
+	Level int      `json:"lv,omitempty"`
+	Con   bool     `json:"con,omitempty"`
+	Lines []string `json:"ln"`
 }
 
 // Shoot is the archer's bow order. Mode "" draws at the held target and keeps

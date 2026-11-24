@@ -382,6 +382,8 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 		z.Do(func() { z.AskTask(p, m.ID) })
 	case *protocol.UseItem:
 		z.Do(func() { z.UseItem(p, m.Slot) })
+	case *protocol.Delve:
+		z.Do(func() { z.Delve(p, m) })
 	case *protocol.Shoot:
 		z.Do(func() { z.Shoot(p, m.Mode) })
 	case *protocol.RezAnswer:

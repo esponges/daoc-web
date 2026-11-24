@@ -16,26 +16,26 @@ export const COMMAND_ACTIONS = {
   Release: 'release',
   Follow: 'follow',
   Face: 'face',
+  Stick: 'stick',
 };
 
 // Why the rest are greyed.
 export const COMMAND_WHY = {
-  Stick: 'Sticking to a target is not built yet.',
   Bonuses: 'The bonuses list is not built yet.',
   RespecRealm: 'There are no realm abilities to respec.',
 };
 
 // createCommandWindow builds the window, stock or plain. onAction(name) gets
-// attack, sprint, sit, pray, release, follow or face. toggle() shows or hides it.
+// attack, sprint, sit, pray, release, follow, stick or face. toggle() shows or hides it.
 export function createCommandWindow(doc, data, { onAction, mover } = {}) {
   if (data && data.window && data.window('command')) return createStockCommand(doc, data, { onAction, mover });
   const root = doc.createElement('div');
   root.className = 'panel command';
   let open = true;
-  for (const [label, action] of [['Sit', 'sit'], ['Sprint', 'sprint'], ['Follow', 'follow'], ['Face', 'face']]) {
+  for (const [label, action] of [['Sit', 'sit'], ['Sprint', 'sprint'], ['Follow', 'follow'], ['Stick', 'stick'], ['Face', 'face']]) {
     const b = doc.createElement('button');
     b.textContent = label;
-    b.title = { Sit: 'Sit or stand (X)', Sprint: 'Sprint on or off (Z)', Follow: 'Follow your targeted player', Face: 'Turn to face your target' }[label];
+    b.title = { Sit: 'Sit or stand (X)', Sprint: 'Sprint on or off (Z)', Follow: 'Follow your targeted player', Stick: 'Keep close to your target and face it', Face: 'Turn to face your target' }[label];
     b.addEventListener('click', () => onAction?.(action));
     root.appendChild(b);
   }

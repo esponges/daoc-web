@@ -269,6 +269,7 @@ func (z *Zone) Face(p *Player) {
 func (z *Zone) Follow(p *Player) {
 	if p.follow != 0 {
 		p.follow = 0
+		p.stick = false
 		sys(p, "You stop following.")
 		return
 	}
@@ -281,24 +282,92 @@ func (z *Zone) Follow(p *Player) {
 	sys(p, "You follow "+o.Char.Name+".")
 }
 
+// StickBreak is how far a target may get from a player who sticks to it
+// before they lose it.
+const StickBreak = 1500.0
+
+// Stick keeps the player within melee range of their target, a player or a
+// creature, facing it, until they press a movement key, the target dies or
+// gets away, or they give the command again.
+func (z *Zone) Stick(p *Player) {
+	if p.follow != 0 {
+		was := p.stick
+		p.follow, p.stick = 0, false
+		if was {
+			sys(p, "You stop sticking.")
+		} else {
+			sys(p, "You stop following.")
+		}
+		return
+	}
+	if p.dead || p.ride != nil {
+		return
+	}
+	var name string
+	if o := z.players[p.target]; o != nil {
+		if o == p || o.dead {
+			sys(p, "Target something to stick to.")
+			return
+		}
+		name = o.Char.Name
+	} else if n := z.byID[p.target]; n != nil && n.fightable(z) {
+		name = n.title()
+	} else {
+		sys(p, "Target something to stick to.")
+		return
+	}
+	p.follow, p.stick = p.target, true
+	sys(p, "You stick to "+name+".")
+}
+
+// followee finds who a following or sticking player is after: where they
+// are and the gap to keep. A follower only follows players; a sticker also
+// sticks to a creature, close enough to strike it.
+func (z *Zone) followee(p *Player) (x, y, gap float64, ok bool) {
+	if o := z.players[p.follow]; o != nil {
+		if o.dead || o.closed.Load() || o == p {
+			return 0, 0, 0, false
+		}
+		gap = FollowGap
+		if p.stick {
+			gap = StickGap
+		}
+		return o.Body.X, o.Body.Y, gap, true
+	}
+	if n := z.byID[p.follow]; p.stick && n != nil && n.fightable(z) {
+		return n.Body.X, n.Body.Y, StickGap + n.Reach*0.5, true
+	}
+	return 0, 0, 0, false
+}
+
+// StickGap is how close a sticker stays: inside the reach of a weapon, with a
+// little to spare so a creature that steps back is still in reach.
+const StickGap = 80.0
+
 // followStep moves a following player toward who they follow, with the same
 // step maths as their own input. It returns whether it took the tick over.
 func (z *Zone) followStep(p *Player) bool {
 	if p.follow == 0 {
 		return false
 	}
-	o := z.players[p.follow]
+	ox, oy, gap, found := z.followee(p)
 	moving := false
 	for _, r := range p.queue {
 		if r.k.Fwd != 0 || r.k.Strafe != 0 || r.k.Jump {
 			moving = true
 		}
 	}
-	if o == nil || o.dead || o.closed.Load() || moving || p.dead || p.ride != nil {
-		if moving {
+	away := found && p.stick && math.Hypot(ox-p.Body.X, oy-p.Body.Y) > StickBreak
+	if !found || away || moving || p.dead || p.ride != nil {
+		switch {
+		case moving && p.stick:
+			sys(p, "You stop sticking.")
+		case moving:
 			sys(p, "You stop following.")
+		case p.stick && !p.dead:
+			sys(p, "You lose your target.")
 		}
-		p.follow = 0
+		p.follow, p.stick = 0, false
 		return false
 	}
 	z.standUp(p)
@@ -310,10 +379,10 @@ func (z *Zone) followStep(p *Player) bool {
 	moved := false
 	for p.budget >= 1 {
 		p.budget--
-		if math.Hypot(o.Body.X-p.Body.X, o.Body.Y-p.Body.Y) <= FollowGap {
+		if math.Hypot(ox-p.Body.X, oy-p.Body.Y) <= gap {
 			break
 		}
-		p.Body.Yaw = angleTo(p.Body.X, p.Body.Y, o.Body.X, o.Body.Y)
+		p.Body.Yaw = angleTo(p.Body.X, p.Body.Y, ox, oy)
 		k := Keys{Fwd: 1, Run: true, Slow: 1 - speedFactor(p), Sprint: p.sprint}
 		m := Step(z.G, z.Mv, &p.Body, k)
 		z.landing(p, m)
@@ -329,6 +398,9 @@ func (z *Zone) followStep(p *Player) bool {
 	p.motion = Motion{}
 	if moved {
 		p.motion = last
+	}
+	if p.stick {
+		p.Body.Yaw = angleTo(p.Body.X, p.Body.Y, ox, oy) // a sticker keeps facing it, in reach or not
 	}
 	z.settleAir(p)
 	p.correct = true // the client does not predict a follow: it takes the server's place

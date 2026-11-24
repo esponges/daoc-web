@@ -28,6 +28,7 @@ import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour, infoLines } from './sheet.js';
 import { createStockQuiver } from './quiverwin.js';
+import { delveEntries, rightClick, DELVE_HINT, REMOVE_HINT } from './delve.js';
 import { createStockTrainer, pairLeft } from './trainwin.js';
 import { createStockTalk, healerTalk } from './talk.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
@@ -106,8 +107,10 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     });
     input.addEventListener('keyup', (e) => e.stopPropagation());
     chatApi = {
-      say(text, cls = '') {
-        lines.appendChild(el('div', cls, text));
+      say(text, cls = '', color) {
+        const row = el('div', cls, text);
+        if (color) row.style.color = color;
+        lines.appendChild(row);
         while (lines.childElementCount > 9) lines.firstChild.remove();
       },
       open(prefill = '') { isTyping = true; chat.classList.add('open'); input.value = prefill; input.focus(); },
@@ -115,12 +118,15 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       get typing() { return isTyping; },
     };
   }
-  const say = (text, cls = '') => chatApi.say(text, cls);
+  const say = (text, cls = '', color) => chatApi.say(text, cls, color);
   const openChat = (prefill = '') => chatApi.open(prefill);
   net.on.chat = (m) => {
     const l = chatLine(m);
     say(l.text, l.kind);
   };
+  // Right-click on an item, spell or style: the server's answer goes to the log, the
+  // name of a piece of gear in its con colour against the player's own level.
+  net.on.delveinfo = (m) => { for (const e of delveEntries(m, net.me?.level || 1, conColor)) say(e.text, e.kind, e.color); };
   // A refusal ends a run of buys: the quantity stops at the first the server turns down.
   net.on.err = (m) => { say(m.text, 'err'); stockShop?.fail(); if (!stock) log?.(m.text, 'info'); };
 
@@ -133,7 +139,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     root.appendChild(summary.el);
     // The menu bar across the top carries the experience and the money, so
     // the separate experience window is not needed.
-    charWins = createStockCharWindows(document, stock, { onCast: (id) => castSpell(id), onAssign: (id) => setSpellSlot(id, -1), mover, styleIcon: styleIconNumber,
+    charWins = createStockCharWindows(document, stock, { onCast: (id) => castSpell(id), onAssign: (id) => setSpellSlot(id, -1), onDelve: (kind, id) => net.delve(kind, { id: String(id) }), mover, styleIcon: styleIconNumber,
       onAction: (a) => {
         if (a === 'concentration') concWin.toggle();
         else if (a === 'pet') { if (!petWin.isOpen) say('You have no pet.', 'sys'); }
@@ -171,7 +177,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const bar = el('div', 'stylebar');
   root.appendChild(bar);
   if (stock) {
-    stockBar = createStockBar(document, stock, { onUse: (i) => net.style(i), onDrop: (slot, id) => net.barSet(slot, id), keys: BAR_KEYS.map((k) => k.replace('Digit', '')) });
+    stockBar = createStockBar(document, stock, { onUse: (i) => net.style(i), onDelve: (id) => net.delve('style', { id: String(id) }), onDrop: (slot, id) => net.barSet(slot, id), keys: BAR_KEYS.map((k) => k.replace('Digit', '')) });
     bar.appendChild(stockBar.el);
   }
   let barSlots = [];
@@ -183,8 +189,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       b.dataset.slot = i;
       b.append(el('span', 'key', i < BAR_KEYS.length ? BAR_KEYS[i].replace('Digit', '') : ''), el('span', 'nm', s.nm),
         el('span', 'cost', s.cost + ' end'));
-      b.title = s.nm + ' (' + s.opens + ', level ' + s.lv + ')';
+      b.title = s.nm + ' (' + s.opens + ', level ' + s.lv + ') · ' + DELVE_HINT;
       b.addEventListener('click', () => net.style(i));
+      b.addEventListener('contextmenu', (e) => { e.preventDefault(); net.delve('style', { id: String(s.id) }); });
       bar.appendChild(b);
     });
   };
@@ -210,6 +217,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     onCast: castSpell,
     onAssign: (id, slot) => setSpellSlot(id, slot),
     onClear: (slot) => { spellSlots[slot] = 0; saveSlots(); },
+    onDelve: (id) => net.delve('spell', { id: String(id) }),
   };
   // The stock quickbar, drawn from the skin's art, when the interface is converted.
   const spellBar = stock
@@ -239,7 +247,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   }
   let plainSpells = null;
   if (!stock) {
-    plainSpells = createSpellPanel(document, { onCast: castSpell, onAssign: (id) => setSpellSlot(id, -1) });
+    plainSpells = createSpellPanel(document, { onCast: castSpell, onAssign: (id) => setSpellSlot(id, -1), onDelve: barHandlers.onDelve });
     root.appendChild(plainSpells.el);
   }
   const toggleSpells = () => {
@@ -306,6 +314,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
         else if (it && it.k === 'poison') net.useItem(slot);
       },
       onDestroy: (slot) => net.equip(slot, -1),
+      onDelve: (slot) => net.delve('inv', { slot }),
       onUnequip: (slot) => {
         const free = stockPack.freeSlot();
         if (free >= 0) net.equip(slot, free);
@@ -324,11 +333,12 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       const c = el('div', 'cell worn' + (it ? ' full' : ''));
       c.append(el('small', '', SLOT_NAMES[s]), el('span', '', it ? it.nm : '—'));
       if (it) {
-        c.title = it.nm + (it.d ? ' — ' + it.d : '');
+        c.title = it.nm + (it.d ? ' — ' + it.d : '') + '\n' + DELVE_HINT;
         c.addEventListener('click', () => {
           const free = [...Array(PACK).keys()].find((k) => !bySlot.has(k));
           if (free !== undefined) net.equip(s, free);
         });
+        c.addEventListener('contextmenu', (e) => { e.preventDefault(); net.delve('inv', { slot: s }); });
       }
       worn.appendChild(c);
     }
@@ -337,7 +347,8 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       const c = el('div', 'cell' + (it ? ' full ' + (it.k || '') : ''));
       if (it) {
         c.textContent = it.nm + (it.n > 1 ? ' ×' + it.n : '');
-        c.title = it.nm + (it.d ? ' — ' + it.d : '') + '\nclick: equip · shift-click: destroy';
+        c.title = it.nm + (it.d ? ' — ' + it.d : '') + '\nclick: equip · shift-click: destroy · ' + DELVE_HINT;
+        c.addEventListener('contextmenu', (e) => { e.preventDefault(); net.delve('inv', { slot: i }); });
         c.addEventListener('click', (e) => {
           if (e.shiftKey) { net.equip(i, -1); return; }
           if (tradeOpen()) { net.tradeOp('add', { slot: i }); return; }
@@ -366,7 +377,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   // The stock loot window when the interface is there.
   let stockLoot = null;
   if (stock) {
-    stockLoot = createStockLoot(document, stock, { onTake: (id, slot) => net.loot(id, slot), formatMoney: money });
+    stockLoot = createStockLoot(document, stock, { onTake: (id, slot) => net.loot(id, slot), onDelve: (id, slot) => net.delve('loot', { corpse: id, slot }), formatMoney: money });
     Object.assign(stockLoot.el.style, { position: 'fixed', left: '50%', top: '180px', marginLeft: '-135px', zIndex: 15 });
     root.appendChild(stockLoot.el);
   }
@@ -380,6 +391,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     (m.items || []).forEach((it) => {
       const r = el('div', 'row', it.nm + (it.d ? ' — ' + it.d : ''));
       r.addEventListener('click', () => net.loot(m.id, it.slot));
+      r.addEventListener('contextmenu', (e) => { e.preventDefault(); net.delve('loot', { corpse: m.id, slot: it.slot }); });
       lootWin.appendChild(r);
     });
     const all = el('button', '', 'Take all');
@@ -405,7 +417,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   }
   let stockShop = null;
   if (stock) {
-    stockShop = createStockShop(document, stock, { onBuy: (id) => net.buy(id), onClose: () => hideShop(), formatMoney: money, mover });
+    stockShop = createStockShop(document, stock, { onBuy: (id) => net.buy(id), onDelve: (id) => net.delve('shop', { id }), onClose: () => hideShop(), formatMoney: money, mover });
     root.appendChild(stockShop.el);
   }
   const shopOpen = () => (stockShop ? stockShop.isOpen : shopPanel.classList.contains('open'));
@@ -420,6 +432,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       const r = el('div', 'row', it.nm + (it.d ? ' — ' + it.d : '') + '  ' + money(it.pr || 0));
       if ((it.pr || 0) > cash) r.style.opacity = '.55';
       r.addEventListener('click', () => net.buy(it.id));
+      r.addEventListener('contextmenu', (e) => { e.preventDefault(); net.delve('shop', { id: it.id }); });
       shopPanel.appendChild(r);
     }
     const close = el('button', '', 'Close');
@@ -449,6 +462,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   const vaultWin = createVault(document, stock || null, {
     onMove: (from, to) => net.equip(from, to),
     onClose: () => hideVault(),
+    onDelve: (slot) => net.delve('inv', { slot }),
     getInv: () => net.inv, mover,
   });
   if (stock && !stock.window('vault_window')) Object.assign(vaultWin.el.style, { position: 'fixed', left: '50%', top: '110px', marginLeft: '-170px', zIndex: 15 });
@@ -688,6 +702,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
       else if (a === 'sprint') sendLine('/sprint');
       else if (a === 'follow') sendLine('/follow');
       else if (a === 'face') sendLine('/face');
+      else if (a === 'stick') sendLine('/stick');
       else if (a === 'pray') sendLine('/pray');
       else if (a === 'release') net.release();
       else if (a === 'attack') {

@@ -64,9 +64,10 @@ const COIN_ADAPTERS = ['merchant_mithril', 'merchant_platinum', 'merchant_gold',
 
 // createStockShop builds the window, hidden. show(shop) fills and opens it.
 //   onBuy(itemId)   one unit is to be bought (called once per unit, in turn)
+//   onDelve(itemId) a row was right-clicked
 //   onClose()       the window was closed
 // ack() and fail() tell it how a buy went, so a quantity stops at a refusal.
-export function createStockShop(doc, data, { onBuy, onClose, formatMoney = String, mover } = {}) {
+export function createStockShop(doc, data, { onBuy, onDelve, onClose, formatMoney = String, mover } = {}) {
   let shop = null, money = 0, open = false;
   let page = 0, selected = -1, qty = 1, keep = false;
   const queue = createBuyQueue((id) => onBuy?.(id));
@@ -107,7 +108,7 @@ export function createStockShop(doc, data, { onBuy, onClose, formatMoney = Strin
         text: r.name + (r.price ? '   ' + r.priceText : ''),
         icon: itemIconNumber(r.item),
         on: canAfford(r, money),
-        title: [r.detail, r.priceText].filter(Boolean).join(' - '),
+        title: [r.detail, r.priceText, 'Right-click for more information.'].filter(Boolean).join(' - '),
       })));
       list.select(selected >= 0 && Math.floor(selected / perPage()) === page ? selected % perPage() : -1);
     }
@@ -130,6 +131,7 @@ export function createStockShop(doc, data, { onBuy, onClose, formatMoney = Strin
     if (!keep) setQty(1);
   }
   if (list) list.onSelect((i) => { selected = page * perPage() + i; fields(); });
+  if (list) list.onContext((i) => { const r = rows[page * perPage() + i]; if (r) onDelve?.(r.id); });
 
   return {
     el: win.el,

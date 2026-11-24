@@ -126,7 +126,8 @@ type Player struct {
 	trade          *trade            // the trade this player is in
 	social         socialState       // friends, ignores, anon, away and looking for a group
 	guildTag       atomic.Value      // the "<Guild>" line other players see under the name
-	follow         int64             // the player being followed by /follow, 0 for none
+	follow         int64             // the player being followed by /follow, or whoever /stick holds to, 0 for none
+	stick          bool              // follow is a /stick: a creature too, kept in melee range and faced
 	duel           *duel             // the duel this player is in
 	duelOffer      *duelOffer        // a challenge waiting for this player's answer
 	ab             abilityState      // Guard, Protect, Intercept and Engage in force

@@ -50,7 +50,7 @@ so a client that ignores `effects` is corrected.
 
 The step also moves a body up and down: a jump starts with the flag bit 1 on the ground, a body in the air falls under gravity, ground that drops away by more than 12 units in a step makes it fall, and deep water holds it afloat at the surface. A client keeps stepping (with no keys) while it is in the air, and a body whose client stops sending is stepped down by the server after half a second. `you` carries the vertical state so the client's replay picks up where the server is: `air` (true in the air), `vz` (vertical speed), `pk` (the highest point of this stretch of air) and `jp` (the air began with a jump). A landing from a height costs hit points by the rule (`rules-falling`) and arrives as a `fall` event with `n` the damage and `x` the line.
 
-Sitting, standing and sprinting are the chat commands `/sit` (a toggle), `/stand` and `/sprint` (a toggle). A player entity carries `ps`, its posture: `sit`, `air` or `swim`, absent when standing on the ground, and `vz` while in the air. `effects` has `spr` true while sprint is on: predict running steps at 1.25 times run speed.
+Sitting, standing and sprinting are the chat commands `/sit` (a toggle), `/stand` and `/sprint` (a toggle). A player entity carries `ps`, its posture: `sit`, `air` or `swim`, absent when standing on the ground, and `vz` while in the air. `effects` has `spr` true while sprint is on: predict running steps at 1.30 times run speed.
 
 The torch is the chat command `/torch` (a toggle; `/torch on` and `/torch off` set it). It is lit unless put out. A player entity carries `tc` true while its torch is lit, and `you` carries `tc` for your own; a dead player's torch is not lit. The client draws a lit torch as a light around its bearer after dusk, and always inside.
 
@@ -157,6 +157,14 @@ icon numbers come from a later client than the one a player installs, so the
 web client draws a picture by `spec` and does not look `icon` up. Items in
 `inv` and `corpse` carry `k` (weapon, shield, armour, misc), `w` (the worn slot
 an armour piece belongs in) and `line` (a weapon's line) for the same reason.
+They also carry the item table's own numbers, so the client can pick the right
+picture: `ot`, the object type (8 staff, 11 sword, 12 hammer, 13 axe, 14 spear,
+15 composite bow, 16 thrown, 17 left axe, 25 hand to hand, 32 to 36 cloth to plate,
+41 magical, 42 shield, 43 arrow, 45 instrument, 46 poison, 47 alchemy tincture, 48
+gem or rune), `ty`, the item type (12 a two-handed weapon; 21 head, 22 hands, 23
+feet, 25 torso, 27 legs, 28 arms; 26 cloak, 29 necklace, 32 belt, 33 bracer, 35 ring,
+40 a potion or other miscellany) and `sz`, a shield's size, 1 to 3. All three are
+absent when zero.
 
 `smith` is what a blacksmith (`ik:"smith"`) can repair for the player, sent when `interact` opens it: `npc`, `nm`, and `items`, each an `inv`-style row with `d` its condition and `pr` the repair price in copper. `repair` with a `slot` asks for a price and is answered with `repairquote` (`slot`, `nm`, `price`); `repair` with `accept` and the `price` they were quoted pays it, repairs the item to whole and sends a fresh `inv` and `smith` (or `err` if they cannot afford it; a changed price is quoted again). `smithclose` follows when they walk out of reach. Weapon, shield and armour rows in `inv` carry their condition in `d`.
 
@@ -209,11 +217,15 @@ A trade is two players in one zone. Each change to either offer arrives to both 
 
 `/friend <name>` toggles a friend and `/ignore <name>` an ignore (both kept in the player store). `friends` (`list` of `{nm, on}`) is sent at login and whenever the list or a friend's presence changes; a friend coming or going is also a `sys` line. An ignored player's say, shout, emote and tells do not reach you. `/anon` hides your level and class from `/who`, `/lfg` marks you `[LFG]` there, `/afk [text]` answers tells with the text until you speak or move.
 
-`/follow` walks you after your targeted player at run speed until you press a movement key or repeat the command; while it lasts `you.fl` is true, the server places you each tick and the client must not predict. `/assist` takes your target's target, `/face` turns you to your target, `/inspect` lists your targeted player's worn items as `sys` lines.
+`/follow` walks you after your targeted player at run speed until you press a movement key or repeat the command; while it lasts `you.fl` is true, the server places you each tick and the client must not predict. `/stick` does the same for any target, a creature too: you close to melee range and keep facing it, until you press a movement key, it dies or gets 1500 units away, or you repeat the command; `you.fl` is true while it lasts. `/assist` takes your target's target, `/face` turns you to your target, `/inspect` lists your targeted player's worn items as `sys` lines.
 
 ### Guilds
 
 `/gc <form|invite|remove|leave|promote|demote|motd|omotd|note|emblem|ally|allyoff|info>` runs the guild commands; `/gu`, `/o` and `/as` talk on the guild, officer and alliance channels (chat messages with `ch` `guild`, `officer` or `alliance`). `form <name>` at a Guild Registrar, by the leader of a group of 8 of one realm, asks every member to `/accept`; the fee is taken from the leader when all agree. Invitations and alliance offers are answered with `/accept` and `/decline`. `guild` is sent at login and when anything about your guild changes: `nm` (empty when you have none), `rk` and `ti` (your rank and its title), `motd`, `omotd` (officers only), `em` (emblem number), `al` (the leading guild of your alliance), `pm` (what your rank may do, as bits: 1 guild speak, 2 guild hear, 4 officer speak, 8 officer hear, 16 invite, 32 promote, 64 remove, 128 emblem, 256 message) and `mem` (`{nm, rk, nt, on, lv, cl}`, level and class for members in the game). A player in a guild has `<Name>` in `gd` on their entity and in `/who`.
+
+### Delve
+
+Right-click on an item, spell or style asks what it is: send `delve` with `from` and what names the thing. `from` is `inv` (a pack, worn or vault slot, by `slot`), `shop` (an item of the open shop, by `id`, the item id), `loot` (an item on a corpse in reach: `corpse` and `slot`, the index in the loot list), `spell` (a spell in your book, `id` its number as text) or `style` (a style of your class, `id` its number as text). The server answers `delveinfo`: `nm`, `lv` (the item's level, or the level a spell or style opens at), `con` (true for weapons, shields and armour: the client colours the name by `lv` against the player's own level, as it does a creature's) and `ln`, the lines to show: for gear its kind, damage and speed or armour factor, quality, condition, who made it, bonuses and worth; for a spell its target, range, damage or effect, cast time, recast, duration and cost; for a style its spec, weapon, endurance and bonuses. Anything the player cannot see (a shop item the open shop does not sell, a spell not in their book, an empty slot) is `err` with `code` `delve`. Stock shows it on right-click, and Shift+Right-click removes a quickbar or spell bar slot.
 
 ### Poisons
 
