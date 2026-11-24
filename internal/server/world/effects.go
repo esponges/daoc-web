@@ -180,7 +180,11 @@ func speedFactor(c combatant) float64 {
 	if charging { // no slow takes hold while a Charge lasts
 		slows, boost = nil, math.Max(boost, rules.ChargeFactor)
 	}
-	return rules.WithBoost(rules.SpeedFactor(held(c), slows...), boost) * stealthFactor(c)
+	f := rules.WithBoost(rules.SpeedFactor(held(c), slows...), boost) * stealthFactor(c)
+	if p, ok := c.(*Player); ok && p.gmSpeed > 0 && f > 0 {
+		f *= p.gmSpeed // an administrator's multiplier; a hold still holds
+	}
+	return f
 }
 
 // resistBonus is the item bonus type that raises a resist, by damage type.

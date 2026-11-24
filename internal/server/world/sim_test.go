@@ -683,6 +683,19 @@ func TestAdminCommandsNeedAdmin(t *testing.T) {
 	if p.Char.Money != before+50000 {
 		t.Error("a negative amount changed the purse")
 	}
+	base := speedFactor(p)
+	r.w.GM(p, "speed 3")
+	if got := speedFactor(p); got < base*2.99 || got > base*3.01 {
+		t.Errorf("speed 3: factor %v, want 3 x %v", got, base)
+	}
+	r.w.GM(p, "speed 99")
+	if got := speedFactor(p); got > base*3.01 {
+		t.Errorf("speed 99 was accepted: factor %v", got)
+	}
+	r.w.GM(p, "speed 1")
+	if got := speedFactor(p); got != base {
+		t.Errorf("speed 1: factor %v, want %v", got, base)
+	}
 }
 
 func TestPackmatesJoin(t *testing.T) {

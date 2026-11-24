@@ -262,7 +262,7 @@ Keys in network mode: `W/S/A/D/Q/E` and the mouse as before, `Enter` to talk
 (`!` to shout, `/who`, `/pray`, `/bind`, `/invite`, `/disband`, `/tell`, `/g`), `1` attack, `2`-`9`, `0` the styles on the bar (lit when
 usable), `I` the pack, `C` the character sheet (`Shift+C` the free camera), a
 click on a corpse to loot it, a right-click on a merchant, trainer or healer. `Space` jumps, `X` (or `/sit`) sits and stands, `Z` (or `/sprint`) turns sprint on and off, `T` (or `/torch`) lights and puts out your torch (others see its light at night; put it out to be harder to spot), `G` then a click on the ground sets a ground target, `M` opens the Command window, and the classic emotes are slash commands (`/wave`, `/bow`, `/dance`, `/cheer`, `/clap`, `/cry`, `/curtsey`, `/flex`, `/kiss`, `/laugh`, `/point`, `/salute`, `/bang`, `/victory`, `/beckon`, `/blush`). A seated character regains health, power and endurance twice as fast, and stands up to do anything else; a long fall costs health, and a lake is swum, not walked. The numbers are the rule book's `rules-resting`, `rules-falling` and `rules-movement`, all provisional. Administrators: `/gm goto
-103`, `/gm tp x y`, `/gm level n`, `/gm give <item id>`, `/gm money <gold>`.
+103`, `/gm tp x y`, `/gm level n`, `/gm give <item id>`, `/gm money <gold>`, `/gm speed <1..10>`.
 
 ### Where the world's content comes from
 

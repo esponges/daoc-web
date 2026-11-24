@@ -603,7 +603,7 @@ func (w *World) GM(p *Player, line string) {
 	}
 	f := strings.Fields(line)
 	if len(f) == 0 {
-		say("gm: goto <zone> | tp <x> <y> | level <n> | heal | give <item> [n] | money <gold> | kill | where")
+		say("gm: goto <zone> | tp <x> <y> | level <n> | heal | give <item> [n] | money <gold> | speed <x> | kill | where")
 		return
 	}
 	num := func(i int) (float64, bool) {
@@ -676,6 +676,17 @@ func (w *World) GM(p *Player, line string) {
 		p.Char.Money += int64(v * 10000)
 		p.sendInv(z.W.Cat, p.Char.Money)
 		w.savePlayer(p)
+	case "speed":
+		v, ok := num(1)
+		if !ok || v < 1 || v > 10 {
+			say("speed <1..10> (1 is normal)")
+			return
+		}
+		p.gmSpeed = v
+		if v == 1 {
+			p.gmSpeed = 0
+		}
+		z.effectsChanged(p) // tells the client, so prediction keeps up
 	case "kill":
 		if n := z.byID[p.target]; n != nil && !n.dead() {
 			n.hurtBy[p.ID] += n.HP
