@@ -393,7 +393,7 @@ func (z *Zone) questTouch(p *Player, n *NPC) bool {
 func rewardText(p *Player, d *QuestDef) string {
 	var parts []string
 	if d.Rewards.XPPct > 0 {
-		parts = append(parts, fmt.Sprintf("%.0f%% of a level", d.Rewards.XPPct))
+		parts = append(parts, fmt.Sprintf("%.1f%% of a level", d.Rewards.XPPct))
 	}
 	if d.Rewards.Money > 0 {
 		parts = append(parts, moneyText(d.Rewards.Money))

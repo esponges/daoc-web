@@ -312,6 +312,9 @@ func (z *Zone) join(p *Player) {
 	p.send(protocol.Welcome{T: protocol.TWelcome, V: protocol.Version, You: p.ID, Name: c.Name, Char: p.Arch.Key, Race: c.Race, Female: c.Gender == 1, Face: c.Face, Hair: c.Hair,
 		Zone: z.ID, X: p.Body.X, Y: p.Body.Y, Z: p.Body.Z, Yaw: p.Body.Yaw, Level: c.Level, Admin: p.Admin})
 	p.welcomed = true
+	if len(p.quests) > 0 {
+		z.sendQuests(p) // the journal of a returning player
+	}
 	p.statsSent = p.statsMsg(w.Cat)
 	p.send(p.statsSent)
 	if p.sh.maxConc > 0 {
