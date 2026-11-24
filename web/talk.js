@@ -31,6 +31,7 @@ export function createStockTalk(doc, data, { onAccept, onClose, mover } = {}) {
       win.setText('interact_title', v.title || '');
       const area = win.area('1000');
       if (area) area.setText(v.text || '');
+      if (accept) accept.style.display = v.accept ? '' : 'none'; // a greeting has nothing to accept
       win.el.style.display = 'block';
       mover?.restore('interact');
       return v;
@@ -46,8 +47,9 @@ export function createStockTalk(doc, data, { onAccept, onClose, mover } = {}) {
   const put = (label, x, fn) => {
     const b = button(doc, data, 'button_large', x, BTN_Y, fn, label);
     win.el.appendChild(b);
+    return b;
   };
-  put('ACCEPT', 120, () => { onAccept?.(); api.hide(); });
+  const accept = put('ACCEPT', 120, () => { onAccept?.(); api.hide(); });
   put('CLOSE', 200, () => api.hide());
   return api;
 }

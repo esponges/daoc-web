@@ -24,7 +24,8 @@ const t = trainerView({ t: 'trainer', npc: 4, nm: 'Asmund', pts: 12,
   specs: [{ key: 'Hammer', nm: 'Hammer', lv: 3, cost: 4, can: true }, { key: 'Axe', nm: 'Axe', lv: 10, cost: 11 }] });
 assert.equal(t.title, 'Asmund');
 assert.equal(t.rows[0].can, true);
-assert.match(t.rows[0].hint, /Train to 4 for 4 points/);
+assert.match(t.rows[0].hint, /Train Hammer to 4 for 4 points/);
+assert.ok(t.rows[1].hint.includes('Axe cannot go above your level (10).'), 'a spec at the level says so');
 assert.equal(t.rows[1].can, false);
 
 assert.equal(healerText({ nm: 'Hilda', lost: 3, price: 352, total: 1056 }, (c) => c + 'c'),

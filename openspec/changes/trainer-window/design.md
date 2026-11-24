@@ -66,9 +66,9 @@ belongs to realm skills.
 
 ### 7. Leaving reach closes the window
 
-The client closes the Train window (and the talk window it opened) when the trainer is further than
-the interact range, using the same range the server checks. This is a client courtesy; the server
-check in `Train` is unchanged.
+The server tracks the open trainer as it tracks an open shop and sends `trainclose` when the player
+walks out of reach, dies or the trainer is gone (checked each tick, like `checkShop`). The client
+closes the Train window and the greeting it opened. The reach check in `Train` is unchanged.
 
 ## Risks
 

@@ -170,6 +170,7 @@ export class NetClient {
       case 'vaultclose': this.vault = null; this.on.vaultclose?.(); break;
       case 'stats': this.stats = m; this.on.stats?.(m); break;
       case 'trainer': this.trainer = m; this.on.trainer?.(m); break;
+      case 'trainclose': this.trainer = null; this.on.trainclose?.(); break;
       case 'healer': this.healer = m; this.on.healer?.(m); break;
       case 'group': this.group = m.members || []; this.on.group?.(this.group); break;
       case 'groupinv': this.on.groupinv?.(m); break;

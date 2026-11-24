@@ -34,16 +34,42 @@ export function sheetView(s) {
   };
 }
 
-// trainerView is a trainer's offer as rows with a train button each.
+// unlockText is one unlock in words: "5 Savage Rage (style)".
+export const unlockText = (u) => u.lv + ' ' + u.nm + (u.k ? ' (' + u.k + ')' : '');
+
+// whyNot is why a spec's next level cannot be trained: the points are short,
+// or the spec has reached the character's level (the server's two refusals).
+export function whyNot(r, points) {
+  if (r.cost > points) return 'Needs ' + r.cost + ' points; you have ' + points + '.';
+  return r.nm + ' cannot go above your level (' + r.lv + ').';
+}
+
+// infoLines is what INFO writes to the log for a spec.
+export function infoLines(r) {
+  if (!r) return ['Choose a specialization first.'];
+  const g = r.gives || [];
+  if (!g.length) return [r.name + ': nothing more to gain from training.'];
+  return [r.name + ' gives: ' + g.map(unlockText).join(', ') + '.'];
+}
+
+// trainerView is a trainer's offer as rows: name and level, the cost of the
+// next level, whether it can be trained now and a tooltip saying why or why not.
 export function trainerView(t) {
   if (!t) return null;
+  const pts = t.pts || 0;
   return {
     title: t.nm,
-    points: t.pts,
-    rows: (t.specs || []).map((r) => ({
-      key: r.key, text: r.nm + ' ' + r.lv, cost: r.cost, can: !!r.can,
-      hint: r.can ? 'Train to ' + (r.lv + 1) + ' for ' + r.cost + ' points' : 'Needs ' + r.cost + ' points, and a higher level than ' + r.lv,
-    })),
+    points: pts,
+    say: t.say || '',
+    rows: (t.specs || []).map((r) => {
+      const next = (r.gives || [])[0];
+      const head = r.can ? 'Train ' + r.nm + ' to ' + (r.lv + 1) + ' for ' + r.cost + ' points.' : whyNot(r, pts);
+      return {
+        key: r.key, name: r.nm, level: r.lv, text: r.nm + ' ' + r.lv, cost: r.cost, can: !!r.can, gives: r.gives || [],
+        reason: r.can ? '' : whyNot(r, pts),
+        hint: head + (next ? ' Next: ' + unlockText(next) + '.' : ''),
+      };
+    }),
   };
 }
 

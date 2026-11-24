@@ -489,3 +489,14 @@ func TestGuildInfo(t *testing.T) {
 		t.Errorf("no guild marshals as %s", none)
 	}
 }
+
+func TestTrainerGreetingAndUnlocksAreAdditive(t *testing.T) {
+	b, _ := json.Marshal(Trainer{T: TTrainer, Specs: []SpecRow{{Key: "Axe"}}})
+	if s := string(b); strings.Contains(s, "say") || strings.Contains(s, "gives") {
+		t.Errorf("empty fields sent: %s", s)
+	}
+	b, _ = json.Marshal(Trainer{T: TTrainer, Say: "Welcome", Specs: []SpecRow{{Key: "Axe", Gives: []Unlock{{Level: 2, Name: "Plan", Kind: "style"}}}}})
+	if s := string(b); !strings.Contains(s, `"say":"Welcome"`) || !strings.Contains(s, `"gives":[{"lv":2,"nm":"Plan","k":"style"}]`) {
+		t.Errorf("fields missing: %s", s)
+	}
+}

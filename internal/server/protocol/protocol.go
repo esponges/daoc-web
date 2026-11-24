@@ -69,6 +69,7 @@ const (
 	TBook        = "book"        // the spellbook, sent when it changes
 	TShop        = "shop"        // a merchant's stock, sent when interaction opens it
 	TShopClose   = "shopclose"   // the open shop is closed (walked away, died, moved zone)
+	TTrainClose  = "trainclose"  // the open trainer is closed (walked away, died, moved zone)
 	TSmith       = "smith"       // what a blacksmith can repair for the player, with prices
 	TSmithClose  = "smithclose"  // the repair window is closed
 	TRepairQuote = "repairquote" // the price of repairing one item, to be accepted
@@ -458,6 +459,11 @@ type ShopClose struct {
 	T string `json:"t"`
 }
 
+// TrainClose says the open trainer window is closed.
+type TrainClose struct {
+	T string `json:"t"`
+}
+
 // Corpse lists what a dead NPC dropped, for its killer.
 type Corpse struct {
 	T     string    `json:"t"`
@@ -488,6 +494,7 @@ type SpecRow struct {
 	Bonus int    `json:"bonus,omitempty"` // from items, as combat counts it
 	Cost  int    `json:"cost,omitempty"`  // of the next level, on a trainer's list
 	Can   bool   `json:"can,omitempty"`   // the next level can be trained now
+	Gives []Unlock `json:"gives,omitempty"` // on a trainer's list: up to five unlocks above the level
 }
 
 // Ability is one ability a character knows; On is false for one the server
@@ -527,6 +534,14 @@ type Trainer struct {
 	Name    string    `json:"nm"`
 	Specs   []SpecRow `json:"specs"`
 	Unspent int       `json:"pts"`
+	Say     string    `json:"say,omitempty"` // the trainer's greeting, on opening only
+}
+
+// Unlock is something a spec grants at a level: a style, an ability or a spell.
+type Unlock struct {
+	Level int    `json:"lv"`
+	Name  string `json:"nm"`
+	Kind  string `json:"k"` // "style", "ability" or "spell"
 }
 
 // Healer is a healer's offer to restore lost constitution.

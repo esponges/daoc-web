@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -33,6 +34,9 @@ func TestTrainingAtAWarriorTrainer(t *testing.T) {
 	if len(tr) != 1 || tr[0].Unspent != p.sh.unspent || len(tr[0].Specs) == 0 {
 		t.Fatalf("trainer offer %+v", tr)
 	}
+	if !strings.Contains(tr[0].Say, "Pupil") || !strings.Contains(tr[0].Say, "specialization points to spend") {
+		t.Errorf("greeting %q", tr[0].Say)
+	}
 	pts := p.sh.unspent
 	r.z.Train(p, "Hammer", 2)
 	if p.specLevel("Hammer") != 3 || p.sh.unspent != pts-rules.TrainCost(1, 3) {
@@ -42,8 +46,10 @@ func TestTrainingAtAWarriorTrainer(t *testing.T) {
 	if saved.Specs["Hammer"] != 3 {
 		t.Errorf("saved specs %v", saved.Specs)
 	}
-	if len(sentOf[protocol.Trainer](p, protocol.TTrainer)) == 0 {
+	if re := sentOf[protocol.Trainer](p, protocol.TTrainer); len(re) == 0 {
 		t.Error("the trainer's offer was not resent")
+	} else if re[0].Say != "" {
+		t.Errorf("a resent offer repeats the greeting: %q", re[0].Say)
 	}
 	// Above level is refused.
 	r.z.Train(p, "Hammer", 8)
@@ -53,11 +59,15 @@ func TestTrainingAtAWarriorTrainer(t *testing.T) {
 	// Another class's trainer will not teach.
 	errsOf(p)
 	r.z.Interact(p, 2)
-	if errs := errsOf(p); len(errs) == 0 || !strings.Contains(errs[0], "cannot teach you") {
+	if errs := errsOf(p); len(errs) == 0 || !strings.Contains(errs[0], "cannot teach you. Seek a Warrior or Viking trainer.") {
 		t.Errorf("thane trainer: %v", errs)
 	}
 	// Away from a trainer.
 	p.Body.X = 38000
+	r.z.checkTrainer(p)
+	if len(sentOf[protocol.TrainClose](p, protocol.TTrainClose)) != 1 || p.trainer != 0 {
+		t.Error("walking away did not close the trainer")
+	}
 	r.z.Train(p, "Sword", 1)
 	if p.specLevel("Sword") != 1 {
 		t.Error("trained away from a trainer")
@@ -212,5 +222,40 @@ func TestHealersRestoreConstitution(t *testing.T) {
 	saved, _ := r.st.Character(p.Acct.ID, p.Char.ID)
 	if saved.ConLost != 0 || saved.Money != 944 {
 		t.Errorf("saved lost %d money %d", saved.ConLost, saved.Money)
+	}
+}
+
+func TestSpecUnlocksAndHints(t *testing.T) {
+	c := &Catalog{
+		Styles: []StyleDef{
+			{Class: rules.ClassSavage, Name: "Low Style", Spec: "Hand to Hand", SpecLevel: 2},
+			{Class: rules.ClassSavage, Name: "Later Style", Spec: "Hand to Hand", SpecLevel: 8},
+			{Class: rules.ClassSavage, Name: "Sooner Style", Spec: "Hand to Hand", SpecLevel: 5},
+			{Class: rules.ClassSavage, Name: "Axe Style", Spec: "Axe", SpecLevel: 6},
+			{Class: rules.ClassWarrior, Name: "Other Class", Spec: "Hand to Hand", SpecLevel: 6},
+		},
+		Grants: map[int][]rules.Grant{rules.ClassSavage: {{Source: "Hand to Hand", Level: 7, Ability: "Fist Wraps"}}},
+	}
+	got := c.SpecUnlocks(rules.ClassSavage, "Hand to Hand", 4, 5)
+	want := []string{"5 Sooner Style style", "7 Fist Wraps ability", "8 Later Style style"}
+	if len(got) != len(want) {
+		t.Fatalf("unlocks %+v", got)
+	}
+	for i, u := range got {
+		if s := fmt.Sprintf("%d %s %s", u.Level, u.Name, u.Kind); s != want[i] {
+			t.Errorf("unlock %d: %q, want %q", i, s, want[i])
+		}
+	}
+	if n := len(c.SpecUnlocks(rules.ClassSavage, "Hand to Hand", 0, 2)); n != 2 {
+		t.Errorf("capped list has %d", n)
+	}
+	if s := seekTrainers(rules.ClassSavage); s != "a Savage or Viking trainer" {
+		t.Errorf("seek %q", s)
+	}
+	if s := spendHint(rules.ClassSavage); s != " Visit a Savage trainer to spend them." {
+		t.Errorf("hint %q", s)
+	}
+	if s := trainerGreeting("Hrafn", 0); !strings.Contains(s, "no specialization points") {
+		t.Errorf("greeting %q", s)
 	}
 }

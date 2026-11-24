@@ -67,7 +67,7 @@ The trainer's offer SHALL list, for each spec, up to five styles, abilities or s
 - **THEN** the log says to choose a specialization first
 
 ### Requirement: Leaving the trainer closes the window
-The client SHALL close the Train window, and the talk window it opened, when the player moves out of the trainer's interact range or the trainer is no longer present. Status: provisional.
+The server SHALL tell the client when the player moves out of the trainer's interact range, dies, or the trainer is no longer present, and the client SHALL then close the Train window and the talk window it opened. Status: provisional.
 
 #### Scenario: Walking away
 - **WHEN** the player walks beyond interact range of the trainer with the Train window open

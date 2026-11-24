@@ -202,6 +202,7 @@ func (z *Zone) add(p *Player) {
 	p.Zone = z
 	z.players[p.ID] = p
 	p.shop = 0 // a shop never follows a character into another zone
+	p.trainer = 0
 }
 
 func (z *Zone) tickPlayer(p *Player) {
@@ -224,6 +225,7 @@ func (z *Zone) tickPlayer(p *Player) {
 	p.applyInput(z)
 	z.updatePrayer(p)
 	z.checkShop(p)
+	z.checkTrainer(p)
 	z.checkVault(p)
 	z.checkTrade(p)
 	z.checkDuel(p)

@@ -190,6 +190,7 @@ type Player struct {
 
 	inv         map[int]*invItem
 	shop        int64            // the merchant whose shop is open, 0 for none
+	trainer     int64            // the trainer whose window is open, 0 for none
 	vault       map[int]*invItem // their vault, by slot (VaultBase and up)
 	vaultNPC    int64            // the vault keeper whose vault is open, 0 for none
 	smithNPC    int64            // the blacksmith whose repair window is open, 0 for none

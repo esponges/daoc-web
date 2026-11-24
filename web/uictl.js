@@ -272,8 +272,8 @@ export function createControls(h) {
   // buildList builds the rows, scrollbar and wheel of a list. cfg says how it
   // looks: {bg, font: {name, normal, high, grey, head}, lineOffset, iconPx,
   // textLeft, scroll: scrollbar template name or '', check: art for a heading's
-  // box, onHeader(i, row)}. Rows are {text, color, icon, title, drag, header,
-  // on, indent, check} where check is 'open' or 'closed' for a heading that
+  // box, onHeader(i, row)}. Rows are {text, right, color, icon, title, drag, header,
+  // on, indent, check} where right is a second, right-aligned column and check is 'open' or 'closed' for a heading that
   // folds. It returns {root, api}.
   const buildList = (env, r, cfg) => {
     const { doc, data } = env;
@@ -318,6 +318,14 @@ export function createControls(h) {
         t.style.left = px(x);
         t.style.top = px(Math.max(0, (rowH - fontH) / 2));
         line.appendChild(t);
+        if (row.right !== undefined && row.right !== '') {
+          // A second column, right-aligned clear of the scrollbar.
+          const t2 = text(doc, data, fontName, String(row.right), color);
+          t2.style.left = '';
+          t2.style.right = px(cfg.scroll ? 18 : 4);
+          t2.style.top = px(Math.max(0, (rowH - fontH) / 2));
+          line.appendChild(t2);
+        }
         if (row.title) line.title = row.title;
         if (row.drag) {
           line.draggable = true;

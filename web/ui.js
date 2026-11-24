@@ -26,7 +26,7 @@ import { createQuests } from './quest.js';
 import { gameSeconds, clockFace } from './daynight.js';
 import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
-import { sheetView, trainerView, healerText, conColour } from './sheet.js';
+import { sheetView, trainerView, healerText, conColour, infoLines } from './sheet.js';
 import { createStockQuiver } from './quiverwin.js';
 import { createStockTrainer } from './trainwin.js';
 import { createStockTalk, healerTalk } from './talk.js';
@@ -574,33 +574,71 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     sheetPanel.classList.toggle('open');
     renderSheet();
   };
-  let stockTrainer = null;
+  // The trainer: a greeting when opened (in the talk window beside the Train
+  // window), the Train window, lines in the log when TRAIN or INFO cannot act,
+  // and both closed when the server says the player walked away.
+  let stockTrainer = null, trainerGreeting = false, trainerSay = '';
   if (stock && stock.window('train')) {
-    stockTrainer = createStockTrainer(document, stock, { onTrain: (key) => net.train(key, 1), mover });
+    stockTrainer = createStockTrainer(document, stock, {
+      onTrain: (key) => net.train(key, 1), onMessage: (text) => say(text, 'info'), mover,
+    });
     root.appendChild(stockTrainer.el);
   }
   const renderTrainer = (m) => {
     const v = trainerView(m);
-    if (stockTrainer) { stockTrainer.show(v); return; }
-    trainPanel.replaceChildren(el('h2', '', v.title), el('div', 'line', v.points + ' specialization points to spend'));
+    if (v.say) trainerSay = v.say;
+    if (stockTrainer) {
+      stockTrainer.show(v);
+      if (v.say && stockTalk) {
+        talkNpc = null;
+        trainerGreeting = true;
+        // Left of the Train window, which sits at the middle of the screen.
+        const left = Math.max(8, Math.round(innerWidth / 2 - 150 - 384 - 8));
+        Object.assign(stockTalk.el.style, { left: left + 'px', marginLeft: '0px' });
+        stockTalk.show({ title: v.title, text: v.say });
+      } else if (v.say) {
+        say(v.title + ': ' + v.say, 'info');
+      }
+      return;
+    }
+    trainPanel.replaceChildren(el('h2', '', v.title));
+    if (trainerSay) trainPanel.append(el('div', 'line', trainerSay));
+    trainPanel.append(el('div', 'line', v.points + ' specialization points to spend'));
     for (const r of v.rows) {
       const row = el('div', 'row' + (r.can ? '' : ' off'));
-      row.append(el('span', '', r.text), el('small', '', r.cost + ' pts'));
+      const info = el('button', '', 'Info');
+      info.addEventListener('click', (e) => { e.stopPropagation(); for (const l of infoLines(r)) say(l, 'info'); });
+      row.append(el('span', '', r.text), el('small', '', r.cost + ' pts'), info);
       row.title = r.hint;
-      if (r.can) row.addEventListener('click', () => net.train(r.key, 1));
+      row.addEventListener('click', () => { if (r.can) net.train(r.key, 1); else say(r.reason, 'info'); });
       trainPanel.appendChild(row);
     }
     trainPanel.append(closeButton(trainPanel));
     trainPanel.classList.add('open');
   };
   net.on.trainer = renderTrainer;
+  net.on.trainclose = () => {
+    trainerSay = '';
+    stockTrainer?.hide();
+    trainPanel.classList.remove('open');
+    if (trainerGreeting) { trainerGreeting = false; stockTalk?.hide(); }
+  };
   let stockTalk = null, talkNpc = null;
   if (stock && stock.window('interact')) {
-    stockTalk = createStockTalk(document, stock, { onAccept: () => { if (talkNpc) net.restore(talkNpc); }, mover });
+    stockTalk = createStockTalk(document, stock, {
+      onAccept: () => { if (talkNpc) net.restore(talkNpc); },
+      onClose: () => { trainerGreeting = false; }, mover,
+    });
     root.appendChild(stockTalk.el);
   }
   const renderHealer = (m) => {
-    if (stockTalk) { talkNpc = m.npc; stockTalk.show(healerTalk(m, money)); return; }
+    if (stockTalk) {
+      talkNpc = m.npc;
+      trainerGreeting = false;
+      Object.assign(stockTalk.el.style, { left: '50%', marginLeft: '-192px' });
+      stockTalk.show(healerTalk(m, money));
+      return;
+    }
     healPanel.replaceChildren(el('h2', '', m.nm), el('div', 'line', healerText(m, money)));
     const ok = el('button', '', 'Accept');
     ok.addEventListener('click', () => { net.restore(m.npc); healPanel.classList.remove('open'); });

@@ -750,7 +750,7 @@ func (z *Zone) award(p *Player, xp int64) {
 	if !levelled && !wasHalf && p.sh.half {
 		pts := rules.SpecPoints(p.sh.class, c.Level, true) - rules.SpecPoints(p.sh.class, c.Level, false)
 		z.event(protocol.Event{K: "level", To: p.ID, Amount: c.Level,
-			Text: fmt.Sprintf("You have reached level %d.5! You gain %d specialization points.", c.Level, pts)}, p.Body.X, p.Body.Y)
+			Text: fmt.Sprintf("You have reached level %d.5! You gain %d specialization points.", c.Level, pts) + spendHint(c.Class)}, p.Body.X, p.Body.Y)
 	}
 	z.W.savePlayer(p)
 }
@@ -775,7 +775,7 @@ func (z *Zone) levelUp(p *Player) {
 		text += fmt.Sprintf(" You gain %d hit points.", d)
 	}
 	if d := p.sh.unspent - ptsBefore; d > 0 {
-		text += fmt.Sprintf(" You gain %d specialization points.", d)
+		text += fmt.Sprintf(" You gain %d specialization points.", d) + spendHint(c.Class)
 	}
 	z.event(protocol.Event{K: "level", To: p.ID, Amount: c.Level, Text: text}, p.Body.X, p.Body.Y)
 	z.buildBar(p)
