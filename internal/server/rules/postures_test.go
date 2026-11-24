@@ -60,7 +60,7 @@ func TestFalling(t *testing.T) {
 func TestMovementNumbers(t *testing.T) {
 	const c = "rules-movement"
 	vector(t, c, "Sprint speed", func(t *testing.T) {
-		near(t, "sprint", SprintSpeed(191), 238.75, 1e-9)
+		near(t, "sprint", SprintSpeed(191), 248.3, 1e-9)
 	})
 	vector(t, c, "Standing sprint costs nothing", func(t *testing.T) {
 		near(t, "standing ten seconds", SprintDrain(10, false), 0, 1e-9)

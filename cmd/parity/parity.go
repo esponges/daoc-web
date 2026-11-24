@@ -35,8 +35,9 @@ type Item struct {
 
 // RuleRow is one registered rule.
 type RuleRow struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
+	Searched bool   `json:"searched,omitempty"` // a sourcing pass looked and found nothing
+	ID       string `json:"id"`
+	Status   string `json:"status"`
 }
 
 // Report is the census.
@@ -50,6 +51,7 @@ type Report struct {
 	Content        []Item         `json:"content"`            // quests, doors, keeps, relics, battlegrounds
 	Rules          []RuleRow      `json:"rules"`
 	RulesByStatus  map[string]int `json:"rulesByStatus"`
+	RulesSearched  int            `json:"rulesSearched"` // rules without a documented source that were searched for one
 	Placements     int            `json:"placements"`
 	LevellingGear  []GearRow      `json:"levellingGear"`
 }
@@ -253,7 +255,10 @@ func Run(dump string) (*Report, error) {
 	rep.LevellingGear = gear
 
 	for _, r := range rules.Registry() {
-		rep.Rules = append(rep.Rules, RuleRow{ID: r.ID, Status: r.Status.String()})
+		rep.Rules = append(rep.Rules, RuleRow{ID: r.ID, Status: r.Status.String(), Searched: r.Searched != ""})
+		if r.Searched != "" && r.Status != rules.Documented {
+			rep.RulesSearched++
+		}
 		rep.RulesByStatus[r.Status.String()]++
 	}
 	for _, l := range [][]Item{rep.CreatureSpells, rep.ClassSpells, rep.StyleFeatures, rep.Abilities, rep.CreatureKinds} {

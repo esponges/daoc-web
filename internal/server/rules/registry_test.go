@@ -81,3 +81,12 @@ func near(t *testing.T, what string, got, want, tol float64) {
 		t.Errorf("%s = %v, want %v", what, got, want)
 	}
 }
+
+// A sourcing note must name a rule that exists, so a rename cannot orphan it.
+func TestSearchedNotesNameRules(t *testing.T) {
+	for id := range searched {
+		if !Implemented(id) {
+			t.Errorf("sourcing note for %q, which is not a registered rule", id)
+		}
+	}
+}

@@ -18,7 +18,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   battlegrounds          5, none implemented
   quests not classic     81 (an XP Item collection quest: an NPC pays experience for a creature's drop)
   levelling gear         0 gaps in 10 bands
-  rules: 27 documented, 66 reference, 58 provisional
+  rules: 27 documented, 66 reference, 58 provisional (44 searched, no source)
 ```
 
 ## Creature spell types

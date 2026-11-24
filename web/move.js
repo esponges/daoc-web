@@ -16,7 +16,7 @@ export const STEPS_PER_SECOND = 60;
 
 // The numbers of internal/server/rules/movement.go (rules-movement): the
 // vectors fail if either side drifts.
-export const SPRINT_FACTOR = 1.25;
+export const SPRINT_FACTOR = 1.30;
 export const SWIM_SPEED = 120;
 export const JUMP_SPEED = 210;   // units a second, upward
 export const GRAVITY = 500;      // units a second squared

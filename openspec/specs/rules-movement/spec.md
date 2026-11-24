@@ -6,11 +6,11 @@ The rule book's entry for the movement numbers beyond walk and run: sprint speed
 ## Requirements
 
 ### Requirement: Sprint speed and cost
-Sprinting while running forward SHALL multiply run speed by the sprint factor and spend endurance each second while the player moves. Standing still while sprint is on SHALL cost nothing. The sprint factor is 1.25 and the cost is 5 endurance a second spent moving. Status: provisional; no 1.65 page gives them (the Grab Bag question about sprint was never answered in what is published).
+Sprinting while running forward SHALL multiply run speed by the sprint factor and spend endurance each second while the player moves. Standing still while sprint is on SHALL cost nothing. The sprint factor is 1.30 (a Grab Bag answer: sprint gives a 30 percent bonus to velocity) and the cost is 5 endurance a second spent moving (no source; provisional).
 
 #### Scenario: Sprint speed
 - **WHEN** a player sprints forward on flat ground with no other speed effect
-- **THEN** they move at 191 × 1.25 = 238.75 units a second
+- **THEN** they move at 191 × 1.30 = 248.3 units a second
 
 #### Scenario: Standing sprint costs nothing
 - **WHEN** a player turns sprint on and stands still for ten seconds

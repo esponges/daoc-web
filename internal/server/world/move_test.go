@@ -113,7 +113,7 @@ func vectors() []vector {
 		{Name: "run while hidden (Stealth 10 at level 20, half speed)", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 0, 0, 1}, {20, 1, 0, 1, 1}}, Slow: 0.5},
 		{Name: "held: no moving or turning", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 1, 1, 1}}, Slow: 1},
 		{Name: "free, the factor at 1", Start: [4]float64{30000, 30000, 0, 0.7}, Runs: [][5]int{{60, 1, 0, -1, 1}}, Slow: 0},
-		{Name: "sprint is a quarter faster than a run", Start: [4]float64{30000, 30000, 0, 0}, Runs: [][5]int{{60, 1, 0, 0, 1}}, Sprint: true},
+		{Name: "sprint is 30 percent faster than a run", Start: [4]float64{30000, 30000, 0, 0}, Runs: [][5]int{{60, 1, 0, 0, 1}}, Sprint: true},
 		{Name: "sprint does not speed a walk", Start: [4]float64{30000, 30000, 0, 0}, Runs: [][5]int{{60, 1, 0, 0, 0}}, Sprint: true},
 		{Name: "jump in place", Start: [4]float64{30000, 30000, 8500, 0}, Runs: [][5]int{{1, 0, 0, 0, 2}, {59, 0, 0, 0, 0}}},
 		{Name: "running jump", Start: [4]float64{30000, 30000, 8500, 0}, Runs: [][5]int{{1, 1, 0, 0, 3}, {59, 1, 0, 0, 1}}},

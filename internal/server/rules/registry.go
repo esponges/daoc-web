@@ -41,6 +41,10 @@ type Rule struct {
 	Status      Status   //
 	Sources     []string // keys of Sources
 	Scenarios   []string // scenario names in the spec that are table tests
+	// Searched records a sourcing pass that found nothing: a date and what was
+	// searched, so the search is not repeated. Only for a rule still without a
+	// documented source.
+	Searched string
 }
 
 // Sources are the places rules come from, by key.
@@ -72,6 +76,7 @@ func register(rs ...Rule) { registry = append(registry, rs...) }
 
 // Registry is every implemented rule, sorted by id.
 func Registry() []Rule {
+	markSearched()
 	out := append([]Rule(nil), registry...)
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out

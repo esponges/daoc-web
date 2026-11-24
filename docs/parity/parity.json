@@ -1898,18 +1898,22 @@
   ],
   "rules": [
     {
+      "searched": true,
       "id": "ability.berserk",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "ability.charge",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "ability.danger-sense",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "ability.distraction",
       "status": "provisional"
     },
@@ -1934,6 +1938,7 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "ability.quickcast",
       "status": "provisional"
     },
@@ -1942,18 +1947,22 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "archery.abilities",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "archery.damage",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "archery.draw",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "archery.range",
       "status": "provisional"
     },
@@ -1962,6 +1971,7 @@
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "cast.heal",
       "status": "provisional"
     },
@@ -1978,22 +1988,27 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "character.class-hunter",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "character.class-midgard",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "character.class-shadowblade",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "character.class-spiritmaster-bonedancer",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "character.class-thane-skald",
       "status": "provisional"
     },
@@ -2002,10 +2017,12 @@
       "status": "documented"
     },
     {
+      "searched": true,
       "id": "character.endurance",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "character.health-regen",
       "status": "provisional"
     },
@@ -2026,6 +2043,7 @@
       "status": "documented"
     },
     {
+      "searched": true,
       "id": "conc.end",
       "status": "provisional"
     },
@@ -2042,6 +2060,7 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "condition.repair-price",
       "status": "provisional"
     },
@@ -2050,10 +2069,12 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "condition.warning",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "condition.wear",
       "status": "provisional"
     },
@@ -2138,14 +2159,17 @@
       "status": "documented"
     },
     {
+      "searched": true,
       "id": "experience.group-grey",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "experience.group-share",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "experience.group-split",
       "status": "provisional"
     },
@@ -2158,14 +2182,17 @@
       "status": "documented"
     },
     {
+      "searched": true,
       "id": "falling.damage",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "falling.safe-fall",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "falling.water",
       "status": "provisional"
     },
@@ -2186,6 +2213,7 @@
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "loot.money",
       "status": "provisional"
     },
@@ -2202,6 +2230,7 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "los.visible",
       "status": "provisional"
     },
@@ -2230,6 +2259,7 @@
       "status": "documented"
     },
     {
+      "searched": true,
       "id": "melee.left-hand",
       "status": "provisional"
     },
@@ -2278,6 +2308,7 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "movement.jump",
       "status": "provisional"
     },
@@ -2286,10 +2317,12 @@
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "movement.swim",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "pet.charm",
       "status": "provisional"
     },
@@ -2314,10 +2347,12 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "power.regen",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "resting.seated",
       "status": "provisional"
     },
@@ -2334,10 +2369,12 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "savage.buffs",
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "savage.endurance-heal",
       "status": "provisional"
     },
@@ -2346,6 +2383,7 @@
       "status": "documented"
     },
     {
+      "searched": true,
       "id": "savage.taunt",
       "status": "provisional"
     },
@@ -2370,6 +2408,7 @@
       "status": "documented"
     },
     {
+      "searched": true,
       "id": "spell.area",
       "status": "provisional"
     },
@@ -2382,6 +2421,7 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "spell.buff-af",
       "status": "provisional"
     },
@@ -2410,6 +2450,7 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "spell.haste",
       "status": "provisional"
     },
@@ -2418,6 +2459,7 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "spell.health-regen",
       "status": "provisional"
     },
@@ -2438,6 +2480,7 @@
       "status": "reference"
     },
     {
+      "searched": true,
       "id": "spell.mez-duration",
       "status": "provisional"
     },
@@ -2478,6 +2521,7 @@
       "status": "provisional"
     },
     {
+      "searched": true,
       "id": "stealth.detection",
       "status": "provisional"
     },
@@ -2507,6 +2551,7 @@
     "provisional": 58,
     "reference": 66
   },
+  "rulesSearched": 44,
   "placements": 29932,
   "levellingGear": [
     {

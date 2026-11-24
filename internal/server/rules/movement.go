@@ -5,7 +5,7 @@ package rules
 
 const (
 	// SprintFactor multiplies run speed while sprinting.
-	SprintFactor = 1.25
+	SprintFactor = 1.30
 	// SprintCost is the endurance a second of sprinting while moving takes.
 	SprintCost = 5.0
 	// SwimSpeed is the speed of a swimming body, in units a second.
@@ -48,7 +48,7 @@ func init() {
 	const c = "rules-movement"
 	register(
 		Rule{ID: "movement.sprint", Capability: c, Requirement: "Sprint speed and cost", Status: Provisional,
-			Sources:   []string{"project"},
+			Sources:   []string{"grabbag", "project"},
 			Scenarios: []string{"Sprint speed", "Standing sprint costs nothing", "Out of endurance"}},
 		Rule{ID: "movement.swim", Capability: c, Requirement: "Swim speed", Status: Provisional,
 			Sources: []string{"project"}, Scenarios: []string{"Swimming"}},

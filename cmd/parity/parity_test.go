@@ -146,8 +146,8 @@ func TestReadmeAgreesWithBaseline(t *testing.T) {
 			t.Errorf("README should list %s as 0 of %d", it.Name, it.Uses)
 		}
 	}
-	rules := fmt.Sprintf("%d documented, %d reference, %d provisional",
-		base.RulesByStatus["documented"], base.RulesByStatus["reference"], base.RulesByStatus["provisional"])
+	rules := fmt.Sprintf("%d documented, %d reference, %d provisional (%d searched, no source)",
+		base.RulesByStatus["documented"], base.RulesByStatus["reference"], base.RulesByStatus["provisional"], base.RulesSearched)
 	if !strings.Contains(text, rules) {
 		t.Errorf("README should say rules: %s", rules)
 	}

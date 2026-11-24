@@ -105,8 +105,8 @@ func summary(w io.Writer, rep *Report) {
 		fmt.Fprintf(w, "  %-22s %d, none implemented\n", c.Name, c.Uses)
 	}
 	fmt.Fprintf(w, "  %-22s %d gaps in %d bands\n", "levelling gear", gearGaps(rep.LevellingGear), len(rep.LevellingGear))
-	fmt.Fprintf(w, "  rules: %d documented, %d reference, %d provisional\n",
-		rep.RulesByStatus["documented"], rep.RulesByStatus["reference"], rep.RulesByStatus["provisional"])
+	fmt.Fprintf(w, "  rules: %d documented, %d reference, %d provisional (%d searched, no source)\n",
+		rep.RulesByStatus["documented"], rep.RulesByStatus["reference"], rep.RulesByStatus["provisional"], rep.RulesSearched)
 }
 
 func readme(b *strings.Builder, rep *Report) {
