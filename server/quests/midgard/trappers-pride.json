@@ -1,0 +1,37 @@
+{
+  "id": "trappers-pride",
+  "title": "Trapper's Pride",
+  "source": "camelot.allakhazam.com/quests.html?cquest=308 (retold in our own words; the page gives 42 copper and no experience figure, so a tenth of a level is our choice; the pelts are said to drop from the cubs; levels 1 to 6)",
+  "min_level": 1,
+  "max_level": 6,
+  "giver": "Krek",
+  "offer": "If you want to be of use in Galplen, go and speak to Wariel. She is the trapper, and she is short of pelts.",
+  "complete": "Fine work. Take this for your trouble.",
+  "items": [
+    { "id": "quest_lynx_pelt", "name": "tawny lynx cub pelt" }
+  ],
+  "steps": [
+    {
+      "kind": "talk",
+      "npc": "Wariel",
+      "text": "Find Wariel, the trapper, near the bone crossing outside Galplen.",
+      "say": "I need pelts, and my traps are empty. Bring me five from the lynx cubs in the forest."
+    },
+    {
+      "kind": "item",
+      "target": "tawny lynx cub",
+      "item": "quest_lynx_pelt",
+      "count": 5,
+      "chance": 75,
+      "text": "Hunt tawny lynx cubs in Myrkwood Forest for five pelts."
+    },
+    {
+      "kind": "deliver",
+      "npc": "Wariel",
+      "item": "quest_lynx_pelt",
+      "count": 5,
+      "text": "Bring the five pelts to Wariel."
+    }
+  ],
+  "rewards": { "xp_pct": 10, "money": 42 }
+}

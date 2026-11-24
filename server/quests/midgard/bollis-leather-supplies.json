@@ -1,0 +1,48 @@
+{
+  "id": "bollis-leather-supplies",
+  "title": "Bolli's Leather Supplies",
+  "source": "camelot.allakhazam.com/quests.html?cquest=325 (retold in our own words; the page gives 40 and 80 experience for the two stages, about 6 silver, and the Choker of the Bear, which we pay once at the end; levels 3 to 50)",
+  "min_level": 3,
+  "max_level": 50,
+  "giver": "Bolli",
+  "offer": "A huldu lurker made off with my skinning knife, and I cannot work without it. Fetch it back, and I may have more work for you after.",
+  "complete": "Fine bones. That is all I needed. Take this for your trouble.",
+  "items": [
+    { "id": "quest_bolli_knife", "name": "Bolli's skinning knife" },
+    { "id": "quest_shinbone", "name": "a skeleton's shinbone" }
+  ],
+  "steps": [
+    {
+      "kind": "item",
+      "target": "huldu lurker",
+      "item": "quest_bolli_knife",
+      "count": 1,
+      "chance": 35,
+      "text": "Kill huldu lurkers on the hills west of Mularn for Bolli's skinning knife."
+    },
+    {
+      "kind": "deliver",
+      "npc": "Bolli",
+      "item": "quest_bolli_knife",
+      "count": 1,
+      "text": "Bring the skinning knife back to Bolli.",
+      "say": "My knife! Now, I will need a bone as well."
+    },
+    {
+      "kind": "item",
+      "target": "rattling skeleton",
+      "item": "quest_shinbone",
+      "count": 1,
+      "chance": 40,
+      "text": "Take a shinbone from a rattling skeleton outside Mularn."
+    },
+    {
+      "kind": "deliver",
+      "npc": "Bolli",
+      "item": "quest_shinbone",
+      "count": 1,
+      "text": "Bring the shinbone to Bolli."
+    }
+  ],
+  "rewards": { "xp_pct": 20, "money": 600, "items": ["choker_of_the_bear"] }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "mauler-invasion",
+  "title": "Mauler Invasion",
+  "source": "camelot.allakhazam.com/quests.html?cquest=2451 (retold in our own words; the 27 copper and the experience, 5 at level 1 and 20 at level 2, are from its log: a tenth of a level)",
+  "min_level": 1,
+  "max_level": 4,
+  "giver": "Viking Kreimhilde",
+  "offer": "The black mauler cubs have grown bold around the village. Thin them out, and bring me two of their pelts to show it.",
+  "complete": "Good. The village sleeps easier.",
+  "items": [
+    { "id": "quest_mauler_pelt", "name": "black mauler cub pelt" }
+  ],
+  "steps": [
+    {
+      "kind": "item",
+      "target": "black mauler cub",
+      "item": "quest_mauler_pelt",
+      "count": 2,
+      "chance": 60,
+      "text": "Hunt black mauler cubs near Mularn for two pelts."
+    },
+    {
+      "kind": "deliver",
+      "npc": "Viking Kreimhilde",
+      "item": "quest_mauler_pelt",
+      "count": 2,
+      "text": "Bring the two pelts to Viking Kreimhilde."
+    }
+  ],
+  "rewards": { "xp_pct": 10, "money": 27 }
+}
