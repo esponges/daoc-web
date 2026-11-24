@@ -1521,14 +1521,12 @@
     {
       "name": "DOL.GS.AlchemistsMaster",
       "uses": 2,
-      "implemented": false,
-      "reason": "a crafting master: owned by the crafting change"
+      "implemented": true
     },
     {
       "name": "DOL.GS.ArmorCraftingMaster",
       "uses": 2,
-      "implemented": false,
-      "reason": "a crafting master: owned by the crafting change"
+      "implemented": true
     },
     {
       "name": "DOL.GS.EmblemNPC",
@@ -1538,8 +1536,7 @@
     {
       "name": "DOL.GS.FletchingMaster",
       "uses": 2,
-      "implemented": false,
-      "reason": "a crafting master: owned by the crafting change"
+      "implemented": true
     },
     {
       "name": "DOL.GS.GuildRegistrar",
@@ -1579,14 +1576,12 @@
     {
       "name": "DOL.GS.TailoringMaster",
       "uses": 2,
-      "implemented": false,
-      "reason": "a crafting master: owned by the crafting change"
+      "implemented": true
     },
     {
       "name": "DOL.GS.WeaponCraftingMaster",
       "uses": 2,
-      "implemented": false,
-      "reason": "a crafting master: owned by the crafting change"
+      "implemented": true
     },
     {
       "name": "DOL.GS.AccountVaultKeeper",
@@ -1764,8 +1759,7 @@
     {
       "name": "DOL.GS.SpellCraftingMaster",
       "uses": 1,
-      "implemented": false,
-      "reason": "a crafting master: owned by the crafting change"
+      "implemented": true
     },
     {
       "name": "DOL.GS.Steinolf",
@@ -2061,6 +2055,22 @@
     },
     {
       "id": "condition.wear",
+      "status": "provisional"
+    },
+    {
+      "id": "crafting.quality",
+      "status": "provisional"
+    },
+    {
+      "id": "crafting.skill",
+      "status": "provisional"
+    },
+    {
+      "id": "crafting.success",
+      "status": "provisional"
+    },
+    {
+      "id": "crafting.time",
       "status": "provisional"
     },
     {
@@ -2494,7 +2504,7 @@
   ],
   "rulesByStatus": {
     "documented": 27,
-    "provisional": 54,
+    "provisional": 58,
     "reference": 66
   },
   "placements": 29932,

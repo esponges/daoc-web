@@ -112,6 +112,9 @@ export class NetClient {
   // barSet puts a style the character has into a bar slot, swapping with what was there.
   barSet(slot, id) { this._send({ t: 'barset', slot, id }); }
   buy(id) { this._send({ t: 'buy', id }); }
+  // craftOp opens the crafting window, joins the profession of the master by you,
+  // makes the recipe of a product, or cancels the craft under way.
+  craftOp(op, id) { this._send({ t: 'craftop', op, ...(id ? { id } : {}) }); }
   sell(slot) { this._send({ t: 'sell', slot }); }
   // repair asks the open blacksmith for the price of repairing a slot, or, with
   // the price they were quoted, accepts it.
@@ -152,6 +155,9 @@ export class NetClient {
       case 'clock': this.clock = { gs: m.gs, at: this.now() }; this.on.clock?.(this.clock); break;
       case 'trade': this.trade = m; this.on.trade?.(m); break;
       case 'tradeclose': this.trade = null; this.on.tradeclose?.(m); break;
+      case 'craft': this.craft = m; this.on.craft?.(m); break;
+      case 'craftprog': this.on.craftprog?.(m); break;
+      case 'craftdone': this.on.craftdone?.(m); break;
       case 'guild': this.guild = m; this.on.guild?.(m); break;
       case 'friends': this.friends = m; this.on.friends?.(m); break;
       case 'duelask': this.on.duelask?.(m); break;

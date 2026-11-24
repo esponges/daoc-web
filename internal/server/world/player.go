@@ -93,9 +93,11 @@ type invItem struct {
 	ID      string
 	Slot    int
 	Count   int
-	Cond    int // condition in hundredths of a percent, store.FullCondition whole
-	Poison  int // the poison on a weapon: a spell id, 0 for none
-	Charges int // and the hits it has left
+	Cond    int    // condition in hundredths of a percent, store.FullCondition whole
+	Poison  int    // the poison on a weapon: a spell id, 0 for none
+	Charges int    // and the hits it has left
+	Quality int    // a crafted item's percent quality, 0 for the template's
+	Crafter string // who made it
 }
 
 // Player is a connected character in a zone. All fields belong to the zone's
@@ -145,6 +147,7 @@ type Player struct {
 	closed       atomic.Bool
 	disconnected atomic.Bool
 	zoning       atomic.Bool // closed to load another zone, not logging out
+	craft        *craftState // tradeskills and the craft under way
 	// graceEnd is when a disconnected character in a fight leaves the world.
 	graceEnd float64
 

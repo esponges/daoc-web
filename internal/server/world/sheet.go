@@ -272,6 +272,23 @@ func weaponOf(it *Item) rules.Weapon {
 		Quality: itemFraction(it.Quality), Condition: condition(it.Condition), DamageType: it.DamageType, Bonus: it.Bonus}
 }
 
+// qualOf is the quality of the item worn in a slot as a fraction: its maker's
+// crafted quality if it has one, the template's otherwise.
+func (p *Player) qualOf(slot, template int) float64 {
+	if it := p.inv[slot]; it != nil && it.Quality > 0 {
+		return itemFraction(it.Quality)
+	}
+	return itemFraction(template)
+}
+
+// it0 is a weapon's template quality, 0 for none.
+func it0(it *Item) int {
+	if it == nil {
+		return 0
+	}
+	return it.Quality
+}
+
 // locationSlot is the worn slot that covers each place a blow lands.
 var locationSlot = [rules.NumLocations]int{SlotTorso, SlotLegs, SlotArms, SlotHead, SlotHands, SlotFeet}
 
@@ -282,6 +299,7 @@ func (p *Player) combatant(cat *Catalog) *rules.Combatant {
 		Weapon: weaponOf(p.weapon), EvadeLevel: sh.abilities[rules.AbEvade], StyleDefence: p.styleDefence, BuffAF: float64(sh.buffAF), BuffAbsorb: strongestValue(p, effAbsorb) / 100}
 	if p.weapon != nil {
 		cb.Weapon.Condition = p.condOf(SlotWeapon)
+		cb.Weapon.Quality = p.qualOf(SlotWeapon, it0(p.weapon))
 	}
 	if p.weapon != nil {
 		cb.Spec = p.combatSpec(weaponSpec(p.weapon.ObjectType))
@@ -295,13 +313,13 @@ func (p *Player) combatant(cat *Catalog) *rules.Combatant {
 	}
 	if s := p.shield; s != nil && sh.abilities[rules.AbShield] > 0 {
 		cb.ShieldSpec = p.combatSpec("Shields")
-		cb.Shield = &rules.Shield{Size: max(1, s.DamageType), Quality: itemFraction(s.Quality), Condition: p.condOf(SlotShield)}
+		cb.Shield = &rules.Shield{Size: max(1, s.DamageType), Quality: p.qualOf(SlotShield, s.Quality), Condition: p.condOf(SlotShield)}
 	}
 	for l, slot := range locationSlot {
 		if it := p.inv[slot]; it != nil {
 			if x := cat.Items[it.ID]; x != nil && x.IsArmour() {
 				cb.Armour[l] = &rules.Piece{AF: float64(x.AF), Absorb: float64(x.Absorb) / 100, Cloth: x.ObjectType == rules.ObjCloth,
-					Quality: itemFraction(x.Quality), Condition: p.condOf(slot), Bonus: x.Bonus}
+					Quality: p.qualOf(slot, x.Quality), Condition: p.condOf(slot), Bonus: x.Bonus}
 			}
 		}
 	}

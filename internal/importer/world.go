@@ -88,6 +88,9 @@ CREATE TABLE npc_template_ext(
   class_type TEXT, flags INTEGER, race INTEGER);
 CREATE INDEX template_spell_template ON template_spell(template);
 CREATE TABLE style_spell(class INTEGER, style INTEGER, spell INTEGER, chance INTEGER);
+CREATE TABLE recipe(product TEXT PRIMARY KEY, skill INTEGER, level INTEGER);
+CREATE TABLE recipe_material(product TEXT, material TEXT, count INTEGER);
+CREATE INDEX recipe_material_product ON recipe_material(product);
 `
 
 // Options say where things are and which spawns to keep.
@@ -462,9 +465,11 @@ func build(o Options) (*Report, error) {
 		return nil, err
 	}
 	var candidates []StockCandidate
+	haveItem := map[string]bool{}
 	if err := read("itemtemplate", func(r *Row) (bool, error) {
 		candidates = append(candidates, CandidateOf(r))
 		id := r.Str("Id_nb")
+		haveItem[id] = true
 		if p := r.Int("ProcSpellID"); p != 0 {
 			wantSpell[p] = true
 		}
@@ -482,6 +487,50 @@ func build(o Options) (*Report, error) {
 			r.Int("Weight"), r.Int("Price"), r.Int("Realm"), r.Str("AllowedClasses"), r.Int("CanDropAsLoot"), r.Int("LevelRequirement"),
 			r.Int("Bonus"), r.Int("Condition"), r.Int("MaxCondition"), r.Int("Durability"), r.Int("ProcSpellID"), r.Int("ProcChance"), r.Int("PackSize"), r.Int("MaxCount"), r.Int("PoisonSpellID"), r.Int("PoisonCharges"))
 	}); err != nil {
+		return nil, err
+	}
+	// --- crafting: a recipe is kept when its product and every material are items ---
+	recipes := map[string]bool{}
+	broken := map[string]bool{}
+	_, noRecipes := os.Stat(filepath.Join(o.Dump, "crafteditem.sql")) // an older dump has no recipes
+	if noRecipes != nil {
+		o.Log("  crafteditem            not in the dump; no recipes")
+	}
+	if noRecipes == nil {
+		if err := read("crafteditem", func(r *Row) (bool, error) {
+			p := r.Str("Id_nb")
+			if !haveItem[p] || recipes[p] {
+				return false, nil
+			}
+			recipes[p] = true
+			return true, ins(`INSERT INTO recipe VALUES(?,?,?)`, p, r.Int("CraftingSkillType"), r.Int("CraftingLevel"))
+		}); err != nil {
+			return nil, err
+		}
+		if err := read("craftedxitem", func(r *Row) (bool, error) {
+			p, m := r.Str("CraftedItemId_nb"), r.Str("IngredientId_nb")
+			if !recipes[p] {
+				return false, nil
+			}
+			if !haveItem[m] || r.Int("Count") <= 0 {
+				broken[p] = true // a recipe missing a material cannot be made; dropped below
+				return false, nil
+			}
+			return true, ins(`INSERT INTO recipe_material VALUES(?,?,?)`, p, m, r.Int("Count"))
+		}); err != nil {
+			return nil, err
+		}
+	}
+	for p := range broken {
+		if err := ins(`DELETE FROM recipe WHERE product=?`, p); err != nil {
+			return nil, err
+		}
+		if err := ins(`DELETE FROM recipe_material WHERE product=?`, p); err != nil {
+			return nil, err
+		}
+	}
+	// A recipe with no material row at all is not a recipe.
+	if err := ins(`DELETE FROM recipe WHERE product NOT IN (SELECT product FROM recipe_material)`); err != nil {
 		return nil, err
 	}
 	for _, a := range PlaceStock(AddedStock(candidates), lastPage) {
@@ -863,6 +912,26 @@ func IsVaultClass(classType string) bool {
 
 // IsGuildRegistrarClass reports whether a mob's class type is a Guild Registrar,
 // who founds guilds; IsEmblemClass whether it is an Emblem Maker.
+// CraftMasterSkill is the tradeskill a craft master of this class type
+// teaches (the community database's skill number), or 0 for any other NPC.
+func CraftMasterSkill(classType string) int {
+	switch classType {
+	case "DOL.GS.WeaponCraftingMaster":
+		return 1
+	case "DOL.GS.ArmorCraftingMaster":
+		return 2
+	case "DOL.GS.AlchemistMaster", "DOL.GS.AlchemistsMaster":
+		return 4
+	case "DOL.GS.TailoringMaster":
+		return 11
+	case "DOL.GS.FletchingMaster":
+		return 12
+	case "DOL.GS.SpellCraftingMaster":
+		return 13
+	}
+	return 0
+}
+
 func IsGuildRegistrarClass(classType string) bool { return classType == "DOL.GS.GuildRegistrar" }
 func IsEmblemClass(classType string) bool         { return classType == "DOL.GS.EmblemNPC" }
 

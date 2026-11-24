@@ -83,6 +83,10 @@ type Item struct {
 	// Charges how many hits it has left; 0 for no poison.
 	Poison  int
 	Charges int
+	// Quality is a crafted item's percent quality (94 to 100); 0 is the
+	// template's own. Crafter is who made it, "" for a found or bought item.
+	Quality int
+	Crafter string
 	Created time.Time
 }
 
@@ -114,6 +118,9 @@ CREATE TABLE IF NOT EXISTS item(
   id INTEGER PRIMARY KEY AUTOINCREMENT, char_id INTEGER NOT NULL REFERENCES character(id) ON DELETE CASCADE,
   item_id TEXT NOT NULL, slot INTEGER NOT NULL, count INTEGER NOT NULL DEFAULT 1, cond INTEGER NOT NULL DEFAULT 10000, created INTEGER NOT NULL,
   UNIQUE(char_id, slot));
+CREATE TABLE IF NOT EXISTS char_craft(
+  char_id INTEGER NOT NULL REFERENCES character(id) ON DELETE CASCADE, skill INTEGER NOT NULL, value INTEGER NOT NULL,
+  PRIMARY KEY(char_id, skill));
 CREATE TABLE IF NOT EXISTS task(
   char_id INTEGER PRIMARY KEY REFERENCES character(id) ON DELETE CASCADE, kind TEXT NOT NULL DEFAULT '',
   giver TEXT NOT NULL DEFAULT '', giver_id INTEGER NOT NULL DEFAULT 0, target TEXT NOT NULL DEFAULT '',
@@ -179,6 +186,24 @@ func Open(path string) (*Store, error) {
 	}
 	if hasCond == 0 {
 		if _, err := db.Exec(`ALTER TABLE item ADD COLUMN cond INTEGER NOT NULL DEFAULT 10000`); err != nil {
+			db.Close()
+			return nil, err
+		}
+	}
+	for _, col := range []string{"quality"} {
+		var has int
+		db.QueryRow(`SELECT count(*) FROM pragma_table_info('item') WHERE name=?`, col).Scan(&has)
+		if has == 0 {
+			if _, err := db.Exec(`ALTER TABLE item ADD COLUMN ` + col + ` INTEGER NOT NULL DEFAULT 0`); err != nil {
+				db.Close()
+				return nil, err
+			}
+		}
+	}
+	var hasCrafter int
+	db.QueryRow(`SELECT count(*) FROM pragma_table_info('item') WHERE name='crafter'`).Scan(&hasCrafter)
+	if hasCrafter == 0 {
+		if _, err := db.Exec(`ALTER TABLE item ADD COLUMN crafter TEXT NOT NULL DEFAULT ''`); err != nil {
 			db.Close()
 			return nil, err
 		}
@@ -322,6 +347,54 @@ func (s *Store) loadSpecs(c *Character) error {
 	return rows.Err()
 }
 
+// Craft is a character's tradeskills: the primary skill they joined (0 for
+// none) and each skill's value. It is stored apart from the character so a
+// crafter's skills are saved when they change, not with every character save.
+type Craft struct {
+	Primary int
+	Skills  map[int]int
+}
+
+// LoadCraft reads a character's tradeskills.
+func (s *Store) LoadCraft(charID int64) (Craft, error) {
+	c := Craft{Skills: map[int]int{}}
+	rows, err := s.db.Query(`SELECT skill,value FROM char_craft WHERE char_id=?`, charID)
+	if err != nil {
+		return c, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var sk, v int
+		if err := rows.Scan(&sk, &v); err != nil {
+			return c, err
+		}
+		if sk == 0 {
+			c.Primary = v // skill 0 holds the primary's number
+		} else {
+			c.Skills[sk] = v
+		}
+	}
+	return c, rows.Err()
+}
+
+// SaveCraft writes a character's tradeskills.
+func (t *Tx) SaveCraft(charID int64, c Craft) error {
+	if _, err := t.tx.Exec(`DELETE FROM char_craft WHERE char_id=?`, charID); err != nil {
+		return err
+	}
+	if c.Primary != 0 {
+		if _, err := t.tx.Exec(`INSERT INTO char_craft VALUES(?,0,?)`, charID, c.Primary); err != nil {
+			return err
+		}
+	}
+	for sk, v := range c.Skills {
+		if _, err := t.tx.Exec(`INSERT INTO char_craft VALUES(?,?,?)`, charID, sk, v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Characters lists an account's characters, oldest first.
 func (s *Store) Characters(accountID int64) ([]*Character, error) {
 	rows, err := s.db.Query(`SELECT `+charCols+` FROM character WHERE account_id=? ORDER BY id`, accountID)
@@ -371,7 +444,7 @@ func (s *Store) DeleteCharacter(accountID, id int64) error {
 
 // Items lists what a character carries and wears.
 func (s *Store) Items(charID int64) ([]Item, error) {
-	rows, err := s.db.Query(`SELECT id,char_id,item_id,slot,count,cond,poison,charges,created FROM item WHERE char_id=? ORDER BY slot`, charID)
+	rows, err := s.db.Query(`SELECT id,char_id,item_id,slot,count,cond,poison,charges,quality,crafter,created FROM item WHERE char_id=? ORDER BY slot`, charID)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +453,7 @@ func (s *Store) Items(charID int64) ([]Item, error) {
 	for rows.Next() {
 		var it Item
 		var created int64
-		if err := rows.Scan(&it.ID, &it.CharID, &it.ItemID, &it.Slot, &it.Count, &it.Cond, &it.Poison, &it.Charges, &created); err != nil {
+		if err := rows.Scan(&it.ID, &it.CharID, &it.ItemID, &it.Slot, &it.Count, &it.Cond, &it.Poison, &it.Charges, &it.Quality, &it.Crafter, &created); err != nil {
 			return nil, err
 		}
 		it.Created = time.Unix(created, 0)
@@ -439,6 +512,14 @@ func (t *Tx) AddItem(charID int64, itemID string, slot, count int) error {
 func (t *Tx) AddItemCond(charID int64, itemID string, slot, count, cond int) error {
 	_, err := t.tx.Exec(`INSERT INTO item(char_id,item_id,slot,count,cond,created) VALUES(?,?,?,?,?,?)`,
 		charID, itemID, slot, count, cond, time.Now().Unix())
+	return err
+}
+
+// AddCrafted puts a crafted item in a slot (which must be empty): its
+// quality in percent and the name of its maker.
+func (t *Tx) AddCrafted(charID int64, itemID string, slot, count, quality int, crafter string) error {
+	_, err := t.tx.Exec(`INSERT INTO item(char_id,item_id,slot,count,quality,crafter,created) VALUES(?,?,?,?,?,?,?)`,
+		charID, itemID, slot, count, quality, crafter, time.Now().Unix())
 	return err
 }
 

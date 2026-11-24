@@ -21,6 +21,7 @@ import { createStockShop } from './shop.js';
 import { createVault, firstFreeVault } from './vault.js';
 import { createTrade, createFriends, createDuelPrompt } from './social.js';
 import { createGuild } from './guild.js';
+import { createCraft } from './craft.js';
 import { gameSeconds, clockFace } from './daynight.js';
 import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
@@ -482,6 +483,11 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   root.appendChild(guildWin.el);
   net.on.guild = (m) => guildWin.set(m);
   if (net.guild) guildWin.set(net.guild);
+  const craftWin = createCraft(document, { onOp: (op, id) => net.craftOp(op, id), mover });
+  root.appendChild(craftWin.el);
+  net.on.craft = (m) => { craftWin.set(m); if (m.offer && !craftWin.isOpen) craftWin.show(); };
+  net.on.craftprog = (m) => craftWin.started(m.s);
+  net.on.craftdone = (m) => craftWin.done(m);
   const duelPrompt = createDuelPrompt(document, { onAnswer: (yes) => net.chat('say', yes ? '/accept' : '/decline') });
   root.appendChild(duelPrompt.el);
   net.on.duelask = (m) => duelPrompt.show(m.from, m.secs);
@@ -762,6 +768,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'KeyP' && !e.repeat) { toggleSpells(); return true; } // the spellbook
     if (e.code === 'KeyO' && !e.repeat) { friendsWin.toggle(); return true; } // the friends list
     if (e.code === 'KeyU' && !e.repeat) { guildWin.toggle(); return true; } // the guild
+    if (e.code === 'KeyY' && !e.repeat) { craftWin.toggle(); return true; } // crafting (Y)
     if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera
     // Shift+1 to Shift+8 cast the spell on that slot of the spell bar.
     const sn = /^Digit([1-8])$/.exec(e.code);

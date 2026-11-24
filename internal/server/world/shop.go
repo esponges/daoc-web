@@ -43,6 +43,8 @@ func npcKind(classType string) string {
 		return KindSmith
 	case importer.IsGuildRegistrarClass(classType):
 		return KindGuildRegistrar
+	case importer.CraftMasterSkill(classType) != 0:
+		return KindCraftMaster
 	case importer.IsEmblemClass(classType):
 		return KindEmblem
 	case notClassic(classType):
@@ -105,6 +107,8 @@ func (z *Zone) Interact(p *Player, id int64) {
 		z.openTrainer(p, n)
 	case KindHealer:
 		z.openHealer(p, n)
+	case KindCraftMaster:
+		z.openMaster(p, n)
 	case KindGuildRegistrar:
 		sys(p, n.title()+" says: \"To found a guild, lead a group of "+fmt.Sprint(rules.GuildFormMembers)+" and type /gc form <name> here. It costs "+moneyText(rules.GuildFormFee)+".\"")
 	case KindEmblem:
@@ -196,7 +200,18 @@ func (z *Zone) Buy(p *Player, itemID string) {
 		return
 	}
 	slot, before := -1, p.Char.Money
+	// Something that stacks (a crafting material, 200 to a stack) tops up a
+	// stack the player already has rather than taking a new slot.
+	topUp := stackFor(p, it)
 	err := z.W.Store.Tx(func(tx *store.Tx) error {
+		if topUp >= 0 {
+			slot = topUp
+			if err := tx.SetCount(p.Char.ID, slot, p.inv[slot].Count+it.Pack()); err != nil {
+				return err
+			}
+			p.Char.Money -= it.Price
+			return tx.SaveCharacter(p.Char)
+		}
 		var err error
 		if slot, err = tx.FreeSlot(p.Char.ID, PackSize); err != nil {
 			return err
@@ -219,8 +234,29 @@ func (z *Zone) Buy(p *Player, itemID string) {
 		}
 		return
 	}
-	p.inv[slot] = &invItem{ID: itemID, Slot: slot, Count: it.Pack(), Cond: z.W.Cat.newCondition(itemID)}
+	if topUp >= 0 {
+		p.inv[slot].Count += it.Pack()
+	} else {
+		p.inv[slot] = &invItem{ID: itemID, Slot: slot, Count: it.Pack(), Cond: z.W.Cat.newCondition(itemID)}
+	}
 	p.sendInv(cat, p.Char.Money)
+}
+
+// stackFor is the pack slot of a stack of this item with room for one more
+// pack, or -1. Only a plain stackable (no crafter, no poison) is topped up.
+func stackFor(p *Player, it *Item) int {
+	if it.MaxCount <= 1 {
+		return -1
+	}
+	best := -1
+	for slot := 0; slot < PackSize; slot++ {
+		if s := p.inv[slot]; s != nil && s.ID == it.ID && s.Crafter == "" && s.Poison == 0 && s.Count+it.Pack() <= it.MaxCount {
+			if best < 0 {
+				best = slot
+			}
+		}
+	}
+	return best
 }
 
 var errPackFull = errors.New("your pack is full")

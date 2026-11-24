@@ -346,7 +346,7 @@ func kindImplemented(classType string) bool {
 	if importer.SpawnTiming(classType) != importer.Always {
 		return true // night and day creatures are present in their time of the game clock
 	}
-	if classType == "DOL.GS.GameNPC" || classType == "DOL.GS.GameGuard" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) || importer.IsStableClass(classType) || importer.IsVaultClass(classType) || importer.IsSmithClass(classType) || importer.IsGuildRegistrarClass(classType) || importer.IsEmblemClass(classType) {
+	if classType == "DOL.GS.GameNPC" || classType == "DOL.GS.GameGuard" || importer.IsMerchantClass(classType) || importer.IsHealerClass(classType) || importer.IsStableClass(classType) || importer.IsVaultClass(classType) || importer.IsSmithClass(classType) || importer.IsGuildRegistrarClass(classType) || importer.IsEmblemClass(classType) || importer.CraftMasterSkill(classType) != 0 {
 		return true
 	}
 	t := importer.TrainerClass(classType)

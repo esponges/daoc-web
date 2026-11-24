@@ -10,7 +10,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   Class spell types       73 of  73 implemented (987 of 987 spells)
   Style features          13 of  14 implemented (1382 of 1383 styles)
   Abilities               27 of  30 implemented (97 of 100 grants)
-  Creature kinds          28 of 110 implemented (29195 of 29932 placements, 16 kinds not classic)
+  Creature kinds          34 of 110 implemented (29206 of 29932 placements, 16 kinds not classic)
   quests                 0, none implemented
   keep doors             432, none implemented
   keeps                  79, none implemented
@@ -18,7 +18,7 @@ Midgard (regions 100, 101, 151): 29932 placements
   battlegrounds          5, none implemented
   quests not classic     81 (an XP Item collection quest: an NPC pays experience for a creature's drop)
   levelling gear         0 gaps in 10 bands
-  rules: 27 documented, 66 reference, 54 provisional
+  rules: 27 documented, 66 reference, 58 provisional
 ```
 
 ## Creature spell types
@@ -228,18 +228,18 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Scripts.OFTeleporter | 3 | not classic: a teleporter: Origin Fantasy convenience travel |
 | DOL.GS.SnarlsAdd | 3 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Trainer.RogueTrainer | 3 | yes |
-| DOL.GS.AlchemistsMaster | 2 | no: a crafting master: owned by the crafting change |
-| DOL.GS.ArmorCraftingMaster | 2 | no: a crafting master: owned by the crafting change |
+| DOL.GS.AlchemistsMaster | 2 | yes |
+| DOL.GS.ArmorCraftingMaster | 2 | yes |
 | DOL.GS.EmblemNPC | 2 | yes |
-| DOL.GS.FletchingMaster | 2 | no: a crafting master: owned by the crafting change |
+| DOL.GS.FletchingMaster | 2 | yes |
 | DOL.GS.GuildRegistrar | 2 | yes |
 | DOL.GS.HitbackDummy | 2 | not classic: a test dummy: a developer's target |
 | DOL.GS.Keeps.GuardMerchant | 2 | no: a keep guard: owned by the frontiers-and-keeps change |
 | DOL.GS.Loken | 2 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Scripts.OFMerchantHome | 2 | not classic: a home merchant of the Origin Fantasy server |
 | DOL.GS.Scripts.Recharger | 2 | no: an item service: whether 1.65 had it is unsettled; spawns as a plain creature |
-| DOL.GS.TailoringMaster | 2 | no: a crafting master: owned by the crafting change |
-| DOL.GS.WeaponCraftingMaster | 2 | no: a crafting master: owned by the crafting change |
+| DOL.GS.TailoringMaster | 2 | yes |
+| DOL.GS.WeaponCraftingMaster | 2 | yes |
 | DOL.GS.AccountVaultKeeper | 1 | not classic: an account vault: shared storage across characters |
 | DOL.GS.Alina | 1 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Basilius | 1 | no: behaviour unsourced: spawns as a plain creature |
@@ -269,7 +269,7 @@ Midgard (regions 100, 101, 151): 29932 placements
 | DOL.GS.Shredclaw | 1 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.SimpleTeleporter | 1 | not classic: a teleporter: Live-era travel the horse routes replace |
 | DOL.GS.Snarls | 1 | no: behaviour unsourced: spawns as a plain creature |
-| DOL.GS.SpellCraftingMaster | 1 | no: a crafting master: owned by the crafting change |
+| DOL.GS.SpellCraftingMaster | 1 | yes |
 | DOL.GS.Steinolf | 1 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Stripe | 1 | no: behaviour unsourced: spawns as a plain creature |
 | DOL.GS.Trainer.MidgardRogueTrainer | 1 | yes |
@@ -349,6 +349,10 @@ Midgard merchants (placements) selling Warrior gear in each five-level band. **n
 | condition.start | reference |
 | condition.warning | provisional |
 | condition.wear | provisional |
+| crafting.quality | provisional |
+| crafting.skill | provisional |
+| crafting.success | provisional |
+| crafting.time | provisional |
 | creature.armour | reference |
 | creature.blows | reference |
 | creature.defences | documented |

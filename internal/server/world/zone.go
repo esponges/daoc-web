@@ -228,6 +228,7 @@ func (z *Zone) tickPlayer(p *Player) {
 	z.checkTrade(p)
 	z.checkDuel(p)
 	z.checkSmith(p)
+	z.craftTick(p)
 	z.continuePlayerCast(p)
 	z.tickSong(p)
 	z.continueDraw(p)

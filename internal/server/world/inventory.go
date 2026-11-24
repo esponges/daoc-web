@@ -68,7 +68,7 @@ func (w *World) loadInventory(p *Player) {
 			p.vault[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count, Cond: it.Cond}
 			continue
 		}
-		p.inv[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count, Cond: it.Cond, Poison: it.Poison, Charges: it.Charges}
+		p.inv[it.Slot] = &invItem{DBID: it.ID, ID: it.ItemID, Slot: it.Slot, Count: it.Count, Cond: it.Cond, Poison: it.Poison, Charges: it.Charges, Quality: it.Quality, Crafter: it.Crafter}
 	}
 	w.recalc(p)
 }
@@ -163,6 +163,9 @@ func (p *Player) sendInv(c *Catalog, money int64) {
 			}
 			if repairable(it) {
 				v.Detail += ", " + conditionText(p.inv[slot].Cond)
+			}
+			if cr := p.inv[slot]; cr.Crafter != "" {
+				v.Detail += fmt.Sprintf(", %d%% quality, made by %s", cr.Quality, cr.Crafter)
 			}
 			if pz := p.inv[slot]; pz.Poison != 0 {
 				name := "poison"

@@ -79,6 +79,10 @@ const (
 	TTradeClose  = "tradeclose"  // your trade ended, with the reason
 	TGuild       = "guild"       // your guild, or an empty one when you have none
 	TDuelAsk     = "duelask"     // you have been challenged to a duel; answer with /accept or /decline
+	TCraftOp     = "craftop"     // open the crafting window, join a profession, make an item or cancel
+	TCraft       = "craft"       // the crafting window: your skills and what you can make
+	TCraftProg   = "craftprog"   // a craft began: how long it takes
+	TCraftDone   = "craftdone"   // a craft ended: made, failed or cancelled
 	TFriends     = "friends"     // your friends list, with who is in the game
 	TTradeOp     = "tradeop"     // a request in a trade: open, add, remove, money, accept or cancel
 	TStats       = "stats"       // the character sheet
@@ -598,6 +602,8 @@ func Decode(data []byte) (string, interface{}, error) {
 		v = &RezAnswer{}
 	case TGroundTarget:
 		v = &GroundTarget{}
+	case TCraftOp:
+		v = &CraftOp{}
 	case TTradeOp:
 		v = &TradeOp{}
 	case TConcCancel:
@@ -898,6 +904,74 @@ type GroundTarget struct {
 	Y     float64 `json:"y"`
 	Z     float64 `json:"z"`
 	Clear bool    `json:"clear,omitempty"`
+}
+
+// CraftOp is a crafting request: Op is "open", "join" (the profession of the
+// master you stand by), "make" (the recipe of product ID) or "cancel".
+type CraftOp struct {
+	T  string `json:"t"`
+	Op string `json:"op"`
+	ID string `json:"id,omitempty"`
+}
+
+// CraftSkill is one tradeskill of the crafter: its number, name, value and the
+// most it can reach now.
+type CraftSkill struct {
+	ID    int    `json:"id"`
+	Name  string `json:"nm"`
+	Value int    `json:"v"`
+	Cap   int    `json:"cap"`
+}
+
+// CraftMat is one material of a recipe and how many the crafter holds.
+type CraftMat struct {
+	ID   string `json:"id"`
+	Name string `json:"nm"`
+	N    int    `json:"n"`
+	Have int    `json:"have"`
+}
+
+// CraftRecipe is one thing the crafter can try to make, with the chance it
+// works and how long it takes.
+type CraftRecipe struct {
+	ID     string     `json:"id"` // the product's item id
+	Name   string     `json:"nm"`
+	Skill  int        `json:"sk"`
+	Level  int        `json:"lv"`
+	Chance int        `json:"ok"` // percent
+	Secs   int        `json:"s"`
+	Mats   []CraftMat `json:"m"`
+}
+
+// Craft is the crafting window. Prof is the primary profession's skill number
+// (0 before you join one); Offer is the profession the master you stand by
+// teaches, when you have none.
+type Craft struct {
+	T         string        `json:"t"`
+	Prof      int           `json:"pr,omitempty"`
+	ProfName  string        `json:"pn,omitempty"`
+	Offer     int           `json:"offer,omitempty"`
+	OfferName string        `json:"on,omitempty"`
+	Skills    []CraftSkill  `json:"skills"`
+	Recipes   []CraftRecipe `json:"recipes"`
+}
+
+// CraftProg says a craft began and how many seconds it takes.
+type CraftProg struct {
+	T    string `json:"t"`
+	ID   string `json:"id"`
+	Secs int    `json:"s"`
+}
+
+// CraftDone ends a craft. OK is a made item; Q its quality; Gain a point of
+// skill won; Text the line for the log.
+type CraftDone struct {
+	T    string `json:"t"`
+	ID   string `json:"id"`
+	OK   bool   `json:"ok"`
+	Q    int    `json:"q,omitempty"`
+	Gain bool   `json:"gain,omitempty"`
+	Text string `json:"text"`
 }
 
 // Book is the spellbook: the spells the character knows, by spec line.

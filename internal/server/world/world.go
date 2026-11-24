@@ -287,6 +287,7 @@ func (z *Zone) join(p *Player) {
 	}
 	p.end = float64(rules.MaxEndurance)
 	w.loadInventory(p) // computes the sheet, and so the hit points
+	w.loadCraft(p)
 	if c.HP <= 0 {
 		c.HP = p.maxHP()
 	}
