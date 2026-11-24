@@ -939,6 +939,10 @@ draws the archetype's baked outfit. Gender is stored (existing characters are
 male) but nothing lets a player choose it yet: the character-creation wizard is
 a follow-up.
 
+### Hair
+
+A humanoid head shape (`HeadA1`..`HeadA5`, `HeadB1`..`HeadB5`) is two meshes in one, and has two UV sets. **UV set 1** lays the face out on the face skin (`v_mhed1`); the vertices of the **hair shell** are all gathered in a small patch at the skin's top left, which is why a head dressed from set 0 looked like a face squeezed onto a hood. **UV set 0** lays the hair out on the hair atlas (`hair_black.dds` and 21 other colours, 256x128, one atlas for every style; the trolls have `t_hair1`..`t_hair4`). Nothing in the file says which triangles are hair, so `charconv` calls a triangle hair when two of its three vertices sit in that patch (UV1 u < 0.3, v < 0.32), and only splits a head when that is between a tenth and nine tenths of its triangles. The face keeps the head shape, the hair becomes a second shape `HairA1` with its own skin. The faces of a race are `<prefix>_<m|f>hed1`..`6` and the colours are the hair skins; `charconv -appearance` writes them, with their textures, to `web/data/appearance*`. The other nine head meshes are different hairstyles; they are not converted yet.
+
 ### Character textures
 
 Models carry UVs but no `NiTexturingProperty` — the game assigns skins at

@@ -15,7 +15,7 @@ import { Animator } from './animator.js';
 import { PostureClips, POSTURE_CLIPS } from './posture.js';
 import { bodyRadius } from './npc.js';
 import { createGear } from './gear.js';
-import { loadRaces, candidates } from './race.js';
+import { loadRaces, candidates, loadAppearance, skinFor } from './race.js';
 
 // Beyond this distance from the camera an entity is neither posed nor drawn.
 const DRAW_DISTANCE = 14000;
@@ -82,6 +82,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
     fetchJson,
   });
   const races = loadRaces(fetchJson);
+  const looks = loadAppearance(fetchJson);
 
   // The directory a character is converted into: creatures by model number; a
   // player by the base for their race and gender, else the outfit the server
@@ -225,7 +226,8 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
         const placed = { ...ctx, model: modelMatrix(v.x, v.e.z, v.y, v.yaw, v.scale) };
         // A creature or player with armour on is dressed by its tiers; the rest draw as converted.
         const look = v.dressed && v.e.eq ? gear.lookFor(v, v.e.eq, v.type.ch) : null;
-        v.type.ch.draw(look ? { ...placed, look } : placed);
+        const skin = v.e.k === 'p' && (v.e.face || v.e.hair) ? skinFor(looks.table, v.e.race, v.e.female, v.e.face, v.e.hair) : null;
+        v.type.ch.draw({ ...placed, ...(look ? { look } : {}), ...(skin ? { skin } : {}) });
         // A held item that cannot be drawn must not cost the creature its body.
         if (v.dressed && v.e.eq) {
           try { gear.draw(v, v.e.eq, v.type.ch.skeleton, placed); } catch (e) { v.e.eq = null; console.warn('held item cannot be drawn:', e.message); }
@@ -241,7 +243,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
   }
 
   return {
-    views, sync, events, update, draw, gear, races,
+    views, sync, events, update, draw, gear, races, looks,
     // The base a player of this race and gender is drawn with, or null (see race.js).
     loadType,
     // The creatures a click or Tab can select.

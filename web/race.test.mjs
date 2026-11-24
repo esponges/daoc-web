@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { baseFor, candidates, loadRaces } from './race.js';
+import { baseFor, candidates, loadRaces, skinFor, loadAppearance } from './race.js';
 
 const ok = (c, m) => { assert.ok(c, m); console.log('ok: ' + m); };
 
@@ -22,5 +22,14 @@ ok(missing.state === 'none' && missing.table === null, 'a missing races.json lea
 const present = loadRaces(() => Promise.resolve(table));
 await present.done;
 ok(present.state === 'ok' && present.table === table, 'a present races.json is kept');
+
+const look = { races: { 6: { m: { faces: ['t_mhed1', 't_mhed2'], hair: ['t_hair1', 't_hair2'] } } } };
+ok(JSON.stringify(skinFor(look, 6, false, 2, 1)) === '{"Head":"data/appearance/t_mhed2.png","Hair":"data/appearance/t_hair1.png"}', 'a chosen face and hair give their textures');
+ok(skinFor(look, 6, false, 0, 0) === null, 'the default look keeps the model own look');
+ok(JSON.stringify(skinFor(look, 6, false, 0, 2)) === '{"Hair":"data/appearance/t_hair2.png"}', 'hair alone is fine');
+ok(skinFor(look, 6, true, 1, 1) === null && skinFor(look, 6, false, 9, 9) === null && skinFor(null, 6, false, 1, 1) === null, 'a missing gender, number or table gives nothing');
+const none = loadAppearance(() => Promise.reject(new Error('404')));
+await none.done;
+ok(none.table === null, 'a missing appearance.json is not an error');
 
 console.log('all passed');

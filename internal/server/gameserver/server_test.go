@@ -478,3 +478,36 @@ func TestCreateCharacterByClass(t *testing.T) {
 		t.Errorf("the Healer has no hit points or stats: %+v", list[0])
 	}
 }
+
+// Creation takes a face and a hair colour, stores them, and refuses numbers
+// the race does not have.
+func TestCreateCharacterAppearance(t *testing.T) {
+	ts, c, w := testServer(t)
+	login(t, ts, c)
+	type body struct {
+		Name string `json:"name"`
+		Arch string `json:"arch"`
+		Face int    `json:"face,omitempty"`
+		Hair int    `json:"hair,omitempty"`
+	}
+	if r := post(t, c, ts.URL+"/api/characters", body{"Faceless", "troll-warrior", 7, 1}); r.StatusCode != 400 {
+		t.Errorf("a seventh face: %d, want 400", r.StatusCode)
+	}
+	if r := post(t, c, ts.URL+"/api/characters", body{"Redhead", "troll-warrior", 3, 4}); r.StatusCode != 201 {
+		t.Fatalf("a valid look: %d", r.StatusCode)
+	}
+	if r := post(t, c, ts.URL+"/api/characters", body{Name: "Plainface", Arch: "troll-warrior"}); r.StatusCode != 201 {
+		t.Fatalf("no look: %d", r.StatusCode)
+	}
+	list, _ := w.Store.Characters(1)
+	got := map[string][2]int{}
+	for _, ch := range list {
+		got[ch.Name] = [2]int{ch.Face, ch.Hair}
+	}
+	if got["Redhead"] != [2]int{3, 4} || got["Plainface"] != [2]int{0, 0} {
+		t.Errorf("stored looks %v", got)
+	}
+	if _, ok := got["Faceless"]; ok {
+		t.Error("the refused look made a character")
+	}
+}

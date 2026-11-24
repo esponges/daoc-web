@@ -592,12 +592,10 @@ builder cannot draw is named once on the console.
   `city.csv`. The other realms' cities and dungeons convert but, like
   their outdoor zones, have only been measured.
 - **About 7% of Midgard's creatures are not in the world.** 1,693 of 24,134 placements in Midgard's regions have no converted model, across 35 models (measured 2026-11-23): wisps, spirits and ghost lights are effect models with no skinned mesh (`charconv` says "no shapes selected"), and the morvalt skugga, mud frogs, carrion crawlers and keep guards are composite figures ("no geometry or no skin"). Their placements are dropped at import. Named creatures that do spawn have no scripted behaviour: no public source says what they do, so they act as their template says; `docs/parity` lists each kind with its reason.
-- **Faces, not hair.** A humanoid's head wears the Face skin from
-  `monsters.csv`; the hair is a separate style number that is not mapped, so
-  a head shows only what its face texture paints.
+- **Hair has one style per race.** A humanoid head is a face and a hair shell in one mesh; `charconv` draws the face on UV set 1 and the shell on set 0 with the row's hair skin (see docs/formats.md, "Hair"). Only the first head mesh (`HeadA1`) is converted, so there is one hair style per race and gender; the ten head meshes the install holds are not offered. Trolls, kobolds and some other races have little or no shell to split, and keep their whole head. Eyes are painted into the face skin, so there is no eye colour. Run `charconv -appearance` for the creation page's faces and hair colours.
 - **Character options are thin.** A character is one of the twelve playable
-  classes in the races the start table allows, male or female, with no face,
-  hair or name-style choices beyond that. Repair is a plain panel; the stock
+  classes in the races the start table allows, male or female, with a face
+  (1 to 6) and a hair colour (10, the trolls 4) and no hair style or name-style choices. Repair is a plain panel; the stock
   frame has none. The clock has no plain window when the converted interface is
   absent. The journal, map, war map and main-menu buttons are greyed, with a
   tooltip saying why.

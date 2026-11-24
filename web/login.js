@@ -53,8 +53,35 @@ async function render() {
   if (!me.characters.length) list.textContent = 'None yet. Make one below.';
   show('create', me.characters.length < me.max);
   const sel = $('arch');
-  if (!sel.options.length) for (const a of me.archetypes) sel.add(new Option(a.label, a.key));
+  if (!sel.options.length) for (const a of me.archetypes) { sel.add(new Option(a.label, a.key)); archRace[a.key] = a.race; }
+  refreshLook();
 }
+
+// The face and hair pickers list what the chosen race has (data/appearance.json,
+// from charconv -appearance) and show the face skin and the hair swatch picked.
+// Without that file they offer only the numbers, which the server checks.
+let looks = null, archRace = {};
+fetch('data/appearance.json').then((r) => (r.ok ? r.json() : null)).then((t) => { looks = t; refreshLook(); }).catch(() => {});
+function refreshLook() {
+  const race = archRace[$('arch').value] || 0;
+  const l = looks && looks.races && looks.races[race] && looks.races[race][$('gender').value];
+  const fill = (id, label, n) => {
+    const sel = $(id), keep = sel.value;
+    sel.replaceChildren(new Option('Default', '0'));
+    for (let i = 1; i <= n; i++) sel.add(new Option(label + ' ' + i, String(i)));
+    if (Number(keep) <= n) sel.value = keep;
+  };
+  fill('face', 'Face', l ? l.faces.length : 6);
+  fill('hair', 'Hair', l ? l.hair.length : 10);
+  const box = $('look');
+  box.replaceChildren();
+  if (!l) return;
+  const pic = (name) => { const i = document.createElement('img'); i.src = 'data/appearance/' + name + '.png'; i.width = 96; i.height = 96; return i; };
+  const f = Number($('face').value), h = Number($('hair').value);
+  if (f) box.append(pic(l.faces[f - 1]));
+  if (h) box.append(pic(l.hair[h - 1]));
+}
+for (const id of ['arch', 'gender', 'face', 'hair']) $(id).addEventListener('change', refreshLook);
 
 $('admin-box').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -64,7 +91,7 @@ $('admin-box').addEventListener('submit', async (e) => {
 $('new').addEventListener('submit', async (e) => {
   e.preventDefault();
   msg('');
-  try { await post('/api/characters', { name: $('name').value, arch: $('arch').value, female: $('gender').value === 'f' }); $('name').value = ''; render(); } catch (err) { msg(err.message); }
+  try { await post('/api/characters', { name: $('name').value, arch: $('arch').value, female: $('gender').value === 'f', face: Number($('face').value) || 0, hair: Number($('hair').value) || 0 }); $('name').value = ''; render(); } catch (err) { msg(err.message); }
 });
 $('logout').addEventListener('click', async () => { await post('/auth/logout', {}); render(); });
 

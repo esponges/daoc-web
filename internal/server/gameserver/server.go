@@ -16,6 +16,7 @@ import (
 
 	"daocweb/internal/server/auth"
 	"daocweb/internal/server/protocol"
+	"daocweb/internal/server/rules"
 	"daocweb/internal/server/store"
 	"daocweb/internal/server/world"
 )
@@ -132,7 +133,7 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request, sess *auth.Session) 
 	}
 	arch := []map[string]any{}
 	for _, a := range world.Archetypes {
-		arch = append(arch, map[string]any{"key": a.ID, "label": a.Label})
+		arch = append(arch, map[string]any{"key": a.ID, "label": a.Label, "race": a.Race})
 	}
 	writeJSON(w, map[string]any{"name": acct.Name, "admin": sess.Admin, "characters": out, "archetypes": arch, "max": MaxCharacters})
 }
@@ -147,6 +148,8 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 		Arch   string  `json:"arch"`
 		Build  *[8]int `json:"build"`  // how far each stat is raised; absent for the class default
 		Female bool    `json:"female"` // false (or absent) is male
+		Face   int     `json:"face"`   // 1 up; 0 or absent is the race's default
+		Hair   int     `json:"hair"`   // the hair colour, 1 up
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -167,14 +170,18 @@ func (s *Server) characters(w http.ResponseWriter, r *http.Request, sess *auth.S
 		http.Error(w, "you have the most characters allowed", http.StatusConflict)
 		return
 	}
+	if err := rules.ValidAppearance(arch.Race, body.Face, body.Hair); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	stats, err := world.CreationStats(arch.Race, arch.Class, body.Build)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	c := &store.Character{AccountID: sess.AccountID, Name: body.Name, Race: arch.Race, Class: arch.Class, Level: 1,
-		Gender: genderOf(body.Female),
-		Stats:  stats, HasStats: true, XPScheme: store.XPSchemeRules, Specs: map[string]int{}}
+		Gender: genderOf(body.Female), Face: body.Face, Hair: body.Hair,
+		Stats: stats, HasStats: true, XPScheme: store.XPSchemeRules, Specs: map[string]int{}}
 	if st, ok := s.World.Cat.StartFor(arch.Realm, arch.Race, arch.Class); ok {
 		c.Zone, c.X, c.Y, c.Z, c.Heading = st.Zone, st.X, st.Y, st.Z, st.Heading
 		c.Bind = &store.Place{Zone: st.Zone, X: st.X, Y: st.Y, Z: st.Z, Heading: st.Heading}

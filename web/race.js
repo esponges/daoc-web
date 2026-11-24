@@ -32,3 +32,24 @@ export function candidates(table, { race, female, char }) {
   if (char && !out.includes(char)) out.push(char);
   return out;
 }
+
+// skinFor is the head and hair textures a player chose, as `{Head, Hair}`
+// urls keyed by shape-name prefix, or null for the model's own. table is
+// data/appearance.json (charconv -appearance); face and hair are the 1-up
+// numbers the server stores, 0 for the default.
+export function skinFor(table, race, female, face, hair) {
+  const l = table && table.races && table.races[race] && table.races[race][female ? 'f' : 'm'];
+  if (!l || !(face || hair)) return null;
+  const out = {};
+  if (face && l.faces && l.faces[face - 1]) out.Head = 'data/appearance/' + l.faces[face - 1] + '.png';
+  if (hair && l.hair && l.hair[hair - 1]) out.Hair = 'data/appearance/' + l.hair[hair - 1] + '.png';
+  return Object.keys(out).length ? out : null;
+}
+
+// loadAppearance fetches the table; a missing file leaves everyone on the
+// model's own face and hair.
+export function loadAppearance(fetchJson) {
+  const r = { table: null };
+  r.done = fetchJson('data/appearance.json').then((t) => { r.table = t; }).catch(() => {});
+  return r;
+}

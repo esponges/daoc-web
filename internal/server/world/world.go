@@ -295,7 +295,7 @@ func (z *Zone) join(p *Player) {
 	z.resumeRide(p)
 	z.add(p)
 	p.exitLatched = z.exitAt(p) != nil
-	p.send(protocol.Welcome{T: protocol.TWelcome, V: protocol.Version, You: p.ID, Name: c.Name, Char: p.Arch.Key, Race: c.Race, Female: c.Gender == 1,
+	p.send(protocol.Welcome{T: protocol.TWelcome, V: protocol.Version, You: p.ID, Name: c.Name, Char: p.Arch.Key, Race: c.Race, Female: c.Gender == 1, Face: c.Face, Hair: c.Hair,
 		Zone: z.ID, X: p.Body.X, Y: p.Body.Y, Z: p.Body.Z, Yaw: p.Body.Yaw, Level: c.Level, Admin: p.Admin})
 	p.welcomed = true
 	p.statsSent = p.statsMsg(w.Cat)

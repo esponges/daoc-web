@@ -212,8 +212,16 @@ func main() {
 	dataDir := flag.String("data", filepath.Join("web", "data"), "with -gear: the converted data directory")
 	doRaces := flag.Bool("races", false, "write races.json for the player races of -realm and list the models to convert, then exit")
 	realm := flag.Int("realm", 2, "with -races: 1 Albion, 2 Midgard, 3 Hibernia, 0 all")
+	doLooks := flag.Bool("appearance", false, "write the faces and hair colours a player may choose (needs races.json), then exit")
 	flag.Parse()
 
+	if *doLooks {
+		if err := convertAppearance(*game, *dataDir); err != nil {
+			fmt.Fprintln(os.Stderr, "charconv:", err)
+			os.Exit(1)
+		}
+		return
+	}
 	if *doRaces {
 		if err := convertRaces(*game, *dataDir, *realm); err != nil {
 			fmt.Fprintln(os.Stderr, "charconv:", err)
@@ -330,8 +338,10 @@ func fromTables(game string, id int) (outfit, error) {
 		o.textures[slot] = s.DDS()
 		if slot == "Head" && m.Face > 0 {
 			// The Head column of a humanoid is its hair colour (hair_white);
-			// the face is the row's Face skin, which the head shape wears.
+			// the face is the row's Face skin, which the head shape wears,
+			// and the hair skin goes to the hair shell (see hairTriangles).
 			if f, ok := t.Skins[m.Face]; ok {
+				o.textures["Hair"] = s.DDS()
 				o.textures[slot] = f.DDS()
 			}
 		}
@@ -515,8 +525,17 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex, tiers bool)
 			invBind[bi] = rows12(sd.Bones[bi].Skin)
 		}
 
+		// A head with two UV sets draws its face on the second and its hair
+		// on the first (see hairTriangles); the hair becomes a shape of its own.
+		hair := hairTriangles(s.Name, d, slotTextures["Hair"] != "")
+		type skinned struct {
+			idx [maxInfluences]byte
+			wts [maxInfluences]float32
+		}
+		packed := make([]skinned, len(d.Vertices))
 		for vi := range d.Vertices {
 			idx, wts, sum := pack(influences[vi])
+			packed[vi] = skinned{idx, wts}
 			if dv := float32(math.Abs(float64(sum - 1))); dv > worstW {
 				worstW = dv
 			}
@@ -541,10 +560,16 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex, tiers bool)
 			if len(d.UV) > 0 && vi < len(d.UV[0]) {
 				uv = d.UV[0][vi]
 			}
+			if hair != nil {
+				uv = d.UV[1][vi]
+			}
 			verts = appendVertex(verts, p, n, uv, idx, wts)
 		}
 		first := len(indices)
-		for _, t := range d.Triangles {
+		for ti, t := range d.Triangles {
+			if hair != nil && hair[ti] {
+				continue
+			}
 			indices = append(indices,
 				uint32(base)+uint32(t[0]),
 				uint32(base)+uint32(t[1]),
@@ -572,6 +597,36 @@ func run(game, figure, name, out, shapeList string, listOnly, noTex, tiers bool)
 		shapes = append(shapes, so)
 		fmt.Printf("  + %-12s %4d verts %4d tris  %2d bones  tex %s\n",
 			s.Name, len(d.Vertices), len(d.Triangles), len(si.Bones), so.Texture)
+
+		if hair != nil {
+			// The hair shell: the same vertices again, laid out on the hair
+			// atlas (UV set 0), over only the triangles the hair covers.
+			hbase := len(verts) / vertStride
+			for vi := range d.Vertices {
+				var n [3]float32
+				if vi < len(d.Normals) {
+					n = d.Normals[vi]
+				}
+				verts = appendVertex(verts, d.Vertices[vi], n, d.UV[0][vi], packed[vi].idx, packed[vi].wts)
+			}
+			hs := so
+			hs.Name = "Hair" + s.Name[4:]
+			hs.First = len(indices)
+			for ti, t := range d.Triangles {
+				if hair[ti] {
+					indices = append(indices,
+						uint32(hbase)+uint32(t[0]), uint32(hbase)+uint32(t[1]), uint32(hbase)+uint32(t[2]))
+				}
+			}
+			hs.Count = len(indices) - hs.First
+			hs.Texture = ""
+			if tex := textureFor(hs.Name); tex != "" {
+				hs.Texture = strings.TrimSuffix(tex, ".dds") + ".png"
+				texNeed[tex] = true
+			}
+			shapes = append(shapes, hs)
+			fmt.Println("  +", hs.Name, hs.Count/3, "tris of hair, tex", hs.Texture)
+		}
 	}
 
 	for s := range wanted {
@@ -887,6 +942,38 @@ func forwardSign(f *nif.File, world []nif.Transform) int {
 		return -1
 	}
 	return 1
+}
+
+// hairTriangles says which triangles of a head are hair, or nil when the head
+// is drawn whole. DAoC heads are two meshes in one: the face and a hair shell.
+// UV set 1 lays the face out on the face skin, where the hair shell's
+// vertices are all gathered into the small scalp patch at its top left; UV
+// set 0 lays the hair out on the hair atlas (hair_black.dds and the rest).
+// A triangle is hair when most of its vertices sit in that patch. Only done
+// when the model has a hair skin, and only when the split is clean enough to
+// trust: some of the hair, and not most of the head.
+func hairTriangles(name string, d *nif.ShapeData, haveHair bool) []bool {
+	if !haveHair || len(d.UV) < 2 || !strings.HasPrefix(strings.ToLower(name), "head") {
+		return nil
+	}
+	in := func(v uint16) bool { uv := d.UV[1][v]; return uv[0] < 0.3 && uv[1] < 0.32 }
+	hair := make([]bool, len(d.Triangles))
+	n := 0
+	for i, t := range d.Triangles {
+		c := 0
+		for k := 0; k < 3; k++ {
+			if in(t[k]) {
+				c++
+			}
+		}
+		if hair[i] = c >= 2; hair[i] {
+			n++
+		}
+	}
+	if n < len(hair)/10 || n > len(hair)*9/10 {
+		return nil
+	}
+	return hair
 }
 
 // shapeStem drops the ":NN" instance tag the exporter appends to shape names.

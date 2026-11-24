@@ -277,7 +277,14 @@ export async function createCharacter(gl, base, helpers) {
       }
       gl.uniform4fv(U.uBones, skinBuf.subarray(0, s.bones.length * 12));
       gl.uniform3fv(U.uDiffuse, tint ? [s.diffuse[0] * tint[0], s.diffuse[1] * tint[1], s.diffuse[2] * tint[2]] : s.diffuse);
-      const t = dressed || (s.texture && texCache.get(s.texture));
+      let t = dressed || (s.texture && texCache.get(s.texture));
+      // A player's chosen face and hair colour (ctx.skin, see race.js skinFor)
+      // stand in for the model's own head and hair skins once they have loaded.
+      if (ctx.skin) {
+        const k = s.name.startsWith('Head') ? 'Head' : s.name.startsWith('Hair') ? 'Hair' : '';
+        const o = k && ctx.skin[k] ? lookTex(ctx.skin[k]) : null;
+        if (o) t = o;
+      }
       gl.uniform1f(U.uHasTex, t ? 1 : 0);
       if (t) gl.bindTexture(gl.TEXTURE_2D, t);
       gl.drawElements(gl.TRIANGLES, s.count, gl.UNSIGNED_INT, s.first * 4);

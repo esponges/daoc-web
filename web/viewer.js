@@ -24,7 +24,7 @@ import { loadInterior } from './interior.js';
 import { NetClient } from './net.js';
 import { loadOutdoorCollision } from './collision.js';
 import { createRemote, eventAnim, postureFor } from './remote.js';
-import { candidates } from './race.js';
+import { candidates, skinFor } from './race.js';
 import { createUI, conColor, money } from './ui.js';
 import { ownCastLine } from './spells.js';
 import { eventLine, conColour } from './sheet.js';
@@ -1531,7 +1531,9 @@ async function main() {
       const placed = { ...ctx, model: charModel, ...(hiddenSelf ? { alpha: 0.4 } : {}) };
       const eq = dressed && net && remote ? net.eq : null;
       const look = eq && eq.length ? remote.gear.lookFor(selfGear, eq, char) : null;
-      char.draw(look ? { ...placed, look } : placed);
+      const skin = welcome && (welcome.fc || welcome.hc) && remote
+        ? skinFor(remote.looks.table, welcome.rc || 0, !!welcome.fm, welcome.fc || 0, welcome.hc || 0) : null;
+      char.draw({ ...placed, ...(look ? { look } : {}), ...(skin ? { skin } : {}) });
       if (eq && eq.length) {
         // A held piece that cannot be drawn must not cost you your body.
         try { remote.gear.draw(selfGear, eq, char.skeleton, placed); } catch (e) { net.eq = []; console.warn('held item cannot be drawn:', e.message); }

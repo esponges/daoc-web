@@ -27,6 +27,8 @@ type Character struct {
 	AccountID int64
 	Name      string
 	Race      int
+	Face      int // the face the player chose, 1 up; 0 is the race's default
+	Hair      int // the hair colour the player chose, 1 up; 0 is the race's default
 	Gender    int // 0 male, 1 female; saved characters from before this column are male
 	Class     int
 	Level     int
@@ -148,6 +150,7 @@ func Open(path string) (*Store, error) {
 	// which the world converts on its first join.
 	for _, col := range []struct{ name, def string }{
 		{"gender", "INTEGER NOT NULL DEFAULT 0"},
+		{"face", "INTEGER NOT NULL DEFAULT 0"}, {"hair", "INTEGER NOT NULL DEFAULT 0"},
 		{"str", "INTEGER"}, {"con", "INTEGER"}, {"dex", "INTEGER"}, {"qui", "INTEGER"},
 		{"int", "INTEGER"}, {"pie", "INTEGER"}, {"emp", "INTEGER"}, {"cha", "INTEGER"},
 		{"con_lost", "INTEGER NOT NULL DEFAULT 0"}, {"death_count", "INTEGER NOT NULL DEFAULT 0"},
@@ -252,9 +255,9 @@ func (s *Store) CreateCharacter(c *Character) error {
 	if c.Level < 1 {
 		c.Level = 1
 	}
-	res, err := s.db.Exec(`INSERT INTO character(account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money,created,xp_scheme)
-		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-		c.AccountID, c.Name, c.Race, c.Gender, c.Class, c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money, time.Now().Unix(), c.XPScheme)
+	res, err := s.db.Exec(`INSERT INTO character(account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money,created,xp_scheme,face,hair)
+		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		c.AccountID, c.Name, c.Race, c.Gender, c.Class, c.Level, c.XP, c.Zone, c.X, c.Y, c.Z, c.Heading, c.HP, c.Endurance, c.Money, time.Now().Unix(), c.XPScheme, c.Face, c.Hair)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {
 			return ErrNameTaken
@@ -270,7 +273,7 @@ func (s *Store) CreateCharacter(c *Character) error {
 
 const charCols = `id,account_id,name,race,gender,class,level,xp,zone,x,y,z,heading,hp,endurance,money,
   str,con,dex,qui,int,pie,emp,cha,con_lost,death_count,xp_scheme,grave_zone,grave_x,grave_y,grave_z,grave_xp,
-  bind_zone,bind_x,bind_y,bind_z,bind_heading`
+  bind_zone,bind_x,bind_y,bind_z,bind_heading,face,hair`
 
 func scanChar(r interface{ Scan(...any) error }) (*Character, error) {
 	c := &Character{}
@@ -283,7 +286,7 @@ func scanChar(r interface{ Scan(...any) error }) (*Character, error) {
 		&c.X, &c.Y, &c.Z, &c.Heading, &c.HP, &c.Endurance, &c.Money,
 		&st[0], &st[1], &st[2], &st[3], &st[4], &st[5], &st[6], &st[7], &c.ConLost, &c.DeathCount, &c.XPScheme,
 		&gz, &gx, &gy, &gzz, &gxp,
-		&bz, &bx, &by, &bzz, &bh)
+		&bz, &bx, &by, &bzz, &bh, &c.Face, &c.Hair)
 	if err != nil {
 		return c, err
 	}

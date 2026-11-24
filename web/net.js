@@ -235,7 +235,7 @@ export class NetClient {
         this.ents.set(e.id, r);
       }
       r.k = e.k; r.name = e.nm; r.model = e.m || 0; r.guild = e.ow ? e.ow + "'s pet" : (e.gd || ''); r.char = e.ch || ''; r.level = e.lv || 0;
-      r.race = e.rc || 0; r.female = !!e.fm;
+      r.race = e.rc || 0; r.female = !!e.fm; r.face = e.fc || 0; r.hair = e.hc || 0;
       // Gear is sent once as the entity comes into view (and, for a player, again
       // whenever it changes, possibly to nothing: gs); kept until it leaves.
       if (e.eq || e.gs) r.eq = e.eq || [];

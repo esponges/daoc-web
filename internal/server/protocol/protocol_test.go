@@ -95,7 +95,7 @@ func TestEntityEquipmentIsAdditive(t *testing.T) {
 }
 
 func TestPlayerAppearanceIsAdditive(t *testing.T) {
-	p := Entity{ID: 9, K: "p", Name: "Grimm", Char: "troll-warrior", Race: 6, Female: true, GearSet: true,
+	p := Entity{ID: 9, K: "p", Name: "Grimm", Char: "troll-warrior", Race: 6, Female: true, Face: 3, Hair: 2, GearSet: true,
 		Equip: [][4]int{{10, 311, 0, 0}}}
 	b, err := json.Marshal(p)
 	if err != nil {
@@ -106,7 +106,7 @@ func TestPlayerAppearanceIsAdditive(t *testing.T) {
 		t.Errorf("round trip of %s: %+v, %v", b, back, err)
 	}
 	// A male with no race sent adds nothing to the entity.
-	if b, _ := json.Marshal(Entity{ID: 1, K: "p", Name: "x"}); strings.Contains(string(b), `"rc"`) || strings.Contains(string(b), `"fm"`) || strings.Contains(string(b), `"gs"`) {
+	if b, _ := json.Marshal(Entity{ID: 1, K: "p", Name: "x"}); strings.Contains(string(b), `"rc"`) || strings.Contains(string(b), `"fm"`) || strings.Contains(string(b), `"gs"`) || strings.Contains(string(b), `"fc"`) || strings.Contains(string(b), `"hc"`) {
 		t.Errorf("an entity without appearance must omit it: %s", b)
 	}
 	// The inventory always states what you wear, even when it is nothing.

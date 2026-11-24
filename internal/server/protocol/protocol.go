@@ -229,6 +229,8 @@ type Welcome struct {
 	Char   string  `json:"char"`         // the converted character to draw you with
 	Race   int     `json:"rc,omitempty"` // your race number, for the race-and-gender base model
 	Female bool    `json:"fm,omitempty"`
+	Face   int     `json:"fc,omitempty"` // the face you chose, 1 up; absent is the race's default
+	Hair   int     `json:"hc,omitempty"` // the hair colour you chose, 1 up
 	Zone   int     `json:"zone"`
 	X      float64 `json:"x"`
 	Y      float64 `json:"y"`
@@ -249,6 +251,8 @@ type Entity struct {
 	Char     string   `json:"ch,omitempty"` // a player's character
 	Race     int      `json:"rc,omitempty"` // a player's race number
 	Female   bool     `json:"fm,omitempty"`
+	Face     int      `json:"fc,omitempty"` // a player's chosen face and hair colour, 1 up
+	Hair     int      `json:"hc,omitempty"`
 	GearSet  bool     `json:"gs,omitempty"` // a player's eq is present even when empty: it went out because it changed
 	Level    int      `json:"lv,omitempty"`
 	X        float64  `json:"x"`
