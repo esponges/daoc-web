@@ -28,7 +28,7 @@ import { createStockCharWindows } from './charwin.js';
 import { createStockMenuBar, createStockCompass, createStockClock } from './chrome.js';
 import { sheetView, trainerView, healerText, conColour, infoLines } from './sheet.js';
 import { createStockQuiver } from './quiverwin.js';
-import { createStockTrainer } from './trainwin.js';
+import { createStockTrainer, pairLeft } from './trainwin.js';
 import { createStockTalk, healerTalk } from './talk.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
 import { createSpellPanel, createSpellBar, createCastBar, castGuard, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, SPELL_SLOTS } from './spells.js';
@@ -588,13 +588,17 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     const v = trainerView(m);
     if (v.say) trainerSay = v.say;
     if (stockTrainer) {
+      if (v.say && stockTalk) {
+        // The greeting and the Train window side by side, centred together
+        // (a window the player has moved stays where they put it).
+        const at = pairLeft(innerWidth);
+        Object.assign(stockTalk.el.style, { left: at.talk + 'px', marginLeft: '0px' });
+        Object.assign(stockTrainer.el.style, { left: at.train + 'px', marginLeft: '0px' });
+      }
       stockTrainer.show(v);
       if (v.say && stockTalk) {
         talkNpc = null;
         trainerGreeting = true;
-        // Left of the Train window, which sits at the middle of the screen.
-        const left = Math.max(8, Math.round(innerWidth / 2 - 150 - 384 - 8));
-        Object.assign(stockTalk.el.style, { left: left + 'px', marginLeft: '0px' });
         stockTalk.show({ title: v.title, text: v.say });
       } else if (v.say) {
         say(v.title + ': ' + v.say, 'info');

@@ -79,3 +79,11 @@ export function createStockTrainer(doc, data, { onTrain, onMessage, onClose, mov
   };
   return api;
 }
+
+// pairLeft places the trainer's greeting (the 384-wide talk window) and the
+// 300-wide Train window side by side, centred together on a screen that wide,
+// and from the left edge on a narrower one.
+export function pairLeft(screenW, talkW = 384, trainW = 300, gap = 8) {
+  const talk = Math.max(8, Math.round((screenW - talkW - gap - trainW) / 2));
+  return { talk, train: talk + talkW + gap };
+}

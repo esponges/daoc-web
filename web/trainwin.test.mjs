@@ -35,3 +35,11 @@ import { trainerView, infoLines } from './sheet.js';
   assert.deepEqual(infoLines(undefined), ['Choose a specialization first.']);
   console.log('ok: INFO and the tooltip say what the next levels give');
 }
+{
+  const { pairLeft } = await import('./trainwin.js');
+  assert.deepEqual(pairLeft(1400), { talk: 354, train: 746 });
+  const n = pairLeft(952);
+  assert.ok(n.talk + 384 <= n.train, 'the greeting never covers the Train window');
+  assert.deepEqual(pairLeft(500), { talk: 8, train: 400 });
+  console.log('ok: the greeting and the Train window sit side by side');
+}
