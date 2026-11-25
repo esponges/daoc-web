@@ -86,6 +86,8 @@ export class NetClient {
   target(id) { this._send({ t: 'target', id }); if (this.me) this.me.target = id; }
   attack(on) { this._send({ t: 'attack', on }); if (this.me) this.me.attacking = on; }
   style(slot) { this._send({ t: 'style', slot }); }
+  // styleId uses a style by its id, wherever it sits on the server's bar (the quickbars name styles).
+  styleId(id) { this._send({ t: 'style', slot: -1, id }); }
   // cast casts a spell of the book at an entity (the held target when 0).
   cast(sp, tg = 0) { this._send({ t: 'cast', sp, ...(tg ? { tg } : {}) }); }
   // askTask talks to an NPC about tasks; abandonTask gives up the held one.

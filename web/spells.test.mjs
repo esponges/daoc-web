@@ -1,7 +1,7 @@
 // Headless checks of the spellbook's pure parts.
 //   node web/spells.test.mjs
 
-import { spellsView, findSpell, spellDragId, slotsFor, assignSlot, castBar, castEventEffect, ownCastLine, castGuard, slotState, SPELL_SLOTS } from './spells.js';
+import { spellsView, findSpell, spellDragId, castBar, castEventEffect, ownCastLine, castGuard, slotState } from './spells.js';
 
 let failed = 0;
 const ok = (cond, name, extra = '') => {
@@ -26,13 +26,6 @@ ok(playing[1].playing && playing[1].text.endsWith('(playing)') && !playing[2].pl
 ok(!spellsView(book)[1].playing && !spellsView(book, 0)[1].text.includes('playing'), 'nothing is marked when no song is on');
 ok(findSpell(book, 5001).nm === 'Smite Bolt' && findSpell(book, 1) === null, 'a spell is found by id');
 ok(spellDragId('spell:3001') === 3001 && spellDragId('style:12') === null && spellDragId('') === null, 'a dragged spell id is read, a style is not');
-
-let slots = slotsFor([3001, 99999, 5001], book);
-ok(slots.length === SPELL_SLOTS && slots[0] === 3001 && slots[1] === 0 && slots[2] === 5001, 'saved slots keep only the spells the character still has');
-slots = assignSlot(slots, 5001, 5);
-ok(slots[5] === 5001 && slots[2] === 0, 'a spell moves between slots');
-slots = assignSlot(slots, 4001, -1);
-ok(slots[1] === 4001, 'a spell with no slot named takes the first free one');
 
 ok(castBar(null, 10) === null, 'no cast, no bar');
 const c = { name: 'Minor Mending', start: 10, dur: 2 };

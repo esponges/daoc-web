@@ -25,8 +25,10 @@
 .stylebar .style .cost { color: #6f8ba6; font-size: 10px; }
 .stylebar .style.ready { color: #fff; border-color: #ffd76a; box-shadow: 0 0 8px rgba(255,215,106,.45); }
 .stylebar .style.poor .cost { color: #e05252; }
-.stylebar.abilities { bottom: 118px; }
-.stylebar.abilities .style { display: block; min-width: 0; }
+/* The quickbars without the converted interface: plain squares with the name. */
+.qbar:not(.stock) .qslot { background: rgba(8,14,22,.82); border: 1px solid rgba(120,170,220,.25); box-sizing: border-box; font-size: 9px; color: #c8d0da; overflow: hidden; }
+.qbar:not(.stock) .qslot .nm { position: absolute; left: 1px; right: 1px; top: 12px; font-size: 8px; line-height: 9px; text-align: center; pointer-events: none; }
+.qbar:not(.stock) .pager { font-size: 9px; color: #ffd76a; }
 .panel { position: fixed; z-index: 14; display: none; background: rgba(8,14,22,.92); border: 1px solid rgba(120,170,220,.35);
   border-radius: 8px; padding: 10px 12px; backdrop-filter: blur(6px); }
 .panel.open { display: block; }

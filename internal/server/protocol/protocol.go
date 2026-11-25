@@ -161,6 +161,7 @@ type Attack struct {
 type Style struct {
 	T    string `json:"t"`
 	Slot int    `json:"slot"`
+	ID   int    `json:"id,omitempty"` // when set, the style by its id wherever it sits (a quickbar slot)
 }
 
 // Loot takes an item from a corpse; Index -1 takes the money.

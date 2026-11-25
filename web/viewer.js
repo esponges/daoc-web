@@ -908,7 +908,7 @@ async function main() {
     ui = createUI(net, { log, stock, getTarget: () => combat.target });
     if (stock) { chatOut = (t, k) => ui.say(t, k); logEl.style.display = 'none'; }
     if (savedTorch(window.localStorage) === 'off') net.chat('say', '/torch off');
-    log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 2-9 are your styles, I opens your pack, J your task, ` shows developer info.', 'info');
+    log('Welcome, ' + welcome.name + '. Enter talks, 1 attacks, 1-0 use your first quickbar (Shift and Alt the second and third), I opens your pack, J your task, ` shows developer info.', 'info');
     // Lasting spells: a row of badges by kind under the vitals, counting down,
     // and a line when a hold or slow begins or ends.
     const fxEl = document.createElement('div');

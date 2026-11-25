@@ -4,7 +4,7 @@
 // the server has not sent stays empty: nothing here is invented.
 
 import { buildWindow } from './uiwin.js';
-import { STAT_NAMES } from './sheet.js';
+import { STAT_NAMES, sheetView } from './sheet.js';
 import { DELVE_HINT } from './delve.js';
 
 // --- what each window shows (pure, so node can test it) ---
@@ -44,7 +44,8 @@ export function skillsView(st) {
   return {
     points: 'pts: ' + st.pts,
     specs: (st.specs || []).map((s) => ({ text: s.nm + '  ' + s.lv + (s.bonus ? ' (+' + s.bonus + ')' : '') })),
-    abilities: (st.ab || []).map((a) => ({ text: a.nm + (a.lv > 1 ? ' ' + a.lv : '') + (a.on ? '' : ' (not yet)'), on: !!a.on })),
+    abilities: (sheetView(st)?.abilities || []).map((a) => ({ text: a.text + (a.on ? '' : ' (not yet)'), on: a.on,
+      ...(a.use ? { drag: 'ability:' + a.use, title: 'Drag onto a quickbar' } : {}) })),
   };
 }
 
@@ -99,7 +100,7 @@ export function spellGroups(book, song = 0, open = {}) {
         icon: SPELL_ICON[spellKind(s.tp, s.tg)],
         on: !!s.ok,
         drag: s.ok ? 'spell:' + s.id : undefined,
-        title: (s.ok ? 'Double-click to cast, drag to the spell bar' : 'You cannot cast this yet') + ' · ' + DELVE_HINT,
+        title: (s.ok ? 'Double-click to cast, drag onto a quickbar' : 'You cannot cast this yet') + ' · ' + DELVE_HINT,
       };
     }),
   }));
@@ -107,17 +108,17 @@ export function spellGroups(book, song = 0, open = {}) {
 
 // styleGroups is the styles tree's content: a group for each weapon line with
 // the styles the character can use now (each carries its id to drag to the
-// style bar), then one group of those they have learned but cannot use.
+// quickbars), then one group of those they have learned but cannot use.
 export function styleGroups(slots, also, iconOf = () => 0, open = {}) {
   const v = stylesView(slots, also);
   const groups = [];
   for (const r of v.usable) {
     if (r.header) { groups.push({ title: r.header, open: open[r.header] !== false, rows: [] }); continue; }
-    groups[groups.length - 1].rows.push({ id: r.id, text: r.text, icon: iconOf(r.spec), drag: 'style:' + r.id, title: 'Drag onto the style bar · ' + DELVE_HINT });
+    groups[groups.length - 1].rows.push({ id: r.id, text: r.text, icon: iconOf(r.spec), drag: 'style:' + r.id, title: 'Drag onto a quickbar · ' + DELVE_HINT });
   }
   if (v.locked.length) {
     const t = 'Not usable now';
-    groups.push({ title: t, open: open[t] !== false, rows: v.locked.map((r) => ({ id: r.id, text: r.text, icon: iconOf(r.spec), on: false })) });
+    groups.push({ title: t, open: open[t] !== false, rows: v.locked.map((r) => ({ id: r.id, text: r.text, icon: iconOf(r.spec), on: false, drag: 'style:' + r.id, title: 'Drag onto a quickbar; it works with the weapon it needs · ' + DELVE_HINT })) });
   }
   return groups;
 }
@@ -129,7 +130,7 @@ export function styleGroups(slots, also, iconOf = () => 0, open = {}) {
 // book, song) refills them; toggle(name) opens or closes one ("attributes",
 // "skills", "styles", "spells").
 //   onCast(id)          a spell was double-clicked
-//   onAssign(id)        a spell was asked for the spell bar
+//   onAssign(id)        a spell was asked for a quickbar
 //   onDelve(kind, id)   a spell or style row was right-clicked ("spell" or "style")
 //   onAction(name)      a window button: "concentration", "pet", "quiver",
 //                       "pray", "bind"

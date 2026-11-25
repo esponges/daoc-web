@@ -4,14 +4,13 @@
 
 const SLOT_NAMES = { 40: 'Weapon', 41: 'Shield', 42: 'Torso', 43: 'Legs', 44: 'Arms', 45: 'Feet', 46: 'Hands', 47: 'Head', 48: 'Bow', 49: 'Quiver 1', 50: 'Quiver 2', 51: 'Quiver 3', 52: 'Quiver 4' };
 const PACK = 40;
-const BAR_KEYS = ['Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];
 
-import { createStockChat, createStockSummary, createStockBar, createStockRelease, RESPAWN_SECONDS } from './hud.js';
+import { createStockChat, createStockSummary, createStockRelease, RESPAWN_SECONDS } from './hud.js';
 import { releaseLine } from './effects.js';
 import { createConcWindow, heldSpells } from './conc.js';
 import { createCommandWindow } from './command.js';
 import { createPetWindow } from './pet.js';
-import { createSpellQuickbar, quickbarPlace, BAR_W } from './quickbar.js';
+import { createQuickbars, parseLayout, fillNew, placeEntry, keySlot } from './quickbars.js';
 import { styleIconNumber } from './uiwin.js';
 import { createMover, createPositionStore } from './uimove.js';
 import { createTaskWindow } from './task.js';
@@ -32,7 +31,7 @@ import { delveEntries, rightClick, DELVE_HINT, REMOVE_HINT } from './delve.js';
 import { createStockTrainer, pairLeft } from './trainwin.js';
 import { createStockTalk, healerTalk } from './talk.js';
 import { chatLine, createStockGroup, createPlainGroup, createInvitePrompt } from './group.js';
-import { createSpellPanel, createSpellBar, createCastBar, castGuard, castEventEffect, slotsFor, assignSlot, spellDragId, findSpell, slotState, SPELL_SLOTS } from './spells.js';
+import { createSpellPanel, createCastBar, castGuard, castEventEffect, findSpell } from './spells.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -171,79 +170,76 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   you.append(endBar, powBar, xpBar);
   you.querySelector('.name').prepend(lvl);
 
-  // --- style bar ---
-  // The stock bar when the converted interface is there: a row of icons.
-  let stockBar = null;
-  const bar = el('div', 'stylebar');
-  root.appendChild(bar);
-  if (stock) {
-    stockBar = createStockBar(document, stock, { onUse: (i) => net.style(i), onDelve: (id) => net.delve('style', { id: String(id) }), onDrop: (slot, id) => net.barSet(slot, id), keys: BAR_KEYS.map((k) => k.replace('Digit', '')) });
-    bar.appendChild(stockBar.el);
-  }
-  let barSlots = [];
-  const renderBar = () => {
-    if (stockBar) { stockBar.set(barSlots); return; }
-    bar.replaceChildren();
-    barSlots.forEach((s, i) => {
-      const b = el('button', 'style');
-      b.dataset.slot = i;
-      b.append(el('span', 'key', i < BAR_KEYS.length ? BAR_KEYS[i].replace('Digit', '') : ''), el('span', 'nm', s.nm),
-        el('span', 'cost', s.cost + ' end'));
-      b.title = s.nm + ' (' + s.opens + ', level ' + s.lv + ') · ' + DELVE_HINT;
-      b.addEventListener('click', () => net.style(i));
-      b.addEventListener('contextmenu', (e) => { e.preventDefault(); net.delve('style', { id: String(s.id) }); });
-      bar.appendChild(b);
-    });
-  };
-  net.on.bar = (slots) => { barSlots = slots; renderBar(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song); };
-  // --- spells ---
-  // The spell bar (Shift+1 to Shift+8) and the cast bar; the plain panel stands in
-  // for the stock SPELLS window when the converted interface is absent.
-  const slotKey = () => 'spellbar:' + (net.me && net.me.name);
-  let spellSlots = new Array(SPELL_SLOTS).fill(0);
-  let heldBuffs = new Set(); // spell ids of the buffs held by concentration, marked on the bar
-  const loadSlots = () => {
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(slotKey()) || '[]'); } catch { /* private window: no memory */ }
-    spellSlots = slotsFor(saved, net.book);
-  };
+  // --- quickbars ---
+  // Three bars of ten slots with ten pages each, as the stock client has them:
+  // any slot holds a style, a spell or an ability (quickbars.js). The layout is
+  // the player's, kept per character in the browser.
   const guard = castGuard();
   const castSpell = (id) => {
     if (!guard.ask(id, performance.now())) return;
     const t = getTarget ? getTarget() : null;
     net.cast(id, t && !t.dead ? t.id : 0);
   };
-  const barHandlers = {
-    onCast: castSpell,
-    onAssign: (id, slot) => setSpellSlot(id, slot),
-    onClear: (slot) => { spellSlots[slot] = 0; saveSlots(); },
-    onDelve: (id) => net.delve('spell', { id: String(id) }),
+  const useAbility = (use) => {
+    const shot = { 'critical shot': 'critical', 'rapid fire': 'rapid' }[use];
+    if (shot) net.shoot(shot); else net.chat('say', '/' + use);
   };
-  // The stock quickbar, drawn from the skin's art, when the interface is converted.
-  const spellBar = stock
-    ? createSpellQuickbar(document, stock, { ...barHandlers, findSpell, dragId: spellDragId })
-    : createSpellBar(document, barHandlers);
-  root.appendChild(spellBar.el);
-  // The two rows sit where default.ini puts the quickbar: centred, near the bottom.
-  const placeBars = () => {
-    if (!stock) return;
-    const a = quickbarPlace(innerWidth, innerHeight, 0), b = quickbarPlace(innerWidth, innerHeight, 1);
-    Object.assign(bar.style, { left: a.left + 'px', top: a.top + 'px', bottom: 'auto', transform: 'none', width: BAR_W + 'px', flexWrap: 'nowrap', gap: '0px' });
-    Object.assign(spellBar.el.style, { left: b.left + 'px', top: b.top + 'px' });
+  let heldBuffs = new Set(); // spell ids of the buffs held by concentration, marked on the bars
+  const qbKey = () => 'quickbars:' + (net.me && net.me.name);
+  const qbCtx = () => ({
+    bar: net.bar, also: net.barAlso, book: net.book, song: net.song, held: heldBuffs, recasts: net.recasts,
+    abilities: net.stats ? sheetView(net.stats).abilities.filter((a) => a.use).map((a) => a.use) : [],
+  });
+  const saveBars = (l) => { try { localStorage.setItem(qbKey(), JSON.stringify(l)); } catch { /* not remembered */ } };
+  const quickbars = createQuickbars(document, stock, {
+    onUse: (e, r) => {
+      if (e.k === 'style') { if (r.locked) say(r.title.replace(/\s*\(needs/, ': needs').replace(/\)$/, '.'), 'err'); else net.styleId(e.id); }
+      else if (e.k === 'spell') castSpell(e.id);
+      else useAbility(e.id);
+    },
+    onDelve: (e) => { if (e.k !== 'ability') net.delve(e.k, { id: String(e.id) }); },
+    onChange: saveBars,
+  });
+  for (const b of quickbars.els) root.appendChild(b);
+  let qbLoaded = '';
+  // refreshBars loads the character's layout once their name is known, places
+  // what they have newly gained, and redraws.
+  const refreshBars = () => {
+    let l = quickbars.layout;
+    const name = net.me && net.me.name;
+    if (name && qbLoaded !== name) {
+      qbLoaded = name;
+      let raw = null, legacy = null;
+      try { raw = localStorage.getItem(qbKey()); legacy = JSON.parse(localStorage.getItem('spellbar:' + name) || 'null'); } catch { /* private window */ }
+      l = parseLayout(raw);
+      if (!raw && Array.isArray(legacy)) l = fillNew(l, qbCtx(), legacy);
+    }
+    if (!name) { quickbars.set(l, qbCtx()); return; }
+    const next = fillNew(l, qbCtx());
+    if (next !== l || l !== quickbars.layout) saveBars(next);
+    quickbars.set(next, qbCtx());
   };
+  const placeBars = () => quickbars.place(innerWidth, innerHeight);
   placeBars();
   addEventListener('resize', placeBars);
-  if (stock) spellBar.set(spellSlots, net.book, net.song, heldBuffs); // the empty bar shows from the start
+  quickbars.set(null, qbCtx()); // the empty bars show from the start
+  net.on.bar = () => { refreshBars(); if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song); };
+  // --- spells ---
+  // The cast bar; the plain panel stands in for the stock SPELLS window when the
+  // converted interface is absent.
   const castBox = createCastBar(document, stock, { mover });
   root.appendChild(castBox.el);
-  const saveSlots = () => {
-    try { localStorage.setItem(slotKey(), JSON.stringify(spellSlots)); } catch { /* not remembered */ }
-    spellBar.set(spellSlots, net.book, net.song, heldBuffs);
-  };
-  function setSpellSlot(id, slot) {
+  // A spell asked for a bar (shift-click, or the window's assign) goes to the
+  // first empty slot of the second bar's open page, else of any of its pages.
+  function setSpellSlot(id) {
     if (!findSpell(net.book, id)) return;
-    spellSlots = assignSlot(spellSlots, id, slot);
-    saveSlots();
+    const l = quickbars.layout;
+    const pages = [l.page[1], ...Array.from({ length: 10 }, (_, i) => i).filter((p) => p !== l.page[1])];
+    for (const p of pages) {
+      const s = l.bars[1][p].findIndex((x) => !x);
+      if (s >= 0) { const next = placeEntry(l, 1, p, s, { k: 'spell', id }); saveBars(next); quickbars.set(next); return; }
+    }
+    say('Your second quickbar is full.', 'err');
   }
   let plainSpells = null;
   if (!stock) {
@@ -256,14 +252,13 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     plainSpells.render(net.book, net.song);
   };
   net.on.book = () => {
-    loadSlots();
-    spellBar.set(spellSlots, net.book, net.song, heldBuffs);
+    refreshBars();
     if (plainSpells) plainSpells.render(net.book, net.song);
     if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song);
   };
   // A song or chant coming on or going off is marked on the bar and in the window.
   net.on.song = () => {
-    spellBar.set(spellSlots, net.book, net.song, heldBuffs);
+    quickbars.set(null, qbCtx());
     if (plainSpells) plainSpells.render(net.book, net.song);
     if (charWins) charWins.update(net.me, net.stats, net.bar, net.barAlso, net.book, net.song);
   };
@@ -274,25 +269,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     cast = e.what === 'start' ? { name: e.name, start: performance.now() / 1000, dur: e.dur } : null;
   };
 
-  // Abilities used on a target (Guard, Protect, Intercept, Engage) sit beside the styles.
-  const abBar = el('div', 'stylebar abilities');
-  if (stock) abBar.style.bottom = '134px'; // above the quickbar
-  root.appendChild(abBar);
-  const renderAbilities = () => {
-    abBar.replaceChildren();
-    if (!net.stats) return;
-    for (const a of sheetView(net.stats).abilities) {
-      if (!a.use) continue;
-      const b = el('button', 'style', a.text);
-      b.title = ['berserk', 'charge', 'quickcast'].includes(a.use) ? 'Use (/' + a.use + ')'
-        : a.use === 'distraction' ? 'Use on your ground target (/distraction); set one with G, then click the ground'
-        : 'Use on your target (/' + a.use + ')';
-      const shot = { 'critical shot': 'critical', 'rapid fire': 'rapid' }[a.use];
-      b.title = shot ? 'Draw a ' + a.text + ' (shift+B for Critical Shot, N for Rapid Fire)' : b.title;
-      b.addEventListener('click', () => (shot ? net.shoot(shot) : net.chat('say', '/' + a.use)));
-      abBar.appendChild(b);
-    }
-  };
+  // Abilities used on a target (Guard, Protect, Intercept, Engage) and the
+  // others a player uses (Berserk, Critical Shot) sit on the quickbars too.
+  const renderAbilities = () => refreshBars();
 
   // --- pack ---
   const pack = el('div', 'panel pack');
@@ -576,7 +555,11 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     sheetPanel.append(el('h3', '', 'Abilities'));
     for (const a of v.abilities) {
       const row = el('div', 'line' + (a.on ? '' : ' off'), a.text + (a.on ? '' : ' (not yet in this game)'));
-      if (a.use) { const b = el('button', 'use', 'Use'); b.title = 'Use on your target (/' + a.use + ')'; b.addEventListener('click', () => net.chat('say', '/' + a.use)); row.append(' ', b); }
+      if (a.use) {
+        const b = el('button', 'use', 'Use'); b.title = 'Use (/' + a.use + ')'; b.addEventListener('click', () => useAbility(a.use)); row.append(' ', b);
+        row.draggable = true; row.title = 'Drag onto a quickbar';
+        row.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', 'ability:' + a.use));
+      }
       sheetPanel.append(row);
     }
     sheetPanel.append(closeButton(sheetPanel));
@@ -721,7 +704,7 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
   net.on.conc = (m) => {
     concWin.update(m);
     heldBuffs = heldSpells(m);
-    spellBar.set(spellSlots, net.book, net.song, heldBuffs);
+    quickbars.set(null, qbCtx());
   };
   // The pet: a window that opens when there is one and closes when it is gone.
   const petWin = createPetWindow(document, stock, { onOrder: (cmd) => net.petOrder(cmd), mover });
@@ -794,25 +777,9 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
         deadTimer.textContent = releaseLine(RESPAWN_SECONDS - (now - deadSince));
       }
     }
-    if (stockBar) stockBar.update(me);
     castBox.update(cast, performance.now() / 1000);
     if (duelPrompt && [...net.ents.values()].some((e) => e.foe)) duelPrompt.hide(); // the duel has begun, however it was answered
-    const nowS = performance.now() / 1000;
-    if (stock) spellBar.update(me, net.recasts, nowS);
-    else spellBar.el.querySelectorAll('.style').forEach((b) => {
-      const id = spellSlots[Number(b.dataset.slot)];
-      const s = id && findSpell(net.book, id);
-      const { poor, wait } = slotState(s, me, net.recasts, nowS); // a Savage spell is paid in hit points
-      b.classList.toggle('poor', poor);
-      b.classList.toggle('wait', wait > 0);
-      const cost = b.querySelector('.cost');
-      if (cost && s) cost.textContent = wait ? wait + 's' : s.pw + (s.hp ? ' hp' : ' pw');
-    });
-    bar.querySelectorAll('.style').forEach((b) => {
-      const i = Number(b.dataset.slot);
-      b.classList.toggle('ready', me.avail.includes(i));
-      b.classList.toggle('poor', barSlots[i] && me.end < barSlots[i].cost);
-    });
+    quickbars.update(me, performance.now() / 1000); // a Savage spell is paid in hit points; slotLook knows
     // A corpse window closes when you walk away from it.
     const lootOpen = stockLoot ? stockLoot.isOpen : lootWin.classList.contains('open');
     if (lootOpen && net.corpse) {
@@ -838,14 +805,16 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (e.code === 'KeyU' && !e.repeat) { guildWin.toggle(); return true; } // the guild
     if (e.code === 'KeyY' && !e.repeat) { craftWin.toggle(); return true; } // crafting (Y)
     if (e.code === 'KeyC' && !e.repeat && !e.shiftKey) { toggleSheet(); return true; } // shift-C is still the free camera
-    // Shift+1 to Shift+8 cast the spell on that slot of the spell bar.
-    const sn = /^Digit([1-8])$/.exec(e.code);
-    if (sn && e.shiftKey) {
-      if (!e.repeat && spellSlots[Number(sn[1]) - 1]) castSpell(spellSlots[Number(sn[1]) - 1]);
+    // 1 to 0 use the first quickbar's slot, with Shift the second's, with Alt the
+    // third's. 1 on an empty first slot falls through to the attack key.
+    const ks = keySlot(e);
+    if (ks) {
+      const r = quickbars.entryAt(ks.bar, ks.slot);
+      if (!r && ks.bar === 0 && ks.slot === 0) return false;
+      if (e.preventDefault) e.preventDefault(); // Alt+digit must not reach the browser
+      if (r && !e.repeat) quickbars.use(r);
       return true;
     }
-    const i = BAR_KEYS.indexOf(e.code);
-    if (i >= 0 && !e.repeat) { net.style(i); return true; }
     return false;
   }
 

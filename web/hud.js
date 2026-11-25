@@ -3,8 +3,7 @@
 // goes in, what the player did comes out through callbacks. The server
 // decides everything; these only display and ask.
 
-import { buildWindow, frame, fontFamily, child, num, str, pt, text, icon, styleIconNumber, hrButton } from './uiwin.js';
-import { slotFrame } from './quickbar.js';
+import { buildWindow, frame, fontFamily, child, num, str, pt, hrButton } from './uiwin.js';
 import { CHAT_MAX, CHAT_SIZE, pushRing, atBottom, chatSize } from './chatlog.js';
 import { scrollThumb } from './uictl.js';
 import { releaseLine } from './effects.js';
@@ -287,67 +286,6 @@ export function createStockExp(doc, data) {
 export function styleDragId(data) {
   const m = /^style:(\d+)$/.exec(data || '');
   return m ? Number(m[1]) : null;
-}
-
-// createStockBar builds the style bar: one stock icon per style with its key
-// and endurance cost. A style that cannot be used now is shaded, one the
-// character cannot pay for is shaded red, one ready to use gets a gold frame.
-//   onUse(slot)  the player clicked a style      onDelve(id)  it was right-clicked
-export function createStockBar(doc, data, { onUse, onDrop, onDelve, keys = [] } = {}) {
-  const root = doc.createElement('div');
-  Object.assign(root.style, { display: 'flex', gap: '3px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '92vw' });
-  let slots = [];
-  let cells = [];
-
-  const label = (value, font, x, y) => {
-    const t = text(doc, data, font, value, 'rgb(255,255,255)');
-    t.style.left = x + 'px';
-    t.style.top = y + 'px';
-    t.style.pointerEvents = 'none';
-    t.style.filter = 'drop-shadow(1px 1px 0 #000)';
-    return t;
-  };
-
-  function set(next) {
-    slots = next;
-    root.textContent = '';
-    cells = slots.map((s, i) => {
-      const cell = doc.createElement('div');
-      Object.assign(cell.style, { position: 'relative', width: '36px', height: '36px', cursor: 'pointer' });
-      cell.title = `${s.nm} (${s.opens}, level ${s.lv}, ${s.cost} endurance) · Right-click for more information.`;
-      cell.addEventListener('contextmenu', (e) => { e.preventDefault?.(); onDelve?.(s.id); });
-      cell.appendChild(slotFrame(doc, data));
-      cell.appendChild(icon(doc, data, styleIconNumber(s.spec), 2, 2));
-      const shade = doc.createElement('div');
-      Object.assign(shade.style, { position: 'absolute', left: '2px', top: '2px', width: '32px', height: '32px', pointerEvents: 'none' });
-      cell.appendChild(shade);
-      if (keys[i]) cell.appendChild(label(keys[i], 'arial9', 4, 4));
-      cell.appendChild(label(String(s.cost), 'arial9', 20, 24));
-      cell.addEventListener('click', () => onUse?.(i));
-      // A style dragged from the styles window lands in this slot.
-      cell.addEventListener('dragover', (e) => e.preventDefault());
-      cell.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const id = styleDragId(e.dataTransfer?.getData('text/plain'));
-        if (id !== null) onDrop?.(i, id);
-      });
-      root.appendChild(cell);
-      return { cell, shade };
-    });
-  }
-
-  // update takes the server's vitals: which slots may be used (avail) and endurance.
-  function update(me) {
-    if (!me) return;
-    cells.forEach(({ cell, shade }, i) => {
-      const ready = (me.avail || []).includes(i);
-      const poor = me.end < slots[i].cost;
-      shade.style.background = poor ? 'rgba(160,0,0,.55)' : ready ? 'transparent' : 'rgba(0,0,0,.55)';
-      cell.style.outline = ready && !poor ? '1px solid #ffd76a' : 'none';
-    });
-  }
-
-  return { el: root, set, update, get count() { return slots.length; } };
 }
 
 // The server stands a dead character up after this many seconds unless they

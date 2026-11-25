@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { concRows, heldSpells, createConcWindow } from './conc.js';
 import { UIData } from './uiwin.js';
-import { createSpellBar } from './spells.js';
+import { resolve, slotLook } from './quickbars.js';
 
 const doc = {
   createElement(tag) {
@@ -38,16 +38,16 @@ assert.deepEqual([...heldSpells(m)], [8001, 8002]);
 assert.equal(heldSpells(null).size, 0);
 console.log('ok: concentration rows');
 
-// The spell bar marks the buffs that are held.
+// The quickbars mark the buffs that are held.
 const book = { lines: [{ spec: 'Mending', nm: 'Mending', sp: [{ id: 8001, nm: 'Blessing of Might', lv: 1, pw: 0, ct: 1, ok: true }, { id: 8003, nm: 'Minor Mending', lv: 1, pw: 1, ct: 2, ok: true }] }] };
-const sb = createSpellBar(doc, {});
-sb.set([8001, 8003, 0], book, 0, heldSpells(m));
-const marked = sb.el.children.map((b) => b.classList.contains('on'));
-assert.deepEqual(marked, [true, false, false], 'only the held buff is marked');
-assert.match(sb.el.children[0].title, /you hold this buff/);
-sb.set([8001, 8003, 0], book, 0);
-assert.deepEqual(sb.el.children.map((b) => b.classList.contains('on')), [false, false, false], 'nothing is marked when nothing is held');
-console.log('ok: held buffs marked on the spell bar');
+const ctx = { book, held: heldSpells(m) };
+const me = { power: 10, hp: 10 };
+const marked = [8001, 8003].map((id) => slotLook(resolve({ k: 'spell', id }, ctx), me, ctx).on);
+assert.deepEqual(marked, [true, false], 'only the held buff is marked');
+assert.match(resolve({ k: 'spell', id: 8001 }, ctx).title, /you hold this buff/);
+const none = { book };
+assert.deepEqual([8001, 8003].map((id) => slotLook(resolve({ k: 'spell', id }, none), me, none).on), [false, false], 'nothing is marked when nothing is held');
+console.log('ok: held buffs marked on the quickbars');
 
 // The plain panel: lists the buffs, and a cancel button asks for that buff.
 const asked = [];

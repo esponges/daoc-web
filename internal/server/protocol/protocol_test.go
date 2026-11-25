@@ -15,6 +15,7 @@ func TestRoundTrip(t *testing.T) {
 		&Target{T: TTarget, ID: 42},
 		&Attack{T: TAttack, On: true},
 		&Style{T: TStyle, Slot: 2},
+		&Style{T: TStyle, Slot: -1, ID: 77},
 		&Loot{T: TLoot, Corpse: 9, Index: -1},
 		&Equip{T: TEquip, From: 3, To: 40},
 		&Use{T: TUse},

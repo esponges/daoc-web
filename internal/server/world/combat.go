@@ -277,6 +277,25 @@ func (z *Zone) requestStyle(p *Player, slot int) {
 	p.pending = slot
 }
 
+// requestStyleID queues a style by its id: the quickbars name styles, not
+// places on the server's bar. A style the player has learned but cannot use
+// with what they hold is refused with the reason.
+func (z *Zone) requestStyleID(p *Player, id int) {
+	for i := range p.bar {
+		if p.bar[i].ID == id {
+			z.requestStyle(p, i)
+			return
+		}
+	}
+	for i := range p.barAlso {
+		if p.barAlso[i].ID == id {
+			p.errMsg("style", p.barAlso[i].Name+": you cannot use that style with what you hold.")
+			return
+		}
+	}
+	p.errMsg("style", "You do not know that style.")
+}
+
 // SetTarget selects an NPC (id 0 clears it).
 func (z *Zone) SetTarget(p *Player, id int64) {
 	if id != p.ab.engage {

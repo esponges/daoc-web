@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -483,6 +484,45 @@ func TestStyleIsSpentOnSwing(t *testing.T) {
 	}
 	if p.end > end0-5 {
 		t.Errorf("endurance %v -> %v; a 15-cost style (12 with a 3.1 s hammer) should have been paid", end0, p.end)
+	}
+}
+
+// A quickbar names a style by its id: it is queued wherever it sits on the
+// server's bar, and one held back for the weapon is refused with the reason.
+func TestStyleByID(t *testing.T) {
+	r := newRig(t, wolf(1, 30100, 30000, 1))
+	p := r.player("Quickbar", 5, 30000, 30000, true)
+	r.train(p, map[string]int{"Hammer": 5})
+	r.z.SetTarget(p, 1)
+	r.z.SetAttack(p, true)
+	anvil := -1
+	for i, d := range p.bar {
+		if d.Name == "Thor's Anvil" {
+			anvil = i
+		}
+	}
+	if anvil < 0 {
+		t.Fatal("no Thor's Anvil on the bar")
+	}
+	r.z.RequestStyleID(p, p.bar[anvil].ID)
+	if p.pending != anvil {
+		t.Fatalf("pending %d, want slot %d", p.pending, anvil)
+	}
+	p.pending = -1
+	p.barAlso = append(p.barAlso, StyleDef{ID: 999999, Name: "Held Back"})
+	r.z.RequestStyleID(p, 999999)
+	if p.pending != -1 {
+		t.Errorf("a held-back style was queued")
+	}
+	types, raws := sent(p)
+	found := false
+	for i, ty := range types {
+		if ty == protocol.TErr && strings.Contains(string(raws[i]), "Held Back") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("no refusal naming the held-back style")
 	}
 }
 

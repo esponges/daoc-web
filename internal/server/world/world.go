@@ -728,6 +728,7 @@ func StartHP(class int, stats [8]int) int {
 
 // RequestStyle, TakeLoot and Pong are the entry points the connection uses.
 func (z *Zone) RequestStyle(p *Player, slot int)      { z.requestStyle(p, slot) }
+func (z *Zone) RequestStyleID(p *Player, id int)      { z.requestStyleID(p, id) }
 func (z *Zone) TakeLoot(p *Player, id int64, idx int) { z.takeLoot(p, id, idx) }
 
 // Pong answers a client's ping.

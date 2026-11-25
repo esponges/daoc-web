@@ -4,7 +4,7 @@
 // absent, and the bar and cast bar in both cases.
 
 import { buildWindow } from './uiwin.js';
-import { rightClick, DELVE_HINT, REMOVE_HINT } from './delve.js';
+import { DELVE_HINT } from './delve.js';
 // spellsView is the spells window's content: for each spec line a header and
 // its spells, each with its level, power and cast time. A spell the server
 // cannot cast yet is greyed (on: false) and cannot be dragged.
@@ -43,8 +43,6 @@ export function spellDragId(data) {
   return m ? Number(m[1]) : null;
 }
 
-export const SPELL_SLOTS = 8;
-
 // slotState is what stops a spell on the bar being cast now: poor when the
 // character cannot pay for it (power, or for a Savage spell hit points, which
 // may not go to 0), and wait, the whole seconds left of its recast (0 when it is
@@ -56,23 +54,6 @@ export function slotState(s, me, recasts, nowS) {
   const until = recasts && recasts.get ? recasts.get(s.id) : undefined;
   const wait = until > nowS ? Math.ceil(until - nowS) : 0;
   return { poor, wait };
-}
-
-// slotsFor keeps a bar's slot assignments to spells the character still has:
-// a slot holds a spell id, or 0.
-export function slotsFor(saved, book) {
-  const out = new Array(SPELL_SLOTS).fill(0);
-  (saved || []).slice(0, SPELL_SLOTS).forEach((id, i) => { if (findSpell(book, id)) out[i] = id; });
-  return out;
-}
-
-// assignSlot puts a spell into a slot (the first free one when slot is
-// negative), taking it out of any other, and returns the new slots.
-export function assignSlot(slots, id, slot = -1) {
-  const out = slots.map((x) => (x === id ? 0 : x));
-  if (slot < 0) slot = out.findIndex((x) => x === 0);
-  if (slot >= 0 && slot < SPELL_SLOTS) out[slot] = id;
-  return out;
 }
 
 // castBar is the state of the cast bar at a time: null when nothing is being
@@ -121,7 +102,7 @@ const el = (doc, tag, cls, text) => {
 };
 
 // createSpellPanel builds the plain spells panel: the book's lines with each
-// spell; a click casts it, a drag (or shift-click) puts it on the spell bar.
+// spell; a click casts it, a drag (or shift-click) puts it on a quickbar.
 //   onCast(id)  onAssign(id)  onDelve(id) on right-click
 export function createSpellPanel(doc, { onCast, onAssign, onDelve } = {}) {
   const panel = el(doc, 'div', 'panel spells');
@@ -141,51 +122,13 @@ export function createSpellPanel(doc, { onCast, onAssign, onDelve } = {}) {
         const d = el(doc, 'div', 'spell' + (r.on ? '' : ' off') + (r.playing ? ' playing' : ''), r.text);
         if (r.on) {
           d.draggable = true;
-          d.title = 'Click to cast at your target · shift-click or drag onto the spell bar · ' + DELVE_HINT;
+          d.title = 'Click to cast at your target · shift-click or drag onto a quickbar · ' + DELVE_HINT;
           d.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', r.drag));
           d.addEventListener('click', (e) => (e.shiftKey ? onAssign?.(r.id) : onCast?.(r.id)));
         } else d.title = 'This kind of spell does not work yet. ' + DELVE_HINT;
         d.addEventListener('contextmenu', (e) => { e.preventDefault(); onDelve?.(r.id); });
         list.appendChild(d);
       }
-    },
-  };
-}
-
-// createSpellBar builds the row of spell slots (Shift+1 to Shift+8). set(slots,
-// book) refills it; a slot's click casts, and a spell dropped on a slot is
-// assigned to it.
-//   onCast(id)  onAssign(id, slot)  onClear(slot) on Shift+right-click  onDelve(id) on right-click
-export function createSpellBar(doc, { onCast, onAssign, onClear, onDelve } = {}) {
-  const bar = el(doc, 'div', 'stylebar spellbar');
-  return {
-    el: bar,
-    set(slots, book, song = 0, held = null) {
-      bar.replaceChildren();
-      const any = slots.some(Boolean);
-      bar.style.display = any ? '' : 'none';
-      slots.forEach((id, i) => {
-        const s = id ? findSpell(book, id) : null;
-        const b = el(doc, 'button', 'style' + (s ? '' : ' empty') + (s && ((song && s.id === song) || (held && held.has(s.id))) ? ' on' : ''));
-        b.dataset.slot = i;
-        b.append(el(doc, 'span', 'key', '⇧' + (i + 1)), el(doc, 'span', 'nm', s ? s.nm : ''), el(doc, 'span', 'cost', s ? s.pw + (s.hp ? ' hp' : ' pw') : ''));
-        if (s) {
-          b.title = s.nm + ' (level ' + s.lv + ')' + (s.pl ? (song === s.id ? ' · playing: click to stop' : ' · a song: click to start, again to stop') : '') + (held && held.has(s.id) ? ' · you hold this buff' : '') + ' · ' + DELVE_HINT + ' ' + REMOVE_HINT;
-          b.addEventListener('click', () => onCast?.(id));
-          b.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            if (rightClick(e, { clearable: true }) === 'clear') onClear?.(i);
-            else onDelve?.(id);
-          });
-        }
-        b.addEventListener('dragover', (e) => e.preventDefault());
-        b.addEventListener('drop', (e) => {
-          e.preventDefault();
-          const sid = spellDragId(e.dataTransfer?.getData('text/plain'));
-          if (sid) onAssign?.(sid, i);
-        });
-        bar.appendChild(b);
-      });
     },
   };
 }

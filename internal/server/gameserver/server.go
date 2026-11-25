@@ -336,7 +336,13 @@ func (s *Server) dispatch(z *world.Zone, p *world.Player, typ string, msg interf
 	case *protocol.Attack:
 		z.Do(func() { z.SetAttack(p, m.On) })
 	case *protocol.Style:
-		z.Do(func() { z.RequestStyle(p, m.Slot) })
+		z.Do(func() {
+			if m.ID != 0 {
+				z.RequestStyleID(p, m.ID)
+			} else {
+				z.RequestStyle(p, m.Slot)
+			}
+		})
 	case *protocol.Loot:
 		z.Do(func() { z.TakeLoot(p, m.Corpse, m.Index) })
 	case *protocol.Equip:

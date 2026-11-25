@@ -51,6 +51,6 @@ ok(spellGroups(null).length === 0 && spellGroups({ lines: [] }).length === 0, 'n
 const stg = styleGroups(slots, [{ id: 9, nm: 'Slice', spec: 'Sword' }], (spec) => (spec === 'Hammer' ? 634 : 705), { Shield: false });
 ok(stg.map((g) => g.title).join('|') === 'Hammer|Shield|Not usable now', 'styles are grouped by line, then the ones that cannot be used');
 ok(stg[0].rows.length === 2 && stg[0].rows[0].drag === 'style:1' && stg[0].rows[0].icon === 634 && stg[1].open === false, 'a usable style carries its id and the line icon; a folded line stays folded');
-ok(stg[2].rows[0].on === false && stg[2].rows[0].drag === undefined && stg[2].rows[0].text.includes('Sword'), 'a style that cannot be used now is greyed and not draggable');
+ok(stg[2].rows[0].on === false && stg[2].rows[0].drag === 'style:9' && stg[2].rows[0].text.includes('Sword'), 'a style that cannot be used now is greyed, and can still go on a quickbar');
 ok(styleGroups([], []).length === 0, 'no styles, no groups');
 process.exit(failed ? 1 : 0);

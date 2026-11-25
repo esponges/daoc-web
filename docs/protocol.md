@@ -105,7 +105,7 @@ Creation also takes `face` and `hair` (1 up; 0 or absent is the race's default l
 | --- | --- | --- |
 | `target` | `id` | select a creature (0 clears); a corpse you may loot opens its window; another player can be targeted, to invite them, not attacked |
 | `attack` | `on` | auto-attack on or off |
-| `style` | `slot` | queue the style on that bar slot for the next swing |
+| `style` | `slot`, `id`? | queue the style on that bar slot for the next swing; with `id` (added for the quickbars), the style with that id wherever it is on the bar, and an `err` naming it when it is one held back for the weapon |
 | `release` | | a dead character stands up at their bind point now, without waiting for the respawn timer (5 s); ignored if alive |
 | `loot` | `corpse`, `index` | take a corpse's item by index, or its money with -1 |
 | `interact` | `id` | ask the creature with that id to do what it does: a merchant (`ik:"merchant"`) answers with `shop`, a trainer (`ik:"trainer"`) with `trainer` or a refusal if it teaches another class, a healer (`ik:"healer"`) with `healer` or a chat line if nothing is lost; a stable master (`ik:"stable"`) takes a horse ticket for one of its routes from the pack and starts the ride, otherwise answers with `shop` like a merchant (a ticket for another stable is refused in a chat line and kept); only within reach (128 units plus half the creature's reach); otherwise `err` |
@@ -189,7 +189,7 @@ characters a chat line, one line a second with a burst of four.
 
 `clock` is the game time of day: `gs`, seconds since midnight. It is sent after the welcome and every 30 seconds. A game day lasts 60 real minutes, so between messages the client runs it at 24 times real time. Night is 18:00 up to 06:00. Night-only and day-only creatures simply appear in and leave `ents` as their time begins and ends.
 
-`barset` (`slot`, `id`) puts the style with that id, one on the `bar` the server sent, into a slot, swapping with the style there; the server answers with a fresh `bar`, or `err` if the character cannot use that style. `bar` may carry `also`: the styles the character has learned but cannot use with what they hold (`locked: true`, `slot: -1`), for the styles window. `stats` may carry `race`, the race's name. The bar order a player sets lasts until they reconnect.
+`barset` (`slot`, `id`) puts the style with that id, one on the `bar` the server sent, into a slot, swapping with the style there; the server answers with a fresh `bar`, or `err` if the character cannot use that style. `bar` may carry `also`: the styles the character has learned but cannot use with what they hold (`locked: true`, `slot: -1`), for the styles window. `stats` may carry `race`, the race's name. The bar order a player sets lasts until they reconnect. The client's quickbars (three bars of ten slots, ten pages each) are its own, kept in the browser per character, and use styles by `id`.
 
 ### Pets
 
