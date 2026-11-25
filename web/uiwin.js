@@ -393,6 +393,7 @@ export function button(doc, data, tplName, x, y, onClick, label = '') {
   const size = (tpl && pt(tpl, 'Size')) || { x: 0, y: 0 };
   const e = box(doc, x, y, size.x, size.y);
   e.style.cursor = 'pointer';
+  if (e.dataset) e.dataset.nodrag = '1'; // a press on a button never drags its window
   const tn = tpl && child(tpl, 'Texture');
   // A labelled button writes its label in the template's font and state colours.
   const font = tpl && child(tpl, 'Font');

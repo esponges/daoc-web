@@ -91,6 +91,11 @@ export function createMover({ store, viewport }) {
       items.set(key, item);
       let drag = null;
       el.addEventListener('pointerdown', (e) => {
+        // A button on the strip (the close button) is not a handle: capturing
+        // the pointer here would take its pointerup, and it would never click.
+        for (let n = e.target; n && n !== el; n = n.parentElement) {
+          if ((n.dataset && n.dataset.nodrag) || /^(BUTTON|INPUT|SELECT|TEXTAREA)$/.test(n.tagName || '')) return;
+        }
         const p = where(el);
         // A window with its own grab handle (the chat, whose title strip holds tabs) moves only by that.
         if (grab ? !(e.target && grab.contains && grab.contains(e.target)) : e.clientY - p.y > strip) return;

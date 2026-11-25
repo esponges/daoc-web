@@ -57,6 +57,13 @@ The server SHALL close a player's open shop, with `shopclose`, when the player m
 - **WHEN** the player moves beyond interact range of the merchant whose shop is open
 - **THEN** the server sends `shopclose` and later `buy` and `sell` are refused until the player interacts again
 
+### Requirement: A Midgard merchant's stock is Midgard's
+An item a Midgard merchant stocks SHALL NOT be refused at equip time for its realm, even where the imported data tags it as another realm's. The class, training and level checks SHALL still apply. Items no Midgard merchant stocks SHALL keep their realm.
+
+#### Scenario: A war axe the data calls Albion's
+- **WHEN** a Warrior buys a war axe from a Midgard merchant and the data gives it Albion's realm
+- **THEN** the Warrior can equip it
+
 ### Requirement: The merchant window uses the stock interface and falls back
 The client SHALL show the shop in the stock `Merchant` window. Its list box SHALL list the page's items, each with its picture by kind or weapon line, name and price. Its page buttons and page label SHALL turn the pages. Its quantity field SHALL set how many to buy, and its coin fields SHALL show the selected item's price. Its buy button SHALL buy the selection. Selling SHALL be a click on a pack item while the shop is open. When `web/data/ui/` is absent the client SHALL show the same rows in the built-in panel style.
 

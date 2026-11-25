@@ -430,6 +430,9 @@ func TestCatalogLoadsStoresWithAndWithoutMerchantData(t *testing.T) {
 			`INSERT INTO zone VALUES(100,100,'Test',0,0,1,1,0,2,1)`,
 			`INSERT INTO spawn(zone,name,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,classtype,items_list) VALUES(100,'Smith',56,10,10,0,0,1,50,191,0,0,30,0,0,2,0,'DOL.GS.GameMerchant','L1')`,
 			`INSERT INTO merchant_stock(list,item,page,slot) VALUES('L1','b',1,0),('L1','a',0,2),('L1','c',0,1)`,
+			`INSERT INTO item(id,name,level,quality,dps_af,spd_abs,hand,damage_type,object_type,item_type,model,weight,price,realm,allowed_classes,droppable,level_req,bonus,condition,max_condition,durability,proc_spell,proc_chance,pack_size,max_count,poison_spell,poison_charges)
+				VALUES('a','war axe',1,85,18,27,0,2,13,10,1,10,100,1,'',1,0,0,0,0,0,0,0,1,1,0,0),
+				      ('unsold','their axe',1,85,18,27,0,2,13,10,1,10,100,1,'',1,0,0,0,0,0,0,0,1,1,0,0)`,
 		}
 		if old {
 			stmts = append(stmts[:1], `INSERT INTO spawn(zone,name,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags) VALUES(100,'Smith',56,10,10,0,0,1,50,191,0,0,30,0,0,2,0)`)
@@ -455,6 +458,9 @@ func TestCatalogLoadsStoresWithAndWithoutMerchantData(t *testing.T) {
 	}
 	if got := strings.Join(c.Stock["L1"], ","); got != "c,a,b" {
 		t.Errorf("stock order = %s, want page then slot: c,a,b", got)
+	}
+	if sold, other := c.Items["a"], c.Items["unsold"]; sold == nil || other == nil || sold.Realm != 0 || other.Realm != 1 {
+		t.Errorf("a Midgard merchant's stock is usable, other realms' items are not: %+v %+v", sold, other)
 	}
 	sp, err := c.SpawnsIn(100)
 	if err != nil || len(sp) != 1 || sp[0].ClassType != "DOL.GS.GameMerchant" || sp[0].ItemsList != "L1" || newNPC(sp[0], c, rand.New(rand.NewSource(1))).Kind != KindMerchant {

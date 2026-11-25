@@ -63,6 +63,16 @@ function fakeEl(x, y, w, h) {
   el.listeners.pointermove({ clientX: 300, clientY: 300 });
   assert.equal(el.style.left, '50px', 'the body of a window is not a handle');
 
+  // A button on the strip is not a handle: dragging would swallow its click.
+  let captured = false;
+  el.setPointerCapture = () => { captured = true; };
+  const label = { dataset: {}, parentElement: { dataset: { nodrag: '1' }, parentElement: el } };
+  el.listeners.pointerdown({ clientX: 100, clientY: 70, pointerId: 1, target: label });
+  el.listeners.pointermove({ clientX: 400, clientY: 270 });
+  assert.equal(el.style.left, '50px', 'a press on a button does not drag');
+  assert.equal(captured, false, 'and the pointer stays with the button');
+  delete el.setPointerCapture;
+
   // Pressing in the strip drags, and releasing keeps the place.
   el.listeners.pointerdown({ clientX: 100, clientY: 70 });
   el.listeners.pointermove({ clientX: 400, clientY: 270 });

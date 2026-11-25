@@ -406,6 +406,21 @@ func LoadCatalog(path string) (*Catalog, error) {
 		}); err != nil {
 			return nil, err
 		}
+		// What a Midgard merchant sells, Midgard may use. The data tags some of
+		// that stock (war axes, great axes, many shields) as Albion's, and
+		// canUse would refuse an item the player has just bought.
+		if err := q(`SELECT DISTINCT m.item FROM merchant_stock m JOIN spawn s ON s.items_list=m.list WHERE s.realm=2`, func(r *sql.Rows) error {
+			var id string
+			if err := r.Scan(&id); err != nil {
+				return err
+			}
+			if it := c.Items[id]; it != nil && it.Realm != 2 {
+				it.Realm = 0
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 	} else {
 		log.Printf("world store has no merchant data; NPC interaction is off (run cmd/dbimport again)")
 	}
