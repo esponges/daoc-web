@@ -195,3 +195,44 @@ const ctx = { bar, also, book, abilities: ['guard', 'critical shot'] };
   q.update({ end: 0, avail: [], power: 0, hp: 1 });
   console.log('ok: the plain bars use, delve, clear, take drops and turn pages');
 }
+
+// The bars move like the windows: by the grip on the page number, not by a slot.
+{
+  const { createMover } = await import('./uimove.js');
+  const mk = (tag) => {
+    const e = { tag, style: {}, dataset: {}, children: [], listeners: {}, className: '', title: '', parentElement: null,
+      appendChild(c) { c.parentElement = this; this.children.push(c); return c; },
+      append(...cs) { cs.forEach((c) => this.appendChild(c)); },
+      addEventListener(t, f) { (this.listeners[t] ||= []).push(f); },
+      contains(n) { for (let x = n; x; x = x.parentElement) if (x === this) return true; return false; },
+      fire(t, ev) { (this.listeners[t] || []).forEach((f) => f(ev)); },
+      getBoundingClientRect() { return { left: 0, top: 0, width: 376, height: 36 }; },
+      remove() {} };
+    let text = '';
+    Object.defineProperty(e, 'textContent', { get: () => text, set: (v) => { text = v; if (v === '') e.children = []; } });
+    return e;
+  };
+  const saved = new Map();
+  const store = { get: (k) => saved.get(k), set: (k, v) => saved.set(k, v), remove: (k) => saved.delete(k), clear: () => saved.clear() };
+  const mover = createMover({ store, viewport: () => ({ w: 1600, h: 900 }) });
+  const q = createQuickbars({ createElement: mk }, null, {});
+  q.set(emptyLayout(), {});
+  q.place(1600, 900);
+  assert.equal(q.grips.length, 3);
+  const el = q.els[0];
+  const item = mover.makeMovable(el, 'quickbar1', 0, q.grips[0]);
+  const x0 = parseFloat(el.style.left), y0 = parseFloat(el.style.top);
+  const slot = el.children[0].children[3];
+  el.fire('pointerdown', { target: slot, clientX: x0 + 100, clientY: y0 + 10 });
+  el.fire('pointermove', { clientX: x0 - 200, clientY: y0 - 300 });
+  el.fire('pointerup', {});
+  assert.equal(parseFloat(el.style.left), x0, 'pressing a slot does not move the bar');
+  el.fire('pointerdown', { target: q.grips[0], clientX: x0 + 365, clientY: y0 + 18 });
+  el.fire('pointermove', { clientX: x0 + 365 - 200, clientY: y0 + 18 - 300 });
+  el.fire('pointerup', {});
+  assert.deepEqual([parseFloat(el.style.left), parseFloat(el.style.top)], [x0 - 200, y0 - 300], 'the grip moves it');
+  assert.deepEqual(saved.get('quickbar1'), { x: x0 - 200, y: y0 - 300 }, 'and the place is kept');
+  item.reset();
+  assert.deepEqual([parseFloat(el.style.left), parseFloat(el.style.top)], [x0, y0], '/resetui puts it back');
+  console.log('ok: a quickbar moves by its grip and keeps its place');
+}

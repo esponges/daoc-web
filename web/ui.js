@@ -10,7 +10,7 @@ import { releaseLine } from './effects.js';
 import { createConcWindow, heldSpells } from './conc.js';
 import { createCommandWindow } from './command.js';
 import { createPetWindow } from './pet.js';
-import { createQuickbars, parseLayout, fillNew, placeEntry, keySlot } from './quickbars.js';
+import { createQuickbars, parseLayout, fillNew, placeEntry, keySlot, barPlaces } from './quickbars.js';
 import { styleIconNumber } from './uiwin.js';
 import { createMover, createPositionStore } from './uimove.js';
 import { createTaskWindow } from './task.js';
@@ -219,7 +219,17 @@ export function createUI(net, { log, onTargetNext, stock, getTarget } = {}) {
     if (next !== l || l !== quickbars.layout) saveBars(next);
     quickbars.set(next, qbCtx());
   };
-  const placeBars = () => quickbars.place(innerWidth, innerHeight);
+  // The bars move like the windows, by the grip on their page number, and keep
+  // their places; one never moved follows the screen to its default place.
+  quickbars.place(innerWidth, innerHeight);
+  const qbItems = quickbars.els.map((b, i) => mover.makeMovable(b, 'quickbar' + (i + 1), 0, quickbars.grips[i]));
+  const placeBars = () => {
+    barPlaces(innerWidth, innerHeight).forEach((p, i) => {
+      qbItems[i].home.x = p.left;
+      qbItems[i].home.y = p.top;
+      if (!qbItems[i].restore()) Object.assign(quickbars.els[i].style, { left: p.left + 'px', top: p.top + 'px' });
+    });
+  };
   placeBars();
   addEventListener('resize', placeBars);
   quickbars.set(null, qbCtx()); // the empty bars show from the start

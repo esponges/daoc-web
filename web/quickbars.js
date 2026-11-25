@@ -274,12 +274,18 @@ export function createQuickbars(doc, data, { onUse, onDelve, onChange } = {}) {
     const pager = doc.createElement('div');
     pager.className = 'pager';
     Object.assign(pager.style, { position: 'relative', width: PAGER + 'px', height: SLOT + 'px' });
-    el.append(row, pager);
+    // The grip: the page number between the arrows. Dragging it moves the bar
+    // (as a window's title strip does); dragging a slot moves what is in it.
+    const grip = doc.createElement('div');
+    grip.className = 'grip';
+    grip.title = 'Drag to move this quickbar';
+    Object.assign(grip.style, { position: 'absolute', left: SLOTS * SLOT + 'px', top: '13px', width: PAGER + 'px', height: (SLOT - 26) + 'px', cursor: 'move' });
+    el.append(row, pager, grip);
     el.addEventListener('wheel', (e) => {
       if (e.preventDefault) e.preventDefault();
       turn(b, e.deltaY > 0 ? 1 : -1);
     });
-    bars.push({ el, row, pager });
+    bars.push({ el, row, pager, grip });
   }
 
   const label = (value, x, y, color) => {
@@ -386,6 +392,7 @@ export function createQuickbars(doc, data, { onUse, onDelve, onChange } = {}) {
 
   return {
     els: bars.map((x) => x.el),
+    grips: bars.map((x) => x.grip),
     get layout() { return layout; },
     get cells() { return cells; },
     set(next, nextCtx) {
