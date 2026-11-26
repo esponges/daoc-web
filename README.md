@@ -367,7 +367,9 @@ Sources the rules come from:
   15 seconds; [1.52](https://camelotherald.fandom.com/wiki/Patch_Notes:_Version_1.52):
   concentration returns after resurrection sickness;
   [1.65](https://camelotherald.fandom.com/wiki/Patch_Notes:_Version_1.65): a timer
-  shows the time to release) and the Grab Bag
+  shows the time to release; [1.50](https://camelotherald.fandom.com/wiki/Patch_Notes:_Version_1.50):
+  a backup style is used when the queued one cannot be, and the two cannot be
+  cancelled once set) and the Grab Bag
   answer that the concentration pool depends on level and casting stat, not spec.
   The spell texts in the community database are Mythic's own, and say that a
   resurrection spares the release penalty.

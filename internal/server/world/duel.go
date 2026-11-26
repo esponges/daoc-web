@@ -208,14 +208,7 @@ func (z *Zone) combatDuel(p, o *Player) {
 // duelSwing is one blow of one duellist at the other, resolved with the
 // defender's own evade, parry, block and armour.
 func (z *Zone) duelSwing(p, o *Player) {
-	var style *StyleDef
-	if p.pending >= 0 && p.pending < len(p.bar) {
-		def := p.bar[p.pending]
-		if ok, _ := z.styleReady(p, &def); ok {
-			style = &def
-		}
-	}
-	p.pending = -1
+	style := z.queuedStyle(p)
 	z.unstealth(p, "You are no longer hidden.")
 	z.standUp(o)
 	p.combatUntil, o.combatUntil = z.now+CombatLinger, z.now+CombatLinger

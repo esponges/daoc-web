@@ -175,6 +175,7 @@ type Player struct {
 	swingAt     float64 // when the next swing is ready
 	combatUntil float64
 	pending     int // style bar slot queued for the next swing, -1 for none
+	backup      int // the slot to use instead when the queued style cannot be performed; only meaningful while pending is set, -1 for none
 	lastDef     defence
 	lastStyle   int
 	lastStyleAt float64
@@ -367,6 +368,6 @@ func (p *Player) applyInput(z *Zone) {
 func newPlayer(acct *store.Account, ch *store.Character) *Player {
 	return &Player{
 		ID: PlayerIDBase + ch.ID, Acct: acct, Char: ch, Admin: acct.Admin,
-		Arch: ArchetypeFor(ch.Race, ch.Class), out: make(chan []byte, 256), pending: -1, chatTokens: 4, spellReady: map[int]float64{},
+		Arch: ArchetypeFor(ch.Race, ch.Class), out: make(chan []byte, 256), pending: -1, backup: -1, chatTokens: 4, spellReady: map[int]float64{},
 	}
 }

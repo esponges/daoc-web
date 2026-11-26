@@ -2,6 +2,7 @@ package world
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
@@ -492,6 +493,69 @@ func TestStyleIsSpentOnSwing(t *testing.T) {
 	}
 	if p.end > end0-5 {
 		t.Errorf("endurance %v -> %v; a 15-cost style (12 with a 3.1 s hammer) should have been paid", end0, p.end)
+	}
+}
+
+// A backup style (patch 1.50): a second style pressed while one is queued is
+// used when the first cannot be performed at the swing. A reactive style may be
+// queued before its block happens; pressing the queued style again cancels it,
+// and once both are set a third is refused.
+func TestBackupStyle(t *testing.T) {
+	r := newRig(t, wolf(1, 30100, 30000, 3))
+	p := r.player("Backup", 5, 30000, 30000, true)
+	r.train(p, map[string]int{"Hammer": 5, "Shields": 3})
+	r.z.SetTarget(p, 1)
+	byName := func(s string) int {
+		for i, d := range p.bar {
+			if d.Name == s {
+				return i
+			}
+		}
+		t.Fatalf("no %s on the bar", s)
+		return -1
+	}
+	revenge, anvil, numb := byName("Revenge"), byName("Thor's Anvil"), byName("Numb")
+	p.end = 100
+
+	// No block yet: Revenge still queues, Thor's Anvil backs it, and the swing uses the backup.
+	r.z.requestStyle(p, revenge)
+	r.z.requestStyle(p, anvil)
+	if p.pending != revenge || p.backup != anvil {
+		t.Fatalf("pending %d backup %d, want %d and %d", p.pending, p.backup, revenge, anvil)
+	}
+	r.z.requestStyle(p, numb)
+	if p.pending != revenge || p.backup != anvil {
+		t.Error("a third style replaced a set style and backup")
+	}
+	if s := r.z.queuedStyle(p); s == nil || s.Name != "Thor's Anvil" {
+		t.Errorf("without a block the swing used %v, want the backup", s)
+	}
+	if p.pending != -1 || p.backup != -1 {
+		t.Error("the queue was not spent by the swing")
+	}
+
+	// After a block the reactive style itself goes.
+	r.z.requestStyle(p, revenge)
+	r.z.requestStyle(p, anvil)
+	p.lastDef = defence{kind: "block", at: r.z.now}
+	if s := r.z.queuedStyle(p); s == nil || s.Name != "Revenge" {
+		t.Errorf("after a block the swing used %v, want Revenge", s)
+	}
+
+	// Pressing the queued style again, with no backup set, cancels it.
+	r.z.requestStyle(p, anvil)
+	r.z.requestStyle(p, anvil)
+	if p.pending != -1 {
+		t.Error("pressing the queued style again did not cancel it")
+	}
+	var preps []int
+	for _, e := range r.z.ev {
+		if e.e.K == "prep" {
+			preps = append(preps, e.e.Amount)
+		}
+	}
+	if fmt.Sprint(preps) != "[0 1 0 1 0 2]" {
+		t.Errorf("prep events %v, want queue, backup, queue, backup, queue, cancel", preps)
 	}
 }
 

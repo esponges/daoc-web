@@ -1219,7 +1219,7 @@ async function main() {
           if (mine) eventAnim(anim, ev, player.gait > 0);
           break;
         case 'prep':
-          if (toMe) log('You prepare to perform ' + ev.x + '.', 'style');
+          if (toMe) log(ev.n === 1 ? 'You will perform ' + ev.x + ' as a backup.' : ev.n === 2 ? 'You no longer prepare ' + ev.x + '.' : 'You prepare to perform ' + ev.x + '.', 'style');
           break;
         case 'emote':
           if (mine) eventAnim(anim, ev, false);

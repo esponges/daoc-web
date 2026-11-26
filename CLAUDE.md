@@ -88,7 +88,7 @@ checkout, `world.db`, `players.db`, `session.key`, `server.env`).
     Grab Bag answer that buff and item resist caps are separate;
   - The Camelot Herald patch notes (1.37c: a resurrection offer is answered within
     15 seconds; 1.52: concentration after resurrection sickness; 1.65: the release
-    timer) and Mythic's Grab Bag answer that concentration depends on level and the
+    timer; 1.50: backup styles) and Mythic's Grab Bag answer that concentration depends on level and the
     casting stat, not the spec; the community database's own spell texts, which are
     Mythic's (a resurrection "eliminates the experience penalty and con loss");
   - The Camelot Herald 1.38 patch notes (falling damage on; Safe Fall in the Stealth line, one level per ten

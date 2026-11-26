@@ -42,6 +42,10 @@ Styles, their requirements, endurance costs and effects SHALL come from the impo
 - **WHEN** a player with a hostile target uses a style while not attacking
 - **THEN** the server turns their attack on and queues the style for the first swing, as the game does; with no target it says so
 
+#### Scenario: A backup style
+- **WHEN** a player queues a style and then presses a different one
+- **THEN** the second is the backup: at the swing the first is performed if its opening is met, else the backup if its is, else neither; the queue is spent by the swing. A style's opening is checked at the swing, not when it is queued, so a reactive style can wait for its block. Pressing the queued style again with no backup cancels it; once both are set a third is refused (patch 1.50, Camelot Herald)
+
 #### Scenario: The next swing is named
 - **WHEN** a style is queued
 - **THEN** the player is sent a `prep` event naming it, and the log reads "You prepare to perform <style>."

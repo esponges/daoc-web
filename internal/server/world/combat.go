@@ -266,7 +266,10 @@ func (z *Zone) requestStyle(p *Player, slot int) {
 		p.errMsg("style", "You cannot act while you are held.")
 		return
 	}
-	if ok, why := z.styleReady(p, &p.bar[slot]); !ok {
+	// Only what the player cannot change before the swing refuses a style now:
+	// its opening (a block, a position, a hit) is looked at when it swings, so a
+	// reactive style can wait for its block with a backup behind it.
+	if ok, why := z.styleUsable(p, &p.bar[slot]); !ok {
 		p.errMsg("style", p.bar[slot].Name+": "+why+".")
 		return
 	}
@@ -278,9 +281,61 @@ func (z *Zone) requestStyle(p *Player, slot int) {
 			return
 		}
 	}
-	p.pending = slot
-	// Only the player is told: the log says what the next swing will be.
-	z.event(protocol.Event{K: "prep", To: p.ID, Text: p.bar[slot].Name}, p.Body.X, p.Body.Y)
+	// Only the player is told: prep's n is 0 for the next swing, 1 for the
+	// backup, 2 when the queued style is cancelled.
+	prep := func(n int, name string) {
+		z.event(protocol.Event{K: "prep", To: p.ID, Text: name, Amount: n}, p.Body.X, p.Body.Y)
+	}
+	switch {
+	case p.pending < 0:
+		p.pending, p.backup = slot, -1
+		prep(0, p.bar[slot].Name)
+	case p.backup >= 0:
+		// Patch 1.50: once a style and its backup are set they stay set.
+		p.errMsg("style", "You already have "+p.bar[p.pending].Name+" prepared, with "+p.bar[p.backup].Name+" as a backup.")
+	case slot == p.pending:
+		p.pending = -1
+		prep(2, p.bar[slot].Name)
+	default:
+		p.backup = slot
+		prep(1, p.bar[slot].Name)
+	}
+}
+
+// styleUsable is what a style needs that the next few seconds will not bring:
+// the endurance, and stealth for a stealth opener.
+func (z *Zone) styleUsable(p *Player, s *StyleDef) (bool, string) {
+	if p.end < float64(p.styleCost(s)) {
+		return false, "not enough endurance"
+	}
+	if s.Stealth && !p.hidden() {
+		return false, "needs you to be hidden"
+	}
+	return true, ""
+}
+
+// queuedStyle takes the style the next swing performs: the queued one if it
+// can be performed now, else its backup if that can, else none, and tells the
+// player when one is passed over. The queue is spent either way.
+func (z *Zone) queuedStyle(p *Player) *StyleDef {
+	var style *StyleDef
+	first, second := p.pending, p.backup
+	p.pending, p.backup = -1, -1
+	for i, slot := range []int{first, second} {
+		if slot < 0 || slot >= len(p.bar) {
+			continue
+		}
+		def := p.bar[slot]
+		ok, why := z.styleReady(p, &def)
+		if ok {
+			style = &def
+			break
+		}
+		if i == 0 {
+			p.errMsg("style", "You cannot perform "+def.Name+": "+why+".")
+		}
+	}
+	return style
 }
 
 // requestStyleID queues a style by its id: the quickbars name styles, not
@@ -410,14 +465,7 @@ func (z *Zone) playerSwing(p *Player, n *NPC) {
 // mainSwing is the main hand's blow, with its style and procs.
 func (z *Zone) mainSwing(p *Player, n *NPC) {
 	z.interruptCasting(n) // any attack, hit or not
-	var style *StyleDef
-	if p.pending >= 0 && p.pending < len(p.bar) {
-		def := p.bar[p.pending]
-		if ok, _ := z.styleReady(p, &def); ok {
-			style = &def
-		}
-	}
-	p.pending = -1
+	style := z.queuedStyle(p)
 	z.unstealth(p, "You are no longer hidden.") // any attack ends stealth, after the opener was chosen
 	p.combatUntil = z.now + CombatLinger
 	p.styleDefence = 0 // a style's defence bonus lasts until the next swing
