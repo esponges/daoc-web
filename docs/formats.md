@@ -1290,9 +1290,12 @@ draws.
 
 Hit an NPC and it fights back: it closes at its run speed — read from its run
 clip's feet like the walk, within a sane band of it — takes up its combat
-stance and swings on its own timer. Packmates (same name) join in only when
-they are aggressive, it is within their own aggro range, and you are not grey
-to them; passive creatures fight only when hit themselves.
+stance and swings on its own timer. Most creatures fight alone. One that
+belongs to a faction (`mob.FactionID`, or its template's; the camps such as
+Morvalt Samhalle or Clan Smyg, about four in ten of Midgard's) calls for help:
+creatures of its faction or of one `linkedfaction` marks as a friend join in,
+if they are aggressive, it is within their own aggro range, and you are not
+grey to them. dbimport keeps these as `spawn.faction` and `faction_friend`.
 Large grey wolves are aggressive and attack anything that comes within 400
 units; everything else only fights back. Chase one more than 2500 units past
 its home and it gives up and walks back, healing when it arrives. Killed, it

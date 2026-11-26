@@ -884,40 +884,54 @@ func TestAdminCommandsNeedAdmin(t *testing.T) {
 	}
 }
 
-func TestPackmatesJoin(t *testing.T) {
-	r := newRig(t, wolf(1, 30300, 30000, 3), wolf(2, 30400, 30100, 3), wolf(3, 30500, 30000, 3))
+// camper is a wolf of a faction: a creature that calls for help.
+func camper(id int64, x float64, faction int) Spawn {
+	s := wolf(id, x, 30000, 3)
+	s.Faction = faction
+	return s
+}
+
+func TestCampCallsForHelp(t *testing.T) {
+	r := newRig(t, camper(1, 30300, 7), camper(2, 30400, 7), camper(3, 30500, 9))
+	r.w.Cat.addFactionFriends(7, 9)
 	for _, n := range r.z.npcs {
 		n.Aggro = 300
 	}
 	p := r.player("Puller", 5, 30000, 30000, true)
 	p.Body.Yaw = math.Pi / 2
 	r.z.npcs[0].engage(p, r.z)
-	if r.z.npcs[1].target != p || r.z.npcs[2].target != p {
-		t.Error("aggressive packmates within their aggro range should join the fight")
+	if r.z.npcs[1].target != p {
+		t.Error("its own faction within aggro range should answer")
+	}
+	if r.z.npcs[2].target != p {
+		t.Error("a friendly faction within aggro range should answer")
 	}
 }
 
-func TestPackmatesStayOut(t *testing.T) {
+func TestNoHelpCalled(t *testing.T) {
 	cases := []struct {
-		name  string
-		aggro float64
-		dx    float64
-		level int
+		name      string
+		fa, fb    int
+		aggro, dx float64
+		pullerLvl int
 	}{
-		{"passive packmate", 0, 100, 5},
-		{"beyond its aggro range", 300, 600, 5},
-		{"puller grey to it", 300, 100, 20},
+		{"no faction, same name", 0, 0, 300, 100, 5},
+		{"another faction", 7, 8, 300, 100, 5},
+		{"helper has no faction", 7, 0, 300, 100, 5},
+		{"passive helper", 7, 7, 0, 100, 5},
+		{"beyond its aggro range", 7, 7, 300, 600, 5},
+		{"puller grey to it", 7, 7, 300, 100, 20},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			r := newRig(t, wolf(1, 30300, 30000, 3), wolf(2, 30300+tc.dx, 30000, 3))
+			r := newRig(t, camper(1, 30300, tc.fa), camper(2, 30300+tc.dx, tc.fb))
 			for _, n := range r.z.npcs {
 				n.Aggro = tc.aggro
 			}
-			p := r.player("Puller", tc.level, 30000, 30000, true)
+			p := r.player("Puller", tc.pullerLvl, 30000, 30000, true)
 			r.z.npcs[0].engage(p, r.z)
 			if r.z.npcs[1].target != nil {
-				t.Error("the packmate should not join")
+				t.Error("nobody should answer")
 			}
 		})
 	}

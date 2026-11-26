@@ -439,14 +439,18 @@ func (n *NPC) engage(c combatant, z *Zone) {
 	n.state = npcChase
 	if first {
 		n.swingAt = z.now + 0.6
-		// Packmates: others of the same name join in, but only those that would
-		// have attacked anyway: aggressive, the fight inside their own aggro
-		// range, and the attacker not grey to them. A passive creature only
-		// fights back when it is hit itself.
+		// Calling for help: most creatures fight alone. Only one that belongs to
+		// a faction (a camp) calls, and only its own faction and the factions
+		// friendly to it answer, and of those only the ones that would have
+		// attacked anyway: aggressive, the fight inside their own aggro range,
+		// and the attacker not grey to them.
+		if n.Spawn.Faction <= 0 || n.pet != nil {
+			return
+		}
 		p, _ := c.(*Player)
 		for _, o := range z.npcs {
 			if o == n || o.dead() || o.hidden || o.pet != nil || o.Friendly || o.Aggro <= 0 ||
-				o.target != nil || o.state == npcReturn || o.Name != n.Name ||
+				o.target != nil || o.state == npcReturn || !z.W.Cat.helpsFaction(n.Spawn.Faction, o.Spawn.Faction) ||
 				math.Hypot(o.Body.X-n.Body.X, o.Body.Y-n.Body.Y) > o.Aggro {
 				continue
 			}

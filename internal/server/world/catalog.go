@@ -126,6 +126,7 @@ type Spawn struct {
 	ItemsList  string // merchant stock list id, "" for none
 	Race       int    // the race table row its resists come from, 0 for none
 	Levels     []int  // the levels it may spawn at, from a template that replaces the row; nil uses Level
+	Faction    int    // the camp it belongs to, 0 for none: only a creature with one calls for help
 }
 
 // Template is the optional fixed stats of an NPC kind.
@@ -218,6 +219,8 @@ type Catalog struct {
 	hasShops       bool                    // spawn.classtype and merchant_stock exist (a world.db imported before merchants lacks them)
 	hasRules       bool                    // item bonuses, races and abilities exist (a world.db imported before the rule book lacks them)
 	hasLevels      bool                    // spawn.levels exists (a world.db imported before templates were honoured lacks it)
+	hasFaction     bool                    // spawn.faction exists (a world.db imported before factions lacks it, and nothing calls for help)
+	FactionFriends map[int]map[int]bool    // faction -> the factions that help it, both ways
 	Resists        map[int]map[int]float64 // race -> damage type -> percent
 	RaceNames      map[int]string          // race -> name, for the character sheet
 	ClassSpecs     map[int][]string        // class -> its spec and career keys
@@ -288,6 +291,21 @@ func LoadCatalog(path string) (*Catalog, error) {
 	var levelCols int
 	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND name='spawn' AND sql LIKE '%levels TEXT%'`).Scan(&levelCols)
 	c.hasLevels = levelCols == 1
+	var factionParts int
+	db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND (name='faction_friend' OR (name='spawn' AND sql LIKE '%faction INTEGER%'))`).Scan(&factionParts)
+	c.FactionFriends = map[int]map[int]bool{}
+	if c.hasFaction = factionParts == 2; c.hasFaction {
+		if err := q(`SELECT faction,friend FROM faction_friend`, func(r *sql.Rows) error {
+			var a, b int
+			if err := r.Scan(&a, &b); err != nil {
+				return err
+			}
+			c.addFactionFriends(a, b)
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	}
 	itemCols := "0,100,1"
 	if c.hasRules {
 		itemCols = "COALESCE(bonus,0),COALESCE(condition,0),COALESCE(max_condition,0)"
@@ -479,6 +497,25 @@ func LoadCatalog(path string) (*Catalog, error) {
 // Shops reports whether the store carries merchant data.
 func (c *Catalog) Shops() bool { return c.hasShops }
 
+// addFactionFriends links two factions so each helps the other.
+func (c *Catalog) addFactionFriends(a, b int) {
+	if c.FactionFriends == nil {
+		c.FactionFriends = map[int]map[int]bool{}
+	}
+	for _, p := range [][2]int{{a, b}, {b, a}} {
+		if c.FactionFriends[p[0]] == nil {
+			c.FactionFriends[p[0]] = map[int]bool{}
+		}
+		c.FactionFriends[p[0]][p[1]] = true
+	}
+}
+
+// helpsFaction says whether a creature of faction b answers a call from
+// faction a: the same camp, or one linked to it as a friend. No faction, no help.
+func (c *Catalog) helpsFaction(a, b int) bool {
+	return a > 0 && b > 0 && (a == b || c != nil && c.FactionFriends[a][b])
+}
+
 // SpawnsIn reads a zone's spawns.
 func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	equip := "''"
@@ -497,7 +534,11 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	if c.hasLevels {
 		levels = "COALESCE(levels,'')"
 	}
-	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,`+equip+`,`+shop+`,`+race+`,`+levels+` FROM spawn WHERE zone=?`, zone)
+	faction := "0"
+	if c.hasFaction {
+		faction = "COALESCE(faction,0)"
+	}
+	rows, err := c.db.Query(`SELECT id,zone,name,COALESCE(guild,''),model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,`+equip+`,`+shop+`,`+race+`,`+levels+`,`+faction+` FROM spawn WHERE zone=?`, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -506,7 +547,7 @@ func (c *Catalog) SpawnsIn(zone int) ([]Spawn, error) {
 	for rows.Next() {
 		s := Spawn{}
 		var levels string
-		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags, &s.Equip, &s.ClassType, &s.ItemsList, &s.Race, &levels); err != nil {
+		if err := rows.Scan(&s.ID, &s.Zone, &s.Name, &s.Guild, &s.Model, &s.X, &s.Y, &s.Z, &s.Heading, &s.Level, &s.Size, &s.Speed, &s.Template, &s.Roam, &s.RespawnS, &s.AggroLevel, &s.AggroRange, &s.Realm, &s.Flags, &s.Equip, &s.ClassType, &s.ItemsList, &s.Race, &levels, &s.Faction); err != nil {
 			return nil, err
 		}
 		s.Levels = importer.NumberList(levels)

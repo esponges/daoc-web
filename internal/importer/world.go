@@ -33,8 +33,9 @@ CREATE TABLE spawn(
   x REAL, y REAL, z REAL, heading INTEGER, level INTEGER, size INTEGER, speed INTEGER,
   template INTEGER, roam INTEGER, respawn_s INTEGER, aggro_level INTEGER, aggro_range INTEGER,
   realm INTEGER, flags INTEGER, path TEXT, brain TEXT, equip TEXT, classtype TEXT, items_list TEXT, race INTEGER,
-  levels TEXT, timed INTEGER);
+  levels TEXT, timed INTEGER, faction INTEGER DEFAULT 0);
 CREATE INDEX spawn_zone ON spawn(zone);
+CREATE TABLE faction_friend(faction INTEGER, friend INTEGER);
 CREATE TABLE merchant_stock(list TEXT, item TEXT, page INTEGER, slot INTEGER, added TEXT DEFAULT '');
 CREATE INDEX merchant_stock_list ON merchant_stock(list);
 CREATE TABLE npc_equip(
@@ -295,6 +296,7 @@ func build(o Options) (*Report, error) {
 
 	// --- templates ---
 	tmplEquip := map[int]string{} // npc template id -> equipment template id
+	tmplFaction := map[int]int{}  // npc template id -> its faction
 	replaces := map[int]tmplValues{}
 	tmplSpells := map[int][]int{} // npc template id -> the spells it casts, in order
 	wantSpell := map[int]bool{}   // spells something kept names
@@ -309,6 +311,9 @@ func build(o Options) (*Report, error) {
 		ml, _ := r.Range("Model")
 		if e := r.Str("EquipmentTemplateID"); e != "" {
 			tmplEquip[id] = e
+		}
+		if f := r.Int("FactionID"); f > 0 {
+			tmplFaction[id] = f
 		}
 		if s := NumberList(r.Str("Spells")); len(s) > 0 {
 			tmplSpells[id] = s
@@ -430,14 +435,32 @@ func build(o Options) (*Report, error) {
 		if outside {
 			rep.LevelReplaced++
 		}
-		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list,race,levels,timed)
-			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		// The faction is the camp a creature belongs to: only creatures with one
+		// call others for help. The mob's own wins; otherwise its template's.
+		faction := r.Int("FactionID")
+		if faction <= 0 {
+			faction = tmplFaction[r.Int("NPCTemplateID")]
+		}
+		return true, ins(`INSERT INTO spawn(zone,name,guild,model,x,y,z,heading,level,size,speed,template,roam,respawn_s,aggro_level,aggro_range,realm,flags,path,brain,equip,classtype,items_list,race,levels,timed,faction)
+			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			z.id, name, r.Str("Guild"), model, lx, ly, zz, r.Int("Heading"), level, r.Int("Size"),
 			speed, r.Int("NPCTemplateID"), r.Int("RoamingRange"), r.Int("RespawnInterval"),
 			aggroLevel, aggroRange, r.Int("Realm"), flags, r.Str("PathID"), r.Str("Brain"), equip,
-			classType, r.Str("ItemsListTemplateID"), r.Int("Race"), levels, SpawnTiming(classType))
+			classType, r.Str("ItemsListTemplateID"), r.Int("Race"), levels, SpawnTiming(classType), max(faction, 0))
 	}); err != nil {
 		return nil, err
+	}
+	// Factions linked as friends help each other too.
+	if fileExists(filepath.Join(o.Dump, "linkedfaction.sql")) {
+		if err := read("linkedfaction", func(r *Row) (bool, error) {
+			a, b := r.Int("FactionID"), r.Int("LinkedFactionID")
+			if r.Int("IsFriend") == 0 || a <= 0 || b <= 0 || a == b {
+				return false, nil
+			}
+			return true, ins(`INSERT INTO faction_friend VALUES(?,?)`, a, b)
+		}); err != nil {
+			return nil, err
+		}
 	}
 	lastPage := map[string]int{} // merchant list -> its highest page, for the added stock
 	if err := read("merchantitem", func(r *Row) (bool, error) {
