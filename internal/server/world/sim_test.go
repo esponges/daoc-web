@@ -887,13 +887,39 @@ func TestAdminCommandsNeedAdmin(t *testing.T) {
 func TestPackmatesJoin(t *testing.T) {
 	r := newRig(t, wolf(1, 30300, 30000, 3), wolf(2, 30400, 30100, 3), wolf(3, 30500, 30000, 3))
 	for _, n := range r.z.npcs {
-		n.Aggro = 0 // only fights back
+		n.Aggro = 300
 	}
 	p := r.player("Puller", 5, 30000, 30000, true)
 	p.Body.Yaw = math.Pi / 2
 	r.z.npcs[0].engage(p, r.z)
 	if r.z.npcs[1].target != p || r.z.npcs[2].target != p {
-		t.Error("packmates within 900 units should join the fight")
+		t.Error("aggressive packmates within their aggro range should join the fight")
+	}
+}
+
+func TestPackmatesStayOut(t *testing.T) {
+	cases := []struct {
+		name  string
+		aggro float64
+		dx    float64
+		level int
+	}{
+		{"passive packmate", 0, 100, 5},
+		{"beyond its aggro range", 300, 600, 5},
+		{"puller grey to it", 300, 100, 20},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := newRig(t, wolf(1, 30300, 30000, 3), wolf(2, 30300+tc.dx, 30000, 3))
+			for _, n := range r.z.npcs {
+				n.Aggro = tc.aggro
+			}
+			p := r.player("Puller", tc.level, 30000, 30000, true)
+			r.z.npcs[0].engage(p, r.z)
+			if r.z.npcs[1].target != nil {
+				t.Error("the packmate should not join")
+			}
+		})
 	}
 }
 

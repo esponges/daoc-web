@@ -439,15 +439,24 @@ func (n *NPC) engage(c combatant, z *Zone) {
 	n.state = npcChase
 	if first {
 		n.swingAt = z.now + 0.6
-		// Packmates: others of the same name close by join in.
+		// Packmates: others of the same name join in, but only those that would
+		// have attacked anyway: aggressive, the fight inside their own aggro
+		// range, and the attacker not grey to them. A passive creature only
+		// fights back when it is hit itself.
+		p, _ := c.(*Player)
 		for _, o := range z.npcs {
-			if o != n && !o.dead() && !o.Friendly && o.target == nil && o.state != npcReturn &&
-				o.Name == n.Name && math.Hypot(o.Body.X-n.Body.X, o.Body.Y-n.Body.Y) < 900 {
-				o.addHate(c, 1)
-				o.target = c
-				o.state = npcChase
-				o.swingAt = z.now + 0.9
+			if o == n || o.dead() || o.hidden || o.pet != nil || o.Friendly || o.Aggro <= 0 ||
+				o.target != nil || o.state == npcReturn || o.Name != n.Name ||
+				math.Hypot(o.Body.X-n.Body.X, o.Body.Y-n.Body.Y) > o.Aggro {
+				continue
 			}
+			if p != nil && p.Char.Level-o.Level >= 8 {
+				continue
+			}
+			o.addHate(c, 1)
+			o.target = c
+			o.state = npcChase
+			o.swingAt = z.now + 0.9
 		}
 	}
 }

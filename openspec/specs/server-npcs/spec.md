@@ -23,6 +23,10 @@ The server SHALL move NPCs along their imported paths or within their roam radiu
 - **WHEN** a player enters an aggressive wolf's aggro range
 - **THEN** the wolf closes at its run speed and attacks
 
+#### Scenario: Packmates
+- **WHEN** a player attacks a creature, or is noticed by one
+- **THEN** others of the same name join the fight only if they are aggressive, the creature is within their own aggro range, and the player is not grey to them; a passive creature fights only when it is hit itself. Status: provisional
+
 #### Scenario: Leash
 - **WHEN** a player draws an NPC beyond its leash distance
 - **THEN** it gives up, walks home and heals

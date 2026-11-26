@@ -1290,7 +1290,9 @@ draws.
 
 Hit an NPC and it fights back: it closes at its run speed — read from its run
 clip's feet like the walk, within a sane band of it — takes up its combat
-stance and swings on its own timer. Its packmates within 900 units join in.
+stance and swings on its own timer. Packmates (same name) join in only when
+they are aggressive, it is within their own aggro range, and you are not grey
+to them; passive creatures fight only when hit themselves.
 Large grey wolves are aggressive and attack anything that comes within 400
 units; everything else only fights back. Chase one more than 2500 units past
 its home and it gives up and walks back, healing when it arrives. Killed, it
