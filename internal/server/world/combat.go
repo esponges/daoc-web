@@ -266,15 +266,21 @@ func (z *Zone) requestStyle(p *Player, slot int) {
 		p.errMsg("style", "You cannot act while you are held.")
 		return
 	}
-	if !p.attacking {
-		p.errMsg("style", "Start attacking first.")
-		return
-	}
 	if ok, why := z.styleReady(p, &p.bar[slot]); !ok {
 		p.errMsg("style", p.bar[slot].Name+": "+why+".")
 		return
 	}
+	// A style starts the fight, as in the game: there is no need to turn the
+	// attack on first. With nothing to attack, SetAttack says why.
+	if !p.attacking {
+		z.SetAttack(p, true)
+		if !p.attacking {
+			return
+		}
+	}
 	p.pending = slot
+	// Only the player is told: the log says what the next swing will be.
+	z.event(protocol.Event{K: "prep", To: p.ID, Text: p.bar[slot].Name}, p.Body.X, p.Body.Y)
 }
 
 // requestStyleID queues a style by its id: the quickbars name styles, not
@@ -417,7 +423,7 @@ func (z *Zone) mainSwing(p *Player, n *NPC) {
 	p.styleDefence = 0 // a style's defence bonus lasts until the next swing
 	ev := protocol.Event{K: "swing", From: p.ID, To: n.ID}
 	if style != nil {
-		ev.Style = style.Anim
+		ev.Style = style.ClientStyle(p.weapon != nil && p.weapon.TwoHanded())
 		ev.Text = style.Name
 	}
 	z.event(ev, p.Body.X, p.Body.Y)

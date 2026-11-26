@@ -474,6 +474,14 @@ func TestStyleIsSpentOnSwing(t *testing.T) {
 	if p.pending != anvil {
 		t.Fatal("style not queued")
 	}
+	// The player is told what the next swing will be.
+	prepped := false
+	for _, e := range r.z.ev {
+		prepped = prepped || e.e.K == "prep" && e.e.To == p.ID && e.e.Text == "Thor's Anvil"
+	}
+	if !prepped {
+		t.Error("no prep event naming the queued style")
+	}
 	p.end = 60
 	end0 := p.end
 	for i := 0; i < TickRate*8 && p.pending >= 0; i++ {
@@ -484,6 +492,80 @@ func TestStyleIsSpentOnSwing(t *testing.T) {
 	}
 	if p.end > end0-5 {
 		t.Errorf("endurance %v -> %v; a 15-cost style (12 with a 3.1 s hammer) should have been paid", end0, p.end)
+	}
+}
+
+// A style used while not attacking starts the attack, as the game does; with
+// no target there is nothing to start and the player is told.
+func TestStyleStartsTheAttack(t *testing.T) {
+	r := newRig(t, wolf(1, 30100, 30000, 1))
+	p := r.player("Opener", 5, 30000, 30000, true)
+	r.train(p, map[string]int{"Hammer": 5})
+	anvil := -1
+	for i, d := range p.bar {
+		if d.Name == "Thor's Anvil" {
+			anvil = i
+		}
+	}
+	if anvil < 0 {
+		t.Fatal("no Thor's Anvil on the bar")
+	}
+	r.z.requestStyle(p, anvil)
+	if p.attacking || p.pending != -1 {
+		t.Fatalf("with no target: attacking %v, pending %d", p.attacking, p.pending)
+	}
+	r.z.SetTarget(p, 1)
+	r.z.requestStyle(p, anvil)
+	if !p.attacking || p.pending != anvil {
+		t.Errorf("attacking %v, pending %d; the style should start the attack and wait for the swing", p.attacking, p.pending)
+	}
+}
+
+// A player's weapon kind picks their swings on every client.
+func TestWieldKind(t *testing.T) {
+	p := &Player{}
+	if got := p.wield(); got != "h2h" {
+		t.Errorf("empty hands %q, want h2h", got)
+	}
+	p.weapon = &Item{ObjectType: rules.ObjHammer}
+	if got := p.wield(); got != "" {
+		t.Errorf("a hammer %q, want one-handed", got)
+	}
+	p.left = &Item{ObjectType: rules.ObjLeftAxe}
+	if got := p.wield(); got != "dual" {
+		t.Errorf("hammer and left axe %q, want dual", got)
+	}
+	p.left = nil
+	p.weapon = &Item{ObjectType: rules.ObjHammer, Hand: 1, ItemType: 12}
+	if got := p.wield(); got != "2h" {
+		t.Errorf("a great hammer %q, want 2h", got)
+	}
+	p.weapon = &Item{ObjectType: rules.ObjSpear, Hand: 1, ItemType: 12}
+	if got := p.wield(); got != "pole" {
+		t.Errorf("a spear %q, want pole", got)
+	}
+	p.weapon = &Item{ObjectType: rules.ObjStaff, Hand: 1, ItemType: 12}
+	if got := p.wield(); got != "staff" {
+		t.Errorf("a staff %q, want staff", got)
+	}
+	p.weapon = &Item{ObjectType: rules.ObjHandToHand}
+	if got := p.wield(); got != "h2h" {
+		t.Errorf("claws %q, want h2h", got)
+	}
+}
+
+// A swing's style number is the client's styles.csv row: the style's Icon, or
+// with a two-handed weapon its two-handed animation when it has one.
+func TestClientStyle(t *testing.T) {
+	whirl := StyleDef{Icon: 146, Anim: 22} // Whirling Blade: "2H 4" in a two-handed sword
+	if got := whirl.ClientStyle(false); got != 146 {
+		t.Errorf("one-handed %d, want 146", got)
+	}
+	if got := whirl.ClientStyle(true); got != 22 {
+		t.Errorf("two-handed %d, want 22", got)
+	}
+	if got := (&StyleDef{Icon: 72}).ClientStyle(true); got != 72 {
+		t.Errorf("no two-handed animation: %d, want the Icon 72", got)
 	}
 }
 

@@ -23,7 +23,7 @@ import { createSpellFx, createDirector, bonePoint } from './spellfx.js';
 import { loadInterior } from './interior.js';
 import { NetClient } from './net.js';
 import { loadOutdoorCollision } from './collision.js';
-import { createRemote, eventAnim, postureFor } from './remote.js';
+import { createRemote, eventAnim, postureFor, combatStance } from './remote.js';
 import { candidates, skinFor } from './race.js';
 import { createUI, conColor, money } from './ui.js';
 import { ownCastLine } from './spells.js';
@@ -1218,6 +1218,9 @@ async function main() {
         case 'swing':
           if (mine) eventAnim(anim, ev, player.gait > 0);
           break;
+        case 'prep':
+          if (toMe) log('You prepare to perform ' + ev.x + '.', 'style');
+          break;
         case 'emote':
           if (mine) eventAnim(anim, ev, false);
           break;
@@ -1398,7 +1401,8 @@ async function main() {
     // Standing in a fight is the combat stance rather than the idle.
     const fighting = net ? net.me.fighting || net.me.attacking
       : combat && (combat.attacking || npcs.npcs.some((n) => n.fight === player));
-    const still = fighting && anim.has('cidle') ? 'cidle' : 'idle';
+    if (net) anim.wield = net.me.wield; // a player swings and stands as the weapon held
+    const still = (fighting && combatStance(anim)) || 'idle';
     const forward = player.gait <= WALK ? 'walk' : 'run';
     const strafe = player.side > 0 ? 'strafeR' : 'strafeL';
     let base = player.gait === 0 ? still

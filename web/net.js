@@ -239,6 +239,7 @@ export class NetClient {
     me.level = s.lv; me.xp = s.xp; me.xpNext = s.xpn; me.money = s.mo;
     me.target = s.tg; me.attacking = s.at; me.dead = !!s.dead; me.fighting = !!s.fg;
     me.avail = s.av || [];
+    me.wield = s.wd || ''; // the weapon kind, which picks the swings
     me.serverSpeed = s.sp;
     me.ride = !!s.rd;
     me.seated = !!s.sit;
@@ -265,6 +266,7 @@ export class NetClient {
       r.ride = !!e.rd; // on a horse route
       r.posture = e.ps || ''; // sit, air or swim
       r.torch = !!e.tc; // a player whose torch is lit
+      r.wield = e.wd || ''; // a player's weapon kind, which picks their swings
       r.foe = !!e.foe; // the player you are in a duel with
       r.con = e.cc; r.own = !!e.own; // a creature's con colour to you; your own gravestone
       r.samples.push({ t, x: e.x, y: e.y, z: e.z, yaw: e.h });

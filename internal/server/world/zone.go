@@ -370,6 +370,7 @@ func (z *Zone) selfOf(p *Player) protocol.Self {
 		Back: p.motion.Back, Side: p.motion.Side, Speed: p.motion.Speed,
 		Fighting: z.now < p.combatUntil, Ride: p.ride != nil,
 		Air: p.Body.Air, VZ: p.Body.VZ, Peak: p.Body.PeakZ, Jumped: p.Body.Jumped, Seated: p.seated, Ground: p.groundMsg(), Follow: p.follow != 0, Torch: !p.torchOut && !p.dead,
+		Wield: p.wield(),
 	}
 	if c.Level >= MaxLevel {
 		s.XP, s.XPNext = 1, 1
@@ -394,7 +395,28 @@ func (z *Zone) playerEntity(o *Player) protocol.Entity {
 		X: o.Body.X, Y: o.Body.Y, Z: o.Body.Z, Yaw: o.Body.Yaw, Speed: o.motion.Speed,
 		HP: math.Max(0, o.hp/float64(o.maxHP())), State: st, Back: o.motion.Back, Side: o.motion.Side, Ride: o.ride != nil,
 		Posture: z.posture(o), VZ: ifAir(o), Guild: guildLine(o), Torch: !o.torchOut && !o.dead,
+		Wield: o.wield(),
 	}
+}
+
+// wield is the kind of weapon a player fights with, which picks the swings the
+// client plays: "" one-handed, "2h", "pole" (a spear), "staff", "dual" (a weapon
+// in each hand) or "h2h" (claws, or nothing at all).
+func (p *Player) wield() string {
+	w := p.weapon
+	switch {
+	case w == nil || w.ObjectType == rules.ObjHandToHand:
+		return "h2h"
+	case w.ObjectType == rules.ObjStaff:
+		return "staff"
+	case w.ObjectType == rules.ObjSpear:
+		return "pole"
+	case w.TwoHanded():
+		return "2h"
+	case p.left != nil:
+		return "dual"
+	}
+	return ""
 }
 
 func (z *Zone) npcEntity(n *NPC, to *Player) protocol.Entity {

@@ -221,7 +221,7 @@ func (z *Zone) duelSwing(p, o *Player) {
 	p.combatUntil, o.combatUntil = z.now+CombatLinger, z.now+CombatLinger
 	ev := protocol.Event{K: "swing", From: p.ID, To: o.ID}
 	if style != nil {
-		ev.Style, ev.Text = style.Anim, style.Name
+		ev.Style, ev.Text = style.ClientStyle(p.weapon != nil && p.weapon.TwoHanded()), style.Name
 	}
 	z.event(ev, p.Body.X, p.Body.Y)
 	cb := o.combatant(z.W.Cat)

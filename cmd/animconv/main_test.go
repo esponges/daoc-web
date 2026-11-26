@@ -190,6 +190,67 @@ func TestCastJobsFollowTheSpellTable(t *testing.T) {
 	}
 }
 
+// A style's animation is a numbered column of canims.csv, named by its row of
+// styles.csv: Assault (style 150) animates as 60, "Style 1HS 4", and the
+// one-handed crush styles 3 and 4 as 42 and 43, "Style 1HC 1" and "2".
+func TestStyleJobsFollowTheStyleTable(t *testing.T) {
+	game := gamePath(t)
+	tb, err := gamedataLoad(game)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for id, want := range map[int]int{150: 60, 3: 42, 4: 43} {
+		if got := tb.StyleAnims[id]; got != want {
+			t.Errorf("style %d animates as %d, want %d", id, got, want)
+		}
+	}
+	jobs := styleJobs(tb, 28) // anim set 28: Norse Male
+	byOut := map[string]job{}
+	for _, j := range jobs {
+		byOut[j.out] = j
+		if !j.alias {
+			t.Errorf("%s is not an alias job", j.out)
+		}
+	}
+	for _, n := range []string{"style42", "style43", "style60"} {
+		if _, ok := byOut[n]; !ok {
+			t.Errorf("no %s job for Norse Male", n)
+		}
+	}
+	if byOut["style42"].src == byOut["style43"].src {
+		t.Errorf("Style 1HC 1 and 2 are the same clip %q", byOut["style42"].src)
+	}
+}
+
+// A player body gets a swing set for every kind of weapon: a Norse Male (anim
+// set 28) swings a two-hander with different clips from a one-hander, and both
+// differ from his fists.
+func TestWieldJobsGiveEachWeaponItsSwings(t *testing.T) {
+	game := gamePath(t)
+	tb, err := gamedataLoad(game)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := map[string]string{}
+	for _, j := range wieldJobs(tb, 28) {
+		src[j.out] = strings.ToLower(j.src)
+		if !j.alias {
+			t.Errorf("%s is not an alias job", j.out)
+		}
+	}
+	for _, k := range []string{"1h", "2h", "pole", "staff", "dual", "h2h"} {
+		if src["att_"+k+"1"] == "" {
+			t.Errorf("no att_%s1 for Norse Male", k)
+		}
+	}
+	if src["att_1h1"] == src["att_2h1"] || src["att_1h1"] == src["att_h2h1"] {
+		t.Errorf("one-handed %q, two-handed %q and fists %q should differ", src["att_1h1"], src["att_2h1"], src["att_h2h1"])
+	}
+	if src["cidle_2h"] == "" {
+		t.Error("no two-handed combat stance")
+	}
+}
+
 func TestWithEntryReplacesBySameName(t *testing.T) {
 	l := withEntry(nil, indexEntry{Name: "walk", File: "walk.json"})
 	l = withEntry(l, indexEntry{Name: "cast41", File: "cast41.json"})

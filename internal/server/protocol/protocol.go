@@ -292,6 +292,7 @@ type Entity struct {
 	Foe      bool     `json:"foe,omitempty"` // the player you are in a duel with
 	VZ       float64  `json:"vz,omitempty"`  // a player in the air: vertical speed, units a second
 	Torch    bool     `json:"tc,omitempty"`  // a player whose torch is lit: a light around them at night
+	Wield    string   `json:"wd,omitempty"`  // a player's weapon kind, which picks their swings: "2h", "pole", "staff", "dual", "h2h"; absent one-handed
 }
 
 // Event is something that happened this tick, for the log and the animations.
@@ -334,6 +335,7 @@ type Self struct {
 	Ride      bool    `json:"rd,omitempty"` // on a horse route: inputs do nothing
 	Fighting  bool    `json:"fg,omitempty"`
 	Avail     []int   `json:"av,omitempty"` // style bar slots usable right now
+	Wield     string  `json:"wd,omitempty"` // your weapon kind, as an entity's wd
 	// The body's vertical state, so the client's prediction can pick up where
 	// the server is: in the air, its speed up, its highest point, and whether
 	// the air began with a jump.

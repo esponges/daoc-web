@@ -75,6 +75,9 @@ drawn as `data/char/m<N>`), plus `gd`, the guild or description shown under the 
 `dead`. `ev` are the tick's events: `swing`, `hit`, `miss`, `block`, `parry`,
 `evade`, `death`, `xp`, `level`, `loot`, `join`, and from the rule book:
 
+- `prep`: sent to you (`to`) when a style is queued, `x` its name: the log says "You prepare to perform <x>."; a style used while not attacking turns the attack on (with no target it is an `err` with `code` `target`);
+- a `swing` with a style carries `x`, its name, and `s`, its row of the install's `styles.csv` (the database's style Icon, or its TwoHandAnimation when the attacker holds a two-handed weapon). `styles.csv` gives the style's animation as a column of `canims.csv`; `animconv` writes that table to `data/styles.json` and the clips as lazy `style<column>` of each player body;
+- a player entity (and your own snapshot) carries `wd`, the kind of weapon held, which picks the plain swings and the combat stance: absent one-handed, `2h`, `pole` (a spear), `staff`, `dual` (a weapon in each hand) or `h2h` (claws, or empty hands). A player body has them as lazy `att_<kind>1`..`3` and `cidle_<kind>` (`1h` for absent);
 - `xploss`: experience lost at death or on release, in `n`;
 - `conloss`: constitution lost on release, in `n`;
 - `pray`: a prayer at your gravestone, with `x` set to `started`, `cancelled` or `done` (`n` is the experience returned);

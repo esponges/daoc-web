@@ -42,13 +42,61 @@ export function postureFor(anim) {
   });
 }
 
+// The style animations: each client style number (a swing's s, a row of the
+// install's styles.csv) to its combat animation number, which animconv writes
+// as the lazy clip style<number> of a player body. animconv writes the table
+// to data/styles.json; without it a style swings like a plain attack.
+let styleAnims = {};
+export function setStyleAnims(m) { styleAnims = m || {}; }
+export function loadStyleAnims(fetchJson) {
+  return fetchJson('data/styles.json').then((j) => setStyleAnims(j && j.styles)).catch(() => {});
+}
+export function styleClip(s) { const n = styleAnims[s]; return n > 0 ? 'style' + n : null; }
+
+// playLazy plays a clip a body may have only as a lazy file, fetching it the
+// first time; or() runs instead when the body was converted without it.
+function playLazy(anim, clip, opts, or) {
+  if (anim.has(clip)) { anim.play(clip, opts) || or(); return; }
+  const ch = anim.ch;
+  if (ch && ch.loadClip) ch.loadClip(clip).then((c) => { if (c) anim.play(clip, opts); else or(); });
+  else or();
+}
+
+// wieldOf is the kind of weapon a player's figure fights with, which the
+// server sends as wd and the caller keeps on anim.wield: "1h", "2h", "pole",
+// "staff", "dual" or "h2h". null for a creature, whose own clips already fit.
+export function wieldOf(anim) {
+  const w = anim.wield;
+  return w === undefined || w === null ? null : (w || '1h');
+}
+
+// combatStance is the fighting stance for what the figure holds, fetched the
+// first time it is wanted; until then, or for a creature, its own cidle.
+export function combatStance(anim) {
+  const w = wieldOf(anim);
+  if (w) {
+    const n = 'cidle_' + (w === 'dual' ? '1h' : w);
+    if (anim.has(n)) return n;
+    if (anim.ch && anim.ch.loadClip) anim.ch.loadClip(n);
+  }
+  return anim.has('cidle') ? 'cidle' : null;
+}
+
 // The clip an event plays on the entity it happened to or came from.
 export function eventAnim(anim, ev, moving, rng = Math.random) {
   if (!anim) return;
   switch (ev.k) {
     case 'swing': {
-      const which = 'attack' + (1 + Math.floor(rng() * 3));
-      anim.play(which, { upper: moving }) || anim.play('attack1', { upper: moving });
+      const opts = { upper: moving };
+      const i = 1 + Math.floor(rng() * 3);
+      const generic = () => { anim.play('attack' + i, opts) || anim.play('attack1', opts); };
+      // A player swings as the weapon they hold: a race body's own attack1..3
+      // are its fists.
+      const w = wieldOf(anim);
+      const plain = w ? () => playLazy(anim, 'att_' + w + i, opts, generic) : generic;
+      const clip = ev.s ? styleClip(ev.s) : null;
+      if (clip) playLazy(anim, clip, opts, plain);
+      else plain();
       break;
     }
     case 'hit':
@@ -83,6 +131,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
   });
   const races = loadRaces(fetchJson);
   const looks = loadAppearance(fetchJson);
+  loadStyleAnims(fetchJson);
 
   // The directory a character is converted into: creatures by model number; a
   // player by the base for their race and gender, else the outfit the server
@@ -182,6 +231,7 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
       const a = v.anim;
       if (!a) continue;
       const e = v.e, t = v.type;
+      a.wield = v.isPlayer ? e.wield : null;
       if (v.dead) {
         if (!v.deathPlayed) { a.play('death', { hold: true }); v.deathPlayed = true; }
       } else if (v.deathPlayed) {
@@ -199,8 +249,8 @@ export function createRemote(gl, helpers, { cell = 256 } = {}) {
         else if (e.side && a.has(e.side > 0 ? 'strafeR' : 'strafeL')) base = e.side > 0 ? 'strafeR' : 'strafeL';
         else base = sp > t.walk * v.scale * 1.7 ? 'run' : 'walk';
         if (!a.has(base)) base = 'walk';
-      } else if (v.fight && a.has('cidle')) {
-        base = 'cidle';
+      } else if (v.fight) {
+        base = combatStance(a) || 'idle';
       }
       if (pb && a.has(pb)) base = pb;
       a.setBase(base);

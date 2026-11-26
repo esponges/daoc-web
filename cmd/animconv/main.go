@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"daocweb/internal/gamedata"
@@ -269,7 +270,100 @@ func fromAnimSet(game, char string) ([]job, error) {
 		return nil, fmt.Errorf("anim set %d resolves no clips", m.AnimSet)
 	}
 	jobs = append(jobs, castJobs(t, m.AnimSet)...)
+	if playerFigure(char) {
+		jobs = append(jobs, wieldJobs(t, m.AnimSet)...)
+		jobs = append(jobs, styleJobs(t, m.AnimSet)...)
+		if err := writeStyleMap(filepath.Join(filepath.Dir(filepath.Dir(filepath.Clean(char))), "styles.json"), t); err != nil {
+			fmt.Printf("  styles.json: %v\n", err)
+		}
+	}
 	return jobs, nil
+}
+
+// wieldSets are a player body's plain swings and combat stance for each kind of
+// weapon it can hold, from canims.csv: the server names the kind a player holds
+// (an entity's wd), and the viewer plays att_<kind>1..3 and cidle_<kind>. The
+// body's own attack1..3 are whatever it was converted holding, which for a race
+// base is nothing: the hand-to-hand swings.
+var wieldSets = []struct {
+	kind    string
+	attacks [3]string // medium, high, low
+	idle    string    // "" uses the one-handed stance
+}{
+	{"1h", [3]string{"att med", "att high", "att low"}, "c-idle"},
+	{"2h", [3]string{"att 2h med", "att 2h high", "att 2h low"}, "c-idle 2h"},
+	{"pole", [3]string{"att pole med", "att pole h", "att pole l"}, "c-idle pole"},
+	{"staff", [3]string{"att staff-m", "att staff h", "att staff l"}, "c-idle staff"},
+	{"dual", [3]string{"att dual m", "att dual h", "att dual l"}, ""},
+	{"h2h", [3]string{"h2h att m", "h2h att h", "h2h att l"}, "h2h cidle"},
+}
+
+// wieldJobs are the clips of wieldSets an anim set has, written lazy.
+func wieldJobs(t *gamedata.Tables, set int) []job {
+	var jobs []job
+	add := func(col, out string) {
+		an, ok := t.CombatClip(set, col)
+		if !ok {
+			return
+		}
+		jobs = append(jobs, job{src: strings.TrimSuffix(an.File, filepath.Ext(an.File)), out: out,
+			rate: an.Rate(), loop: an.Loop, length: an.Length(), alias: true})
+	}
+	for _, w := range wieldSets {
+		for i, col := range w.attacks {
+			add(col, fmt.Sprintf("att_%s%d", w.kind, i+1))
+		}
+		if w.idle != "" {
+			add(w.idle, "cidle_"+w.kind)
+		}
+	}
+	return jobs
+}
+
+// styleNumbers lists the combat animation numbers any style uses, sorted.
+func styleNumbers(t *gamedata.Tables) []int {
+	seen := map[int]bool{}
+	for _, n := range t.StyleAnims {
+		seen[n] = true
+	}
+	out := make([]int, 0, len(seen))
+	for n := range seen {
+		out = append(out, n)
+	}
+	sort.Ints(out)
+	return out
+}
+
+// styleJobs are a player body's style animations, each called style<number>
+// after its column in canims.csv and written lazy, like the cast clips.
+func styleJobs(t *gamedata.Tables, set int) []job {
+	var jobs []job
+	for _, n := range styleNumbers(t) {
+		an, ok := t.CombatClipAt(set, n)
+		if !ok {
+			continue
+		}
+		jobs = append(jobs, job{src: strings.TrimSuffix(an.File, filepath.Ext(an.File)), out: fmt.Sprintf("style%d", n),
+			rate: an.Rate(), loop: an.Loop, length: an.Length(), alias: true})
+	}
+	return jobs
+}
+
+// writeStyleMap writes styles.json: each client style number (what the server
+// sends as a swing's s) to the canims.csv number of its animation, so the
+// viewer can play style<number>.
+func writeStyleMap(path string, t *gamedata.Tables) error {
+	m := map[string]int{}
+	for id, n := range t.StyleAnims {
+		m[strconv.Itoa(id)] = n
+	}
+	b, err := json.Marshal(struct {
+		Styles map[string]int `json:"styles"`
+	}{m})
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, b, 0o644)
 }
 
 // playerFigure says whether a converted character directory is a player's

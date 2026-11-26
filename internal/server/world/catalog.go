@@ -87,7 +87,19 @@ type StyleDef struct {
 	GrowthOff  float64
 	BonusToHit int
 	BonusToDef int
-	Anim       int
+	// Anim is the database's TwoHandAnimation: the client style (a row of the
+	// install's styles.csv, as Icon is) the style animates as with a two-handed
+	// weapon. 0 when it has none.
+	Anim int
+}
+
+// ClientStyle is the row of the install's styles.csv the style animates as:
+// its Icon, or with a two-handed weapon its two-handed animation.
+func (s *StyleDef) ClientStyle(twoHanded bool) int {
+	if twoHanded && s.Anim > 0 {
+		return s.Anim
+	}
+	return s.Icon
 }
 
 // Spawn is an NPC placement from the world store.

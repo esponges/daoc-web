@@ -38,8 +38,24 @@ Styles, their requirements, endurance costs and effects SHALL come from the impo
 - **WHEN** a queued style's swing is parried
 - **THEN** the style does not fire and half its endurance is spent
 
+#### Scenario: A style starts the fight
+- **WHEN** a player with a hostile target uses a style while not attacking
+- **THEN** the server turns their attack on and queues the style for the first swing, as the game does; with no target it says so
+
+#### Scenario: The next swing is named
+- **WHEN** a style is queued
+- **THEN** the player is sent a `prep` event naming it, and the log reads "You prepare to perform <style>."
+
 ### Requirement: Combat is visible to all
 Swings, hits, blocks, flinches and deaths SHALL play on every nearby client with the same clips as today.
+
+#### Scenario: A style looks like itself
+- **WHEN** a player swings with a style
+- **THEN** the swing's `s` names the style's row of the install's `styles.csv` (its Icon, or its two-handed animation with a two-handed weapon) and every client plays that style's own clip from `canims.csv`
+
+#### Scenario: A player swings as the weapon held
+- **WHEN** a player swings without a style
+- **THEN** they play the plain swings and combat stance of the kind of weapon they hold (`wd`: one-handed, two-handed, spear, staff, dual or hand to hand), never the hand-to-hand set of the bare race body when they hold a weapon
 
 #### Scenario: Watching a fight
 - **WHEN** a player fights a wolf

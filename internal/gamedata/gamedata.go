@@ -94,6 +94,12 @@ type Tables struct {
 	// SetCols is each anim set's row of anims.csv by column number, from 0 at
 	// "Walk": the numbers spells.csv uses to name a caster's animations.
 	SetCols map[int][]int
+	// CombatCols is the same for canims.csv, from 0 at "Att Med": the numbers
+	// styles.csv uses for a style's animation.
+	CombatCols map[int][]int
+	// StyleAnims is styles.csv: each client style (the community database's
+	// style Icon and TwoHandAnimation) to its animation number in canims.csv.
+	StyleAnims map[int]int
 	// Spells is spells.csv: how each client effect looks.
 	Spells map[int]SpellFX
 	// Effects is speffects.csv: each effect's model, bone and duration.
@@ -139,7 +145,7 @@ func Load(game string) (*Tables, error) {
 	t := &Tables{
 		Monsters: map[int]Monster{}, Figures: map[int]Figure{}, Skins: map[int]Skin{},
 		Anims: map[int]Anim{}, AnimSets: map[int]map[string]int{}, CombatSets: map[int]map[string]int{},
-		SetCols: map[int][]int{}, Spells: map[int]SpellFX{}, Effects: map[int]Effect{}, EffectNIFs: map[int]string{},
+		SetCols: map[int][]int{}, CombatCols: map[int][]int{}, StyleAnims: map[int]int{}, Spells: map[int]SpellFX{}, Effects: map[int]Effect{}, EffectNIFs: map[int]string{},
 	}
 
 	rows, _, err := table(a, "monsters.csv")
@@ -194,6 +200,17 @@ func Load(game string) (*Tables, error) {
 	}
 	if t.SetCols, err = colTable(a, "anims.csv"); err != nil {
 		return nil, err
+	}
+	if t.CombatCols, err = colTable(a, "canims.csv"); err != nil {
+		return nil, err
+	}
+	if rows, _, err = table(a, "styles.csv"); err != nil {
+		return nil, err
+	}
+	for _, r := range rows {
+		if n := num(r, 3); n > 0 { // the column headed "Animation"
+			t.StyleAnims[num(r, 0)] = n
+		}
 	}
 	if t.Spells, err = spellTable(a); err != nil {
 		return nil, err
@@ -347,6 +364,16 @@ func colTable(a *mpak.Archive, name string) (map[int][]int, error) {
 // anims.csv from 0 at "Walk": the numbers a spell uses for its cast animations.
 func (t *Tables) SetClipAt(set, n int) (Anim, bool) {
 	cols := t.SetCols[set]
+	if n < 0 || n >= len(cols) {
+		return Anim{}, false
+	}
+	return t.resolve(cols[n])
+}
+
+// CombatClipAt resolves combat animation number n in an anim set, counting the
+// columns of canims.csv from 0 at "Att Med": the numbers a style animates with.
+func (t *Tables) CombatClipAt(set, n int) (Anim, bool) {
+	cols := t.CombatCols[set]
 	if n < 0 || n >= len(cols) {
 		return Anim{}, false
 	}
